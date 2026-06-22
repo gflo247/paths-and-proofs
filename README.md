@@ -39,7 +39,7 @@ compile. Cloudflare Pages serves the files as-is.
 
 Search the repo for these and replace once the values exist:
 
-- `REPLACE-WITH-SITE-URL` — the canonical / Open Graph site URL (in `index.html`).
+- `paths-and-proofs.pages.dev` — the canonical / Open Graph site URL (in `index.html`).
   Set this to the Cloudflare Pages URL (or custom domain) after first deploy.
 
 ## Deploying to Cloudflare Pages
