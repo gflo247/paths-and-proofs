@@ -3,14 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Paths and Proofs — honest tools for slow money decisions</title>
+<title>Paths and Proofs — find the tipping point on big money decisions</title>
 <meta name="description" content="A small family of privacy-first calculators for the slow, irreversible money decisions — Social Security, Roth conversions, rent versus buy. Each one resolves to a breakeven. Built by one independent developer, honest about what's finished and what isn't.">
-<!-- TODO(Nick): set canonical + og:url to the real site URL once the Cloudflare project exists. -->
-<link rel="canonical" href="https://REPLACE-WITH-SITE-URL.example/">
-<meta property="og:title" content="Paths and Proofs — honest tools for slow money decisions">
+<link rel="canonical" href="https://paths-and-proofs.pages.dev/">
+<meta property="og:title" content="Paths and Proofs — find the tipping point on big money decisions">
 <meta property="og:description" content="A small family of privacy-first calculators for slow, irreversible money decisions. Each resolves to a breakeven. Runs in your browser. Built by one independent developer.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://REPLACE-WITH-SITE-URL.example/">
+<meta property="og:url" content="https://paths-and-proofs.pages.dev/">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,8 +31,11 @@
     --amber:#b06a1f;    /* in-testing accent, used sparingly */
     color-scheme: light dark;
   }
+  /* Dark palette applies when the OS prefers dark (unless the visitor has
+     overridden to light via the toggle), OR when explicitly set to dark.
+     The toggle sets data-theme; with no JS the page just follows the OS. */
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --paper:#15181d;
       --paper-2:#191d23;
       --ink:#e8eaf0;
@@ -48,6 +50,35 @@
       --amber:#d2974f;
     }
   }
+  :root[data-theme="dark"] {
+    --paper:#15181d;
+    --paper-2:#191d23;
+    --ink:#e8eaf0;
+    --muted:#9aa0ad;
+    --faint:#5f6571;
+    --teal:#5fb3ad;
+    --teal-soft:#26352f;
+    --line-a:#8a9099;
+    --line-b:#5fb3ad;
+    --border:#2b2f3a;
+    --surface:#1b1f29;
+    --amber:#d2974f;
+  }
+
+  /* Theme toggle button */
+  .theme-toggle {
+    position:fixed; top:16px; right:16px; z-index:50;
+    width:40px; height:40px; padding:8px;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:var(--surface); color:var(--ink);
+    border:1px solid var(--border); border-radius:8px; cursor:pointer; line-height:0;
+  }
+  .theme-toggle:hover { border-color:var(--teal); }
+  .theme-toggle svg { width:20px; height:20px; }
+  .theme-toggle .ic-moon { display:none; }
+  .theme-toggle.is-dark .ic-sun { display:none; }
+  .theme-toggle.is-dark .ic-moon { display:inline-block; }
+  .theme-toggle:focus-visible { outline:2px solid var(--teal); outline-offset:2px; }
 
   * { box-sizing:border-box; }
   html { -webkit-text-size-adjust:100%; }
@@ -177,11 +208,11 @@
 
   <header>
     <p class="eyebrow reveal">Paths and Proofs</p>
-    <h1 class="display reveal">The slow money decisions, shown as a crossover.</h1>
-    <p class="lede reveal">A small family of calculators for the choices you make once and live
-      with for decades — when to start Social Security, whether to convert to a Roth this year,
-      whether to rent or buy. Each one resolves to a breakeven: the point where one path
-      overtakes the other.</p>
+    <h1 class="display reveal">Big money decisions have a tipping point. Here's yours.</h1>
+    <p class="lede reveal">A small family of calculators for a few big, hard-to-reverse money
+      choices — when to start Social Security, whether to convert to a Roth, whether to rent or
+      buy. Each one finds your tipping point — the breakeven, where waiting or acting starts to
+      pay off.</p>
 
     <!-- Signature: the crossover the whole family is built around. -->
     <div class="hero-cross" aria-hidden="true">
@@ -292,20 +323,18 @@
   </section>
 
   <section class="strip">
-    <h2 class="display">Built by Nick, an independent developer</h2>
-    <p>I build these one at a time and don't ship one until it's honest. No accounts, no ads,
-      nothing sold. Each calculator runs entirely in your browser — your numbers never leave
-      your device — and shows its work, with the rules linked to their sources so you can check
-      them yourself.</p>
+    <h2 class="display">Built by Nick</h2>
+    <p>I'm an independent developer, and I build these one at a time — and don't ship one until
+      it's honest. No accounts, no ads, nothing sold. Each calculator runs entirely in your
+      browser, so your numbers never leave your device, and shows its work, with every rule
+      linked to its source so you can check it yourself.</p>
     <p style="margin-top:14px">
-      <span class="pill">⌥ Runs in your browser</span>
-      <span class="pill" style="margin-left:6px">Nothing sent anywhere</span>
-      <a class="pill" href="https://github.com/gflo247" style="margin-left:6px; text-decoration:none">↗ github.com/gflo247</a>
+      <a class="pill" href="https://github.com/gflo247" style="text-decoration:none">↗ github.com/gflo247</a>
     </p>
-    <p class="aside">Nick also built <strong>“In case I'm not there”</strong> — a private,
-      offline tool for leaving your family the information they'd need if something happened to
-      you. It's a different kind of thing, not a calculator, so it lives on its own
-      — <a href="/in-case-im-not-there/">have a look</a> if that's useful to you.</p>
+    <p class="aside">I also built <strong>“In case I'm not there”</strong> — a private, offline
+      tool for leaving your family the information they'd need if something happened to you. It's
+      not a calculator, so it lives on its own
+      — <a href="/in-case-im-not-there/">have a look</a> if that's useful.</p>
   </section>
 
   <footer>
@@ -313,13 +342,40 @@
       locally in your browser.</p>
     <p style="margin-top:6px">
       <!-- All internal paths confirmed against repo structure. -->
-      <a href="/social-security/">Social Security</a> ·
+      <a href="/social-security/">Social Security claiming</a> ·
       <a href="/roth-conversion/">Roth conversion</a> ·
-      <a href="/rent-vs-buy/">Rent vs buy</a> ·
+      <a href="/rent-vs-buy/">Rent versus buy</a> ·
       <a href="https://github.com/gflo247">GitHub</a>
     </p>
   </footer>
 
 </div>
+<button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch theme">
+  <span class="ic-sun" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+  <span class="ic-moon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+</button>
+<script>
+  // Stateless theme toggle: follow OS by default, override for this visit only.
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    function isDark() {
+      var t = root.getAttribute('data-theme');
+      if (t) return t === 'dark';
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    function sync() {
+      var d = isDark();
+      btn.classList.toggle('is-dark', d);
+      btn.title = d ? 'Switch to light mode' : 'Switch to dark mode';
+      btn.setAttribute('aria-label', btn.title);
+    }
+    btn.addEventListener('click', function () {
+      root.setAttribute('data-theme', isDark() ? 'light' : 'dark');
+      sync();
+    });
+    sync();
+  })();
+</script>
 </body>
 </html>

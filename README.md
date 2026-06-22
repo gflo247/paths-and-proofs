@@ -35,12 +35,14 @@ compile. Cloudflare Pages serves the files as-is.
 - **Verify the calculators:** `npm install` then `npm run verify`
   (mounts each calculator on the shared core and checks it renders)
 
-## Before deploying — placeholders to resolve
+## Deployment notes
 
-Search the repo for these and replace once the values exist:
+The site is live at <https://paths-and-proofs.pages.dev/> via Cloudflare Pages
+(Git-connected to this repo — every push to `main` auto-deploys).
 
-- `REPLACE-WITH-SITE-URL` — the canonical / Open Graph site URL (in `index.html`).
-  Set this to the Cloudflare Pages URL (or custom domain) after first deploy.
+The canonical / Open Graph URL in `index.html` is set to the `.pages.dev` URL.
+If a custom domain (e.g. pathsandproofs.com) is added later, update the
+`<link rel="canonical">` and `og:url` in `index.html` to point at it.
 
 ## Deploying to Cloudflare Pages
 

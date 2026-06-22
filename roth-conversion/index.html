@@ -339,8 +339,8 @@
     }
   </style>
   <script>
-    (function(){var s=null;try{s=localStorage.getItem('rg-theme');}catch(e){}var d=s?s==='dark':(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.setAttribute('data-theme','dark');})();
-    function toggleTheme(){var dark=document.documentElement.getAttribute('data-theme')==='dark';var next=dark?'light':'dark';if(next==='dark')document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');try{localStorage.setItem('rg-theme',next);}catch(e){}syncThemeBtn();if(typeof calc==='function'){try{calc();}catch(e){}}}
+    (function(){var d=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.setAttribute('data-theme','dark');})();
+    function toggleTheme(){var dark=document.documentElement.getAttribute('data-theme')==='dark';if(dark)document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme','dark');syncThemeBtn();if(typeof calc==='function'){try{calc();}catch(e){}}}
     function syncThemeBtn(){var d=document.documentElement.getAttribute('data-theme')==='dark';var b=document.getElementById('themeBtn');if(b){var t=d?'Switch to light mode':'Switch to dark mode';b.title=t;b.setAttribute('aria-label',t);}}
     document.addEventListener('DOMContentLoaded',syncThemeBtn);
   </script>

@@ -5,10 +5,11 @@
 //   bootstrap(mod);
 
 import { mount } from './app.js';
+import { applyOSTheme, installThemeToggle } from './theme.js';
 
 export function bootstrap(module) {
-  const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+  applyOSTheme();
+  installThemeToggle();
 
   const api = mount(module, document.getElementById('calc'));
 
