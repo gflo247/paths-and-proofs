@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rent vs buy — how long until buying wins?</title>
+<meta name="description" content="See how many years you'd need to stay for buying to beat renting, with the down payment's opportunity cost counted honestly. Runs in your browser.">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<link rel="stylesheet" href="../core/tokens.css">
+<link rel="stylesheet" href="../core/page.css">
+<link rel="stylesheet" href="../core/components.css">
+</head>
+<body>
+<main>
+  <a class="backlink" href="../">← All calculators</a>
+  <p class="eyebrow">Housing</p>
+  <h1>Rent or buy?</h1>
+  <p class="lede">Buying builds equity but ties up cash and costs a fortune to get into and out of.
+    Renting frees that cash to invest. <span class="muted">The honest question isn't "is buying
+    better" — it's "how long would you have to stay for buying to come out ahead," counting what
+    your down payment could have earned elsewhere.</span></p>
+
+  <div id="calc">
+    <section>
+      <h2>Your numbers</h2>
+      <div class="presets" id="presets"></div>
+      <div data-controls></div>
+    </section>
+    <section>
+      <h2>Net worth, if you sold and left</h2>
+      <div class="chart" data-chart></div>
+      <p class="caption">Each line is one path, valued as if you sold and moved on that year.
+        Where buying overtakes renting is the number of years that makes owning worth it.</p>
+    </section>
+    <section>
+      <h2>What it works out to</h2>
+      <div data-summary></div>
+    </section>
+  </div>
+
+  <details>
+    <summary>What this does and doesn't account for</summary>
+    <p>The renter is assumed to invest the cash buying would tie up — the down payment and closing
+      costs — plus any month where renting costs less. That opportunity cost is the piece most
+      rent-vs-buy tools leave out, and it's why the breakeven depends so heavily on the gap between
+      home appreciation and investment return.</p>
+    <p>It assumes a 30-year fixed mortgage with no refinance, rates that hold steady, and no
+      income-tax effects — most people take the standard deduction now, so the mortgage-interest
+      deduction rarely changes the answer. Selling costs apply at the year you leave.</p>
+    <p>Everything runs in your browser. Nothing you enter is sent anywhere or saved. This is
+      information to help you think, not financial advice.</p>
+  </details>
+  <footer>Built to show the math plainly, not to sell you anything.</footer>
+</main>
+
+<script type="module">
+  import { bootstrap } from '../core/bootstrap.js';
+  import * as mod from './rent-vs-buy.js';
+  bootstrap(mod);
+</script>
+</body>
+</html>

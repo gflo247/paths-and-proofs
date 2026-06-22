@@ -1,0 +1,31 @@
+/* core/tokens.css
+   The single styling contract for the umbrella. Every color lives here; flip a
+   theme and the whole site (chrome, controls, chart) re-themes. Series colors
+   are the exception — each calculator sets its own in compute(). */
+
+:root {
+  --bg:#fbfbf9; --fg:#20242c;          /* page */
+  --surface:#ffffff;                    /* cards, fields */
+  --border:#e6e6e6;
+  --muted:#5a5f6a;                      /* secondary text */
+  --accent:#2c6e6a;                     /* steady teal — controls, headline result, links */
+
+  --chart-grid:#e6e6e6;
+  --chart-text:#5a5f6a;
+  --chart-tooltip-bg:#1f2430;
+  --chart-tooltip-text:#f5f5f5;
+  color-scheme: light dark;
+}
+
+[data-theme="dark"] {
+  --bg:#14171e; --fg:#e8eaf0;
+  --surface:#1b1f29;
+  --border:#2b2f3a;
+  --muted:#9aa0ad;
+  --accent:#5fb3ad;
+
+  --chart-grid:#2b2f3a;
+  --chart-text:#9aa0ad;
+  --chart-tooltip-bg:#f5f5f5;
+  --chart-tooltip-text:#1f2430;
+}

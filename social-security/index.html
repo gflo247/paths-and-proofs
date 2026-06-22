@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>When should each of you start Social Security?</title>
+<meta name="description" content="For a married couple: see how your Social Security benefits change with the age each of you claims, including spousal and survivor benefits, and the age past which waiting pays off. Runs in your browser.">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<link rel="stylesheet" href="../core/tokens.css">
+<link rel="stylesheet" href="../core/page.css">
+<link rel="stylesheet" href="../core/components.css">
+<style>
+  .heatmap-details { margin-top: 1rem; }
+  .heatmap { max-width: 380px; margin: 0.5rem 0; }
+  .heatmap-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; font-size: 0.85rem; }
+  .heatmap-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .heatmap-legend i { width: 0.85rem; height: 0.85rem; border-radius: 2px; display: inline-block; }
+  .heatmap-legend .muted { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <a class="backlink" href="../">← All calculators</a>
+  <p class="eyebrow">Social Security</p>
+  <h1>When should each of you start Social Security?</h1>
+  <p class="lede">Claim early and you collect smaller checks for longer. Wait and you collect
+    larger checks for less time. <span class="muted">For a couple, there's a twist: when one
+    of you dies, the survivor keeps the larger of your two checks — so the higher earner's
+    decision to wait isn't bought for their own lifespan, but for whichever of you lives
+    longer.</span></p>
+
+  <div id="calc">
+    <section>
+      <h2>Your numbers</h2>
+      <div class="presets" id="presets"></div>
+      <div data-controls></div>
+    </section>
+    <section>
+      <h2>Lifetime benefits by claiming age</h2>
+      <div class="chart" data-chart></div>
+      <p class="caption">Each line is one strategy for the higher earner. Where waiting overtakes
+      claiming early is your breakeven — if the longer-living spouse reaches past that age,
+      waiting paid off.</p>
+    </section>
+    <section>
+      <h2>What it works out to</h2>
+      <div data-summary></div>
+    </section>
+  </div>
+
+  <details class="heatmap-details">
+    <summary>Show the full picture — both lifespans at once</summary>
+    <p class="caption">The chart above holds one death at your planning age and varies the other.
+      This grid varies both independently. Each cell is one pair of lifespans: green where the
+      higher earner waiting to 70 wins, red where claiming at 62 wins. It's the one view that
+      also shows what happens if the lower earner dies first.</p>
+    <div class="heatmap" id="heatmap"></div>
+    <div class="heatmap-legend" id="heatmap-legend"></div>
+  </details>
+
+  <details>
+    <summary>What this does and doesn't account for, and where the rules come from</summary>
+    <p>This models a married couple: two benefit amounts, two claiming ages, the spousal
+      benefit (a lower earner can draw up to 50% of the higher earner's full-retirement-age
+      amount), and the survivor rule (when one spouse dies, the survivor keeps the larger of
+      the two checks). It does not account for the earnings test if you keep working before
+      full retirement age, income tax on benefits, or divorced-spouse benefits — each can
+      move the answer.</p>
+    <p><strong>Born before 1960?</strong> This version assumes a full retirement age of 67,
+      which applies to anyone born in 1960 or later. If you were born earlier, your full
+      retirement age is younger and your numbers will differ — the figures here won't be right
+      for you.</p>
+    <p>The discount rate is the real return you assume you could earn on benefits taken
+      earlier; a higher rate makes claiming early look better. The life-expectancy inputs are
+      planning ages you choose — they're marked on the chart, not predictions, and you can move
+      them to see how the answer shifts.</p>
+    <p>Everything runs in your browser. Nothing you enter is sent anywhere or saved. This is
+      information to help you think, not financial advice.</p>
+    <p class="sources">Where the rules come from — each links to the government page that
+      defines it:</p>
+    <ul class="sources-list">
+      <li>Early-claim reductions, the different spousal reduction, and survivor reductions:
+        <a href="https://www.ssa.gov/OP_Home/cfr20/404/404-0410.htm">Code of Federal
+        Regulations section 404.410</a> (with worked dollar examples)</li>
+      <li>Delayed retirement credits (8% per year, stopping at 70):
+        <a href="https://www.ssa.gov/OP_Home/cfr20/404/404-0313.htm">Code of Federal
+        Regulations section 404.313</a></li>
+      <li>Full retirement age 67 for those born in 1960 or later:
+        <a href="https://www.ssa.gov/benefits/retirement/planner/1960-delay.html">Social
+        Security Administration</a></li>
+      <li>Your own benefit estimate:
+        <a href="https://www.ssa.gov/myaccount/">your my Social Security account</a></li>
+    </ul>
+  </details>
+  <footer>Built to show the math plainly, not to sell you anything.</footer>
+</main>
+
+<script type="module">
+  import { bootstrap } from '../core/bootstrap.js';
+  import * as mod from './social-security.js';
+  bootstrap(mod);
+
+  // Opt-in heatmap. Page-local: it reuses the module's pure computeSurface but
+  // does not touch the shared core. It reads the live control values straight
+  // from the DOM, so it stays in sync without needing the engine's internals.
+  const details = document.querySelector('.heatmap-details');
+  const host = document.getElementById('heatmap');
+  const legend = document.getElementById('heatmap-legend');
+
+  function liveValues() {
+    const v = {};
+    mod.inputs.forEach((c) => {
+      const el = document.getElementById(`ctl-${c.id}`);
+      v[c.id] = el ? Number(el.value) : c.default;
+    });
+    return v;
+  }
+
+  function tokenColor(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  function renderHeatmap() {
+    if (!details.open) return;
+    const { ages, cells } = mod.computeSurface(liveValues(), 2);
+    const n = ages.length;
+    const maxAbs = cells.reduce((m, c) => Math.max(m, Math.abs(c.margin)), 1);
+
+    const win = '#98c379';   // waiting wins (matches the delay line)
+    const lose = '#e06c75';  // claiming early wins (matches the early line)
+    const ink = tokenColor('--chart-text', '#5a5f6a');
+    const border = tokenColor('--border', '#e6e6e6');
+
+    const W = 360, M = { top: 8, right: 8, bottom: 40, left: 44 };
+    const cell = (W - M.left - M.right) / n;
+    const H = cell * n + M.top + M.bottom;
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label',
+      'Grid of higher earner death age by lower earner death age, colored by which strategy wins');
+
+    cells.forEach((c) => {
+      const xi = ages.indexOf(c.highDeath);
+      const yi = ages.indexOf(c.lowDeath);
+      const rect = document.createElementNS(ns, 'rect');
+      rect.setAttribute('x', M.left + xi * cell);
+      rect.setAttribute('y', M.top + (n - 1 - yi) * cell);
+      rect.setAttribute('width', cell + 0.5);
+      rect.setAttribute('height', cell + 0.5);
+      const t = Math.min(Math.abs(c.margin) / maxAbs, 1);
+      rect.setAttribute('fill', c.margin >= 0 ? win : lose);
+      rect.setAttribute('fill-opacity', (0.15 + 0.85 * t).toFixed(2));
+      const who = c.margin >= 0 ? 'waiting wins' : 'claiming early wins';
+      rect.setAttribute('aria-label',
+        `higher earner to ${c.highDeath}, lower earner to ${c.lowDeath}: ${who}`);
+      const title = document.createElementNS(ns, 'title');
+      title.textContent =
+        `Higher earner lives to ${c.highDeath}, lower earner to ${c.lowDeath}: ${who}`;
+      rect.append(title);
+      svg.append(rect);
+    });
+
+    // Sparse axis ticks (every other age) so labels don't crowd.
+    ages.forEach((a, idx) => {
+      if (idx % 2 !== 0) return;
+      const xt = document.createElementNS(ns, 'text');
+      xt.setAttribute('x', M.left + idx * cell + cell / 2);
+      xt.setAttribute('y', H - M.bottom + 16);
+      xt.setAttribute('text-anchor', 'middle');
+      xt.setAttribute('font-size', '9'); xt.setAttribute('fill', ink);
+      xt.textContent = a;
+      svg.append(xt);
+      const yt = document.createElementNS(ns, 'text');
+      yt.setAttribute('x', M.left - 6);
+      yt.setAttribute('y', M.top + (n - 1 - idx) * cell + cell / 2 + 3);
+      yt.setAttribute('text-anchor', 'end');
+      yt.setAttribute('font-size', '9'); yt.setAttribute('fill', ink);
+      yt.textContent = a;
+      svg.append(yt);
+    });
+
+    const xl = document.createElementNS(ns, 'text');
+    xl.setAttribute('x', M.left + (W - M.left - M.right) / 2);
+    xl.setAttribute('y', H - 4);
+    xl.setAttribute('text-anchor', 'middle');
+    xl.setAttribute('font-size', '11'); xl.setAttribute('fill', ink);
+    xl.textContent = 'Higher earner lives to age';
+    svg.append(xl);
+
+    host.replaceChildren(svg);
+    legend.innerHTML =
+      `<span><i style="background:${win}"></i> higher earner waiting to 70 wins</span>` +
+      `<span><i style="background:${lose}"></i> claiming at 62 wins</span>` +
+      `<span class="muted">Vertical axis: lower earner lives to age. Deeper color = bigger difference.</span>`;
+  }
+
+  details.addEventListener('toggle', renderHeatmap);
+  document.querySelector('[data-controls]')?.addEventListener('input', renderHeatmap);
+  // Re-theme the heatmap if the page theme flips while it's open.
+  new MutationObserver(renderHeatmap).observe(
+    document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+</script>
+</body>
+</html>

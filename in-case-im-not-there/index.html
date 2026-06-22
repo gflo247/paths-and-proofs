@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>In case I'm not there — a private family vault</title>
+<style>
+  :root {
+    --bg:#f7f5f0; --fg:#2a2a28; --muted:#6b6b66; --surface:#ffffff;
+    --border:#e4e0d8; --accent:#3f6b5a; --danger:#a4453a; color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#15171a; --fg:#e8e6e1; --muted:#9a988f; --surface:#1e2024;
+            --border:#2c2e33; --accent:#6fae97; --danger:#d98a80; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+         font-size:17px; line-height:1.6; background:var(--bg); color:var(--fg); }
+  main { max-width:680px; margin:0 auto; padding:40px 20px 96px; }
+  h1 { font-size:clamp(26px,5vw,34px); line-height:1.2; margin:0 0 12px; letter-spacing:-0.01em; }
+  h2 { font-size:18px; margin:0 0 4px; }
+  p { margin:0 0 12px; }
+  .muted { color:var(--muted); }
+  .small { font-size:14px; }
+  a { color:var(--accent); }
+
+  .card { background:var(--surface); border:1px solid var(--border);
+          border-radius:12px; padding:20px; margin:18px 0; }
+  label { display:block; font-size:14px; font-weight:600; margin:0 0 6px; }
+  input[type=text], input[type=password], textarea {
+    width:100%; font:inherit; padding:10px 12px; border:1px solid var(--border);
+    border-radius:8px; background:var(--bg); color:inherit; }
+  textarea { min-height:70px; resize:vertical; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible {
+    outline:2px solid var(--accent); outline-offset:2px; }
+
+  button { font:inherit; cursor:pointer; border-radius:8px; padding:9px 16px;
+           border:1px solid var(--border); background:var(--surface); color:inherit; }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+  button.link { border:none; background:none; color:var(--accent); padding:4px; }
+  button.danger { color:var(--danger); border-color:var(--danger); background:none; }
+  .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .spacer { flex:1; }
+
+  .banner { font-size:13px; color:var(--muted); border-left:3px solid var(--accent);
+            padding:8px 0 8px 12px; margin:0 0 20px; }
+  .warn { color:var(--danger); }
+
+  .entry { border-top:1px solid var(--border); padding:16px 0 4px; }
+  .entry:first-of-type { border-top:none; }
+  .cat-hint { font-size:13px; color:var(--muted); margin:0 0 10px; }
+  .field + .field { margin-top:10px; }
+  .saved { font-size:13px; color:var(--muted); min-height:18px; }
+
+  .topbar { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .lock-wrap { max-width:440px; margin:8vh auto 0; }
+  .hidden { display:none !important; }
+
+  /* Print: show only the readable export. */
+  #printArea { display:none; }
+
+  /* About section — context for first-time visitors. Uses existing tokens. */
+  .about { max-width:440px; margin:22px auto 0; }
+  .about > summary {
+    cursor:pointer; font-size:14px; color:var(--accent); font-weight:600;
+    list-style:none; padding:4px 0; text-align:center;
+  }
+  .about > summary::-webkit-details-marker { display:none; }
+  .about > summary::before { content:"›"; display:inline-block; margin-right:6px; transition:transform .15s; }
+  .about[open] > summary::before { transform:rotate(90deg); }
+  .about-body { margin-top:10px; }
+  .about-body h3 { font-size:15px; margin:16px 0 2px; }
+  .about-body h3:first-child { margin-top:4px; }
+  .about-body p { font-size:14px; color:var(--muted); margin:0 0 4px; }
+  .about-body .ok { color:var(--accent); }
+  @media print {
+    body { background:#fff; color:#000; font-size:12pt; }
+    main, .topbar { display:none !important; }
+    #printArea { display:block; max-width:none; }
+    #printArea h1 { font-size:20pt; }
+    #printArea .pcat { margin-top:18pt; page-break-inside:avoid; }
+    #printArea .pentry { margin:6pt 0; padding-left:12pt; }
+    #printArea .plabel { font-weight:700; }
+    #printArea .pinfo { white-space:pre-wrap; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOCK / SETUP SCREEN -->
+<div id="lock" class="lock-wrap">
+  <h1 id="lockTitle">In case I'm not there</h1>
+  <p class="muted" id="lockIntro">A private place to leave what your family will need
+    if something happens to you — where things are, who to call, what you'd want.</p>
+
+  <div class="card">
+    <div id="setupFields">
+      <p class="banner">Everything you enter is encrypted on this device and never sent
+        anywhere. Pick a passphrase to protect it.</p>
+      <div class="field">
+        <label for="pass1">Create a passphrase</label>
+        <input type="password" id="pass1" autocomplete="new-password">
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label for="pass2">Type it again</label>
+        <input type="password" id="pass2" autocomplete="new-password">
+      </div>
+      <p class="banner warn" style="margin-top:14px">If you forget this passphrase, the
+        information cannot be recovered — there is no reset by design. Write it somewhere safe,
+        and tell one person you trust.</p>
+      <label class="row" style="font-weight:400; cursor:pointer">
+        <input type="checkbox" id="ack" style="width:auto"> I understand it can't be recovered.
+      </label>
+    </div>
+
+    <div id="unlockFields" class="hidden">
+      <p class="banner">Welcome back. Enter your passphrase to unlock this vault.</p>
+      <div class="field">
+        <label for="passU">Passphrase</label>
+        <input type="password" id="passU" autocomplete="current-password">
+      </div>
+    </div>
+
+    <p id="lockError" class="small warn" style="min-height:18px"></p>
+    <div class="row" style="margin-top:8px">
+      <button class="primary" id="lockBtn">Unlock</button>
+      <span class="spacer"></span>
+      <button class="link" id="importBtn">Restore from a backup file</button>
+      <input type="file" id="importFile" accept="application/json" class="hidden">
+    </div>
+  </div>
+  <p class="small muted" id="resetRow" style="text-align:center"></p>
+
+  <details class="about card">
+    <summary>About this tool — what it is, how it works, why it's here</summary>
+    <div class="about-body">
+      <h3>What it is</h3>
+      <p>A single, private place to write down what your family would need if something happened
+        to you — where the accounts and documents are, who to call, your insurance and digital
+        access, and your wishes. The kind of things that are obvious to you and a painful mystery
+        to everyone else.</p>
+
+      <h3>How it works</h3>
+      <p>Everything you type is encrypted on your own device with a passphrase only you choose,
+        using the same kind of encryption (AES-256) banks rely on. <span class="ok">Nothing is
+        ever sent anywhere</span> — there's no account, no server, no cloud. When it's ready you
+        can print a plain readable copy for a safe or deposit box, and save an encrypted backup
+        file you can keep anywhere. If you forget the passphrase, the data can't be recovered;
+        that's the trade-off for it being truly private.</p>
+
+      <h3>Why it's built</h3>
+      <p>Because the information a family needs in a hard moment is usually scattered across a
+        dozen logins and a few people's memories, and the existing options ask you to hand it to
+        a company. This is the opposite: it stays with you, costs nothing, and asks nothing of
+        you but a passphrase. It's made by an independent developer, kept deliberately simple,
+        and meant to be used once and set aside until it's needed.</p>
+    </div>
+  </details>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app" class="hidden">
+  <div class="topbar">
+    <strong>Your vault</strong>
+    <span class="saved" id="savedNote"></span>
+    <span class="spacer"></span>
+    <button id="lockNow">Lock</button>
+  </div>
+
+  <main>
+    <p class="banner">Stored only on this device, encrypted. Nothing here is sent anywhere.</p>
+
+    <div class="card">
+      <div class="field">
+        <label for="owner">This belongs to</label>
+        <input type="text" id="owner" placeholder="Your name">
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label for="reader">Written for</label>
+        <input type="text" id="reader" placeholder="Who will read this — e.g. my spouse, my executor">
+      </div>
+    </div>
+
+    <div id="categories"></div>
+
+    <div class="card">
+      <h2>When it's ready</h2>
+      <p class="small muted">Print a readable copy and keep it somewhere your family can
+        reach — a safe, a deposit box — and tell the right person where it is. The printed copy
+        is plain text anyone holding it can read, so store it securely. The backup file stays
+        encrypted and is safe to keep anywhere.</p>
+      <div class="row" style="margin-top:8px">
+        <button class="primary" id="printBtn">Print / Save as PDF</button>
+        <button id="exportBtn">Download encrypted backup</button>
+      </div>
+    </div>
+
+    <p class="small" style="text-align:center; margin-top:28px">
+      <button class="danger" id="eraseBtn">Erase everything from this device</button>
+    </p>
+  </main>
+</div>
+
+<div id="printArea"></div>
+
+<script>
+/* ---- Verified crypto (round-trip + wrong-passphrase tested before embedding) ---- */
+const b64 = (bytes) => { let s=''; bytes.forEach(b=>s+=String.fromCharCode(b)); return btoa(s); };
+const unb64 = (str) => { const s=atob(str); const a=new Uint8Array(s.length); for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i); return a; };
+async function deriveKey(passphrase, salt) {
+  const baseKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name:'PBKDF2', salt, iterations:250000, hash:'SHA-256' },
+    baseKey, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+}
+async function encryptData(obj, passphrase) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(passphrase, salt);
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(JSON.stringify(obj)));
+  return { v:1, salt:b64(salt), iv:b64(iv), data:b64(new Uint8Array(ct)) };
+}
+async function decryptData(blob, passphrase) {
+  const key = await deriveKey(passphrase, unb64(blob.salt));
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(blob.iv)}, key, unb64(blob.data));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+/* ---- App ---- */
+const STORE = 'family_vault_blob_v1';
+const CATEGORIES = [
+  { id:'contacts',  name:'Key contacts',          hint:'People to notify and who can help — family, executor, attorney, financial advisor. Include how to reach them.' },
+  { id:'accounts',  name:'Accounts & money',       hint:'Where the accounts are — banks, brokerages, retirement — and how to reach them. Point to your password manager rather than writing full passwords here.' },
+  { id:'insurance', name:'Insurance & policies',   hint:'Life, health, home, auto. Provider, policy number, and who to call.' },
+  { id:'digital',   name:'Digital access',         hint:'Your password manager and how to open it, your main email, and any logins the family will truly need.' },
+  { id:'documents', name:'Important documents',    hint:'Where to find the will, deeds, titles, and certificates — physically, or in which folder.' },
+  { id:'wishes',    name:'Wishes & instructions',  hint:'Medical and funeral wishes, the first steps you want taken, and anything you want to say.' },
+];
+
+let passphrase = null;
+let vault = null;
+let saveTimer = null;
+
+const $ = (id) => document.getElementById(id);
+const emptyVault = () => ({ owner:'', reader:'', updated:null,
+  categories: Object.fromEntries(CATEGORIES.map(c => [c.id, []])) });
+
+function showApp() {
+  $('lock').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('owner').value = vault.owner || '';
+  $('reader').value = vault.reader || '';
+  renderCategories();
+  setSaved(vault.updated ? `Last saved ${new Date(vault.updated).toLocaleString()}` : '');
+}
+
+function renderCategories() {
+  const wrap = $('categories');
+  wrap.replaceChildren();
+  CATEGORIES.forEach(cat => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const h = document.createElement('h2'); h.textContent = cat.name;
+    const hint = document.createElement('p'); hint.className = 'cat-hint'; hint.textContent = cat.hint;
+    card.append(h, hint);
+
+    vault.categories[cat.id].forEach((entry, i) => {
+      card.append(entryEl(cat.id, entry, i));
+    });
+
+    const add = document.createElement('button');
+    add.className = 'link'; add.textContent = '+ Add';
+    add.onclick = () => { vault.categories[cat.id].push({ label:'', info:'' }); renderCategories(); scheduleSave(); };
+    card.append(add);
+    wrap.append(card);
+  });
+}
+
+function entryEl(catId, entry, i) {
+  const box = document.createElement('div');
+  box.className = 'entry';
+
+  const lWrap = document.createElement('div'); lWrap.className = 'field';
+  const label = document.createElement('input');
+  label.type = 'text'; label.placeholder = 'Label — e.g. Checking account, Attorney';
+  label.value = entry.label;
+  label.oninput = () => { entry.label = label.value; scheduleSave(); };
+  lWrap.append(label);
+
+  const iWrap = document.createElement('div'); iWrap.className = 'field';
+  const info = document.createElement('textarea');
+  info.placeholder = 'Details — where it is, account or policy numbers, who to call, what to do.';
+  info.value = entry.info;
+  info.oninput = () => { entry.info = info.value; scheduleSave(); };
+  iWrap.append(info);
+
+  const remove = document.createElement('button');
+  remove.className = 'link'; remove.style.color = 'var(--danger)'; remove.textContent = 'Remove';
+  remove.onclick = () => { vault.categories[catId].splice(i, 1); renderCategories(); scheduleSave(); };
+
+  box.append(lWrap, iWrap, remove);
+  return box;
+}
+
+function setSaved(text) { $('savedNote').textContent = text; }
+function scheduleSave() {
+  setSaved('Saving…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 700);
+}
+async function save() {
+  if (!passphrase || !vault) return;
+  vault.owner = $('owner').value;
+  vault.reader = $('reader').value;
+  vault.updated = new Date().toISOString();
+  const blob = await encryptData(vault, passphrase);
+  localStorage.setItem(STORE, JSON.stringify(blob));
+  setSaved(`All changes saved · ${new Date(vault.updated).toLocaleTimeString()}`);
+}
+
+$('owner') && ($('owner').oninput = scheduleSave);
+$('reader') && ($('reader').oninput = scheduleSave);
+
+function lock() {
+  passphrase = null; vault = null;
+  $('categories').replaceChildren();
+  $('owner').value = ''; $('reader').value = '';
+  $('printArea').replaceChildren();
+  $('app').classList.add('hidden');
+  $('lock').classList.remove('hidden');
+  $('passU').value = '';
+  initLockScreen();
+}
+
+/* ---- Lock screen wiring ---- */
+function hasVault() { return !!localStorage.getItem(STORE); }
+function initLockScreen() {
+  const returning = hasVault();
+  $('setupFields').classList.toggle('hidden', returning);
+  $('unlockFields').classList.toggle('hidden', !returning);
+  $('lockTitle').textContent = returning ? 'Welcome back' : "In case I'm not there";
+  $('lockIntro').classList.toggle('hidden', returning);
+  $('lockBtn').textContent = returning ? 'Unlock' : 'Create vault';
+  $('lockError').textContent = '';
+  $('resetRow').innerHTML = returning
+    ? 'Forgot your passphrase? The data can\'t be recovered, but you can ' +
+      '<button class="link" id="forget" style="font-size:13px">erase it and start over</button>.'
+    : '';
+  const f = $('forget'); if (f) f.onclick = eraseAll;
+}
+
+async function handleLock() {
+  $('lockError').textContent = '';
+  if (hasVault()) {
+    const pass = $('passU').value;
+    if (!pass) return;
+    try {
+      const blob = JSON.parse(localStorage.getItem(STORE));
+      vault = await decryptData(blob, pass);
+      passphrase = pass;
+      // Ensure any newly added categories exist on older vaults.
+      CATEGORIES.forEach(c => { if (!vault.categories[c.id]) vault.categories[c.id] = []; });
+      showApp();
+    } catch {
+      $('lockError').textContent = 'That passphrase didn\'t work. Try again.';
+    }
+  } else {
+    const p1 = $('pass1').value, p2 = $('pass2').value;
+    if (p1.length < 8) { $('lockError').textContent = 'Use at least 8 characters.'; return; }
+    if (p1 !== p2) { $('lockError').textContent = 'The two passphrases don\'t match.'; return; }
+    if (!$('ack').checked) { $('lockError').textContent = 'Please confirm you understand it can\'t be recovered.'; return; }
+    passphrase = p1; vault = emptyVault();
+    await save();
+    showApp();
+  }
+}
+
+/* ---- Export / import / erase ---- */
+function downloadFile(name, text, type) {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+}
+function exportBackup() {
+  const blob = localStorage.getItem(STORE);
+  if (blob) downloadFile('family-vault-backup.json', blob, 'application/json');
+}
+function importBackup(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const blob = JSON.parse(reader.result);
+      if (!blob.salt || !blob.iv || !blob.data) throw new Error('bad file');
+      localStorage.setItem(STORE, JSON.stringify(blob));
+      initLockScreen();
+      $('lockError').textContent = 'Backup loaded. Enter its passphrase to unlock.';
+    } catch { $('lockError').textContent = 'That doesn\'t look like a vault backup file.'; }
+  };
+  reader.readAsText(file);
+}
+function eraseAll() {
+  if (confirm('Erase the vault from this device? This cannot be undone.')) {
+    localStorage.removeItem(STORE);
+    passphrase = null; vault = null;
+    $('app').classList.add('hidden'); $('lock').classList.remove('hidden');
+    $('pass1') && ($('pass1').value = ''); $('pass2') && ($('pass2').value = '');
+    initLockScreen();
+  }
+}
+
+/* ---- Printable readable copy ---- */
+function buildPrint() {
+  const area = $('printArea');
+  area.replaceChildren();
+  const title = document.createElement('h1');
+  title.textContent = (vault.owner ? vault.owner + ' — ' : '') + 'important information';
+  area.append(title);
+  const meta = document.createElement('p');
+  meta.className = 'muted';
+  meta.textContent = (vault.reader ? 'For ' + vault.reader + '. ' : '') +
+    'Prepared ' + new Date().toLocaleDateString();
+  area.append(meta);
+
+  CATEGORIES.forEach(cat => {
+    const entries = vault.categories[cat.id].filter(e => e.label || e.info);
+    if (!entries.length) return;
+    const sec = document.createElement('div'); sec.className = 'pcat';
+    const h = document.createElement('h2'); h.textContent = cat.name; sec.append(h);
+    entries.forEach(e => {
+      const row = document.createElement('div'); row.className = 'pentry';
+      if (e.label) { const l = document.createElement('div'); l.className = 'plabel'; l.textContent = e.label; row.append(l); }
+      if (e.info)  { const p = document.createElement('div'); p.className = 'pinfo'; p.textContent = e.info; row.append(p); }
+      sec.append(row);
+    });
+    area.append(sec);
+  });
+}
+
+/* ---- Events ---- */
+$('lockBtn').onclick = handleLock;
+$('passU').addEventListener('keydown', e => { if (e.key === 'Enter') handleLock(); });
+$('lockNow').onclick = lock;
+$('printBtn').onclick = () => { buildPrint(); window.print(); };
+$('exportBtn').onclick = exportBackup;
+$('eraseBtn').onclick = eraseAll;
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = (e) => { if (e.target.files[0]) importBackup(e.target.files[0]); };
+
+initLockScreen();
+</script>
+</body>
+</html>

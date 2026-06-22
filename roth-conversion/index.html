@@ -1,0 +1,2542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roth conversion · Should you convert this year?</title>
+  <meta name="description" content="Should you do a Roth conversion this year? Free calculator modeling federal and state taxes, a hidden Social Security tax effect, Medicare surcharges, proportional tax rules, joint survival odds, and more. Runs entirely in your browser — nothing leaves your device.">
+  <meta property="og:title" content="Roth conversion — Should you do a Roth conversion this year?">
+  <meta property="og:description" content="Free Roth conversion calculator. Models the hidden Social Security tax effect, all 50 state tax rates, Medicare surcharges, after-tax contributions, and survival odds. Runs in your browser. Nothing leaves your device.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Roth conversion — Should you do a Roth conversion this year?">
+  <meta name="twitter:description" content="Free calculator. hidden Social Security tax effect, state taxes, Medicare, survival odds. Runs in your browser — nothing leaves your device.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F9ED;</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <style>
+    :root {
+      --navy:#1C3A5E; --navy-mid:#2A5280; --navy-pale:#EAF0F7;
+      --amber:#B06000; --amber-lt:#D4860A; --amber-pale:#FFF3E0;
+      --cream:#F5F1EB; --card:#FFFFFF; --text:#18151F; --muted:#3D4451;
+      --border:#CEC6BA; --blight:#E2DAD0;
+      --success:#1B6B3A; --sbg:#E4F3EB;
+      --warn:#8B3A00; --wbg:#FEF0E6;
+      --danger:#8B1A1A; --dbg:#FDECEC;
+      --tip-bg:#EAF0F7; --tip-bdr:#B0C8E0;
+      --sh-sm:0 1px 5px rgba(28,58,94,.07); --sh:0 3px 16px rgba(28,58,94,.10);
+      --r:15px; --rsm:9px;
+      --ink-pale:#1E3250; --ink-green:#0E3B20; --ink-amber:#7A4200;
+    }
+    [data-theme="dark"]{
+      --navy:#7DB2EC; --navy-mid:#5E96D6; --navy-pale:#1E2A3C;
+      --amber:#E89A38; --amber-lt:#F2B24A; --amber-pale:#3A2A18;
+      --cream:#181A20; --card:#222730; --text:#E9E7E1; --muted:#A6ABB5;
+      --border:#3A414C; --blight:#2C323C;
+      --success:#54C285; --sbg:#16301F;
+      --warn:#E89A50; --wbg:#332518;
+      --danger:#EA7070; --dbg:#37201F;
+      --tip-bg:#1E2A3C; --tip-bdr:#3C4C64;
+      --ink-pale:#BFD6F2; --ink-green:#A6E4C0; --ink-amber:#F2CD96;
+      --sh-sm:0 1px 5px rgba(0,0,0,.40); --sh:0 4px 18px rgba(0,0,0,.50);
+    }
+    /* navy becomes a light accent in dark mode, so re-darken the navy *surfaces* */
+    [data-theme="dark"] .site-header{background:#16203A;}
+    [data-theme="dark"] .bottom-line{background:#16203A;}
+    [data-theme="dark"] footer{background:#16203A;}
+    [data-theme="dark"] .btip,[data-theme="dark"] .disclaimer,[data-theme="dark"] .alert.aamb{color:var(--ink-amber);}
+    [data-theme="dark"] .alert.ared{color:var(--danger);}
+    [data-theme="dark"] .ex-btn[data-ex="single"]{background:var(--amber-pale)!important;color:var(--ink-amber)!important;border-color:var(--amber)!important;}
+    [data-theme="dark"] .ex-btn[data-ex="borderline"]{background:var(--blight)!important;color:var(--text)!important;border-color:#6A7080!important;}
+    [data-theme="dark"] .ex-btn[data-ex="couple"]{background:var(--sbg)!important;color:var(--ink-green)!important;border-color:var(--success)!important;}
+    [data-theme="dark"] .sb,[data-theme="dark"] .sc,[data-theme="dark"] .ph-num,[data-theme="dark"] .ex-pill,[data-theme="dark"] .tb:hover,[data-theme="dark"] .tb.open{background:#2C4A72;}
+    [data-theme="dark"] .be-wait{background:#3A414C;}
+    [data-theme="dark"] .vt-neu{color:var(--muted);border-color:#6A7080;}
+    .theme-btn{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9);border-radius:8px;padding:5px 7px;cursor:pointer;transition:background .15s,color .15s;}
+    .theme-btn:hover{background:rgba(255,255,255,.22);color:#fff;}
+    .theme-btn svg{display:block;width:17px;height:17px;}
+    .theme-btn .ic-moon{display:none;}
+    [data-theme="dark"] .theme-btn .ic-sun{display:none;}
+    [data-theme="dark"] .theme-btn .ic-moon{display:block;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{font-size:17px;scroll-behavior:smooth;}
+    body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--text);line-height:1.70;-webkit-font-smoothing:antialiased;}
+    .site-header{background:var(--navy);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:300;box-shadow:0 2px 12px rgba(28,58,94,.28);}
+    .logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:#fff;letter-spacing:-.01em;}
+    .logo em{font-style:normal;color:var(--amber-lt);}
+    .privacy-pill{font-size:.74rem;font-weight:500;color:rgba(255,255,255,.78);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:4px 13px;border-radius:40px;display:flex;align-items:center;gap:5px;}
+    .hero{max-width:720px;margin:0 auto;padding:3rem 1.5rem 2rem;text-align:center;}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3rem);font-weight:700;line-height:1.18;color:var(--navy);margin-bottom:.85rem;}
+    .hero h1 i{font-style:italic;color:var(--amber);}
+    .hero-lead{font-size:1.05rem;color:var(--muted);max-width:560px;margin:0 auto 1.5rem;}
+    /* ── Hero visual ── */
+    .hero-vis{display:flex;gap:1rem;align-items:flex-start;justify-content:center;margin:1.25rem auto .75rem;max-width:400px;}
+    .hv-col{display:flex;flex-direction:column;align-items:center;flex:1;max-width:155px;}
+    .hv-bar{display:flex;flex-direction:column;width:90%;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(28,58,94,.18);animation:hvGrow .7s cubic-bezier(.22,1,.36,1) both;}
+    .hv-gseg{background:linear-gradient(180deg,#2D8A52,var(--success));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 6px;transition:height .55s cubic-bezier(.22,1,.36,1),background .4s,box-shadow .4s;}
+    .hv-gseg.hv-win{background:linear-gradient(180deg,#40CF78,#1E8040);box-shadow:inset 0 4px 0 rgba(255,255,255,.28);}
+    .hv-seg-pct{color:white;font-size:.88rem;font-weight:700;opacity:.9;text-align:center;line-height:1;letter-spacing:.01em;}
+    .hv-aseg{background:linear-gradient(180deg,#D4860A,#A35500);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 6px;animation:hvPulse .55s ease-in-out 1.1s both;transition:height .55s cubic-bezier(.22,1,.36,1);}
+    .vis-toggle{display:flex;gap:.5rem;justify-content:center;margin-bottom:.9rem;flex-wrap:wrap;}
+    .vt-btn{border-radius:40px;padding:5px 15px;font-size:.76rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;border:1.5px solid transparent;opacity:.65;}
+    .vt-btn.active{opacity:1;box-shadow:0 0 0 2px currentColor;}
+    .vt-btn.vt-amb{background:var(--amber-pale);border-color:#B06000;color:var(--ink-amber);}
+    .vt-btn.vt-neu{background:#F5F1EB;border-color:#8A7A60;color:#4A3F2F;}
+    .vt-btn.vt-grn{background:var(--sbg);border-color:var(--success);color:var(--ink-green);}
+    .hv-pct{color:white;font-size:1.45rem;font-weight:800;line-height:1;}
+    .hv-slbl{color:white;font-size:.66rem;font-weight:500;opacity:.88;text-align:center;line-height:1.3;}
+    .hv-chip{background:rgba(255,255,255,.22);border-radius:20px;padding:2px 8px;font-size:.61rem;color:white;font-weight:700;letter-spacing:.01em;text-align:center;line-height:1.35;}
+    .hv-paid{background:#B06000;color:white;border-radius:20px;padding:4px 12px;font-size:.71rem;font-weight:700;text-align:center;line-height:1.4;margin-top:6px;animation:hvFade .35s ease-out 1.15s both;}
+    .hv-col-lbl{font-size:.82rem;font-weight:700;color:var(--navy);margin-top:.65rem;text-align:center;}
+    .hv-col-sub{font-size:.68rem;color:var(--muted);text-align:center;margin-top:.25rem;line-height:1.4;max-width:130px;}
+    .hv-vs{color:var(--muted);font-size:.78rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;flex-shrink:0;align-self:flex-start;margin-top:80px;}
+    .hv-caption{font-size:.82rem;color:var(--muted);text-align:center;line-height:1.55;max-width:420px;margin:.25rem auto 1.25rem;font-style:italic;}
+    .hv-note{font-size:.65rem;color:var(--muted);text-align:center;opacity:.6;}
+    .faq-section{max-width:560px;margin:.2rem auto 1.1rem;display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+    .faq-item{background:var(--card);border:1px solid var(--blight);border-radius:var(--rsm);padding:.6rem .85rem;font-size:.81rem;box-shadow:var(--sh-sm);}
+    .faq-item summary{cursor:pointer;font-weight:600;color:var(--navy);list-style:none;line-height:1.4;}
+    .faq-item summary::-webkit-details-marker{display:none;}
+    .faq-item[open] summary{margin-bottom:.45rem;}
+    .faq-ans{color:var(--muted);line-height:1.6;font-size:.79rem;margin-top:.1rem;}
+    @media(max-width:480px){.faq-section{grid-template-columns:1fr;}}
+    .faq-expand{background:var(--navy-pale);border:1px solid var(--tip-bdr);border-radius:var(--rsm);padding:.65rem 1rem;font-size:.83rem;color:var(--ink-pale);max-width:480px;margin:0 auto .9rem;cursor:pointer;}
+    .faq-expand summary{font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:.5rem;}
+    .faq-expand summary::-webkit-details-marker{display:none;}
+    .faq-expand[open] summary{margin-bottom:.6rem;}
+    .faq-body{font-size:.81rem;color:var(--muted);line-height:1.65;padding-top:.1rem;}
+    .faq-body strong{color:var(--ink-pale);}
+    .ph-title{font-size:1.05rem;font-weight:700;color:var(--navy);margin:.5rem 0 .85rem;}
+    .ph-steps{display:flex;flex-direction:column;gap:.65rem;max-width:340px;margin:0 auto;text-align:left;}
+    .ph-step{display:flex;align-items:flex-start;gap:.65rem;font-size:.87rem;color:var(--muted);line-height:1.5;}
+    .ph-num{background:var(--navy);color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:1px;}
+    .ph-try{color:var(--amber);font-weight:700;cursor:pointer;text-decoration:underline;background:none;border:none;font-family:inherit;font-size:inherit;padding:0;}
+    .concept-note{font-size:.9rem;color:var(--navy-mid);text-align:center;line-height:1.7;max-width:480px;margin:.25rem auto 1.1rem;font-weight:500;}
+    .hv-rmd-note{font-size:.76rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.1rem auto .85rem;font-style:italic;}
+    .hv-damt{color:white;font-size:1.3rem;font-weight:800;line-height:1;letter-spacing:-.01em;text-align:center;}
+    .hv-dollar{font-size:.8rem;text-align:center;padding:.45rem .85rem;border-radius:var(--rsm);margin:.6rem auto 0;max-width:440px;font-weight:600;line-height:1.45;}
+    .hv-dgrn{background:var(--sbg);color:var(--ink-green);}
+    .hv-dneu{background:var(--navy-pale);color:var(--ink-pale);font-weight:500;}
+    .hv-damb{background:var(--amber-pale);color:var(--ink-amber);}
+    /* ── Breakeven timeline ── */
+    .be-tl{margin:.5rem 0 .9rem;}
+    .be-track{display:flex;height:11px;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.12);}
+    .be-wait{background:#D1D5DB;transition:width .6s ease;}
+    .be-win{background:linear-gradient(90deg,#2D8A52,var(--success));transition:width .6s ease;}
+    .be-all-grn{background:linear-gradient(90deg,#2D8A52,var(--success));border-radius:6px;height:11px;}
+    .be-all-amb{background:#D4860A;opacity:.45;border-radius:6px;height:11px;}
+    .be-ages{position:relative;height:34px;margin-top:4px;font-size:.67rem;}
+    .be-pin{position:absolute;transform:translateX(-50%);text-align:center;line-height:1.3;}
+    .be-note{font-size:.71rem;color:var(--muted);text-align:center;margin-top:4px;}
+    /* ── Tax composition bar ── */
+    .tx-wrap{margin:8px 0 5px;}
+    .tx-bar{display:flex;height:13px;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.1);}
+    .tx-lbls{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:5px;}
+    .tx-lbl{font-size:.64rem;color:var(--muted);display:flex;align-items:center;gap:3px;}
+    .tx-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;display:inline-block;}
+    /* ── Optimizer headroom bars ── */
+    .opt-hd{margin:9px 0 2px;}
+    .opt-hd-track{height:5px;background:rgba(255,255,255,.25);border-radius:3px;overflow:hidden;}
+    .opt-hd-fill{height:100%;border-radius:3px;background:rgba(255,255,255,.8);transition:width .5s ease;}
+    .opt-hd-lbl{font-size:.63rem;color:rgba(255,255,255,.72);display:flex;justify-content:space-between;margin-top:2px;}
+    @keyframes hvGrow{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1);transform-origin:bottom}}
+    @keyframes hvPulse{0%{filter:brightness(1)}55%{filter:brightness(1.28)}100%{filter:brightness(1)}}
+    @keyframes hvFade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+    .explainer{background:var(--navy-pale);border:1px solid var(--tip-bdr);border-radius:var(--r);padding:1.15rem 1.4rem;font-size:.94rem;color:var(--ink-pale);text-align:left;line-height:1.65;margin-bottom:1.5rem;}
+    .explainer strong{color:var(--navy);}
+    .how-to{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+    .how-to-step{display:flex;align-items:flex-start;gap:.6rem;background:var(--card);border:1px solid var(--blight);border-radius:var(--rsm);padding:.75rem 1rem;font-size:.88rem;color:var(--muted);max-width:210px;text-align:left;box-shadow:var(--sh-sm);}
+    .sc{width:26px;height:26px;border-radius:50%;background:var(--navy);color:white;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .page-wrap{max-width:1140px;margin:0 auto;padding:0 1.25rem 4rem;}
+    .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;}
+    .card{background:var(--card);border:1px solid var(--blight);border-radius:var(--r);padding:1.5rem 1.6rem;box-shadow:var(--sh-sm);}
+    .ch{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;}
+    .sb{width:24px;height:24px;border-radius:50%;background:var(--navy);color:white;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .ch h2{font-family:'Playfair Display',serif;font-size:1.08rem;font-weight:600;color:var(--navy);}
+    .divider{height:1px;background:var(--blight);margin:1.15rem 0;}
+    .field{margin-bottom:1rem;}
+    .field:last-child{margin-bottom:0;}
+    .flr{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+    .field label{font-size:.80rem;font-weight:700;text-transform:uppercase;letter-spacing:.065em;color:var(--muted);}
+    .field input,.field select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--rsm);font-family:'DM Sans',sans-serif;font-size:1rem;color:var(--text);background:var(--cream);outline:none;transition:border-color .18s,box-shadow .18s,background .18s;-webkit-appearance:none;}
+    .field input:focus,.field select:focus{border-color:var(--navy-mid);background:var(--card);box-shadow:0 0 0 3px rgba(28,58,94,.13);}
+    .hint{font-size:.87rem;color:var(--muted);margin-top:5px;line-height:1.5;}
+    .frow{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;}
+    .idollar{position:relative;}
+    .idollar input{padding-left:26px;}
+    .idollar::before{content:'$';position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
+    .ipct{position:relative;}
+    .ipct input{padding-right:28px;}
+    .ipct::after{content:'%';position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;}
+    .rw{display:flex;align-items:center;gap:12px;}
+    .rw input[type=range]{flex:1;-webkit-appearance:none;height:5px;background:var(--border);border-radius:3px;outline:none;padding:0;border:none;box-shadow:none;}
+    .rw input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:var(--navy);border-radius:50%;cursor:pointer;box-shadow:0 1px 5px rgba(28,58,94,.25);}
+    .rv{min-width:42px;text-align:right;font-weight:700;font-size:.95rem;color:var(--navy);}
+    .tb{width:20px;height:20px;border-radius:50%;background:var(--navy-pale);border:1.5px solid var(--tip-bdr);color:var(--navy);font-size:.72rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
+    .tb:hover,.tb.open{background:var(--navy);color:white;}
+    .ttip{display:none;background:var(--tip-bg);border:1px solid var(--tip-bdr);border-left:3px solid var(--navy);border-radius:var(--rsm);padding:.85rem 1rem;font-size:.88rem;color:var(--ink-pale);line-height:1.6;margin-top:6px;}
+    .ttip.open{display:block;animation:tipIn .18s ease;}
+    .ttip strong{color:var(--navy);}
+    @keyframes tipIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+    .rest{margin-top:8px;border:1px solid var(--blight);border-radius:var(--rsm);overflow:hidden;font-size:.85rem;}
+    .rest summary{padding:8px 12px;cursor:pointer;color:var(--navy);font-weight:600;font-size:.85rem;background:var(--navy-pale);list-style:none;display:flex;align-items:center;justify-content:space-between;}
+    .rest summary::-webkit-details-marker{display:none;}
+    .restb{padding:10px 12px;background:var(--card);}
+    .rerow{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--blight);font-size:.83rem;}
+    .rerow:last-child{border-bottom:none;}
+    .rerow .rbkt{color:var(--muted);} .rerow .rrate{font-weight:700;color:var(--navy);}
+    .trow{display:flex;justify-content:space-between;align-items:baseline;font-size:.9rem;padding:5px 0;border-bottom:1px solid var(--blight);}
+    .trow:last-child{border-bottom:none;}
+    .trow .tl{color:var(--muted);} .trow .tv{font-weight:700;}
+    .trow.ttotal{padding-top:8px;}
+    .trow.ttotal .tl{color:var(--text);font-weight:700;font-size:.95rem;}
+    .trow.ttotal .tv{color:var(--amber);font-size:1.05rem;}
+    .trow.tgrand .tl{color:var(--navy);font-weight:700;font-size:1rem;}
+    .trow.tgrand .tv{color:var(--navy);font-size:1.1rem;font-weight:700;}
+    .tsep{height:1px;background:var(--blight);margin:5px 0;}
+    .tsubhead{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:6px 0 2px;}
+    .btip{background:var(--amber-pale);border:1px solid #E8C97A;border-radius:var(--rsm);padding:9px 12px;font-size:.88rem;color:#5A3500;margin-top:.85rem;line-height:1.55;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+    .fade-up{animation:fadeUp .4s ease forwards;}
+    @keyframes blPulse{0%{box-shadow:0 0 0 0 rgba(176,96,0,.3);}70%{box-shadow:0 0 0 12px rgba(176,96,0,0);}100%{box-shadow:0 0 0 0 rgba(176,96,0,0);}}
+    .bottom-line{background:var(--navy);color:white;border-radius:var(--r);padding:1.85rem 2rem;margin-bottom:1.25rem;box-shadow:var(--sh);position:relative;overflow:hidden;animation:blPulse 1.2s ease .4s 1;}
+    .bottom-line::before{content:'';position:absolute;right:-40px;top:-40px;width:190px;height:190px;border-radius:50%;background:rgba(255,255,255,.05);}
+    .bl-eye{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--amber-lt);margin-bottom:.65rem;}
+    .bl-txt{font-size:1.1rem;line-height:1.68;color:rgba(255,255,255,.92);}
+    .bl-txt strong{color:white;}
+    .bl-cav{margin-top:.9rem;font-size:.83rem;color:rgba(255,255,255,.56);line-height:1.55;}
+    .rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem;}
+    .sc2{background:var(--card);border:1px solid var(--blight);border-radius:var(--r);padding:1.3rem 1.4rem;box-shadow:var(--sh-sm);position:relative;overflow:hidden;}
+    .sc2::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+    .sc2.cost::after{background:var(--amber);} .sc2.be::after{background:var(--navy);} .sc2.surv::after{background:#7BAE8B;}
+    .slbl{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px;}
+    .sval{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;line-height:1;color:var(--text);margin-bottom:5px;}
+    .sval.grn{color:var(--success);} .sval.amb{color:var(--amber);} .sval.red{color:var(--danger);}
+    .ssub{font-size:.85rem;color:var(--muted);line-height:1.45;}
+    .verdict{border-radius:var(--r);padding:1.3rem 1.5rem;display:flex;gap:1rem;align-items:flex-start;margin-bottom:1.25rem;}
+    .verdict.good{background:var(--sbg);border:1.5px solid #9ECFB2;}
+    .verdict.neutral{background:var(--navy-pale);border:1.5px solid var(--tip-bdr);}
+    .verdict.bad{background:var(--wbg);border:1.5px solid #F0BB8F;}
+    .vi{font-size:1.5rem;flex-shrink:0;padding-top:1px;}
+    .vb strong{display:block;font-size:1.08rem;font-weight:700;margin-bottom:6px;color:var(--text);}
+    .vb p{font-size:.92rem;color:var(--muted);line-height:1.6;}
+    .irmaa-card{background:var(--card);border-radius:var(--r);padding:1.4rem 1.5rem;margin-bottom:1.25rem;box-shadow:var(--sh-sm);}
+    .irmaa-card.hit{border:2px solid #E8A0A0;} .irmaa-card.safe{border:1px solid var(--blight);}
+    .irmaa-what{background:var(--navy-pale);border-radius:var(--rsm);padding:.85rem 1rem;font-size:.88rem;color:var(--ink-pale);line-height:1.6;margin-bottom:1rem;}
+    .igrid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-bottom:.9rem;}
+    .ibox{background:var(--cream);border:1px solid var(--blight);border-radius:var(--rsm);padding:1rem;text-align:center;}
+    .ibox.hit{background:var(--dbg);border-color:#E8A0A0;}
+    .ilbl{font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px;}
+    .ival{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;margin-bottom:3px;}
+    .isub{font-size:.82rem;color:var(--muted);line-height:1.4;}
+    .alert{border-radius:var(--rsm);padding:.9rem 1.1rem;font-size:.88rem;line-height:1.55;margin-top:.75rem;}
+    .alert.ared{background:var(--dbg);border:1px solid #E8A0A0;color:#5A1111;}
+    .alert.agrn{background:var(--sbg);border:1px solid #9ECFB2;color:var(--ink-green);}
+    .alert.aamb{background:var(--amber-pale);border:1px solid #E8C97A;color:#5A3500;}
+    .alert.anvy{background:var(--navy-pale);border:1px solid var(--tip-bdr);color:var(--ink-pale);}
+    .stitle{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:7px;margin-bottom:.85rem;}
+    .cwrap{position:relative;height:280px;}
+    .ptbl{width:100%;border-collapse:collapse;font-size:.88rem;}
+    .ptbl th{text-align:left;padding:7px 10px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);border-bottom:2px solid var(--blight);}
+    .ptbl td{padding:10px 10px;border-bottom:1px solid var(--blight);vertical-align:middle;}
+    .ptbl tr:last-child td{border-bottom:none;}
+    .ptbl .hl{background:var(--navy-pale);}
+    .ptbl .hl td:first-child{font-weight:700;}
+    .bet{color:var(--success);font-weight:700;} .wor{color:var(--danger);font-weight:700;}
+    .srow{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+    .sage{font-size:.88rem;font-weight:600;width:58px;flex-shrink:0;}
+    .stracks{flex:1;display:flex;flex-direction:column;gap:4px;}
+    .strack{height:10px;background:var(--blight);border-radius:5px;overflow:hidden;}
+    .sfill{height:100%;border-radius:5px;transition:width .6s ease;}
+    .sfill.m{background:var(--navy);} .sfill.f{background:var(--amber);} .sfill.j{background:var(--success);}
+    .optwrap{display:grid;gap:1rem;margin-bottom:1.25rem;}
+    @media(max-width:600px){.optwrap{grid-template-columns:1fr!important;}}
+    .optcard{background:var(--card);border:1.5px solid var(--blight);border-radius:var(--r);padding:1.2rem 1.3rem;cursor:pointer;display:flex;flex-direction:column;gap:.45rem;box-shadow:var(--sh-sm);transition:border-color .15s,box-shadow .15s,background .15s;position:relative;overflow:hidden;}
+    .optcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--navy);border-radius:var(--r) var(--r) 0 0;}
+    .optcard.brkt::before{background:var(--navy);}
+    .optcard.irm::before{background:#7BAE8B;}
+    .optcard.trp::before{background:var(--amber);}
+    .optcard:not(.optdim):hover{border-color:var(--navy-mid);box-shadow:0 4px 18px rgba(28,58,94,.14);background:var(--navy-pale);}
+    .optcard.optdim{cursor:default;opacity:.65;}
+    .optcard.optdim:hover{border-color:var(--blight);box-shadow:var(--sh-sm);background:var(--card);}
+    .optlbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+    .optamt{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;line-height:1.1;color:var(--navy);}
+    .optnote{font-size:.84rem;color:var(--muted);line-height:1.5;flex:1;}
+    .optbtn{font-size:.82rem;font-weight:700;color:var(--amber);margin-top:.3rem;}
+    .optna{font-size:.95rem;color:var(--muted);font-style:italic;}
+    .strack.jt{height:13px;border-radius:5px;overflow:hidden;background:var(--blight);}
+    .spct{font-size:.82rem;color:var(--muted);min-width:76px;text-align:right;font-weight:500;}
+    .ldot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
+    .disclaimer{background:var(--amber-pale);border:1px solid #E8C97A;border-radius:var(--r);padding:.9rem 1.25rem;font-size:.85rem;color:#5A3500;margin-bottom:1.25rem;line-height:1.6;}
+    .ph{text-align:center;padding:2.5rem 2rem;color:var(--muted);font-size:.95rem;}
+    .ph .big{font-size:2.5rem;margin-bottom:.4rem;}
+    footer{background:var(--navy);color:rgba(255,255,255,.62);text-align:center;padding:1.75rem 1.5rem;font-size:.82rem;line-height:1.7;}
+    footer strong{color:rgba(255,255,255,.92);}
+    footer a{color:rgba(255,255,255,.82);text-decoration:underline;text-underline-offset:2px;transition:color .15s;}
+    footer a:hover{color:white;}
+    /* ── Example profiles ── */
+    .ex-bar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:center;margin-top:1.2rem;}
+    .ex-label{font-size:.82rem;color:var(--muted);}
+    .ex-btn{background:var(--card);border:1.5px solid var(--blight);border-radius:40px;padding:6px 16px;font-size:.83rem;font-weight:600;color:var(--navy);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .15s,background .15s,box-shadow .15s;box-shadow:var(--sh-sm);}
+    .ex-btn:hover{border-color:var(--navy-mid);background:var(--navy-pale);box-shadow:var(--sh);}
+    .ex-btn.active{box-shadow:0 0 0 2.5px currentColor,var(--sh-sm);font-weight:700;filter:brightness(.94);}
+    .ex-banner{background:var(--navy-pale);border:1px solid var(--tip-bdr);border-radius:var(--rsm);padding:.6rem 1rem;font-size:.84rem;color:var(--ink-pale);display:none;align-items:flex-start;gap:.65rem;flex-wrap:wrap;margin-bottom:1rem;line-height:1.5;}
+    .ex-stats{display:block;font-weight:700;font-size:.86rem;color:var(--navy);margin-bottom:.2rem;letter-spacing:.01em;}
+    .ex-context{display:block;font-size:.79rem;color:var(--muted);line-height:1.55;}
+    .ex-pill{background:var(--navy);color:white;border-radius:40px;padding:2px 10px;font-size:.71rem;font-weight:700;white-space:nowrap;flex-shrink:0;margin-top:1px;}
+    .ex-clear{background:none;border:1px solid var(--tip-bdr);border-radius:20px;padding:2px 10px;font-size:.78rem;color:var(--navy);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+    .ex-clear:hover{background:var(--card);}
+    /* ── Print button ── */
+    .print-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.9);border-radius:40px;padding:4px 13px;font-size:.74rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;transition:background .15s;white-space:nowrap;}
+    .print-btn:hover{background:rgba(255,255,255,.27);}
+    .clear-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.75);border-radius:40px;padding:4px 13px;font-size:.74rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;transition:background .15s,color .15s;white-space:nowrap;}
+    .clear-btn:hover{background:rgba(220,80,60,.35);color:white;border-color:rgba(255,255,255,.4);}
+    /* ── Mobile ── */
+    @media(max-width:740px){
+      .input-grid,.rgrid{grid-template-columns:1fr!important;}
+      .pcols,.igrid{grid-template-columns:1fr!important;}
+      .how-to{flex-direction:column;align-items:center;}
+      .how-to-step{max-width:100%;}
+      .bottom-line{padding:1.4rem 1.5rem;}
+      .bl-txt{font-size:1rem;}
+      .sval{font-size:1.85rem;}
+      .cwrap{height:220px!important;}
+      .optamt{font-size:1.75rem;}
+      .optcard{padding:.9rem 1rem;}
+      .optwrap{grid-template-columns:1fr!important;}
+      .site-header{flex-wrap:nowrap;height:auto;padding:.55rem 1rem;gap:.5rem;}
+      .privacy-pill{font-size:.7rem;padding:3px 8px;white-space:normal;flex-basis:100%;text-align:center;justify-content:center;}
+      .print-btn{font-size:.7rem;padding:3px 10px;white-space:nowrap;flex-shrink:0;}
+      .clear-btn{font-size:.7rem;padding:3px 10px;white-space:nowrap;flex-shrink:0;}
+    }
+    @media(max-width:480px){
+      html{font-size:15px;}
+      .frow{grid-template-columns:1fr 1fr;}
+      .ex-bar{flex-direction:column;align-items:stretch;}
+      .ex-btn{text-align:center;justify-content:center;}
+      .sval{font-size:1.65rem;}
+      .bl-txt{font-size:.95rem;}
+      .optamt{font-size:1.55rem;}
+      .hero{padding:1.75rem 1.25rem 1.25rem;}
+      .page-wrap{padding:0 1rem 3rem;}
+    }
+    /* ── Print ── */
+    @media print{
+      @page{margin:1.5cm 2cm;}
+      .site-header,.hero,.input-grid,#optimizerPanel,
+      .print-btn,.clear-btn,.tb,.ttip,details,summary+div,.how-to,
+      .optwrap,.disclaimer{display:none!important;}
+      body{font-size:13px;}
+      .page-wrap{padding:0;}
+      .card,.verdict,.irmaa-card,.bottom-line,.rgrid{break-inside:avoid;}
+      .bottom-line,.verdict,.alert{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .sc2::after{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .cwrap{height:200px!important;}
+      #sensChartWrap svg{max-height:240px;}
+      .print-header{display:block!important;font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1C3A5E;padding-bottom:.6rem;margin-bottom:1.25rem;border-bottom:2px solid #1C3A5E;}
+    }
+  </style>
+  <script>
+    (function(){var s=null;try{s=localStorage.getItem('rg-theme');}catch(e){}var d=s?s==='dark':(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.setAttribute('data-theme','dark');})();
+    function toggleTheme(){var dark=document.documentElement.getAttribute('data-theme')==='dark';var next=dark?'light':'dark';if(next==='dark')document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');try{localStorage.setItem('rg-theme',next);}catch(e){}syncThemeBtn();if(typeof calc==='function'){try{calc();}catch(e){}}}
+    function syncThemeBtn(){var d=document.documentElement.getAttribute('data-theme')==='dark';var b=document.getElementById('themeBtn');if(b){var t=d?'Switch to light mode':'Switch to dark mode';b.title=t;b.setAttribute('aria-label',t);}}
+    document.addEventListener('DOMContentLoaded',syncThemeBtn);
+  </script>
+</head>
+<body>
+<div class="print-header" id="printHeader" style="display:none"></div>
+<header class="site-header">
+  <div class="logo">Roth <em>conversion</em></div>
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+    <div class="privacy-pill">🔒 Runs in your browser · Nothing leaves your device</div>
+    <button class="clear-btn" onclick="clearAllInputs()" title="Clear all inputs and saved data">↺ Clear</button>
+    <button class="print-btn" onclick="window.print()">📄 Save as PDF</button>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Switch to dark mode" aria-label="Switch to dark mode">
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+<div class="hero">
+  <h1>Should you do a Roth conversion <i>this year?</i></h1>
+  <p class="hero-lead">Enter your numbers and I'll translate the financial jargon into a plain-English answer — including what it costs with federal <em>and</em> state taxes, a hidden tax effect on Social Security benefits, Medicare exposure, and the odds you'll live long enough to benefit.</p>
+  <!-- Toggle -->
+  <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. After 73, annual withdrawals become required, adding taxable income each year. A Roth conversion pays that tax now, at a known rate — typically spread over several years — so everything that follows grows completely tax-free, with no forced withdrawals. This tool works out which path costs you less.</p>
+  <details class="faq-expand">
+    <summary>Have a 401(k) instead of an IRA? <span style="font-size:.8rem;opacity:.7">click to expand</span></summary>
+    <div class="faq-body">
+      <p style="margin-bottom:.5rem">A traditional 401(k) works the same way — it's pre-tax money the IRS hasn't touched yet. You have two options:</p>
+      <p style="margin-bottom:.5rem"><strong>Option 1:</strong> Roll your 401(k) into a traditional IRA first (a free, tax-free transfer your provider handles), then use this calculator to decide about converting. This is the most flexible path.</p>
+      <p style="margin-bottom:.5rem"><strong>Option 2:</strong> Some 401(k) plans let you convert to Roth directly inside the plan — check with your HR department or 401(k) company.</p>
+      <p><strong>Have an old 401(k) from a previous job?</strong> You can roll it into a traditional IRA at any time — no deadline, no penalty. This calculator applies to that money too.</p>
+    </div>
+  </details>
+  <p style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:.6rem;opacity:.8">Illustrative Scenarios with a $300K IRA</p>
+  <div class="vis-toggle">
+    <button class="vt-btn vt-amb" data-vis="traditional" onclick="setVisState('traditional')">↓ Keep traditional</button>
+    <button class="vt-btn vt-neu" data-vis="borderline" onclick="setVisState('borderline')">⚖ Too close to call</button>
+    <button class="vt-btn vt-grn active" data-vis="roth" onclick="setVisState('roth')">↑ Convert to Roth</button>
+  </div>
+
+  <!-- Toggleable visual -->
+  <!-- Toggleable visual -->
+  <div class="hero-vis" id="heroVis">
+    <div class="hv-col">
+      <div class="hv-bar">
+        <div class="hv-gseg" id="hvTradGreen" style="height:194px">
+          <div class="hv-damt" id="hvTradGreenAmt">$198K</div>
+          <div class="hv-seg-pct" id="hvTradPct">~66%</div>
+          <div class="hv-slbl">estimated net</div>
+          <div class="hv-chip">⚠️ annual withdrawals required</div>
+        </div>
+        <div class="hv-aseg" id="hvTradAmber" style="height:106px">
+          <div class="hv-damt" id="hvTradAmberAmt">$102K</div>
+          <div class="hv-seg-pct" id="hvTradAmberPct">~34%</div>
+          <div class="hv-slbl" id="hvTradAmberLbl">to IRS</div>
+        </div>
+      </div>
+      <div class="hv-col-lbl">Traditional IRA</div>
+      <div class="hv-col-sub" id="hvTradSub">Large tax owed on every withdrawal — and it compounds too</div>
+    </div>
+
+    <div class="hv-vs">VS</div>
+
+    <div class="hv-col">
+      <div class="hv-bar" style="animation-delay:.3s">
+        <div class="hv-gseg hv-win" id="hvRothGreen" style="height:212px">
+          <div class="hv-damt" id="hvRothGreenAmt">$234K</div>
+          <div class="hv-seg-pct" id="hvRothGreenPct">~78%</div>
+          <div class="hv-slbl">tax-free · guaranteed</div>
+          <div class="hv-chip">✓ no withdrawals required</div>
+        </div>
+        <div class="hv-aseg" id="hvRothAmber" style="height:88px;animation:none">
+          <div class="hv-damt" id="hvRothAmberAmt">$66K</div>
+          <div class="hv-seg-pct" id="hvRothAmberPct">~22%</div>
+          <div class="hv-slbl">tax paid at conversion</div>
+        </div>
+      </div>
+      <div class="hv-col-lbl">After Converting</div>
+      <div class="hv-col-sub" id="hvRothSub">More take-home — grows tax-free from here</div>
+    </div>
+  </div>
+  <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$36K in total taxes vs keeping traditional</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in a known rate — more take-home, no forced withdrawals</div></div>
+  <p class="hv-note" style="margin-top:.85rem;font-style:normal;font-weight:500;color:var(--navy-mid)">Want more detail? Scroll down to plug in your own numbers ↓</p>
+  <div class="how-to" style="margin-top:1.25rem;">
+    <div class="how-to-step"><div class="sc">1</div><div>Fill in your details — approximate is fine</div></div>
+    <div class="how-to-step"><div class="sc">2</div><div>See the true all-in cost — including the often-missed hidden tax on Social Security</div></div>
+    <div class="how-to-step"><div class="sc">3</div><div>Use the Bottom Line as a starting point with your advisor</div></div>
+  </div>
+  <div class="faq-section">
+    <details class="faq-item">
+      <summary>Do I need a Roth account already?</summary>
+      <div class="faq-ans">No. If you don't have one, the conversion creates it. The company holding your IRA (Fidelity, Vanguard, Schwab, etc.) handles this automatically when you convert.</div>
+    </details>
+    <details class="faq-item">
+      <summary>Is there an income limit?</summary>
+      <div class="faq-ans">No — not since 2010. Anyone can convert regardless of income. You owe regular income tax on the converted amount — there's no earning cap.</div>
+    </details>
+    <details class="faq-item">
+      <summary>Do I have to convert everything at once?</summary>
+      <div class="faq-ans">Not at all. You can convert any dollar amount. Converting a smaller amount to stay within your current tax bracket is one of the most common strategies.</div>
+    </details>
+    <details class="faq-item">
+      <summary>Is there a penalty for converting?</summary>
+      <div class="faq-ans">No early withdrawal penalty on conversions, even before age 59½. You only owe regular income tax on the converted amount.</div>
+    </details>
+    <details class="faq-item">
+      <summary>Is there a deadline each year?</summary>
+      <div class="faq-ans">Yes — December 31 of the tax year. Conversions processed by year-end count for that tax year. January 1st starts a new window.</div>
+    </details>
+    <details class="faq-item">
+      <summary>When do I pay the tax?</summary>
+      <div class="faq-ans">When you file your return — not immediately. For smaller conversions, your regular withholding may already cover the bill. The larger the conversion, the more likely estimated taxes are due by January 15th to avoid an underpayment penalty. Your tax software will calculate exactly what you owe and when.</div>
+    </details>
+  </div>
+  <div class="ex-bar" id="examplesSection">
+    <span class="ex-label" style="width:100%;text-align:center;margin-bottom:.2rem">Three example scenarios across the spectrum — click any to explore:</span>
+    <button class="ex-btn" data-ex="single" onclick="loadExample('single')"
+      style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
+      ↓ Illinois · Keep traditional
+    </button>
+    <button class="ex-btn" data-ex="borderline" onclick="loadExample('borderline')"
+      style="border-color:#8A7A60;color:#4A3F2F;background:#F5F1EB">
+      ⚖ Texas · Close call
+    </button>
+    <button class="ex-btn" data-ex="couple" onclick="loadExample('couple')"
+      style="border-color:#1B6B3A;color:#0E3B20;background:#E4F3EB">
+      ↑ Ohio couple · Convert to Roth
+    </button>
+  </div>
+</div>
+<div class="page-wrap">
+<div style="text-align:center;padding:1.5rem 0 .5rem;border-top:1px solid var(--blight);margin-bottom:1rem">
+  <p style="font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:.2rem">Ready to see your own numbers?</p>
+  <p style="font-size:.86rem;color:var(--muted)">Fill in what you know below — rough estimates are fine. Results update instantly.</p>
+</div>
+<div id="exBanner" class="ex-banner">
+  <span class="ex-pill">EXAMPLE</span>
+  <span id="exBannerText" style="flex:1"></span>
+  <button class="ex-clear" onclick="clearExample()">✕ Clear example</button>
+</div>
+<div class="input-grid">
+  <!-- LEFT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:1.25rem;">
+    <div class="card">
+      <div class="ch"><div class="sb">1</div><h2>About You</h2></div>
+      <div class="frow">
+        <div class="field">
+          <div class="flr"><label>Current Age</label></div>
+          <input type="number" id="currentAge" value="60" min="18" max="90" oninput="calc()">
+        </div>
+        <div class="field">
+          <div class="flr"><label>Retirement Age</label></div>
+          <input type="number" id="retirementAge" value="67" min="50" max="90" oninput="calc()">
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <div class="flr"><label>Filing Status</label><button class="tb" onclick="toggleTip('filing')">ⓘ</button></div>
+          <select id="filingStatus" onchange="calc()">
+            <option value="single">Single</option>
+            <option value="mfj" selected>Married (jointly)</option>
+            <option value="mfs">Married (separately)</option>
+            <option value="hoh">Head of Household</option>
+          </select>
+          <div class="ttip" id="tip-filing"><strong>In plain English:</strong> Most married couples file "jointly," which usually means lower taxes. "Separately" is uncommon and often more expensive — especially for Medicare. "Single" is for unmarried filers; "Head of Household" applies to some single parents.</div>
+        </div>
+        <div class="field">
+          <div class="flr"><label>Your Sex</label></div>
+          <select id="sex" onchange="calc()">
+            <option value="male">Male</option>
+            <option value="female" selected>Female</option>
+          </select>
+          <div class="hint">Used only for survival probability estimates</div>
+        </div>
+      </div>
+      <div id="spouseFields" style="display:none">
+        <div class="frow">
+          <div class="field">
+            <div class="flr"><label>Spouse's Current Age</label></div>
+            <input type="number" id="spouseAge" value="60" min="18" max="90" oninput="calc()">
+          </div>
+          <div class="field">
+            <div class="flr"><label>Spouse's Sex</label></div>
+            <select id="spouseSex" onchange="calc()">
+              <option value="male">Male</option>
+              <option value="female" selected>Female</option>
+            </select>
+            <div class="hint">For joint survival odds in the analysis</div>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="flr"><label>Are You 65 or Older This Year?</label><button class="tb" onclick="toggleTip('senior')">ⓘ</button></div>
+        <select id="seniorDeduction" onchange="calc()">
+          <option value="0">Under 65 — standard deduction only</option>
+          <option value="1">Yes, I am 65+ — add $6,000 deduction</option>
+          <option value="2">Yes, both spouses are 65+ — add $12,000</option>
+        </select>
+        <div class="ttip" id="tip-senior"><strong>New for 2026:</strong> A new law gives people 65+ an extra $6,000 tax deduction per qualifying person, on top of the regular standard deduction. This can meaningfully reduce the tax cost of a conversion. Phases out above $75K (single) or $150K (joint).</div>
+      </div>
+      <div class="field">
+        <div class="flr"><label>Your State</label><button class="tb" onclick="toggleTip('state')">ⓘ</button></div>
+        <select id="stateCode" onchange="calc()">
+          <option value="">— Select your state —</option>
+          <option value="AL">Alabama</option>
+          <option value="AK">Alaska — no income tax ✓</option>
+          <option value="AZ">Arizona</option>
+          <option value="AR">Arkansas</option>
+          <option value="CA">California</option>
+          <option value="CO">Colorado</option>
+          <option value="CT">Connecticut</option>
+          <option value="DE">Delaware</option>
+          <option value="FL">Florida — no income tax ✓</option>
+          <option value="GA">Georgia</option>
+          <option value="HI">Hawaii</option>
+          <option value="ID">Idaho</option>
+          <option value="IL">Illinois</option>
+          <option value="IN">Indiana</option>
+          <option value="IA">Iowa</option>
+          <option value="KS">Kansas</option>
+          <option value="KY">Kentucky</option>
+          <option value="LA">Louisiana</option>
+          <option value="ME">Maine</option>
+          <option value="MD">Maryland</option>
+          <option value="MA">Massachusetts</option>
+          <option value="MI">Michigan</option>
+          <option value="MN">Minnesota</option>
+          <option value="MS">Mississippi</option>
+          <option value="MO">Missouri</option>
+          <option value="MT">Montana</option>
+          <option value="NE">Nebraska</option>
+          <option value="NV">Nevada — no income tax ✓</option>
+          <option value="NH">New Hampshire — no income tax ✓</option>
+          <option value="NJ">New Jersey</option>
+          <option value="NM">New Mexico</option>
+          <option value="NY">New York</option>
+          <option value="NC">North Carolina</option>
+          <option value="ND">North Dakota</option>
+          <option value="OH">Ohio</option>
+          <option value="OK">Oklahoma</option>
+          <option value="OR">Oregon</option>
+          <option value="PA">Pennsylvania</option>
+          <option value="RI">Rhode Island</option>
+          <option value="SC">South Carolina</option>
+          <option value="SD">South Dakota — no income tax ✓</option>
+          <option value="TN">Tennessee — no income tax ✓</option>
+          <option value="TX">Texas — no income tax ✓</option>
+          <option value="UT">Utah</option>
+          <option value="VT">Vermont</option>
+          <option value="VA">Virginia</option>
+          <option value="WA">Washington — no income tax ✓</option>
+          <option value="WV">West Virginia</option>
+          <option value="WI">Wisconsin</option>
+          <option value="WY">Wyoming — no income tax ✓</option>
+          <option value="DC">Washington D.C.</option>
+        </select>
+        <div class="ttip" id="tip-state"><strong>Why this matters:</strong> State income taxes can add 3–13% to the cost of a Roth conversion. Some states also exempt IRA withdrawals in retirement — meaning you'd pay state tax on the conversion today but nothing when you withdraw later, which affects the comparison. Selecting your state adds these numbers automatically.</div>
+        <div id="stateRetNote" style="margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><div class="sb">2</div><h2>Your Accounts &amp; Income</h2></div>
+      <div class="field">
+        <div class="flr"><label>Your 2026 Income (before conversion, excluding SS)</label><button class="tb" onclick="toggleTip('income')">ⓘ</button></div>
+        <div class="idollar"><input type="number" id="income" value="72000" min="0" step="1000" oninput="calc()"></div>
+        <div class="ttip" id="tip-income"><strong>What to include:</strong> Wages, self-employment, pension payments, rental income, and other regular income. <strong>Do NOT include Social Security here</strong> — enter that in the field below so I can accurately model how converting triggers extra tax on your Social Security. Rough estimates are fine.</div>
+      </div>
+      <div class="field">
+        <div class="flr"><label>Annual Social Security Benefits</label><button class="tb" onclick="toggleTip('ss')">ⓘ</button></div>
+        <div class="idollar"><input type="number" id="ssIncome" value="24000" min="0" step="500" oninput="calc()"></div>
+        <div class="ttip" id="tip-ss"><strong>Why this field changes everything:</strong> Social Security benefits become partly taxable when your income reaches certain thresholds. A Roth conversion can push more of your SS into taxable territory — a hidden extra cost called the Social Security tax effect. At worst, each $1 converted triggers 85¢ more of SS taxation, pushing your real tax rate to ~40% even in the 22% bracket. Enter $0 if you do not receive SS yet.</div>
+        <div class="hint" id="ssHint">Enter your total annual SS benefit, or $0 if not yet receiving</div>
+      </div>
+      <div class="field">
+        <div class="flr"><label>Net Investment Income (optional)</label><button class="tb" onclick="toggleTip('nii')">ⓘ</button></div>
+        <div class="idollar"><input type="number" id="niiIncome" value="0" min="0" step="500" oninput="calc()"></div>
+        <div class="ttip" id="tip-nii"><strong>What is this field?</strong> A 3.8% federal surcharge applies to investment income — dividends, capital gains, rental income — once your total income tops $200,000 (single) or $250,000 (married). A Roth conversion counts as income and can push you over these thresholds, triggering extra tax on money you'd otherwise owe nothing on. Enter your annual investment income here, or $0 if this doesn't apply to you.</div>
+        <div class="hint">Not sure? Enter $0 — only relevant if you have investment income outside your retirement accounts</div>
+      </div>
+      <div class="field">
+        <div class="flr"><label>Amount You'd Like to Convert</label><button class="tb" onclick="toggleTip('convert')">ⓘ</button></div>
+        <div class="idollar"><input type="number" id="convertAmt" value="20000" min="0" step="1000" oninput="calc()"></div>
+        <div class="ttip" id="tip-convert"><strong>How much is right?</strong> Common strategies: convert just enough to fill up your current tax bracket, or stay below a Medicare income threshold. This calculator shows both sweet spots. There's no income limit on conversions — anyone can do it in any year.</div>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <div class="flr"><label>Traditional IRA / 401(k) Balance</label><button class="tb" onclick="toggleTip('trad')">ⓘ</button></div>
+          <div class="idollar"><input type="number" id="tradBal" value="280000" min="0" step="1000" oninput="calc()"></div>
+          <div class="ttip" id="tip-trad"><strong>What to enter:</strong> Add up all your pre-tax retirement accounts — traditional IRAs, 401(k)s, 403(b)s, SEP-IRAs. Don’t have a statement handy? A rough estimate is fine for planning purposes. Every dollar here will eventually be taxed when withdrawn.</div>
+        </div>
+        <div class="field">
+          <div class="flr"><label>Existing Roth IRA</label></div>
+          <div class="idollar"><input type="number" id="rothBal" value="40000" min="0" step="1000" oninput="calc()"></div>
+          <div class="hint">Enter $0 if you do not have one yet</div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="flr"><label>After-Tax Contributions (optional)</label><button class="tb" onclick="toggleTip('basis')">ⓘ</button></div>
+        <div class="idollar"><input type="number" id="iraBasis" value="0" min="0" step="500" oninput="calc()"></div>
+        <div class="ttip" id="tip-basis"><strong>Have you ever contributed already-taxed money to a traditional IRA?</strong> If so, that amount is called your "basis." It matters because the IRS requires every conversion to be a proportional mix of taxed and untaxed money — you can't cherry-pick just the pre-tax portion. The already-taxed share converts tax-free. If this applies to you, the number lives on IRS Form 8606, line 14. Most people enter $0 — the vast majority of IRA money is pre-tax.</div>
+        <div class="hint">Don’t know this? Enter $0 — it only applies if you’ve made after-tax IRA contributions, and most people haven’t</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:1.25rem;">
+    <div class="card">
+      <div class="ch"><div class="sb">3</div><h2>Assumptions &amp; Medicare</h2></div>
+      <div class="field">
+        <div class="flr"><label>Annual Investment Return — <span id="gDisp" style="color:var(--navy);font-weight:700">7%</span></label><button class="tb" onclick="toggleTip('growth')">ⓘ</button></div>
+        <div class="rw"><input type="range" id="growthRate" min="3" max="12" step=".5" value="7" oninput="document.getElementById('gDisp').textContent=this.value+'%';document.getElementById('gValDisp').textContent=this.value+'%';calc()"><div class="rv" id="gValDisp">7%</div></div>
+        <div class="ttip" id="tip-growth"><strong>What to use?</strong> Historically ~7% after inflation for a diversified stock portfolio. A balanced mix of stocks and bonds might average 5–6%. Try sliding it to see how sensitive your results are.</div>
+      </div>
+      <div class="field">
+        <div class="flr"><label>Your Expected <strong>Federal</strong> Rate in Retirement</label><button class="tb" onclick="toggleTip('retrate')">ⓘ</button></div>
+        <div class="ipct"><input type="number" id="retRate" value="22" min="0" max="60" oninput="calc()"></div>
+        <div class="ttip" id="tip-retrate"><strong>Federal only — I add your state rate automatically.</strong> Enter your expected federal bracket rate on IRA withdrawals. Select your state above and I'll fold the state rate in automatically so the comparison is apples-to-apples. Use the estimator below if you are unsure.</div>
+        <details class="rest">
+          <summary>Not sure? Calculate your retirement rate here ↗</summary>
+          <div class="restb">
+            <p style="font-size:.82rem;color:var(--muted);margin-bottom:8px;line-height:1.5">Enter your expected retirement income sources and I'll compute the marginal federal rate on your IRA withdrawals — including how conversions can trigger extra tax on Social Security benefits.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:6px">
+              <div>
+                <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">SS benefit / yr</label>
+                <div class="idollar"><input type="number" id="retSS" value="24000" min="0" step="500" oninput="updateRetRate()" style="font-size:.93rem"></div>
+              </div>
+              <div>
+                <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Pension / other / yr</label>
+                <div class="idollar"><input type="number" id="retPen" value="0" min="0" step="500" oninput="updateRetRate()" style="font-size:.93rem"></div>
+              </div>
+            </div>
+            <div style="margin-bottom:8px">
+              <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Annual IRA / 401(k) withdrawal</label>
+              <div class="idollar"><input type="number" id="retWd" value="30000" min="0" step="500" oninput="updateRetRate()" style="font-size:.93rem"></div>
+            </div>
+            <div id="retRateResult" style="min-height:1.5rem"></div>
+          </div>
+        </details>
+      </div>
+      <div class="field">
+        <div class="flr"><label>Pay Conversion Taxes From</label><button class="tb" onclick="toggleTip('taxsrc')">ⓘ</button></div>
+        <select id="taxSource" onchange="calc()">
+          <option value="outside">Pay from outside savings ✓ Recommended for most</option>
+          <option value="inside">Take taxes from the IRA itself (reduces converted amount)</option>
+        </select>
+        <div class="ttip" id="tip-taxsrc"><strong>This matters more than people expect:</strong> Paying from outside savings puts the full converted amount into the Roth tax-free. Paying from inside means less money enters the Roth — you'd be giving up tax-advantaged growth on the tax payment itself.</div>
+      </div>
+      <div class="divider"></div>
+      <div class="field">
+        <div class="flr"><label>Are You on Medicare?</label><button class="tb" onclick="toggleTip('medicare')">ⓘ</button></div>
+        <select id="medicareStatus" onchange="calc()">
+          <option value="none">Not on Medicare, not expecting it soon</option>
+          <option value="one" selected>Yes — just me (or will be within 3 years)</option>
+          <option value="two">Yes — both of us (married couple)</option>
+        </select>
+        <div class="ttip" id="tip-medicare"><strong>The hidden two-year trap:</strong> Medicare charges higher premiums to people with higher incomes — called IRMAA. It's based on your income from 2 years ago. A large Roth conversion in 2026 can raise your Medicare bill in 2028. This is one of the most commonly missed costs of converting.<br><br><strong>What counts as income for Medicare?</strong> Medicare adds up all your income from all sources — wages, IRA withdrawals, taxable Social Security, dividends, and capital gains. A Roth conversion counts as income dollar-for-dollar, which is why large conversions can push you into a higher premium tier.</div>
+      </div>
+      <div class="field">
+        <label>Include Medicare Part D (prescription drug)?</label>
+        <select id="partD" onchange="calc()">
+          <option value="yes" selected>Yes — include Part D surcharge</option>
+          <option value="no">No — Part B only</option>
+        </select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="stitle">📊 <span id="taxYearTitle">2026</span> Tax Analysis</div>
+      <div id="taxPanel"><div style="font-size:.9rem;color:var(--muted)">Enter a conversion amount above to see the full tax breakdown.</div></div>
+    </div>
+  </div>
+</div>
+<div id="optimizerPanel" style="padding:0 0 0 0"></div>
+<div id="resultsWrap">
+  <div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Enter your IRA or 401(k) balance and annual income in the form above</span></div><div class="ph-step"><span class="ph-num">2</span><span>Set a conversion amount — not sure where to start? <button class="ph-try" onclick="document.getElementById('convertAmt').value=20000;document.getElementById('convertAmt').dispatchEvent(new Event('input'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">3</span><span>Your personalized analysis appears here instantly</span></div></div></div>
+</div>
+</div>
+<footer>
+  <span style="display:block;margin-bottom:.85rem;color:rgba(255,255,255,.78);font-size:.84rem;line-height:1.7;max-width:580px;margin-left:auto;margin-right:auto">Built by an independent developer after getting frustrated by Roth calculators that ignored state taxes, a hidden Social Security tax effect, and Medicare surcharges — and charged $10–20/month for the privilege. The math uses IRS, SSA, and CMS public data. No ads, no account, no tracking. Just the calculation.</span>
+  <strong>Roth conversion</strong> · Runs entirely in your browser · No data collected or transmitted · No sign-in required<br>
+  Survival odds: <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener"><strong>Social Security life expectancy data</strong></a> — ages 20–54 exact; 55–100 from 2022 progression<br>
+  Tax brackets: <a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf" target="_blank" rel="noopener"><strong>IRS 2026 tax bracket data</strong></a> + <a href="https://www.congress.gov/bill/119th-congress/house-bill/1" target="_blank" rel="noopener"><strong>One Big Beautiful Bill Act</strong></a> · RMD divisors: <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener"><strong>IRS required minimum withdrawal tables (Appendix B)</strong></a> · Medicare surcharges: <a href="https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles" target="_blank" rel="noopener"><strong>Official Medicare 2026 premium rates</strong></a><br>
+  <span style="display:block;margin-top:6px">Planning tool only — not tax or financial advice. State tax rates are approximate; your actual rate may vary. Verify locally. Always consult a CPA, tax professional, or financial advisor before converting. <a href="https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill" target="_blank" rel="noopener" style="font-size:.78rem">IRS 2026 full tax year summary →</a></span>
+</footer>
+<script>
+// ── STORAGE GUARD ──
+// Chrome logs a security warning when localStorage is accessed from file:// URLs
+// because each file:// URL is treated as a unique origin. Detect this and skip
+// storage silently — inputs won't persist during local testing, but the warning
+// disappears. Works normally on the deployed site (rothguide.netlify.app).
+var _canStore=(function(){
+  try{return window.location.protocol!=='file:'&&!!window.localStorage;}
+  catch(e){return false;}
+})();
+
+// Pass example data directly to calc() to avoid onchange race conditions
+var _activeExample = null;
+
+// ═══ 2026 TAX BRACKETS (IRS Rev. Proc. 2025-32 + OBBBA) ═══
+const BRAX={
+  single:[{m:12400,r:.10},{m:50400,r:.12},{m:105700,r:.22},{m:201775,r:.24},{m:256250,r:.32},{m:640600,r:.35},{m:1/0,r:.37}],
+  mfj:   [{m:24800,r:.10},{m:100800,r:.12},{m:211400,r:.22},{m:403550,r:.24},{m:512500,r:.32},{m:768600,r:.35},{m:1/0,r:.37}],
+  mfs:   [{m:12400,r:.10},{m:50400,r:.12},{m:105700,r:.22},{m:201775,r:.24},{m:256250,r:.32},{m:384400,r:.35},{m:1/0,r:.37}],
+  hoh:   [{m:17700,r:.10},{m:67400,r:.12},{m:105700,r:.22},{m:201750,r:.24},{m:256250,r:.32},{m:640600,r:.35},{m:1/0,r:.37}],
+};
+const STDD={single:16100,mfj:32200,mfs:16100,hoh:24150};
+function seniorDed(inc,st,n){if(!n)return 0;const full=n*6000,phase=Math.max(0,inc-(st==='mfj'?150000:75000))*.06;return Math.max(0,full-phase);}
+const RMDD={73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,85:16,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,95:8.9,96:8.4,97:7.8,98:7.3,99:6.8,100:6.4};
+const ITIERS=[{lbl:'Standard',mult:'1.0x',B:202.90,D:0},{lbl:'Tier 1',mult:'1.4x',B:284.10,D:14.50},{lbl:'Tier 2',mult:'2.0x',B:405.80,D:37.60},{lbl:'Tier 3',mult:'2.6x',B:527.50,D:60.60},{lbl:'Tier 4',mult:'3.2x',B:649.30,D:83.20},{lbl:'Tier 5',mult:'3.4x',B:689.90,D:91.00}];
+const ITHR={single:[0,109000,137000,171000,205000,500000],mfj:[0,218000,274000,342000,410000,750000]};
+function irmaaT(magi,st){if(st==='mfs')return magi<=109000?0:magi<391000?3:5;const t=st==='mfj'?ITHR.mfj:ITHR.single;let tier=0;for(let i=1;i<t.length;i++)if(magi>t[i])tier=i;return tier;}
+
+// ═══ STATE TAX DATA ═══
+// {n:name, cr:conversion marginal rate, ex:IRA exempt in retirement, note:retirement treatment}
+// cr = approximate marginal state rate on ordinary income (for conversions added on top of other income)
+// ex = true means IRA/401k distributions are generally state-tax-exempt in retirement
+// IMPORTANT: For states where ex=true, converting NOW means paying state tax you'd NEVER pay later
+const ST={
+  '':  {n:'',cr:0,ex:false,note:''},
+  AL:  {n:'Alabama',       cr:.05,  ex:true,  note:'IRA and pension distributions are generally exempt from Alabama income tax in retirement.'},
+  AK:  {n:'Alaska',        cr:0,    ex:true,  note:'No state income tax.'},
+  AZ:  {n:'Arizona',       cr:.025, ex:false, note:'Flat 2.5% applies to all income including IRA withdrawals in retirement.'},
+  AR:  {n:'Arkansas',      cr:.039, ex:false, note:'Top rate 3.9%; some partial exemptions apply for some retirement income — verify locally.'},
+  CA:  {n:'California',    cr:.093, ex:false, note:'No retirement income exemptions. IRA withdrawals taxed at up to 13.3% in retirement.'},
+  CO:  {n:'Colorado',      cr:.044, ex:false, note:'Flat 4.4%; deduction of up to $24,000 for pension/retirement income depending on age.'},
+  CT:  {n:'Connecticut',   cr:.0699,ex:false, note:'Some Social Security and pension exemptions at lower incomes; IRA generally taxed.'},
+  DE:  {n:'Delaware',      cr:.066, ex:false, note:'$12,500 pension exclusion for age 60+; IRA partially exempt above that.'},
+  FL:  {n:'Florida',       cr:0,    ex:true,  note:'No state income tax.'},
+  GA:  {n:'Georgia',       cr:.0539,ex:true,  note:'Up to $65,000 retirement income exclusion per person at age 65+ often covers most IRA income.'},
+  HI:  {n:'Hawaii',        cr:.11,  ex:false, note:'High rates; limited pension exclusions; Hawaii taxes IRA withdrawals at regular income tax rates.'},
+  ID:  {n:'Idaho',         cr:.058, ex:false, note:'Idaho taxes all income at a flat 5.8%, including IRA withdrawals.'},
+  IL:  {n:'Illinois',      cr:.0495,ex:true,  note:'Illinois exempts all retirement income — IRA, 401(k), and pension — from state income tax.'},
+  IN:  {n:'Indiana',       cr:.0305,ex:false, note:'Indiana taxes IRA withdrawals at a flat 3.05%.'},
+  IA:  {n:'Iowa',          cr:.06,  ex:true,  note:'Iowa exempts retirement income including IRA distributions for taxpayers age 55 and older.'},
+  KS:  {n:'Kansas',        cr:.057, ex:false, note:'Kansas taxes IRA withdrawals as regular income at up to 5.7%.'},
+  KY:  {n:'Kentucky',      cr:.04,  ex:false, note:'Kentucky taxes IRA withdrawals at a flat 4%, with a small pension exclusion.'},
+  LA:  {n:'Louisiana',     cr:.0425,ex:false, note:'Up to 4.25%; $6,000 retirement income exclusion per individual.'},
+  ME:  {n:'Maine',         cr:.0715,ex:false, note:'Up to 7.15%; $35,000 pension deduction for age 65+ (income-limited).'},
+  MD:  {n:'Maryland',      cr:.0575,ex:false, note:'Up to 5.75% state + ~3% county tax; up to $36,200 senior exemption at age 65+.'},
+  MA:  {n:'Massachusetts', cr:.05,  ex:false, note:'Massachusetts taxes most income at a flat 5%, including most retirement income.'},
+  MI:  {n:'Michigan',      cr:.0425,ex:false, note:'Flat 4.25%; some retirement income exemptions vary by birth year — verify locally.'},
+  MN:  {n:'Minnesota',     cr:.0985,ex:false, note:'Minnesota taxes IRA withdrawals as regular income at rates up to 9.85%.'},
+  MS:  {n:'Mississippi',   cr:.047, ex:true,  note:'Mississippi exempts all retirement income — IRA, 401(k), and pension — from state income tax.'},
+  MO:  {n:'Missouri',      cr:.047, ex:false, note:'Missouri taxes most IRA income at up to 4.7%, with a $6,000 public pension exclusion.'},
+  MT:  {n:'Montana',       cr:.059, ex:false, note:'Montana taxes IRA withdrawals at up to 5.9%; small deductions apply for lower-income retirees.'},
+  NE:  {n:'Nebraska',      cr:.0584,ex:false, note:'Nebraska taxes IRA withdrawals at up to 5.84%, with a partial Social Security exemption.'},
+  NV:  {n:'Nevada',        cr:0,    ex:true,  note:'No state income tax.'},
+  NH:  {n:'New Hampshire', cr:0,    ex:true,  note:'No income tax (interest/dividend tax ended 2025).'},
+  NJ:  {n:'New Jersey',    cr:.1075,ex:true,  note:'New Jersey largely exempts IRA and pension income for retirees with combined income under $100,000 — verify for your situation.'},
+  NM:  {n:'New Mexico',    cr:.059, ex:false, note:'New Mexico taxes IRA withdrawals at up to 5.9%, with an $8,000 exemption for age 65+.'},
+  NY:  {n:'New York',      cr:.109, ex:false, note:'$20,000 retirement income exclusion for age 59.5+; NYC residents also pay city tax ~3.9%.'},
+  NC:  {n:'North Carolina',cr:.045, ex:false, note:'North Carolina taxes IRA withdrawals as regular income at a flat 4.5%.'},
+  ND:  {n:'North Dakota',  cr:.025, ex:false, note:'Flat 2.5% on all income.'},
+  OH:  {n:'Ohio',          cr:.0399,ex:false, note:'Ohio taxes IRA withdrawals at up to 3.99%; some retirement income credits apply.'},
+  OK:  {n:'Oklahoma',      cr:.0475,ex:false, note:'Up to 4.75%; $10,000 retirement income exemption for age 65+.'},
+  OR:  {n:'Oregon',        cr:.099, ex:false, note:'Oregon taxes IRA withdrawals fully at rates up to 9.9%, with very limited credits.'},
+  PA:  {n:'Pennsylvania',  cr:.0307,ex:true,  note:'Pennsylvania exempts all retirement income — IRA, 401(k), and pension — from state income tax.'},
+  RI:  {n:'Rhode Island',  cr:.0599,ex:false, note:'Rhode Island taxes IRA income at up to 5.99%; some exemptions apply for lower incomes.'},
+  SC:  {n:'South Carolina',cr:.063, ex:false, note:'Up to 6.3% (rate phasing down); $15,000 retirement income deduction for age 65+.'},
+  SD:  {n:'South Dakota',  cr:0,    ex:true,  note:'No state income tax.'},
+  TN:  {n:'Tennessee',     cr:0,    ex:true,  note:'No income tax.'},
+  TX:  {n:'Texas',         cr:0,    ex:true,  note:'No state income tax.'},
+  UT:  {n:'Utah',          cr:.0465,ex:false, note:'Flat 4.65%; IRA withdrawals taxed; retirement income tax credit available.'},
+  VT:  {n:'Vermont',       cr:.0875,ex:false, note:'Vermont taxes IRA withdrawals as regular income at up to 8.75%.'},
+  VA:  {n:'Virginia',      cr:.0575,ex:false, note:'Up to 5.75%; $12,000 senior deduction for age 65+ (income-limited); IRA otherwise taxed.'},
+  WA:  {n:'Washington',    cr:0,    ex:true,  note:'No income tax (capital gains tax on long-term gains does not apply to ordinary IRA income).'},
+  WV:  {n:'West Virginia', cr:.0512,ex:false, note:'Up to 5.12%; IRA withdrawals taxed; some Social Security exemption.'},
+  WI:  {n:'Wisconsin',     cr:.0765,ex:false, note:'Wisconsin taxes IRA withdrawals as regular income at up to 7.65%.'},
+  WY:  {n:'Wyoming',       cr:0,    ex:true,  note:'No state income tax.'},
+  DC:  {n:'Washington D.C.',cr:.1075,ex:false,note:'Washington D.C. taxes IRA withdrawals as regular income at up to 10.75%.'},
+};
+
+// ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
+// IRS SS taxation thresholds — NOT inflation-adjusted since 1984/1993
+// otherIncome = wages/pensions/etc, EXCLUDING Social Security
+// ss = gross annual SS benefit received
+function calcTaxableSS(ss,otherIncome,status){
+  if(!ss||ss<=0)return 0;
+  if(status==='mfs')return ss*.85; // MFS: 85% always taxable immediately
+  const[lo,hi]=status==='mfj'?[32000,44000]:[25000,34000]; // HOH same as single
+  const pi=otherIncome+ss*.5; // provisional income = AGI + 0.5*SS
+  if(pi<=lo)return 0;
+  if(pi<=hi)return Math.min(ss*.5,(pi-lo)*.5);
+  const zone1=Math.min(ss*.5,(hi-lo)*.5);
+  return Math.min(ss*.85,zone1+(pi-hi)*.85);
+}
+
+// ═══ SSA 2022 PERIOD LIFE TABLE (2025 Trustees Report) ═══
+// Ages 20-54: exact; ages 55-100: projected from 2022 table progression
+const QX={
+  male:{
+    20:1.301,21:1.404,22:1.498,23:1.586,24:1.679,25:1.776,26:1.881,27:1.985,28:2.095,29:2.219,
+    30:2.332,31:2.445,32:2.562,33:2.653,34:2.716,35:2.791,36:2.894,37:2.994,38:3.091,39:3.217,
+    40:3.353,41:3.499,42:3.642,43:3.811,44:3.996,45:4.175,46:4.388,47:4.666,48:4.973,49:5.305,
+    50:5.666,51:6.069,52:6.539,53:7.073,54:7.675,
+    55:8.35,56:9.11,57:9.95,58:10.88,59:11.90,60:13.02,61:14.27,62:15.67,63:17.17,64:18.76,
+    65:20.47,66:22.32,67:24.37,68:26.64,69:29.15,70:31.89,71:34.85,72:38.04,73:41.60,74:45.57,
+    75:50.11,76:55.42,77:61.58,78:68.44,79:75.94,80:84.07,81:93.14,82:103.01,83:113.50,84:124.67,
+    85:136.96,86:150.53,87:165.08,88:180.08,89:195.59,90:211.50,91:228.38,92:246.23,93:265.06,
+    94:284.70,95:304.59,96:323.64,97:342.60,98:360.32,99:376.24,100:389.87},
+  female:{
+    20:0.496,21:0.532,22:0.567,23:0.610,24:0.650,25:0.699,26:0.743,27:0.796,28:0.855,29:0.924,
+    30:0.988,31:1.053,32:1.123,33:1.198,34:1.263,35:1.324,36:1.403,37:1.493,38:1.596,39:1.700,
+    40:1.803,41:1.905,42:2.009,43:2.116,44:2.223,45:2.352,46:2.516,47:2.712,48:2.936,49:3.177,
+    50:3.407,51:3.642,52:3.917,53:4.238,54:4.619,
+    55:5.08,56:5.57,57:6.13,58:6.77,59:7.50,60:8.32,61:9.23,62:10.18,63:11.11,64:12.01,
+    65:12.97,66:14.00,67:15.22,68:16.62,69:18.19,70:19.90,71:21.74,72:23.79,73:26.19,74:28.99,
+    75:32.32,76:36.22,77:40.74,78:45.76,79:51.12,80:56.65,81:62.46,82:68.69,83:75.53,84:83.12,
+    85:91.65,86:101.26,87:112.11,88:124.32,89:137.81,90:152.57,91:168.44,92:185.28,93:202.88,
+    94:221.00,95:239.53,96:258.52,97:277.99,98:298.00,99:318.44,100:338.50}
+};
+function survFrom(sex,from,to){let p=1;for(let a=from;a<Math.min(to,100);a++)p*=1-(QX[sex][a]??400)/1000;return p;}
+// Joint survival: probability at least one of two independent lives reaches age `to`
+function survJoint(sex1,age1,sex2,age2,to){
+  return 1-(1-survFrom(sex1,age1,to))*(1-survFrom(sex2,age2,to));
+}
+// Expected age of last survivor (numerically computed from QX)
+function lifeExJoint(sex1,age1,sex2,age2){
+  const start=Math.min(age1,age2);
+  let e=0;
+  for(let a=start+1;a<=110;a++){
+    const p1=survFrom(sex1,age1,a), p2=survFrom(sex2,age2,a);
+    e+=1-(1-p1)*(1-p2);
+  }
+  return Math.round((start+e)*10)/10;
+}
+function lifeEx(sex,from){let s=1,e=0;for(let a=from;a<=110;a++){const q=(QX[sex][a]??500)/1000;e+=(a+.5)*s*q;s*=(1-q);}return Math.round(e*10)/10;}
+
+function calcTax(ti,st){if(ti<=0)return 0;let t=0,p=0;for(const b of BRAX[st]){if(ti<=p)break;t+=(Math.min(ti,b.m)-p)*b.r;p=b.m;}return t;}
+function margR(ti,st){for(const b of BRAX[st])if(ti<b.m)return b.r;return .37;}
+function roomTo(ti,st){for(const b of BRAX[st])if(ti<b.m)return{room:b.m-ti,cur:b.r};return{room:0,cur:.37};}
+
+const $=id=>document.getElementById(id);
+const fmt=n=>'$'+Math.abs(Math.round(n)).toLocaleString();
+const fmtK=n=>{const a=Math.abs(n),s=n<0?'−':'';return a>=1e6?s+'$'+(a/1e6).toFixed(1)+'M':a>=1e3?s+'$'+Math.round(a/1e3)+'K':s+'$'+Math.round(a);};
+const pct=(n,d=1)=>(n*100).toFixed(d)+'%';
+
+function toggleTip(id){
+  const box=$('tip-'+id);const wasOpen=box.classList.contains('open');
+  document.querySelectorAll('.ttip.open').forEach(b=>b.classList.remove('open'));
+  document.querySelectorAll('.tb.open').forEach(b=>b.classList.remove('open'));
+  if(!wasOpen){box.classList.add('open');const btn=box.previousElementSibling;if(btn&&btn.classList.contains('tb'))btn.classList.add('open');}
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.tb')&&!e.target.closest('.ttip')){document.querySelectorAll('.ttip.open').forEach(b=>b.classList.remove('open'));document.querySelectorAll('.tb.open').forEach(b=>b.classList.remove('open'));}});
+
+function buildRateTable(st){
+  const rows=st==='mfj'?[['Under $94,300 combined','→ about 12%'],['$94,300–$211,400','→ about 22%'],['$211,400–$403,550','→ about 24%'],['Over $403,550','→ about 32%+']]:
+    [['Under $47,150','→ about 12%'],['$47,150–$105,700','→ about 22%'],['$105,700–$201,775','→ about 24%'],['Over $201,775','→ about 32%+']];
+  return rows.map(([r,rt])=>`<div class="rerow"><span class="rbkt">${r}</span><span class="rrate">${rt}</span></div>`).join('');
+}
+
+function animCount(el,to,fmtFn,dur=900){
+  const t0=performance.now();
+  const step=now=>{const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3);el.innerHTML=fmtFn(to*e);if(p<1)requestAnimationFrame(step);else el.innerHTML=fmtFn(to);};
+
+}
+
+// ── OPTIMIZER: set conversion amount and rerun ──
+function setConvert(amt){
+  var el=document.getElementById('convertAmt');
+  if(el){el.value=amt;}
+  calc();
+  var rw=document.getElementById('resultsWrap');
+  if(rw)rw.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── OPTIMIZER: compute three smart targets ──
+function computeOptTargets(income,ss,status,std,nSr,nMed,taxableFrac){
+  if(taxableFrac===undefined)taxableFrac=1;
+  var iSt=status==='hoh'?'single':status;
+  var ssBase=calcTaxableSS(ss,income,status);
+  var agiBase=income+ssBase;
+  var srD=seniorDed(agiBase,status,nSr);
+  var tiBase=Math.max(0,agiBase-std-srD);
+
+  // Find current bracket ceiling
+  var curBktObj=BRAX[status].find(function(b){return tiBase<b.m;});
+  var curBR=curBktObj?curBktObj.r:0.37;
+  var curBktTop=curBktObj?curBktObj.m:Infinity;
+
+  // ── Target 1: Fill bracket ──
+  // Binary search on TOTAL conversion; only taxableFrac of it hits income.
+  // This means you can convert MORE when basis is present.
+  var bracketAmt=0, bracketState='full';
+  if(curBktTop<1e9){
+    var lo=0,hi=2000000;
+    for(var i=0;i<40;i++){
+      var mid=(lo+hi)/2;
+      var taxMid=mid*taxableFrac;
+      var sw=calcTaxableSS(ss,income+taxMid,status);
+      var aw=income+taxMid+sw;
+      var sdw=seniorDed(aw,status,nSr);
+      var tiw=Math.max(0,aw-std-sdw);
+      if(tiw<curBktTop)lo=mid;else hi=mid;
+    }
+    bracketAmt=Math.max(0,Math.round(lo/500)*500);
+    bracketState=bracketAmt>0?'ok':'zero';
+  }
+
+  // ── Target 2: IRMAA-safe maximum ──
+  // MAGI uses taxable portion only; same binary search adjustment.
+  var irmaaAmt=null, irmaaNext=null, irmaaState='';
+  if(nMed>0){
+    var curTier=irmaaT(income+ssBase,iSt);
+    var threshArr=iSt==='mfj'?ITHR.mfj:ITHR.single;
+    if(curTier>=5){irmaaState='maxtier';}
+    else{
+      var nxtThr=threshArr[curTier+1];
+      if(nxtThr){
+        irmaaNext=nxtThr;
+        var ilo=0,ihi=2000000;
+        for(var ii=0;ii<40;ii++){
+          var imid=(ilo+ihi)/2;
+          var taxImid=imid*taxableFrac;
+          var isw=calcTaxableSS(ss,income+taxImid,status);
+          if(income+taxImid+isw<nxtThr)ilo=imid;else ihi=imid;
+        }
+        irmaaAmt=Math.max(0,Math.floor(ilo/500)*500);
+        irmaaState=irmaaAmt>0?'ok':'zero';
+      }else{irmaaState='maxtier';}
+    }
+  }
+
+  // ── Target 3: SS torpedo boundary ──
+  // Provisional income = income + cvt*taxableFrac + ss*0.5
+  var torpOpts=null;
+  if(ss>0&&status!=='mfs'){
+    var loThr=status==='mfj'?32000:25000;
+    var piBase=income+ss*0.5;
+    // Gross amount needed to keep taxable income below loThr
+    var avoidRaw=loThr-piBase;
+    var avoidAmt=taxableFrac>0
+      ? Math.max(0,Math.floor(avoidRaw/taxableFrac/500)*500)
+      : 0;
+    var alreadyFiring=piBase>=loThr;
+    var alreadyClear=calcTaxableSS(ss,income,status)>=ss*0.85*0.9999;
+
+    // Find GROSS amount to push fully past the 85% torpedo zone
+    var clo=0,chi=1000000;
+    for(var ci=0;ci<40;ci++){
+      var cm=(clo+chi)/2;
+      if(calcTaxableSS(ss,income+cm*taxableFrac,status)>=ss*0.85*0.9999)chi=cm;else clo=cm;
+    }
+    var clearAmt=Math.ceil(clo/500)*500;
+
+    torpOpts={alreadyFiring:alreadyFiring,alreadyClear:alreadyClear,
+              avoidAmt:avoidAmt,clearAmt:clearAmt,loThr:loThr,piBase:piBase};
+  }
+
+  return {bracketAmt:bracketAmt,bracketState:bracketState,curBR:curBR,
+          irmaaAmt:irmaaAmt,irmaaNext:irmaaNext,irmaaState:irmaaState,
+          torpOpts:torpOpts};
+}
+
+// ── OPTIMIZER: build HTML panel ──
+function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
+  if(!opts)return'';
+
+  var cards=[];
+
+  // Card 1: Bracket fill
+  if(opts.bracketState==='ok'&&opts.bracketAmt>0){
+    cards.push(
+      '<div class="optcard brkt" onclick="setConvert('+opts.bracketAmt+')">'
+      +'<div class="optlbl">Fill your '+pct(opts.curBR,0)+' bracket</div>'
+      +'<div class="optamt">'+fmt(opts.bracketAmt)+'</div>'
+      +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/((curCvt||0)+opts.bracketAmt)*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>room: '+fmt(opts.bracketAmt)+'</span></div></div>'
+      +'<div class="optnote">Converts up to the top of your current federal bracket — stops right before the next higher rate applies'+
+        (ss>0?' (hidden SS tax already accounted for)':'')+
+      '</div>'
+      +'<div class="optbtn">Explore this →</div>'
+      +'</div>'
+    );
+  } else {
+    var msg=opts.bracketState==='full'
+      ?'You are already in the top 37% bracket — you\'ll pay 37% on any conversion'
+      :'Your income already reaches the top of the '+pct(opts.curBR,0)+' bracket';
+    cards.push(
+      '<div class="optcard brkt optdim">'
+      +'<div class="optlbl">Bracket ceiling</div>'
+      +'<div class="optna">'+pct(opts.curBR,0)+' already full</div>'
+      +'<div class="optnote">'+msg+'</div>'
+      +'</div>'
+    );
+  }
+
+  // Card 2: IRMAA-safe
+  if(nMed>0){
+    if(opts.irmaaState==='ok'&&opts.irmaaAmt>0){
+      cards.push(
+        '<div class="optcard irm" onclick="setConvert('+opts.irmaaAmt+')">'
+        +'<div class="optlbl">Medicare income limit</div>'
+        +'<div class="optamt">'+fmt(opts.irmaaAmt)+'</div>'
+        +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/((curCvt||0)+opts.irmaaAmt)*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe room: '+fmt(opts.irmaaAmt)+'</span></div></div>'
+        +'<div class="optnote">Keeps your 2026 total income just below $'+(opts.irmaaNext/1000).toFixed(0)+'K — avoids the Medicare surcharge that hits your 2028 premiums</div>'
+        +'<div class="optbtn">Explore this →</div>'
+        +'</div>'
+      );
+    } else if(opts.irmaaState==='zero'){
+      cards.push(
+        '<div class="optcard irm optdim">'
+        +'<div class="optlbl">Medicare Surcharge Limit</div>'
+        +'<div class="optna">Already at threshold</div>'
+        +'<div class="optnote">Your income already hits a Medicare surcharge tier — even a small conversion crosses the next threshold</div>'
+        +'</div>'
+      );
+    } else if(opts.irmaaState==='maxtier'){
+      cards.push(
+        '<div class="optcard irm optdim">'
+        +'<div class="optlbl">Medicare Surcharge Limit</div>'
+        +'<div class="optna">Max tier reached</div>'
+        +'<div class="optnote">You are already in Medicare highest income tier — additional income does not increase premiums further</div>'
+        +'</div>'
+      );
+    }
+  }
+
+  // Card 3: SS torpedo
+  if(ss>0&&opts.torpOpts){
+    var t=opts.torpOpts;
+    if(t.alreadyClear){
+      cards.push(
+        '<div class="optcard trp optdim">'
+        +'<div class="optlbl">SS Hidden Tax Zone</div>'
+        +'<div class="optna" style="color:var(--success)">Already clear ✓</div>'
+        +'<div class="optnote">Your Social Security benefits are already 85% taxable — the maximum. Additional income no longer triggers more SS taxation, just your normal bracket rate</div>'
+        +'</div>'
+      );
+    } else if(t.alreadyFiring){
+      cards.push(
+        '<div class="optcard trp" onclick="setConvert('+t.clearAmt+')">'
+        +'<div class="optlbl">Clear the SS Hidden Tax Zone</div>'
+        +'<div class="optamt">'+fmt(t.clearAmt)+'</div>'
+        +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/t.clearAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>to clear: '+fmt(t.clearAmt)+'</span></div></div>'
+        +'<div class="optnote">The SS hidden tax zone is already active. Converting this amount pushes fully past it — after which additional income drops back to your normal bracket rate instead of the elevated hidden rate</div>'
+        +'<div class="optbtn">Explore this →</div>'
+        +'</div>'
+      );
+    } else {
+      cards.push(
+        '<div class="optcard trp" onclick="setConvert('+t.avoidAmt+')">'
+        +'<div class="optlbl">Avoid the SS Hidden Tax Zone</div>'
+        +'<div class="optamt">'+fmt(t.avoidAmt)+'</div>'
+        +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/t.avoidAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe limit: '+fmt(t.avoidAmt)+'</span></div></div>'
+        +'<div class="optnote">Keeps your combined income below $'+(t.loThr/1000).toFixed(0)+'K — the threshold where Social Security starts becoming taxable and your effective rate jumps toward 40%</div>'
+        +'<div class="optbtn">Explore this →</div>'
+        +'</div>'
+      );
+    }
+  }
+
+  if(cards.length===0)return'';
+
+  var ncols=Math.min(3,cards.length);
+  return'<div class="card" style="margin-bottom:1.25rem">'
+    +'<div class="stitle">📊 Common Planning Thresholds</div>'
+    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.55">'
+    +'These are three commonly used reference points in Roth conversion planning — each based on a specific constraint in your inputs. '
+    +'They are useful starting points for a conversation with your advisor, not definitive recommendations. '
+    +'Optimal amounts depend on factors this calculator cannot see: future income changes, estate goals, healthcare subsidies, and more.'
+    +'</p>'
+    +'<div class="optwrap" style="grid-template-columns:repeat('+ncols+',1fr)">'
+    +cards.join('')
+    +'</div>'
+    +'<p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;line-height:1.4">'
+    +'Click any card to load that amount and see the full analysis. Adjust manually from there. Discuss with a CPA or financial advisor before acting.'
+    +'</p>'
+    +'</div>';
+}
+
+function updateRetRate(){
+  var retSS  = parseFloat(document.getElementById('retSS')&&document.getElementById('retSS').value)||0;
+  var retPen = parseFloat(document.getElementById('retPen')&&document.getElementById('retPen').value)||0;
+  var retWd  = parseFloat(document.getElementById('retWd')&&document.getElementById('retWd').value)||0;
+  var status = $('filingStatus').value;
+  var el     = document.getElementById('retRateResult');
+  if(!el) return;
+  if(retSS+retPen+retWd<=0){ el.innerHTML=''; return; }
+
+  var std     = STDD[status];
+  var othInc  = retPen + retWd;
+
+  // Marginal rate: tax difference from adding $1000 more IRA withdrawal
+  var ssT0 = calcTaxableSS(retSS, othInc,      status);
+  var ssT1 = calcTaxableSS(retSS, othInc+1000, status);
+  var ti0  = Math.max(0, othInc     + ssT0 - std);
+  var ti1  = Math.max(0, othInc+1000 + ssT1 - std);
+  var margFed   = (calcTax(ti1,status) - calcTax(ti0,status)) / 1000;
+  var bracketR  = margR(ti0, status);
+  var torpExtra = Math.max(0, Math.round((margFed - bracketR)*1000)/1000);
+
+  var stCode = $('stateCode').value;
+  var stD    = ST[stCode]||{n:'',cr:0,ex:false};
+  var stRetR = stD.ex ? 0 : stD.cr;
+  var totalR = margFed + stRetR;
+
+  var fedPct = Math.round(margFed*1000)/10;
+  var stPct  = Math.round(stRetR*1000)/10;
+  var totPct = Math.round(totalR*1000)/10;
+
+  var out = '<div style="background:var(--navy-pale);border:1px solid var(--tip-bdr);border-radius:var(--rsm);padding:.65rem .8rem;font-size:.84rem;line-height:1.6">';
+  out += '<strong style="color:var(--navy)">Marginal federal rate on IRA withdrawals: '+fedPct+'%</strong>';
+  if(torpExtra > 0.002){
+    out += '<br><span style="color:var(--danger);font-size:.8rem">Includes +'+Math.round(torpExtra*1000)/10+'% hidden Social Security tax (income in the SS-taxable zone)</span>';
+  }
+  if(stRetR > 0 && stD.n){
+    out += '<br>+ '+stPct+'% '+stD.n+' state = <strong>'+totPct+'% combined</strong>';
+  } else if(stD.n && stD.ex){
+    out += '<br><span style="font-size:.8rem">'+stD.n+' does not tax IRA withdrawals — state adds 0%</span>';
+  }
+  out += '</div>';
+  out += '<button onclick="useRetRate('+fedPct+')" style="margin-top:6px;background:var(--navy);color:white;border:none;border-radius:var(--rsm);padding:6px 14px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;display:block">Use '+fedPct+'% as federal rate &uarr;</button>';
+
+  el.innerHTML = out;
+}
+
+function useRetRate(rate){
+  var el = $('retRate');
+  if(el){ el.value = rate; calc(); }
+}
+
+
+// ── MULTI-YEAR PLAN COMPUTATION ──
+function computeMultiYear(income,ss,status,tradBal,rothBal,basis,g,nSr,stD,nMed,curAge,retAge,taxableFrac,planConvert){
+  if(planConvert<=0||tradBal<=0)return null;
+
+  // Compute conversion tax for a given income scenario
+  function convTax(inc,ssV,stat,nsr,cvt,tfrac){
+    var tx=cvt*tfrac;
+    var sb=calcTaxableSS(ssV,inc,stat);
+    var sw=calcTaxableSS(ssV,inc+tx,stat);
+    var tiB=Math.max(0,inc+sb-STDD[stat]-seniorDed(inc+sb,stat,nsr));
+    var tiW=Math.max(0,inc+tx+sw-STDD[stat]-seniorDed(inc+tx+sw,stat,nsr));
+    return Math.max(0,calcTax(tiW,stat)-calcTax(tiB,stat))+tx*stD.cr;
+  }
+
+  // Pre-retirement phase
+  var preRows=[],tBal=tradBal,rBal=rothBal;
+  var nWork=Math.min(Math.max(0,retAge-curAge),15);
+  var preTax=planConvert>0?convTax(income,ss,status,nSr,planConvert,taxableFrac):0;
+
+  for(var i=0;i<nWork;i++){
+    var cv=Math.min(planConvert,tBal);
+    if(cv<500){tBal*=(1+g);rBal*=(1+g);continue;}
+    var tx=preTax*(cv/planConvert);
+    tBal=(tBal-cv)*(1+g); rBal=(rBal+cv)*(1+g);
+    preRows.push({year:2026+i,age:curAge+i,convert:Math.round(cv),tax:Math.round(tx),
+                  tBal:Math.round(tBal),rBal:Math.round(rBal),phase:'work'});
+  }
+  var tBalRet=tBal, rBalRet=rBal;
+
+  // Golden window: retirement to age 73
+  var goldRows=[], tBalRMD=tBal, rBalRMD=rBal;
+  if(retAge<73){
+    var gYears=Math.min(73-retAge,10);
+    var retSSEl=document.getElementById('retSS');
+    var retPenEl=document.getElementById('retPen');
+    var retSSV=parseFloat(retSSEl&&retSSEl.value)||0;
+    var retPenV=parseFloat(retPenEl&&retPenEl.value)||0;
+
+    if(retSSV+retPenV>0){
+      // Bracket room in retirement (lower income = more room)
+      var gOpts=computeOptTargets(retPenV,retSSV,status,STDD[status],0,nMed,taxableFrac);
+      var gConv=gOpts.bracketAmt>0?gOpts.bracketAmt:0;
+      if(gOpts.irmaaAmt!==null&&gOpts.irmaaAmt>0&&gOpts.irmaaAmt<gConv)gConv=gOpts.irmaaAmt;
+
+      if(gConv>500){
+        var gTax=convTax(retPenV,retSSV,status,0,gConv,taxableFrac);
+
+        for(var j=0;j<gYears;j++){
+          var gcv=Math.min(gConv,tBal);
+          if(gcv<500){tBal*=(1+g);rBal*=(1+g);continue;}
+          var gtx=gTax*(gcv/gConv);
+          tBal=(tBal-gcv)*(1+g); rBal=(rBal+gcv)*(1+g);
+          goldRows.push({year:2026+(retAge-curAge)+j,age:retAge+j,
+                         convert:Math.round(gcv),tax:Math.round(gtx),
+                         tBal:Math.round(tBal),rBal:Math.round(rBal),phase:'golden'});
+        }
+        tBalRMD=tBal; rBalRMD=rBal;
+      }
+    }
+  }
+
+  return{preRows:preRows,goldRows:goldRows,
+         tBalRet:Math.round(tBalRet),rBalRet:Math.round(rBalRet),
+         tBalRMD:Math.round(tBalRMD),rBalRMD:Math.round(rBalRMD)};
+}
+
+// ── MULTI-YEAR PLAN HTML ──
+function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn){
+  if(!plan)return'';
+  var allRows=plan.preRows.concat(plan.goldRows);
+  if(allRows.length===0)return'';
+
+  var totalConvert=0,totalTax=0;
+  allRows.forEach(function(r){totalConvert+=r.convert;totalTax+=r.tax;});
+  var avgRate=totalConvert>0?totalTax/totalConvert:0;
+
+  var yearsToRet=Math.max(0,retAge-curAge);
+  var goldenYears=Math.max(0,73-retAge);
+
+  var html='<div class="card" style="margin-top:1.25rem">';
+  html+='<div class="stitle">📅 Multi-Year Conversion Plan</div>';
+
+  // Context paragraph
+  var ctx='';
+  if(plan.preRows.length>0)ctx+='<strong>'+plan.preRows.length+' working '+(plan.preRows.length===1?'year':'years')+'</strong> before retirement at '+retAge+'. ';
+  if(plan.goldRows.length>0)
+    ctx+='The <strong>golden window</strong> — retirement to age 73, when income drops and bracket room expands — adds <strong>'+plan.goldRows.length+' more years</strong> of larger conversions.';
+  else if(goldenYears>0)
+    ctx+='Enter expected retirement SS and pension in the rate estimator above to also see the golden window (age '+retAge+' to 73).';
+  else if(retAge>=73)
+    ctx+='RMDs start at or before retirement — consider converting more aggressively now while income is predictable.';
+  html+='<p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.55">'+ctx+' Income assumed flat within each phase; taxes paid from outside savings.</p>';
+
+  // Table
+  html+='<div style="overflow-x:auto;margin-bottom:1rem">';
+  html+='<table class="ptbl">';
+  html+='<thead><tr><th>Year</th><th>Age</th><th>Phase</th><th>Recommended</th><th>Tax Cost</th><th>Rate</th><th>Trad. IRA</th><th>Roth IRA</th></tr></thead>';
+  html+='<tbody>';
+
+  allRows.forEach(function(r){
+    var eff=r.convert>0?r.tax/r.convert:0;
+    var golden=r.phase==='golden';
+    var bg=golden?'background:rgba(27,107,58,.07);':'';
+    html+='<tr style="'+bg+'">';
+    html+='<td style="color:var(--muted);font-size:.85rem">'+r.year+'</td>';
+    html+='<td><strong>'+r.age+'</strong></td>';
+    html+='<td style="font-size:.79rem;color:'+(golden?'var(--success)':'var(--muted)')+'">'+( golden?'✨ Golden':'💼 Working')+'</td>';
+    html+='<td><strong>'+fmtKFn(r.convert)+'</strong></td>';
+    html+='<td style="color:var(--muted)">'+fmtKFn(r.tax)+'</td>';
+    html+='<td style="color:var(--muted)">'+pctFn(eff,1)+'</td>';
+    html+='<td>'+fmtKFn(r.tBal)+'</td>';
+    html+='<td>'+fmtKFn(r.rBal)+'</td>';
+    html+='</tr>';
+  });
+
+  // Totals row
+  var finalTrad=plan.goldRows.length>0?plan.tBalRMD:plan.tBalRet;
+  var finalRoth=plan.goldRows.length>0?plan.rBalRMD:plan.rBalRet;
+  html+='<tr style="font-weight:700;background:var(--navy-pale)">';
+  html+='<td colspan="3" style="color:var(--navy)">Plan total</td>';
+  html+='<td style="color:var(--navy)">'+fmtKFn(totalConvert)+'</td>';
+  html+='<td style="color:var(--navy)">'+fmtKFn(totalTax)+'</td>';
+  html+='<td style="color:var(--navy)">'+pctFn(avgRate,1)+'</td>';
+  html+='<td>'+fmtKFn(finalTrad)+'</td>';
+  html+='<td>'+fmtKFn(finalRoth)+'</td>';
+  html+='</tr>';
+  html+='</tbody></table></div>';
+
+  // Summary callout
+  var goldTotal=plan.goldRows.reduce(function(s,r){return s+r.convert;},0);
+  html+='<div class="alert agrn" style="font-size:.87rem">';
+  html+='<strong>The full picture:</strong> Following this plan moves <strong>'+fmtKFn(totalConvert)+'</strong> to tax-free Roth at an average rate of <strong>'+pctFn(avgRate,1)+'</strong>. ';
+  if(goldTotal>0)html+='The golden window accounts for <strong>'+fmtKFn(goldTotal)+'</strong> of that at a lower rate — often the most efficient conversions because retirement income is lower and bracket room is wider. ';
+  html+='Without conversions, the IRS forces withdrawals as Required Minimum Distributions starting at 73, taxed at your then-current rate plus whatever SS taxation and state taxes apply.';
+  html+='</div>';
+
+  // Fine print
+  html+='<p style="font-size:.78rem;color:var(--muted);margin-top:.7rem;line-height:1.4">Assumes flat income within each phase and constant brackets (IRS adjusts annually for inflation). Growth applied after each conversion. RMDs not modeled — reduce conversion amounts if you plan to take traditional withdrawals during the plan period. <strong>These are illustrations, not a financial plan.</strong> Do not act on these projections without reviewing with a qualified advisor who knows your full situation.</p>';
+  html+='</div>';
+  return html;
+}
+
+
+// ── SENSITIVITY SURFACE CHART ──
+// Single simulation at a grid point; returns Roth advantage normalised by portfolio size
+function simAdvantageForGrid(gv, totalRetR_v, tradBal, rothBal, rothIn, cvtAmt, curAge, leAge, taxableFrac){
+  var sr = Math.max(0, totalRetR_v * taxableFrac);
+  var DRAG = gv * 0.72;
+  var rA = rothBal + rothIn, tA = Math.max(0, tradBal - cvtAmt);
+  var rB = rothBal, tB = tradBal;
+  var rmdA = 0, rmdB = 0;
+  var target = Math.min(leAge, 98);
+  for(var age = curAge; age < target; age++){
+    if(age >= 73){
+      var div = RMDD[Math.min(age,100)] || 6.4;
+      if(tA > 0){ var ra = tA/div; tA -= ra; rmdA += ra*(1-sr); }
+      if(tB > 0){ var rb = tB/div; tB -= rb; rmdB += rb*(1-sr); }
+    }
+    rA *= (1+gv); tA *= (1+gv); rmdA *= (1+DRAG);
+    rB *= (1+gv); tB *= (1+gv); rmdB *= (1+DRAG);
+  }
+  var vA = rA + tA*(1-sr) + rmdA;
+  var vB = rB + tB*(1-sr) + rmdB;
+  var denom = tradBal + rothBal;
+  return denom > 0 ? (vA - vB) / denom : 0;
+}
+
+// Build the HTML shell only (D3 fills it in after DOM insertion)
+function buildSensitivityHTML(){
+  return '<div class="card" style="margin-top:1.25rem">'
+    + '<div class="stitle">📊 How Sensitive Is the Conclusion?</div>'
+    + '<div id="sensExLabel" style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem"></div>'
+    + '<p style="font-size:.88rem;color:var(--muted);margin-bottom:.7rem;line-height:1.55">'
+    + 'This chart tests your conclusion across hundreds of scenarios. '
+    + '<strong>Green</strong> = Roth wins in that scenario. <strong>Amber</strong> = traditional wins. '
+    + 'The dashed line is the tipping point. <strong>Your situation</strong> is the dot — '
+    + 'the further into green, the more confident you can be.</p>'
+    + '<p style="font-size:.83rem;color:var(--muted);margin-bottom:.85rem">If the chart is all one color, try the <span onclick="loadExample(\'borderline\')" style="color:var(--amber);font-weight:700;cursor:pointer;text-decoration:underline">borderline case example</span> to see what a split looks like.</p>'
+    + '<div id="sensChartWrap" style="width:100%;position:relative"></div>'
+
+    + '<div id="sensRobustness" style="margin-top:.75rem"></div>'
+    + '</div>';
+}
+
+// D3 render — called after innerHTML is set
+function renderSensChart(p){
+  var container = document.getElementById('sensChartWrap');
+  if(!container || typeof d3 === 'undefined') return;
+
+  var DARK = document.documentElement.getAttribute('data-theme')==='dark';
+  function tc(l,d){ return DARK ? d : l; }
+
+  // Grid config
+  var N = 25;
+  var gRange = [0.01, 0.13];
+  var rRange = [0.05, 0.45];
+  var gStep = (gRange[1]-gRange[0])/(N-1);
+  var rStep = (rRange[1]-rRange[0])/(N-1);
+  var leAge = p.isCouple && p.leJoint ? p.leJoint : p.le;
+
+  // Use params from calc() directly — computed from live form values at call time.
+  var rothIn = p.rothIn;   // = cvtAmt - cvtTxFed when taxSrc==='inside'
+  var domCvtAmt = p.cvtAmt;
+  var domTradBal = p.tradBal;
+  var domRothBal = p.rothBal;
+
+  // Compute N×N grid
+  var cells = [];
+  var vals = new Float64Array(N*N); // row-major: row 0 = top (highest rVal)
+  var minAdv = Infinity, maxAdv = -Infinity;
+  for(var ri=0; ri<N; ri++){
+    for(var gi=0; gi<N; gi++){
+      var gv = gRange[0] + gi*gStep;
+      var rv = rRange[0] + ri*rStep;
+      var adv = simAdvantageForGrid(gv, rv, p.tradBal, p.rothBal, rothIn,
+                                     p.cvtAmt, p.curAge, leAge, p.taxableFrac);
+      cells.push({gi:gi, ri:ri, gv:gv, rv:rv, adv:adv});
+      vals[(N-1-ri)*N + gi] = adv; // flip for d3.contours (row 0 = top)
+      if(adv < minAdv) minAdv = adv;
+      if(adv > maxAdv) maxAdv = adv;
+    }
+  }
+
+  // Robustness summary
+  var nRoth = cells.filter(function(c){ return c.adv > 0; }).length;
+  var pctRoth = Math.round(nRoth / cells.length * 100);
+  var robustMsg, robustCls;
+  if(pctRoth === 100){ robustMsg = '<strong>All green</strong> — the Roth wins across every growth rate and retirement rate combination tested. The conclusion is extremely robust: even pessimistic assumptions still favor converting.'; robustCls='agrn'; }
+  else if(pctRoth >= 80){ robustMsg = 'Robust: the Roth wins across <strong>'+pctRoth+'%</strong> of the scenario space shown — the conclusion holds even under lower growth or lower future tax rates.'; robustCls='agrn'; }
+  else if(pctRoth >= 55){ robustMsg = 'Moderately robust: the Roth wins in <strong>'+pctRoth+'%</strong> of scenarios. Consider whether the amber zone is plausible for your situation.'; robustCls='anvy'; }
+  else if(pctRoth >= 30){ robustMsg = 'Sensitive: the Roth wins in only <strong>'+pctRoth+'%</strong> of scenarios — the verdict is close and assumptions matter a lot here.'; robustCls='aamb'; }
+  else { robustMsg = 'Traditional wins across most scenarios (<strong>'+(100-pctRoth)+'%</strong> of the space). Keeping the money in traditional and paying later looks like the stronger default.'; robustCls='ared'; }
+
+  var robDiv = document.getElementById('sensRobustness');
+  if(robDiv) robDiv.innerHTML = '<div class="alert '+robustCls+'" style="font-size:.87rem">'+robustMsg+'</div>';
+
+  // SVG dimensions
+  var totalW = Math.min(container.offsetWidth || 520, 620);
+  var margin = {top:22, right:22, bottom:52, left:58};
+  var W = totalW - margin.left - margin.right;
+  var H = Math.round(W * 0.56); // ~16:9 ish
+  var totalH = H + margin.top + margin.bottom;
+
+  d3.select('#sensChartWrap').select('svg').remove();
+  var svg = d3.select('#sensChartWrap').append('svg')
+    .attr('width','100%').attr('height',totalH)
+    .attr('viewBox','0 0 '+totalW+' '+totalH)
+    .attr('preserveAspectRatio','xMidYMid meet');
+
+  // Clip path to keep contour inside plot area
+  var clipId='sc'+(Math.random()*1e6|0);
+  svg.append('defs').append('clipPath').attr('id',clipId)
+    .append('rect').attr('width',W).attr('height',H);
+
+  var g = svg.append('g').attr('transform','translate('+margin.left+','+margin.top+')');
+
+  // Scales
+  var xSc = d3.scaleLinear().domain(gRange).range([0,W]);
+  var ySc = d3.scaleLinear().domain([rRange[1],rRange[0]]).range([0,H]); // inverted
+
+  // Colour scale: diverging around 0
+  var absMax = Math.max(0.001, Math.abs(minAdv), Math.abs(maxAdv));
+  var colSc = d3.scaleSequential()
+    .domain([-absMax, absMax])
+    .interpolator(function(t){
+      if(t < 0.5) return d3.interpolateRgb(tc('#C87A30','#D98A38'),tc('#F5F1EB','#222730'))(t*2);
+      return d3.interpolateRgb(tc('#F5F1EB','#222730'),tc('#1B6B3A','#54C285'))((t-0.5)*2);
+    });
+
+  // Cell size
+  var cW = W/(N-1), cH = H/(N-1);
+
+  // Draw filled rectangles
+  g.selectAll('rect.sc')
+    .data(cells).enter().append('rect').attr('class','sc')
+    .attr('x', function(d){ return xSc(d.gv) - cW/2; })
+    .attr('y', function(d){ return ySc(d.rv) - cH/2; })
+    .attr('width', cW+1).attr('height', cH+1)
+    .attr('fill', function(d){ return colSc(d.adv); });
+
+  // Zero-advantage contour (boundary line) — skip if all one color
+  if(minAdv < 0 && maxAdv > 0) try {
+    var contourGen = d3.contours().size([N,N]).thresholds([0]);
+    var contData = contourGen(vals);
+    var proj = d3.geoTransform({point: function(px,py){
+      var gv2 = gRange[0] + (px/(N-1))*(gRange[1]-gRange[0]);
+      var rv2 = rRange[1] - (py/(N-1))*(rRange[1]-rRange[0]);
+      this.stream.point(xSc(gv2), ySc(rv2));
+    }});
+    g.append('g').attr('clip-path','url(#'+clipId+')').selectAll('path.contour').data(contData).enter().append('path').attr('class','contour')
+      .attr('d', d3.geoPath(proj))
+      .attr('fill','none')
+      .attr('stroke',tc('#1C1C2A','#D5D8DF'))
+      .attr('stroke-width',1.8)
+      .attr('stroke-dasharray','5,4')
+      .attr('opacity',0.7);
+  } catch(e){}
+
+  // Axes
+  g.append('g').attr('transform','translate(0,'+H+')')
+    .attr('color', tc('#3D4451','#A6ABB5'))
+    .call(d3.axisBottom(xSc).tickValues([0.02,0.04,0.06,0.08,0.10,0.12])
+      .tickFormat(function(d){ return Math.round(d*100)+'%'; }))
+    .selectAll('text').style('font-size','11px').style('font-family','DM Sans, sans-serif');
+
+  g.append('g')
+    .attr('color', tc('#3D4451','#A6ABB5'))
+    .call(d3.axisLeft(ySc).tickValues([0.10,0.15,0.20,0.25,0.30,0.35,0.40])
+      .tickFormat(function(d){ return Math.round(d*100)+'%'; }))
+    .selectAll('text').style('font-size','11px').style('font-family','DM Sans, sans-serif');
+
+  // Axis labels
+  g.append('text').attr('x',W/2).attr('y',H+40).attr('text-anchor','middle')
+    .style('font-size','11px').style('fill',tc('#3D4451','#A6ABB5')).style('font-family','DM Sans, sans-serif')
+    .text('Annual investment growth rate');
+  g.append('text').attr('transform','rotate(-90)').attr('x',-H/2).attr('y',-44)
+    .attr('text-anchor','middle').style('font-size','11px').style('fill',tc('#3D4451','#A6ABB5'))
+    .style('font-family','DM Sans, sans-serif').text('Retirement tax rate');
+
+  // All-green annotation
+  if(pctRoth === 100){
+    // Title in upper area — away from dot (which sits at ~58% down)
+    g.append('rect').attr('x',W/2-112).attr('y',H*0.18-18).attr('width',224).attr('height',50).style('stroke','rgba(27,107,58,0.25)').style('stroke-width','1')
+      .attr('rx',8).style('fill',tc('rgba(255,255,255,0.70)','rgba(34,39,48,0.88)'));
+    g.append('text').attr('x',W/2).attr('y',H*0.18).attr('text-anchor','middle')
+      .style('font-size','13px').style('font-weight','700').style('fill',tc('#0E3B20','#A6E4C0'))
+      .style('font-family','DM Sans, sans-serif').text('Roth wins everywhere');
+    g.append('text').attr('x',W/2).attr('y',H*0.18+22).attr('text-anchor','middle')
+      .style('font-size','11px').style('fill',tc('#1B6B3A','#54C285'))
+      .style('font-family','DM Sans, sans-serif').text('across all tested scenarios');
+  }
+
+  // "Roth wins" / "Traditional wins" labels (placed in chart body)
+  var topRoth = cells.filter(function(c){ return c.ri === N-1; })
+    .filter(function(c){ return c.adv > 0; });
+  if(topRoth.length > 0 && pctRoth < 100){
+    var lx = xSc(topRoth[Math.floor(topRoth.length/2)].gv);
+    var ly = ySc(rRange[1]) + 14;
+    g.append('text').attr('x',lx).attr('y',ly).attr('text-anchor','middle')
+      .style('font-size','10px').style('fill',tc('#0E3B20','#A6E4C0')).style('font-weight','700')
+      .style('font-family','DM Sans, sans-serif').text('Roth wins →');
+  }
+
+  // "You are here" dot
+  var dotG = Math.max(gRange[0], Math.min(gRange[1], p.g));
+  var dotR = Math.max(rRange[0], Math.min(rRange[1], p.totalRetR));
+  var dx = xSc(dotG), dy = ySc(dotR);
+  var outside = p.g < gRange[0] || p.g > gRange[1] || p.totalRetR < rRange[0] || p.totalRetR > rRange[1];
+
+  g.append('circle').attr('cx',dx).attr('cy',dy).attr('r',8)
+    .attr('fill','white').attr('opacity',0.9).attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',2);
+  g.append('circle').attr('cx',dx).attr('cy',dy).attr('r',3.5).attr('fill',tc('#1C3A5E','#7DB2EC'));
+
+  // Label: above for all-green (avoids overlap with title text), else smart position
+  var lblDy = (pctRoth===100 || dy > H*0.65) ? -26 : 22;
+  // White pill behind label so dashed line doesn't bleed through
+  var lblW = outside ? 162 : 88;
+  g.append('rect')
+    .attr('x', dx - lblW/2).attr('y', dy + lblDy - 12)
+    .attr('width', lblW).attr('height', 16)
+    .attr('rx', 3).style('fill',tc('rgba(255,255,255,0.78)','rgba(34,39,48,0.88)'));
+  g.append('text').attr('x',dx).attr('y',dy+lblDy).attr('text-anchor','middle')
+    .style('font-size','11px').style('font-weight','700').style('fill',tc('#1C3A5E','#7DB2EC'))
+    .style('font-family','DM Sans, sans-serif')
+    .text(outside ? 'Your situation (outside chart range)' : 'Your situation');
+
+  // Legend strip — bottom-left (always over cream/light area)
+  var lgW = 90, lgH = 9;
+  var lgX = 4, lgY = H - lgH - 4;
+  var lid = 'lgd'+(Math.random()*1e6|0);
+  var defs = svg.append('defs');
+  var lg = defs.append('linearGradient').attr('id',lid).attr('x1','0%').attr('x2','100%');
+  lg.append('stop').attr('offset','0%').attr('stop-color',tc('#C87A30','#D98A38'));
+  lg.append('stop').attr('offset','50%').attr('stop-color',tc('#F5F1EB','#222730'));
+  lg.append('stop').attr('offset','100%').attr('stop-color',tc('#1B6B3A','#54C285'));
+  // White background so legend is readable against any chart color
+  g.append('rect').attr('x',lgX-3).attr('y',lgY-14)
+    .attr('width',lgW+6).attr('height',lgH+18)
+    .attr('fill',tc('white','#2A2F38')).attr('opacity',0.88)
+    .attr('rx',3).attr('stroke','rgba(0,0,0,.08)').attr('stroke-width',0.5);
+  g.append('rect').attr('x',lgX).attr('y',lgY).attr('width',lgW).attr('height',lgH)
+    .attr('fill','url(#'+lid+')').attr('rx',3).attr('stroke',tc('rgba(0,0,0,.1)','rgba(255,255,255,.14)')).attr('stroke-width',0.5);
+  g.append('text').attr('x',lgX).attr('y',lgY-2).style('font-size','9px')
+    .style('fill',tc('#5A3500','#F2CD96')).style('font-family','DM Sans, sans-serif').text('Traditional');
+  g.append('text').attr('x',lgX+lgW).attr('y',lgY-2).attr('text-anchor','end')
+    .style('font-size','9px').style('fill',tc('#0E3B20','#A6E4C0')).style('font-family','DM Sans, sans-serif').text('Roth');
+
+  // Interactive tooltip
+  var tip = d3.select('body').select('.sens-tip');
+  if(tip.empty()) tip = d3.select('body').append('div').attr('class','sens-tip')
+    .style('position','absolute').style('background','rgba(18,18,30,.92)').style('color','white')
+    .style('padding','7px 12px').style('border-radius','8px').style('font-size','12px')
+    .style('font-family','DM Sans, sans-serif').style('pointer-events','none').style('opacity',0)
+    .style('line-height','1.5').style('z-index','9999');
+
+  g.selectAll('rect.hover').data(cells).enter().append('rect').attr('class','hover')
+    .attr('x', function(d){ return xSc(d.gv)-cW/2; }).attr('y', function(d){ return ySc(d.rv)-cH/2; })
+    .attr('width',cW+1).attr('height',cH+1).attr('fill','transparent')
+    .on('mousemove', function(event,d){
+      var verdict = d.adv > 0 ? 'Roth ahead' : 'Traditional ahead';
+      var pctStr = Math.round(Math.abs(d.adv)*100)+'% of portfolio';
+      tip.html('Growth: <strong>'+Math.round(d.gv*100)+'%</strong> &nbsp; Ret. rate: <strong>'+Math.round(d.rv*100)+'%</strong><br>'+verdict+' by ~'+pctStr)
+        .style('left',(event.pageX+14)+'px').style('top',(event.pageY-36)+'px').style('opacity',1);
+    })
+    .on('mouseleave', function(){ tip.style('opacity',0); });
+}
+
+
+// ── WIDOW/WIDOWER TAX CLIFF ──
+function buildWidowCliffHTML(status){
+  if(status !== 'mfj') return '';
+
+  return '<div class="card" style="margin-top:1.25rem;border-left:4px solid #7BAE8B">'
+    +'<div class="stitle">⚠️ A Note for Married Couples: The Widow/Widower Tax Cliff</div>'
+    +'<p style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;line-height:1.65">'
+    +'When a spouse passes, the survivor files as Single — typically starting the very next tax year. '
+    +'The same income that felt manageable under Married (jointly) can become significantly more expensive, almost overnight. '
+    +'Most married couples experience this — it\'s not a rare edge case.'
+    +'</p>'
+    +'<div style="overflow-x:auto;margin-bottom:1rem">'
+    +'<table class="ptbl">'
+    +'<thead><tr><th>What changes</th><th style="text-align:right">Married (jointly)</th><th style="text-align:right">Single</th></tr></thead>'
+    +'<tbody>'
+    +'<tr><td>Standard deduction</td><td style="text-align:right;font-weight:600">$32,200</td><td style="text-align:right;color:var(--danger);font-weight:600">$16,100</td></tr>'
+    +'<tr><td>12% bracket ends at income of</td><td style="text-align:right;font-weight:600">$100,800</td><td style="text-align:right;color:var(--danger);font-weight:600">$50,400</td></tr>'
+    +'<tr><td>22% bracket ends at income of</td><td style="text-align:right;font-weight:600">$211,400</td><td style="text-align:right;color:var(--danger);font-weight:600">$105,700</td></tr>'
+    +'<tr><td>Medicare surcharges (IRMAA) begin at</td><td style="text-align:right;font-weight:600">$218,000</td><td style="text-align:right;color:var(--danger);font-weight:600">$109,000</td></tr>'
+    +'<tr><td>SS hidden tax begins when combined income exceeds</td><td style="text-align:right;font-weight:600">$32,000</td><td style="text-align:right;color:var(--danger);font-weight:600">$25,000</td></tr>'
+    +'</tbody>'
+    +'</table>'
+    +'</div>'
+    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.65">'
+    +'<strong style="color:var(--text)">Why this matters for Roth planning:</strong> Required Minimum Distributions from a large traditional IRA don\'t stop when a spouse dies — they continue for the survivor, now taxed at Single rates. '
+    +'Income that fell comfortably within the 12% or 22% bracket under Married (jointly) can land in a higher bracket, trigger Medicare surcharges, and cause more Social Security to become taxable, all at the same time.'
+    +'</p>'
+    +'<p style="font-size:.88rem;color:var(--muted);line-height:1.65">'
+    +'<strong style="color:var(--text)">What Roth conversions can do:</strong> Converting while both spouses are alive — and filing jointly at wider brackets — reduces the traditional IRA balance that the surviving spouse will eventually draw from at the narrower Single schedule. '
+    +'A surviving spouse inherits Roth assets and can use them completely tax-free, with no Required Minimum Distributions during their lifetime.'
+    +'</p>'
+    +'<div class="alert anvy" style="margin-top:.85rem;font-size:.86rem">'
+    +'This is one of the most underappreciated dimensions of Roth conversion planning for married couples — and one where a qualified advisor who knows your full situation can make a meaningful difference. The numbers above are 2026 federal figures; state rules vary.'
+    +'</div>'
+    +'</div>';
+}
+
+
+
+// ── BREAKEVEN TIMELINE ──
+function buildBeTimeline(curAge,beAge,leAge,survBE,isCouple){
+  var span=leAge-curAge; if(span<=0) return '';
+  var track,ages,note;
+  if(!beAge||beAge>leAge){
+    track='<div class="be-track"><div class="be-all-amb" style="width:100%"></div></div>';
+    ages='<div class="be-ages"><span class="be-pin" style="left:0;transform:none;color:var(--muted)">Age '+curAge+'<br>now</span>'
+        +'<span class="be-pin" style="right:0;left:auto;transform:none;text-align:right;color:var(--muted)">Age '+leAge+'<br>est. lifespan</span></div>';
+    note='<div class="be-note">Traditional stays ahead throughout estimated lifespan</div>';
+  } else if(beAge<=curAge){
+    track='<div class="be-track"><div class="be-all-grn" style="width:100%"></div></div>';
+    ages='<div class="be-ages"><span class="be-pin" style="left:0;transform:none;color:var(--muted)">Age '+curAge+'<br>now</span>'
+        +'<span class="be-pin" style="right:0;left:auto;transform:none;text-align:right;color:var(--muted)">Age '+leAge+'<br>est. lifespan</span></div>';
+    note='<div class="be-note" style="color:var(--success);font-weight:600">Roth wins from day one</div>';
+  } else {
+    var wPct=(beAge-curAge)/span*100;
+    var gPct=(leAge-beAge)/span*100;
+    var winYrs=leAge-beAge;
+    track='<div class="be-track">'
+      +'<div class="be-wait" style="width:'+wPct+'%"></div>'
+      +'<div class="be-win" style="width:'+gPct+'%"></div>'
+      +'</div>';
+    ages='<div class="be-ages">'
+      +'<span class="be-pin" style="left:0;transform:none;color:var(--muted)">Age '+curAge+'<br>now</span>'
+      +'<span class="be-pin" style="left:'+wPct+'%;color:var(--success);font-weight:700">Age '+beAge+'<br>Roth wins</span>'
+      +'<span class="be-pin" style="right:0;left:auto;transform:none;text-align:right;color:var(--muted)">Age '+leAge+'<br>lifespan</span>'
+      +'</div>';
+    var survStr=survBE?' &nbsp;·&nbsp; <strong>'+Math.round(survBE*100)+'%</strong> chance of reaching it':'';
+    note='<div class="be-note"><strong style="color:var(--success)">'+winYrs+' yrs</strong> of Roth winning'+survStr+'</div>';
+  }
+  return '<div class="be-tl">'+track+ages+note+'</div>';
+}
+
+// ── TAX COMPOSITION BAR ──
+function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName){
+  if(!cvtTxTot) return '';
+  var segs='',lbls='';
+  function seg(w,bg,label,dotClr){
+    if(w<0.5) return;
+    segs+='<div style="width:'+w+'%;background:'+bg+'"></div>';
+    lbls+='<span class="tx-lbl"><span class="tx-dot" style="background:'+bg+'"></span>'+label+'</span>';
+  }
+  seg(cvtTxFed/cvtTxTot*100,'#1C3A5E','Federal'+(torpedoInc>0?' <em style=\'font-style:normal;opacity:.8\'>(incl. SS hidden tax)</em>':''));
+  seg(cvtTxSt/cvtTxTot*100,'#B06000',stName||'State');
+  seg(niitCost/cvtTxTot*100,'#7B5EA7','NIIT');
+  return '<div class="tx-wrap"><div class="tx-bar">'+segs+'</div><div class="tx-lbls">'+lbls+'</div></div>';
+}
+
+
+// ── HERO VISUAL STATES ──
+var VIS_STATES = {
+  traditional: {
+    // 300px green + 88px amber (min for text fit). Trad: 74%/26%. Roth: 71%/29%.
+    tradGreen:212, tradAmberH:88,
+    tradPct:'~74%', tradGreenAmt:'$222K',
+    tradAmberPct:'~26%', tradAmberAmt:'$78K', tradAmberLbl:'to IRS',
+    tradSub:'Only federal tax owed in retirement — state exempts IRA withdrawals',
+    rothGreen:208, rothAmberH:92,
+    rothGreenPct:'~71%', rothGreenAmt:'$213K',
+    rothAmberPct:'~29%', rothAmberAmt:'$87K',
+    rothSub:'Paid more to convert than you\'d ever owe staying traditional',
+    caption:'This example state exempts IRA withdrawals from state tax — converting means paying tax that traditional avoids here',
+    savingsLine:'In this example, traditional saves ~$9K — the state exemption changes the math.',
+    savingsCls:'hv-damb', winSide:'trad', exKey:'single'
+  },
+  borderline: {
+    // Nearly identical bars. 75%/25% each.
+    tradGreen:212, tradAmberH:88,
+    tradPct:'~75%', tradGreenAmt:'$225K',
+    tradAmberPct:'~25%', tradAmberAmt:'$75K', tradAmberLbl:'to IRS',
+    tradSub:'Tax cost nearly identical either way',
+    rothGreen:212, rothAmberH:88,
+    rothGreenPct:'~75%', rothGreenAmt:'$226K',
+    rothAmberPct:'~25%', rothAmberAmt:'$74K',
+    rothSub:'Marginally less tax — but the difference is essentially a toss-up',
+    caption:'Growth rate, lifespan, and state taxes decide it at this margin',
+    savingsLine:'$74K vs $75K in taxes on this $300K IRA — a genuine toss-up.',
+    savingsCls:'hv-dneu', winSide:null, exKey:'borderline'
+  },
+  roth: {
+    // Roth green noticeably taller. 66%/34% trad, 78%/22% roth.
+    tradGreen:194, tradAmberH:106,
+    tradPct:'~66%', tradGreenAmt:'$198K',
+    tradAmberPct:'~34%', tradAmberAmt:'$102K', tradAmberLbl:'to IRS',
+    tradSub:'Large tax owed on every withdrawal — and it compounds too',
+    rothGreen:212, rothAmberH:88,
+    rothGreenPct:'~78%', rothGreenAmt:'$234K',
+    rothAmberPct:'~22%', rothAmberAmt:'$66K',
+    rothSub:'More take-home — grows tax-free from here',
+    caption:'Locks in a known rate — more take-home, no forced withdrawals ever',
+    savingsLine:'Converting saves ~$36K in total taxes vs keeping traditional (on a $300K IRA)',
+    savingsCls:'hv-dgrn', winSide:'roth', exKey:'couple'
+  }
+};
+function setVisState(name){
+  var s=VIS_STATES[name]; if(!s) return;
+  // Animate bars + update all labels
+  function upd(id,val,prop){var el=document.getElementById(id);if(el&&val!==undefined){if(prop)el.style[prop]=val+'px';else el.textContent=val;}}
+  upd('hvTradGreen',s.tradGreen,'height');
+  upd('hvTradAmber',s.tradAmberH,'height');
+  upd('hvRothGreen',s.rothGreen,'height');
+  upd('hvRothAmber',s.rothAmberH,'height');
+  upd('hvTradGreenAmt',s.tradGreenAmt);
+  upd('hvTradAmberAmt',s.tradAmberAmt);
+  upd('hvRothGreenAmt',s.rothGreenAmt);
+  upd('hvRothAmberAmt',s.rothAmberAmt);
+  upd('hvTradPct',s.tradPct);
+  upd('hvTradAmberPct',s.tradAmberPct);
+  upd('hvRothGreenPct',s.rothGreenPct);
+  upd('hvRothAmberPct',s.rothAmberPct);
+  upd('hvTradAmberLbl',s.tradAmberLbl);
+  upd('hvTradSub',s.tradSub);
+  upd('hvRothSub',s.rothSub);
+  upd('hvCaption',s.caption);
+  // Highlight winning green section
+  var tradG=document.getElementById('hvTradGreen');
+  var rothG=document.getElementById('hvRothGreen');
+  if(tradG) tradG.classList.toggle('hv-win', s.winSide==='trad');
+  if(rothG) rothG.classList.toggle('hv-win', s.winSide==='roth');
+  document.querySelectorAll('.vt-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.vis===name);
+  });
+  // Pre-select the matching example button (no data load, no scroll)
+  document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
+    b.classList.toggle('active', b.dataset.ex===s.exKey);
+  });
+  // Update dollar callout
+  var dl=document.getElementById('hvDollar');
+  if(dl&&s.savingsLine){
+    var st=document.getElementById('hvSavingsText');
+    if(st) st.textContent=s.savingsLine;
+    dl.className='hv-dollar '+(s.savingsCls||'hv-dneu')+' py-pad';
+    dl.style.cssText='padding:.65rem 1rem';
+  }
+}
+
+
+// ── CLEAR ALL INPUTS ──
+function clearAllInputs(){
+  if(!confirm('Clear all inputs and start fresh? This also removes your saved data from this browser.')) return;
+  // Reset fields to defaults
+  function sv(id,v){var el=document.getElementById(id);if(el)el.value=v;}
+  sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
+  sv('sex','female'); sv('spouseAge',58); sv('spouseSex','male');
+  sv('seniorDeduction',0); sv('stateCode','');
+  sv('income',72000); sv('ssIncome',24000); sv('niiIncome',0);
+  sv('convertAmt',0); sv('tradBal',280000); sv('rothBal',40000); sv('iraBasis',0);
+  sv('growthRate',7); sv('retRate',22);
+  sv('taxSource','outside'); sv('medicareStatus','one'); sv('partD','yes');
+  // Sync growth rate display
+  var gd=document.getElementById('gDisp'), gv=document.getElementById('gValDisp');
+  if(gd) gd.textContent='7%'; if(gv) gv.textContent='7%';
+  // Clear localStorage
+  if(_canStore) try{ localStorage.removeItem('rg_v1'); }catch(e){}
+  // Clear example active states
+  document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
+    b.classList.remove('active');
+  });
+  // Hide example banner
+  var banner=document.getElementById('exBanner');
+  if(banner) banner.style.display='none';
+  // Reset visual toggle to default (roth wins state)
+  setVisState('roth');
+  // Recalculate
+  calc();
+  // Scroll to top
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── EXAMPLE PROFILES ──
+var PROFILES = {
+  couple: {
+    label: 'Near-retiree couple in Ohio',
+    stats: 'Ages 63 & 61 · Married · $380K IRA · Ohio',
+    context: 'Ohio taxes IRA withdrawals in retirement — I flag the state impact in your results.',
+    f: {
+      currentAge:63, retirementAge:68, filingStatus:'mfj',
+      sex:'female', spouseAge:61, spouseSex:'male',
+      seniorDeduction:0, stateCode:'OH',
+      income:72000, ssIncome:24000, niiIncome:0,
+      convertAmt:20000, tradBal:380000, rothBal:25000, iraBasis:0,
+      growthRate:7, retRate:22,
+      taxSource:'outside', medicareStatus:'none', partD:'yes'
+    }
+  },
+  single: {
+    label: 'Single professional in Illinois',
+    stats: 'Age 57 · Single · $320K IRA · Illinois',
+    context: 'Illinois doesn\'t tax IRA withdrawals in retirement — a nuance I flag automatically in your results.',
+    f: {
+      currentAge:57, retirementAge:65, filingStatus:'single',
+      sex:'female', spouseAge:null, spouseSex:null,
+      seniorDeduction:0, stateCode:'IL',
+      income:110000, ssIncome:0, niiIncome:0,
+      convertAmt:18000, tradBal:320000, rothBal:45000, iraBasis:0,
+      growthRate:7, retRate:24,
+      taxSource:'outside', medicareStatus:'none', partD:'yes'
+    }
+  },
+  borderline: {
+    label: 'Late converter in Texas — borderline case',
+    stats: 'Age 68 · Single · $175K IRA',
+    context: 'Converting at 24% but expecting 18% in retirement — check the sensitivity chart for the close-call boundary.',
+    f: {
+      currentAge:68, retirementAge:72, filingStatus:'single',
+      sex:'male', spouseAge:null, spouseSex:null,
+      seniorDeduction:0, stateCode:'TX',
+      income:105000, ssIncome:0, niiIncome:0,
+      convertAmt:22000, tradBal:175000, rothBal:0, iraBasis:0,
+      growthRate:6, retRate:18,
+      taxSource:'inside', medicareStatus:'one', partD:'yes'
+    }
+  }
+};
+
+function loadExample(name){
+  var p=PROFILES[name]; if(!p) return;
+  var f=p.f;
+  function setVal(id,v){ var el=$(id); if(el&&v!==null&&v!==undefined) el.value=v; }
+  setVal('currentAge',f.currentAge); setVal('retirementAge',f.retirementAge);
+  setVal('filingStatus',f.filingStatus); setVal('sex',f.sex);
+  setVal('seniorDeduction',f.seniorDeduction); setVal('stateCode',f.stateCode);
+  setVal('income',f.income); setVal('ssIncome',f.ssIncome); setVal('niiIncome',f.niiIncome);
+  setVal('convertAmt',f.convertAmt); setVal('tradBal',f.tradBal);
+  setVal('rothBal',f.rothBal); setVal('iraBasis',f.iraBasis);
+  setVal('growthRate',f.growthRate); setVal('retRate',f.retRate);
+  setVal('taxSource',f.taxSource); setVal('medicareStatus',f.medicareStatus);
+  setVal('partD',f.partD);
+  // Update spouse fields (shown by calc() based on status)
+  if(f.spouseAge) setVal('spouseAge',f.spouseAge);
+  if(f.spouseSex) setVal('spouseSex',f.spouseSex);
+  // Sync growth rate displays
+  var gd=document.getElementById('gDisp'),gv=document.getElementById('gValDisp');
+  if(gd) gd.textContent=f.growthRate+'%';
+  if(gv) gv.textContent=f.growthRate+'%';
+  // Active state on example buttons
+  document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
+    b.classList.toggle('active', b.dataset.ex===name);
+  });
+  // Sync hero visual toggle (without triggering loadExample again)
+  var visMap={couple:'roth',borderline:'borderline',single:'traditional'};
+  var visName=visMap[name];
+  if(visName){
+    var s=VIS_STATES[visName];
+    if(s){
+      var tg=document.getElementById('hvTradGreen'),ta=document.getElementById('hvTradAmber'),rg=document.getElementById('hvRothGreen');
+      if(tg)tg.style.height=s.tradGreen+'px';
+      if(ta)ta.style.height=s.tradAmberH+'px';
+      if(rg)rg.style.height=s.rothGreen+'px';
+      function upd2(id,val,prop){var el=document.getElementById(id);if(el&&val!==undefined){if(prop)el.style[prop]=val;else el.textContent=val;}}
+      upd2('hvTradGreen',s.tradGreen+'px','height'); upd2('hvTradAmber',s.tradAmberH+'px','height');
+      upd2('hvRothGreen',s.rothGreen+'px','height'); upd2('hvRothAmber',s.rothAmberH+'px','height');
+      upd2('hvTradGreenAmt',s.tradGreenAmt); upd2('hvTradAmberAmt',s.tradAmberAmt);
+      upd2('hvRothGreenAmt',s.rothGreenAmt); upd2('hvRothAmberAmt',s.rothAmberAmt);
+      upd2('hvTradPct',s.tradPct); upd2('hvTradAmberPct',s.tradAmberPct);
+      upd2('hvRothGreenPct',s.rothGreenPct); upd2('hvRothAmberPct',s.rothAmberPct);
+      upd2('hvTradAmberLbl',s.tradAmberLbl); upd2('hvTradSub',s.tradSub);
+      upd2('hvRothSub',s.rothSub); upd2('hvCaption',s.caption);
+      document.querySelectorAll('.vt-btn').forEach(function(b){b.classList.toggle('active',b.dataset.vis===visName);});
+      var tG2=document.getElementById('hvTradGreen'),rG2=document.getElementById('hvRothGreen');
+      if(tG2)tG2.classList.toggle('hv-win',s.winSide==='trad');
+      if(rG2)rG2.classList.toggle('hv-win',s.winSide==='roth');
+      var dl2=document.getElementById('hvDollar');
+      if(dl2&&s.savingsLine){var st2=document.getElementById('hvSavingsText');if(st2)st2.textContent=s.savingsLine;dl2.className='hv-dollar '+(s.savingsCls||'hv-dneu');dl2.style.cssText='padding:.65rem 1rem';}
+    }
+  }
+  // Show banner
+  var banner=document.getElementById('exBanner');
+  var bannerText=document.getElementById('exBannerText');
+  if(banner){ banner.style.display='flex'; }
+  if(bannerText) bannerText.innerHTML=
+    (p.stats?'<span class="ex-stats">'+p.stats+'</span>':'')
+    +(p.context?'<span class="ex-context">'+p.context+'</span>':'');
+  // Scroll to inputs and calculate
+  _activeExample = f;  // Pass data directly to calc(), bypassing DOM reads
+  // Scroll to top of results so user reads verdict first
+  setTimeout(function(){
+    var target=document.getElementById('resultsWrap');
+    if(target){
+      var hdrH=(document.querySelector('.site-header')||{offsetHeight:60}).offsetHeight||60;
+      window.scrollTo({top:Math.max(0,target.getBoundingClientRect().top+window.scrollY-hdrH-16),behavior:'smooth'});
+    }
+  }, 80);
+  calc();
+  _activeExample = null;
+}
+
+function clearExample(){
+  // Reset to original defaults
+  function sv(id,v){ var el=document.getElementById(id); if(el) el.value=v; }
+  sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
+  sv('sex','female'); sv('seniorDeduction',0); sv('stateCode','');
+  sv('income',72000); sv('ssIncome',24000); sv('niiIncome',0);
+  sv('convertAmt',20000); sv('tradBal',280000); sv('rothBal',40000); sv('iraBasis',0);
+  sv('growthRate',7); sv('retRate',22);
+  sv('taxSource','outside'); sv('medicareStatus','one'); sv('partD','yes');
+  var gd=document.getElementById('gDisp'),gv=document.getElementById('gValDisp');
+  if(gd) gd.textContent='7%'; if(gv) gv.textContent='7%';
+  document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
+    b.classList.remove('active');
+  });
+  var banner=document.getElementById('exBanner');
+  if(banner) banner.style.display='none';
+  calc();
+}
+
+
+// ── INPUT PERSISTENCE ──
+var INPUT_FIELDS = ['currentAge','retirementAge','filingStatus','sex',
+  'spouseAge','spouseSex','seniorDeduction','stateCode',
+  'income','ssIncome','niiIncome','convertAmt','tradBal',
+  'rothBal','iraBasis','growthRate','retRate',
+  'taxSource','medicareStatus','partD'];
+
+function saveInputs(){
+  try{
+    var saved={};
+    INPUT_FIELDS.forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) saved[id]=el.value;
+    });
+    if(_canStore) localStorage.setItem('rg_v1', JSON.stringify(saved));
+  }catch(e){}
+}
+
+function loadSavedInputs(){
+  try{
+    var saved=_canStore?JSON.parse(localStorage.getItem('rg_v1')||'{}'):{};
+    if(!saved) return false;
+    INPUT_FIELDS.forEach(function(id){
+      var el=document.getElementById(id);
+      if(el && saved[id]!==undefined) el.value=saved[id];
+    });
+    // Sync growth rate slider display
+    var g=saved.growthRate;
+    if(g){
+      var gd=document.getElementById('gDisp'), gv=document.getElementById('gValDisp');
+      if(gd) gd.textContent=g+'%';
+      if(gv) gv.textContent=g+'%';
+    }
+    return true;
+  }catch(e){ return false; }
+}
+
+let myChart=null;
+function calc(){
+
+  var _ae = _activeExample;
+  function _rv(id){ var e=document.getElementById(id); return e?e.value:''; }
+  function _rf(id){ return parseFloat(_rv(id))||0; }
+  const curAge   = _ae ? +_ae.currentAge      : (parseInt(_rv('currentAge'))||60);
+  const retAge   = _ae ? +_ae.retirementAge   : (parseInt(_rv('retirementAge'))||67);
+  const status   = _ae ? _ae.filingStatus     : (_rv('filingStatus')||'single');
+  const sex      = _ae ? _ae.sex              : (_rv('sex')||'female');
+  const income   = _ae ? +_ae.income          : _rf('income');
+  const ss       = _ae ? +_ae.ssIncome        : _rf('ssIncome');
+  const cvtAmt   = _ae ? +_ae.convertAmt      : _rf('convertAmt');
+  const tradBal  = _ae ? +_ae.tradBal         : _rf('tradBal');
+  const rothBal  = _ae ? +_ae.rothBal         : _rf('rothBal');
+
+  // ── PRO-RATA / IRA BASIS ──
+  const basis       = Math.min(_ae?+_ae.iraBasis:_rf('iraBasis'), tradBal);
+  const taxableFrac = tradBal > 0 ? Math.max(0, Math.min(1, (tradBal - basis) / tradBal)) : 1;
+  const taxableCvt  = cvtAmt * taxableFrac;
+  const basisCvt    = cvtAmt - taxableCvt;
+  const g        = _ae ? +_ae.growthRate/100   : (parseFloat(_rv('growthRate'))/100||0.07);
+  const retRate  = _ae ? +_ae.retRate/100      : (parseFloat(_rv('retRate'))/100||0.22);
+  const taxSrc   = _ae ? _ae.taxSource         : _rv('taxSource');
+  const nSr      = _ae ? +_ae.seniorDeduction  : (parseInt(_rv('seniorDeduction'))||0);
+  const medSt    = _ae ? _ae.medicareStatus    : _rv('medicareStatus');
+  const inclD    = (_ae ? _ae.partD : _rv('partD'))==='yes';
+  const nMed     = medSt==='two'?2:medSt==='one'?1:0;
+  const stateCode= _ae ? _ae.stateCode         : _rv('stateCode');
+  const stD      = ST[stateCode]||{n:'',cr:0,ex:false,note:''};
+  const isCouple = (status==='mfj'||status==='mfs');
+  const spFields = document.getElementById('spouseFields');
+  if(spFields) spFields.style.display = isCouple ? 'block' : 'none';
+  const spouseAge= isCouple ? (_ae?+_ae.spouseAge:(parseInt(_rv('spouseAge'))||60)) : null;
+  const spouseSex= isCouple ? ($('spouseSex').value) : null;
+
+  // Update helper displays
+  const rateEl=$('rateEstTbl'); if(rateEl) rateEl.innerHTML=buildRateTable(status);
+  // ── SS hint: clarify combined total for married couples ──
+  const ssHintEl=$('ssHint');
+  if(ssHintEl){
+    ssHintEl.textContent=(status==='mfj'||status==='mfs')
+      ?'Combined total for both spouses · Enter $0 if not yet receiving'
+      :'Enter your total annual benefit · Enter $0 if not yet receiving';
+  }
+
+  const snEl=$('stateRetNote');
+  if(snEl){
+    if(stD.n && stD.ex)
+      snEl.innerHTML='<span style="color:var(--success);font-size:.84rem">'+stD.note+'</span>';
+    else if(stD.n && stD.cr>0)
+      snEl.innerHTML='<span style="color:var(--muted);font-size:.84rem">'+stD.note+'</span>';
+    else snEl.innerHTML='';
+  }
+
+  // ── SS TORPEDO ──
+  const ssBase    = calcTaxableSS(ss, income,        status);
+  const ssWith    = calcTaxableSS(ss, income+taxableCvt, status);
+  const torpedoInc= Math.max(0, ssWith - ssBase);
+
+  // ── AGI / TAXABLE INCOME ──
+  const agiBase = income + ssBase;
+  const agiWith = income + taxableCvt + ssWith;
+  const std     = STDD[status];
+  const srD     = seniorDed(agiBase, status, nSr);
+  const srDW    = seniorDed(agiWith, status, nSr);
+  const tiBase  = Math.max(0, agiBase - std - srD);
+  const tiWith  = Math.max(0, agiWith - std - srDW);
+
+  // ── FEDERAL TAX ──
+  const txOut     = calcTax(tiBase, status);
+  const txIn      = calcTax(tiWith, status);
+  const cvtTxFed  = txIn - txOut;
+
+  // Extra federal tax attributable to the torpedo (approximation)
+  const tiWithNoTorpedo = Math.max(0, agiWith - torpedoInc - std - srDW);
+  const txInNoTorpedo   = calcTax(tiWithNoTorpedo, status);
+  const torpedoTax      = Math.max(0, txIn - txInNoTorpedo);
+
+  // ── STATE TAX ──
+  const cvtTxSt  = taxableCvt * stD.cr;
+
+  // ── NIIT (3.8% on net investment income when MAGI > threshold) ──
+  const nii      = parseFloat($('niiIncome').value)||0;
+  const niitThr  = {single:200000,mfj:250000,mfs:125000,hoh:200000}[status]||200000;
+  const niitBase = nii>0 ? Math.max(0,Math.min(nii,agiBase-niitThr))*0.038 : 0;
+  const niitWith = nii>0 ? Math.max(0,Math.min(nii,agiWith-niitThr))*0.038 : 0;
+  const niitCost = Math.max(0,niitWith-niitBase);
+
+  const cvtTxTot = cvtTxFed + cvtTxSt + niitCost;
+  const effR     = cvtAmt > 0 ? cvtTxTot / cvtAmt : 0;
+
+  // State rate on future IRA withdrawals (0 if state exempts retirement income)
+  const stRetR    = stD.ex ? 0 : stD.cr;
+  const totalRetR = retRate + stRetR;
+
+  const margA   = margR(tiWith, status);
+  const {room:brRoom, cur:curBR} = roomTo(tiBase, status);
+  const nxtBR   = BRAX[status].find(b=>b.r>curBR)?.r ?? .37;
+  const rothIn  = taxSrc==='inside' ? Math.max(0, cvtAmt-cvtTxFed) : cvtAmt;
+
+  // ── IRMAA (MAGI = AGI including taxable SS) ──
+  const iSt      = status==='hoh' ? 'single' : status;
+  const magiBase = agiBase;   // same as agiBase; correct for pro-rata
+  const magiWith = agiWith;   // same as agiWith; correct for pro-rata
+  const tBefore  = irmaaT(magiBase, iSt);
+  const tAfter   = irmaaT(magiWith, iSt);
+  const tCrossed = tAfter > tBefore;
+  function irmaaYrPP(t){ return (ITIERS[t].B - ITIERS[0].B)*12 + (inclD ? ITIERS[t].D*12 : 0); }
+  const irmDiffPP  = nMed>0 ? irmaaYrPP(tAfter)-irmaaYrPP(tBefore) : 0;
+  const irmDiffTot = irmDiffPP * nMed;
+  const iThresh  = iSt==='mfj' ? ITHR.mfj : ITHR.single;
+  let irmRoomNote='', avoidNote='';
+  if(nMed>0 && tAfter<5){
+    const nxt=iThresh[tAfter+1];
+    if(nxt && nxt-magiWith>0 && nxt-magiWith<60000)
+      irmRoomNote='You have <strong>'+fmt(nxt-magiWith)+'</strong> of headroom before the next Medicare tier. Converting any more this year could trigger additional surcharges in 2028.';
+  }
+  if(nMed>0 && tCrossed){
+    const safe=iThresh[tAfter]-magiBase;
+    if(safe>0) avoidNote=' To stay below this threshold, convert no more than <strong>'+fmt(safe)+'</strong>.';
+  }
+
+  // ── BUILD TAX PANEL HTML (precomputed fragments to avoid nested template issues) ──
+  let ssSectionHtml = '';
+  if(ss > 0){
+    const piBase  = income + ss*0.5;
+    const piWith  = income + cvtAmt + ss*0.5;
+    let torpedoAlert = '';
+    if(torpedoInc > 0){
+      torpedoAlert =
+        '<div class="alert ared" style="padding:.7rem .9rem;font-size:.84rem">'
+        + '<strong>Hidden tax zone!</strong> The conversion pulls <strong>'+fmt(torpedoInc)+'</strong> more'
+        + ' of your Social Security into taxable income'
+        + ' (provisonal income crosses the '+( status==='mfj'?'$44,000':'$34,000')+'+ threshold).'
+        + ' Extra federal tax from the torpedo: ~<strong>'+fmt(Math.round(torpedoTax))+'</strong>.'
+        + ' I\'ve already included that in the federal conversion tax cost below.</div>';
+    }
+    const ssDeltaSpan = torpedoInc > 0
+      ? ' <span style="color:var(--danger);font-size:.8rem">(+'+fmt(torpedoInc)+' more)</span>'
+      : '';
+    ssSectionHtml =
+      '<div class="tsubhead">Social Security Taxation</div>'
+      +'<div class="trow"><span class="tl">Annual SS benefit</span><span class="tv">'+fmt(ss)+'</span></div>'
+      +'<div class="trow"><span class="tl">Combined income (without conversion)</span><span class="tv">'+fmt(piBase)+'</span></div>'
+      +'<div class="trow"><span class="tl">Combined income (with conversion)</span><span class="tv">'+fmt(piWith)+'</span></div>'
+      +'<div class="trow"><span class="tl">Taxable SS (w/o conversion)</span><span class="tv">'+fmt(ssBase)+'</span></div>'
+      +'<div class="trow"><span class="tl">Taxable SS (with conversion)</span><span class="tv">'+fmt(ssWith)+ssDeltaSpan+'</span></div>'
+      + torpedoAlert
+      +'<div class="tsep"></div>';
+  }
+
+  let stateSectionHtml = '';
+  if(stD.cr > 0){
+    let stateNote = '';
+    if(stD.ex){
+      stateNote =
+        '<div class="alert agrn" style="padding:.7rem .9rem;font-size:.84rem;margin-top:6px">'
+        +'<strong>Heads up:</strong> '+stD.n+' exempts IRA withdrawals in retirement. '
+        +'You pay state tax on the conversion today but owe <em>nothing</em> when you '
+        +'eventually withdraw from a traditional IRA later. This tilts the math against converting.</div>';
+    } else {
+      stateNote = '<div style="font-size:.82rem;color:var(--muted);margin-top:4px">'+stD.note+'</div>';
+    }
+    stateSectionHtml =
+      '<div class="tsep"></div>'
+      +'<div class="tsubhead">State Tax ('+stD.n+')</div>'
+      +'<div class="trow"><span class="tl">State tax on conversion (~'+pct(stD.cr,1)+' marginal)</span><span class="tv">'+fmt(cvtTxSt)+'</span></div>'
+      + stateNote
+      +'<div class="tsep"></div>'
+      +(niitCost>0?'<div class="trow"><span class="tl">NIIT (3.8% on investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')+'<div class="trow tgrand"><span class="tl">Total tax cost (all components)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'
+      +'<div class="trow"><span class="tl">True effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>';
+  } else {
+    stateSectionHtml =
+      (niitCost>0?'<div class="tsep"></div>'+'<div class="tsubhead">Federal Surcharge</div>'+'<div class="trow"><span class="tl">NIIT (3.8% on net investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>'+'<div class="trow tgrand"><span class="tl">Total tax cost (federal + NIIT)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'+'<div class="trow"><span class="tl">True effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>':'')
+      +'<div class="trow"><span class="tl">Effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>';
+  }
+
+  const taxSrcRow = taxSrc==='inside'
+    ? '<div class="trow"><span class="tl">Amount actually entering Roth</span><span class="tv">'+fmt(rothIn)+'</span></div>'
+    : '';
+
+  const brTip = (brRoom>0 && brRoom<120000)
+    ? '<div class="btip">💡 <strong>Bracket room:</strong> You can convert <strong>'+fmt(brRoom)+'</strong> more before crossing into the '+pct(nxtBR,0)+' bracket — still at your current '+pct(margA,0)+' federal rate.</div>'
+    : '';
+
+  const exemptTip = (stD.cr>0 && stRetR===0)
+    ? '<div class="btip" style="border-color:#9ECFB2;background:var(--sbg);color:var(--ink-green)"><strong>State exemption note:</strong> Since '+stD.n+' will not tax your traditional IRA withdrawals in retirement, you are paying state tax today that you never owe on the traditional IRA — which tilts the math against converting.</div>'
+    : '';
+
+  const ssRow = ss>0
+    ? '<div class="trow"><span class="tl">Taxable Social Security</span><span class="tv">+'+fmt(ssWith)+'</span></div>'
+    : '';
+  const srRow = srDW>0
+    ? '<div class="trow"><span class="tl">Senior deduction (age 65+)</span><span class="tv">−'+fmt(srDW)+'</span></div>'
+    : '';
+
+  if(cvtAmt > 0){
+    $('taxPanel').innerHTML =
+      ssSectionHtml
+      +(basis>0&&cvtAmt>0?'<div class="tsubhead">After-Tax Contribution Breakdown</div>'+'<div class="trow"><span class="tl">After-tax basis in IRA</span><span class="tv">'+fmt(basis)+'</span></div>'+'<div class="trow"><span class="tl">Taxable fraction of conversion</span><span class="tv">'+Math.round(taxableFrac*1000)/10+'%</span></div>'+'<div class="trow"><span class="tl">Taxable conversion amount</span><span class="tv">'+fmt(taxableCvt)+'</span></div>'+'<div class="trow"><span class="tl">Basis returned tax-free</span><span class="tv">'+fmt(basisCvt)+'</span></div>'+'<div class="tsep"></div>':'')
+      +'<div class="tsubhead">Federal Income Tax</div>'
+      +'<div class="trow"><span class="tl">Wages/other income</span><span class="tv">'+fmt(income)+'</span></div>'
+      + ssRow
+      +'<div class="trow"><span class="tl">Standard deduction (2026)</span><span class="tv">−'+fmt(std)+'</span></div>'
+      + srRow
+      +'<div class="trow"><span class="tl">Federal tax without conversion</span><span class="tv">'+fmt(txOut)+'</span></div>'
+      +'<div class="trow"><span class="tl">Federal tax with conversion</span><span class="tv">'+fmt(txIn)+'</span></div>'
+      +'<div class="trow ttotal"><span class="tl">Federal conversion tax cost</span><span class="tv">'+fmt(cvtTxFed)+'</span></div>'
+      + stateSectionHtml
+      + taxSrcRow
+      + brTip
+      + exemptTip;
+  } else {
+    $('taxPanel').innerHTML = '<div style="font-size:.9rem;color:var(--muted)">Enter a conversion amount above to see the full breakdown.</div>';
+  }
+
+  // ── OPTIMIZER PANEL (needs all SS/IRMAA vars) ──
+  (function(){
+    var optTargets=computeOptTargets(income,ss,status,STDD[status],nSr,nMed,taxableFrac);
+    var optEl=document.getElementById('optimizerPanel');
+    if(optEl)optEl.innerHTML=buildOptimizerPanel(optTargets,fmt,pct,nMed,ss,cvtAmt);
+  })();
+
+  if(cvtAmt<=0){
+    $('resultsWrap').innerHTML='<div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Enter your IRA or 401(k) balance and annual income in the form above</span></div><div class="ph-step"><span class="ph-num">2</span><span>Set a conversion amount — not sure where to start? <button class="ph-try" onclick="document.getElementById(\'convertAmt\').value=20000;document.getElementById(\'convertAmt\').dispatchEvent(new Event(\'input\'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">3</span><span>Your personalized analysis appears here instantly</span></div></div></div>';
+    return;
+  }
+
+  // ── PROJECTION SIMULATION ──
+  let rA=rothBal+rothIn, tA=Math.max(0,tradBal-cvtAmt);
+  let rB=rothBal,        tB=tradBal;
+  let rmdA=0,rmdB=0;
+  const DRAG=g*.72, simRetR=totalRetR*taxableFrac;  // taxable fraction applies equally in retirement
+  const ages=[],vA=[],vB=[];
+  const maxAge=Math.min(100,retAge+38);
+  for(let age=curAge;age<=maxAge;age++){
+    vA.push(rA+tA*(1-simRetR)+rmdA);
+    vB.push(rB+tB*(1-simRetR)+rmdB);
+    ages.push(age);
+    if(age>=73){
+      const div=RMDD[Math.min(age,100)]??6.4;
+      if(tA>0){const r=tA/div;tA-=r;rmdA+=r*(1-simRetR);}
+      if(tB>0){const r=tB/div;tB-=r;rmdB+=r*(1-simRetR);}
+    }
+    rA*=(1+g);tA*=(1+g);rmdA*=(1+DRAG);
+    rB*=(1+g);tB*=(1+g);rmdB*=(1+DRAG);
+  }
+  let beAge=null;
+  if(vA[0]>vB[0]) beAge=ages[0];
+  else for(let i=1;i<ages.length;i++) if(vA[i]>vB[i]){beAge=ages[i];break;}
+  const le    = lifeEx(sex, curAge);
+  const leSpouse = isCouple ? lifeEx(spouseSex, spouseAge) : null;
+  const leJoint  = isCouple ? lifeExJoint(sex, curAge, spouseSex, spouseAge) : null;
+  // Breakeven survival odds — individual for singles, joint for couples
+  const survBE = beAge
+    ? (isCouple ? survJoint(sex,curAge,spouseSex,spouseAge,beAge) : survFrom(sex,curAge,beAge))
+    : null;
+  const rateDiff=totalRetR-effR;
+
+  // ── BOTTOM LINE TEXT ──
+  const stTodayNote  = stD.cr>0 ? ' (including '+stD.n+' state tax)' : '';
+  const torpedoNote  = torpedoInc>0 ? ' and a hidden extra tax on your Social Security benefits' : '';
+  const stRetNote    = stRetR>0 ? ' + '+pct(stRetR,1)+' '+stD.n+' state' : '';
+  let blTxt =
+    'Converting '+fmt(cvtAmt)+(basis>0&&taxableFrac<0.9999?' ('+fmt(taxableCvt)+' taxable after your '+fmt(basis)+' in after-tax basis)':'')+' this year costs <strong>'+fmt(cvtTxTot)+'</strong> in taxes'
+    +stTodayNote+torpedoNote+' — an all-in rate of <strong>'+pct(effR)+'</strong>.';
+
+  const youOrOneOfYou = isCouple ? 'at least one of you' : 'you';
+  const chanceNote = survBE ? ' — <strong>'+pct(survBE,0)+' chance</strong> '+youOrOneOfYou+' will be there.' : '.';
+
+  if(rateDiff>=.03){
+    blTxt += beAge===curAge
+      ? ' Your combined retirement rate ('+pct(totalRetR)+stRetNote+') is higher than today\'s, so <strong>the Roth wins from day one.</strong>'
+      : beAge
+        ? ' Your combined retirement rate ('+pct(totalRetR)+stRetNote+') is higher than today\'s, so <strong>the Roth starts winning around age '+beAge+'</strong>'+chanceNote
+        : '';
+  } else if(rateDiff>=-0.02){
+    blTxt += ' The rates are close, so the pure numbers don\'t strongly favor either direction. But the Roth still has real advantages: <strong>no Required Minimum Distributions starting at 73</strong>, tax-free compounding, and income that won\'t affect Medicare premiums.';
+    if(beAge && beAge>curAge) blTxt += ' On the numbers alone, the Roth starts winning around age '+beAge+(survBE?' — '+pct(survBE,0)+' chance '+youOrOneOfYou+' is there.':'.');
+  } else {
+    blTxt += ' Your combined retirement rate ('+pct(totalRetR)+stRetNote+') is lower than today\'s conversion cost ('+pct(effR)+'). <strong>Keeping the money in traditional and paying the lower rate later looks like the better move.</strong>';
+    if(brRoom>2000) blTxt += ' If you still want to convert something, you have room for <strong>'+fmt(brRoom)+'</strong> within your current federal bracket.';
+  }
+  if(nMed>0 && tCrossed) blTxt += ' <strong>Medicare:</strong> This conversion also crosses an IRMAA threshold, adding roughly <strong>'+fmt(irmDiffTot)+'/year</strong> in Medicare premiums starting in 2028.';
+  if(stD.ex && stD.cr>0) blTxt += ' <strong>'+stD.n+' note:</strong> Your state exempts IRA withdrawals from tax in retirement. Converting today means paying '+pct(stD.cr,1)+' state tax you would never owe if you kept the money in traditional.';
+
+  // ── VERDICT ──
+  let vCls,vIco,vHd,vBd;
+  if(rateDiff>=.03){
+    vCls='good';vIco='✅';
+    vHd='Based on your numbers, converting looks like the right move.';
+    vBd='Your effective conversion rate today ('+pct(effR)+') is lower than your expected retirement rate ('+pct(totalRetR)+stRetNote+'). Paying the smaller bill now — and letting everything that follows grow permanently tax-free — is a sound strategy.';
+  } else if(rateDiff>=-0.02){
+    vCls='neutral';vIco='⚖️';
+    vHd='This is genuinely close — the Roth still has meaningful advantages worth considering.';
+    vBd='Your effective conversion rate ('+pct(effR)+') and expected retirement rate ('+pct(totalRetR)+') are close enough that the pure math doesn\'t clearly favor either side. That said, the Roth still brings real benefits: <strong>no forced withdrawals at 73</strong>, tax-free growth, and more flexibility for your heirs and future income planning.';
+  } else {
+    vCls='bad';vIco='⚠️';
+    vHd='Right now, the numbers slightly favor keeping traditional.';
+    vBd='Your expected retirement rate ('+pct(totalRetR)+stRetNote+') is lower than what you\'d pay to convert today ('+pct(effR)+'). That means waiting to pay the tax — at a lower rate — likely leaves you with more money overall.';
+    if(stD.ex) vBd += ' Also: since '+stD.n+' exempts IRA withdrawals from state tax, converting is especially costly — you\'d pay state tax today that you would never owe otherwise.';
+  }
+
+  // ── PROJECTION TABLE ──
+  const tAges=[retAge,retAge+5,retAge+10,retAge+15,retAge+20].filter(a=>a>curAge&&a<=maxAge);
+  const tRows=tAges.map(a=>{
+    const i=ages.indexOf(a);if(i<0)return'';
+    const va=vA[i],vb=vB[i],diff=va-vb;
+    const sm=survFrom('male',curAge,a),sf=survFrom('female',curAge,a);
+    return '<tr class="'+(a===beAge?'hl':'')+'"><td><strong>'+a+'</strong>'+(a===beAge?' 🎯':'')+'</td><td>'+fmtK(va)+'</td><td>'+fmtK(vb)+'</td><td class="'+(diff>=0?'bet':'wor')+'">'+(diff>=0?'▲ +':'▼ ')+fmtK(Math.abs(diff))+'</td><td style="font-size:.82rem;color:var(--muted)">&#9794; '+pct(sm,0)+' &#9792; '+pct(sf,0)+'</td></tr>';
+  }).join('');
+
+  // ── SURVIVAL BARS ──
+  const sAges=[];for(let a=Math.max(curAge+3,55);a<=95;a+=5)sAges.push(a);
+  let survLegend, sBars;
+  if(isCouple){
+    survLegend =
+      '<span class="ldot" style="background:var(--navy)"></span>You ('+(sex==='male'?'M':'F')+') &nbsp;'
+      +'<span class="ldot" style="background:var(--amber)"></span>Spouse ('+(spouseSex==='male'?'M':'F')+') &nbsp;'
+      +'<span class="ldot" style="background:var(--success)"></span><strong>At least one of you</strong>';
+    sBars = sAges.map(a=>{
+      const sy = survFrom(sex,      curAge,   a);
+      const ss2= survFrom(spouseSex,spouseAge,a);
+      const sj = survJoint(sex,curAge,spouseSex,spouseAge,a);
+      return '<div class="srow">'
+        +'<div class="sage">Age '+a+'</div>'
+        +'<div class="stracks">'
+        +'<div class="strack"><div class="sfill m" style="width:'+(sy*100).toFixed(1)+'%"></div></div>'
+        +'<div class="strack"><div class="sfill f" style="width:'+(ss2*100).toFixed(1)+'%"></div></div>'
+        +'<div class="strack jt"><div class="sfill j" style="width:'+(sj*100).toFixed(1)+'%"></div></div>'
+        +'</div>'
+        +'<div class="spct" style="min-width:88px">'+pct(sy,0)+' / '+pct(ss2,0)+'<br><strong style="color:var(--success)">'+pct(sj,0)+'</strong></div>'
+        +'</div>';
+    }).join('');
+  } else {
+    survLegend = '<span class="ldot" style="background:var(--navy)"></span>Male &nbsp;<span class="ldot" style="background:var(--amber)"></span>Female';
+    sBars = sAges.map(a=>{
+      const sm=survFrom('male',curAge,a), sf=survFrom('female',curAge,a);
+      return '<div class="srow">'
+        +'<div class="sage">Age '+a+'</div>'
+        +'<div class="stracks">'
+        +'<div class="strack"><div class="sfill m" style="width:'+(sm*100).toFixed(1)+'%"></div></div>'
+        +'<div class="strack"><div class="sfill f" style="width:'+(sf*100).toFixed(1)+'%"></div></div>'
+        +'</div>'
+        +'<div class="spct">'+pct(sm,0)+' / '+pct(sf,0)+'</div>'
+        +'</div>';
+    }).join('');
+  }
+
+  // ── IRMAA HTML ──
+  let irmaaHTML='';
+  if(nMed>0){
+    irmaaHTML =
+      '<div class="irmaa-card '+(tCrossed?'hit':'safe')+'">'
+      +'<div class="stitle">🏥 Medicare Premium Impact</div>'
+      +'<div class="irmaa-what"><strong>Medicare charges higher premiums to higher earners</strong> — based on your income from <strong>2 years ago</strong>. A Roth conversion in 2026 raises 2026 income → affects 2028 premiums. Crossing a threshold by $1 triggers the full surcharge for that tier.</div>'
+      +'<div class="igrid">'
+      +'<div class="ibox"><div class="ilbl">Without Conversion</div><div class="ival" style="color:'+(tBefore===0?'var(--success)':'var(--warn)')+'">'+ITIERS[tBefore].lbl+'</div><div class="isub">Total income: '+fmt(magiBase)+'<br>Part B premium: '+fmt(ITIERS[tBefore].B*12)+'/yr per person</div></div>'
+      +'<div class="ibox '+(tCrossed?'hit':'')+'"><div class="ilbl">With Conversion</div><div class="ival" style="color:'+(tAfter===0?'var(--success)':tCrossed?'var(--danger)':'var(--warn)')+'">'+ITIERS[tAfter].lbl+(tCrossed?' ⬆':' ✓')+'</div><div class="isub">MAIncome (MAGI): '+fmt(magiWith)+'<br>Medicare Part B: '+fmt(ITIERS[tAfter].B*12)+'/yr per person'+(inclD?'<br>Part D premium: '+fmt(ITIERS[tAfter].D*12)+'/yr per person':'')+'</div></div>'
+      +'</div>'
+      +(tCrossed?'<div class="alert ared">⚠️ <strong>Threshold crossed.</strong> Extra Medicare cost: ~<strong>'+fmt(irmDiffTot)+'/year</strong> for '+nMed+' person'+(nMed>1?'s':'')+', starting 2028.'+avoidNote+'</div>':'')
+      +(irmRoomNote?'<div class="alert anvy">'+irmRoomNote+'</div>':'')
+      +(status==='mfs'?'<div class="alert aamb">⚠️ <strong>MFS warning:</strong> Married Filing Separately has a severely compressed Medicare bracket — income over $109,000 jumps immediately to the 2.6× surcharge tier ($527.50/month Part B), with very limited intermediate steps.</div>':'')+((status==='mfj'||status==='mfs')?'<div class="alert anvy" style="margin-top:.65rem;font-size:.85rem">📌 <strong>Widow/widower note:</strong> When a spouse dies, filing status switches from Married (jointly) to Single — often doubling effective tax rates and compressing Medicare brackets overnight. Converting now while both spouses are alive can meaningfully reduce the traditional IRA balance before that happens, protecting the surviving spouse from a much larger tax burden.</div>':'')
+      +'</div>';
+  }
+
+  // ── MULTI-YEAR PLAN ──
+  var multiYearHTML = '';
+  {
+    var myOpts = computeOptTargets(income,ss,status,STDD[status],nSr,nMed,taxableFrac);
+    var myConv = myOpts.bracketAmt > 0 ? myOpts.bracketAmt : 0;
+    if(myOpts.irmaaAmt!==null && myOpts.irmaaAmt>0 && myOpts.irmaaAmt<myConv) myConv=myOpts.irmaaAmt;
+    if(myConv > 500 && tradBal > 0){
+      var myPlan = computeMultiYear(income,ss,status,tradBal,rothBal,basis,g,nSr,stD,nMed,curAge,retAge,taxableFrac,myConv);
+      multiYearHTML = buildMultiYearHTML(myPlan,curAge,retAge,fmt,pct,fmtK);
+    }
+  }
+
+  // ── SCENARIO SENSITIVITY ──
+  var sensitivityHTML = '';
+  var needSensChart = false;
+  if(cvtAmt>0&&tradBal>0){
+    if(stD.ex && taxSrc==='outside'){
+      // Chart would be misleading: it can't capture the state exemption cost.
+      // Show a clear explanation card instead.
+      sensitivityHTML = '<div class="card" style="margin-top:1.25rem">'
+        +'<div class="stitle">📊 How Sensitive Is the Conclusion?</div>'
+        +'<div class="alert aamb" style="margin-top:.6rem">'
+        +'<strong>Sensitivity chart not shown for this scenario.</strong> '
+        +'Your state ('+stD.n+') exempts IRA distributions from state income tax in retirement. '
+        +'The conversion chart works by comparing growth and retirement tax rate combinations — '
+        +'but it can\'t capture the asymmetry here: you\'d pay '+pct(stD.cr)+' '+stD.n+' state tax to convert today, '
+        +'yet owe nothing on traditional withdrawals later. '
+        +'That cost doesn\'t show up in the chart\'s axes regardless of which inputs you test. '
+        +'The state exemption warning in your results above is the key insight for your situation.'
+        +'</div></div>';
+      needSensChart = false;
+    } else {
+      sensitivityHTML = buildSensitivityHTML();
+      needSensChart = true;
+    }
+  }
+
+  // ── WIDOW/WIDOWER CLIFF ──
+  var widowCliffHTML = buildWidowCliffHTML(status);
+
+  // ── ASSEMBLE RESULTS ──
+
+  // ── "What to do next" card ──
+  var nextBody='';
+  if(vCls==='green'){
+    nextBody='<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.65">Based on your numbers, converting looks like the better path. Here\'s what actually doing a Roth conversion involves \u2014 it\'s simpler than it sounds:</p>'
+      +'<ol style="font-size:.87rem;color:var(--muted);line-height:1.7;padding-left:1.25rem;margin-bottom:.85rem">'
+      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">Contact your IRA provider.</strong> That\'s the company holding your IRA \u2014 Fidelity, Vanguard, Schwab, TIAA, or similar. Ask them about a Roth conversion. Most have an online form or a short phone call.</li>'
+      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">Choose how much to convert.</strong> You don\'t have to convert everything. The optimizer above shows how to stay within your current tax bracket. Start there.</li>'
+      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">The tax bill arrives at filing time</strong> \u2014 not immediately, and not as a penalty. You\'ll owe income tax on the converted amount when you file your return for this year. No early withdrawal penalty applies.</li>'
+      +'<li><strong style="color:var(--text)">Consider spreading it over several years.</strong> The multi-year plan above shows how gradual conversions before age 73 can minimize your total tax bill.</li>'
+      +'</ol>'
+      +'<div class="alert anvy" style="font-size:.85rem">'
+      +'<div style="margin-top:.85rem"><p style="font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.4rem">Questions to bring to your advisor:</p>'
+      +'<ul style="font-size:.84rem;color:var(--muted);line-height:1.65;padding-left:1.25rem;margin-bottom:.5rem">'
+      +'<li style="margin-bottom:.3rem">“How does converting fit into my overall tax plan this year?”</li>'
+      +'<li style="margin-bottom:.3rem">“Should I spread this over multiple years to stay within my tax bracket?”</li>'
+      +'<li>“Will this affect my Medicare premiums or ACA health insurance subsidies?”</li>'
+      +'</ul></div>'
+      +'<strong>Who to talk to:</strong> A fee-only financial advisor or CPA can sequence conversions around Social Security, Medicare, and ACA subsidies \u2014 factors this tool can\'t fully model. Look for "fee-only" so they\'re paid by you, not by commissions.'
+      +'</div>';
+  } else if(vCls==='amber'){
+    nextBody='<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.65">Under your current assumptions, keeping the money in traditional comes out ahead. A few things worth knowing before you close this tab:</p>'
+      +'<ul style="font-size:.87rem;color:var(--muted);line-height:1.7;padding-left:1.25rem;margin-bottom:.85rem">'
+      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">This result can change.</strong> A drop in income, a move to a different state, or a change in tax law can flip the verdict. Bookmark this and check back when circumstances shift.</li>'
+      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">RMDs start at 73.</strong> At 73 the IRS will require you to take taxable withdrawals from your traditional IRA every year whether you need the money or not. That income pushes you into higher tax brackets and raises your Medicare premiums. Run the numbers again as you approach that age.</li>'
+      +'<li><strong style="color:var(--text)">A small partial conversion still helps.</strong> Even when the full conversion doesn\'t pay off, converting a modest amount reduces future RMDs and their downstream effects. A CPA can model this.</li>'
+      +'</ul>'
+      +'<div class="alert anvy" style="font-size:.85rem">'
+      +'<div style="margin-top:.85rem"><p style="font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.4rem">Questions to bring to your advisor:</p>'
+      +'<ul style="font-size:.84rem;color:var(--muted);line-height:1.65;padding-left:1.25rem;margin-bottom:.5rem">'
+      +'<li style="margin-bottom:.3rem">“Is there a smaller conversion amount that would help reduce my future required withdrawals?”</li>'
+      +'<li style="margin-bottom:.3rem">“What would need to change for converting to make sense?”</li>'
+      +'<li>“How should I plan for the required withdrawals that start at age 73?”</li>'
+      +'</ul></div>'
+      +'<strong>Who to talk to:</strong> A fee-only financial advisor can model your full retirement picture \u2014 Social Security timing, Medicare, and estate goals \u2014 to confirm this result holds for your situation.'
+      +'</div>';
+  } else {
+    nextBody='<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.65">The math is genuinely close for your situation \u2014 within the margin of your assumptions. That\'s not a failure of the calculator; it means the decision turns on things that are hard to quantify:</p>'
+      +'<ul style="font-size:.87rem;color:var(--muted);line-height:1.7;padding-left:1.25rem;margin-bottom:.85rem">'
+      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">How long you live.</strong> The longer you live, the more the Roth\'s tax-free compounding helps. The sensitivity chart above shows you what happens under different growth and longevity assumptions.</li>'
+      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">Whether tax rates rise.</strong> Converting now locks in today\'s rates. If federal or state tax rates increase later, today\'s rate becomes a bargain in hindsight.</li>'
+      +'<li><strong style="color:var(--text)">Your heirs.</strong> Roth IRAs pass to heirs income-tax-free. Traditional IRAs pass the tax bill along with the inheritance. If leaving money is part of your plan, this tips toward Roth.</li>'
+      +'</ul>'
+      +'<div class="alert anvy" style="font-size:.85rem">'
+      +'<div style="margin-top:.85rem"><p style="font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.4rem">Questions to bring to your advisor:</p>'
+      +'<ul style="font-size:.84rem;color:var(--muted);line-height:1.65;padding-left:1.25rem;margin-bottom:.5rem">'
+      +'<li style="margin-bottom:.3rem">“How does the timing of my Social Security affect whether I should convert?”</li>'
+      +'<li style="margin-bottom:.3rem">“What’s the impact on my estate plan if I convert vs. don’t?”</li>'
+      +'<li>“Can we do a small conversion each year to hedge against future tax rate changes?”</li>'
+      +'</ul></div>'
+      +'<strong>When the math is this close, an advisor earns their fee quickly.</strong> A fee-only financial advisor can factor in Social Security timing, Medicare, and your estate plan to break the tie in your specific situation.'
+      +'</div>';
+  }
+  var nextStepsHTML='<div class="card" style="margin-top:1.25rem;border-left:4px solid var(--navy-mid)">'
+    +'<div class="stitle">\ud83d\udc49 What to Do With This</div>'
+    +nextBody
+    +'</div>';
+
+  $('resultsWrap').innerHTML =
+    '<div class="fade-up">'
+    +'<div class="disclaimer">📌 <strong>Planning tool, not financial advice.</strong> This calculator models common tax rules but cannot see your full picture — estate goals, healthcare subsidies, future moves, charitable plans, and income changes all matter. State rates are approximate. Use this to understand the landscape and size the conversation with your CPA or financial advisor, not to make the decision alone.</div>'
+    +'<div class="bottom-line"><div class="bl-eye">YOUR BOTTOM LINE</div><div class="bl-txt" id="blTxt">'+blTxt+'</div><div class="bl-cav">Estimates only — rough numbers are fine for planning. Scroll down for the full breakdown.</div></div>'
+    +'<div class="rgrid">'
+    +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(niitCost>0?'<br>Fed: '+fmt(cvtTxFed):''))+(niitCost>0?' + NIIT: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')+'</div></div>'
+    +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Not in range')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
+    +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2022 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2022 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'</div></div>'
+    +'</div>'
+    +buildBeTimeline(curAge,beAge,leAge??le,survBE,isCouple)
+    +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n)
+    +'<div class="verdict '+vCls+'"><div class="vi">'+vIco+'</div><div class="vb"><strong>'+vHd+'</strong><p>'+vBd+'</p></div></div>'
+    +sensitivityHTML
+    + irmaaHTML
+    +widowCliffHTML
+    +'<div style="display:grid;grid-template-columns:1.55fr 1fr;gap:1.25rem;margin-bottom:1.25rem" class="pcols">'
+    +'<div class="card"><div class="stitle">📈 Roth vs. Traditional Over Time</div>'
+    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55"><strong>Solid:</strong> after-tax wealth with the conversion. <strong>Dashed:</strong> without. After age 73, Required Minimum Distributions from traditional accounts accelerate taxes — this is what drives the lines apart. Combined '+pct(simRetR)+' effective retirement rate applied'+(basis>0&&taxableFrac<0.9999?' ('+Math.round(taxableFrac*1000)/10+'% taxable fraction applied to retirement withdrawals)':' (federal'+(stRetR>0?' + state':'')+')')+'.</p>'
+    +'<div class="cwrap"><canvas id="myChart"></canvas></div></div>'
+    +'<div class="card"><div class="stitle">📋 At Key Ages</div>'
+    +'<div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Age</th><th>With Conv.</th><th>Without</th><th>Difference</th><th>Odds M/F</th></tr></thead><tbody>'+tRows+'</tbody></table></div>'
+    +'<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">🎯 = breakeven age. After-tax uses '+pct(simRetR)+' combined retirement rate. Survival odds from age '+curAge+'.</p>'
+    +'</div></div>'
+    +'<div class="card"><div class="stitle">❤️ '+(isCouple?'Will At Least One of You Be Around to Benefit?':'Will You Be Around to Benefit?')+'</div>'
+    +'<p style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">'
+    +(isCouple
+      ? 'For married couples, the key question isn\'t just your individual odds — it\'s whether <strong>at least one of you</strong> will live to benefit from the Roth\'s tax-free compounding. The joint odds (green bars) are substantially higher than either individual figure, often by 15–25 percentage points.'
+      : 'The honest question behind every Roth conversion: <strong>will you live long enough for the tax-free growth to outweigh the taxes you pay today?</strong>')
+    +'</p>'
+    +'<p style="font-size:.84rem;color:var(--muted);margin-bottom:.85rem">Chances of still being alive at each age, from age '+curAge+': '+survLegend+'</p>'
+    + sBars
+    +'<p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;line-height:1.45">'+'These bars show population-level averages from Social Security Administration life expectancy statistics — not personalized medical predictions. Your individual odds depend on your health, genetics, and lifestyle.</p>'+'<div class="alert anvy" style="margin-top:.5rem;font-size:.87rem"><strong>Worth keeping in mind:</strong> A plan built around the average life expectancy leaves half of all people underprepared. Many people live 10–20 years longer than they expect — and the longer you live, the more the Roth compounds.</div>'
+    +'</div>'
+    +multiYearHTML
+    +'<div class="card" style="margin-top:1.25rem;border-left:4px solid var(--amber)">'
+    +'<div class="stitle">📋 What This Calculator Doesn\'t Model</div>'
+    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.6">These factors can all change the math — some can reverse the verdict entirely.</p>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem 1.5rem;font-size:.87rem;line-height:1.55" class="pcols">'
+    +'<div><p style="margin-bottom:.45rem"><strong style="color:var(--danger)">High impact</strong></p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">ACA (Affordable Care Act) marketplace subsidies.</strong> If you retire before age 65, Roth conversion income counts toward your ACA marketplace income and can reduce or eliminate premium tax credits — sometimes by thousands of dollars per year. For early retirees, this can completely change the conversion math. Not modeled here at all.</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">State rate accuracy.</strong> Rates shown are approximate at moderate incomes. Your actual rate differs based on deductions, local taxes, and income level. Verify locally before converting.</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Hidden Social Security tax in retirement.</strong> If you have substantial income in retirement, this effect can also raise your effective retirement rate — potentially making the Roth more favorable than shown.</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Widow/widower tax cliff.</strong> When a spouse dies, filing status changes from Married (jointly) to Single, often dramatically increasing effective tax rates and compressing Medicare brackets. For married couples, this is one of the strongest arguments for converting while both spouses are alive — not modeled here.</p>'
+    +'</div>'
+    +'<div><p style="margin-bottom:.45rem"><strong style="color:var(--warn)">Medium impact</strong></p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Period vs. cohort life table.</strong> I use a 2022 mortality snapshot. A cohort table accounts for improving life expectancy over time — giving somewhat longer expected lifespans, which further favors the Roth.</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Your first dollars of retirement income land in a lower bracket.</strong> They fall in the 10–12% range, not your top rate. Use the rate estimator above to find the true rate on your specific income mix.</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Future state of residence.</strong> If you plan to move to a no-income-tax state before retirement, the state tax comparison is reversed — you pay state tax on the conversion today but owe nothing later. Factor this in before converting.</p>'
+    +'</div></div>'
+    +'<div class="alert anvy" style="margin-top:.85rem;font-size:.85rem">Use this calculator as a starting point for a conversation with a CPA, tax professional, or financial advisor — not as a substitute for one.</div>'
+    +'</div>'
+    +nextStepsHTML
+    +'</div>';
+
+  // ── CHART ──
+  const mCA=Math.min(curAge+46,100);
+  const ci=ages.map((_,i)=>i).filter(i=>ages[i]<=mCA);
+  const ctx=$('myChart').getContext('2d');
+  if(myChart) myChart.destroy();
+  var CDARK=document.documentElement.getAttribute('data-theme')==='dark';
+  var axc=CDARK?'#A6ABB5':'#3D4451', grd=CDARK?'rgba(255,255,255,.08)':'rgba(0,0,0,.04)';
+  var lineA=CDARK?'#7DB2EC':'#1C3A5E', lineB=CDARK?'#E89A38':'#B06000';
+  myChart=new Chart(ctx,{
+    type:'line',
+    data:{labels:ci.map(i=>ages[i]),datasets:[
+      {label:'With Roth Conversion',data:ci.map(i=>Math.round(vA[i])),borderColor:lineA,backgroundColor:CDARK?'rgba(125,178,236,.10)':'rgba(28,58,94,.06)',borderWidth:2.5,tension:.35,fill:true,pointRadius:0,pointHoverRadius:5},
+      {label:'Without Converting',  data:ci.map(i=>Math.round(vB[i])),borderColor:lineB,backgroundColor:CDARK?'rgba(232,154,56,.10)':'rgba(176,96,0,.06)', borderWidth:2.5,tension:.35,fill:true,borderDash:[7,4],pointRadius:0,pointHoverRadius:5}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:950,easing:'easeInOutQuart'},
+      interaction:{intersect:false,mode:'index'},
+      plugins:{
+        legend:{position:'top',labels:{color:axc,font:{family:'DM Sans, sans-serif',size:12},boxWidth:20,padding:14}},
+        tooltip:{backgroundColor:'rgba(18,18,30,.92)',padding:10,titleFont:{family:'DM Sans, sans-serif',size:11},bodyFont:{family:'DM Sans, sans-serif',size:13},callbacks:{title:i=>'Age '+i[0].label,label:c=>' '+c.dataset.label+': '+fmt(c.raw)}}
+      },
+      scales:{
+        x:{title:{display:true,text:'Your Age',color:axc,font:{family:'DM Sans, sans-serif',size:11}},grid:{display:false},ticks:{color:axc,font:{family:'DM Sans, sans-serif',size:11},maxTicksLimit:10}},
+        y:{title:{display:true,text:'After-Tax Value',color:axc,font:{family:'DM Sans, sans-serif',size:11}},ticks:{color:axc,font:{family:'DM Sans, sans-serif',size:11},callback:v=>fmtK(v)},grid:{color:grd}}
+      }
+    }
+  });
+
+  const taxEl=$('animTax');
+  if(taxEl && cvtTxTot>0) animCount(taxEl, cvtTxTot, v=>'$'+Math.round(v).toLocaleString());
+
+  // ── Persist inputs ──
+  saveInputs();
+  // Update active-example label on sensitivity chart
+  var _lbl=document.getElementById('sensExLabel');
+  if(_lbl){
+    var _ab=document.querySelector('.ex-btn.active');
+    _lbl.textContent=_ab?'Showing: '+_ab.textContent.trim():'';
+  }
+
+  // ── Populate print header ──
+  var ph=document.getElementById('printHeader');
+  if(ph){
+    var d=new Date();
+    var ds=d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    ph.innerHTML='Roth Conversion Analysis &nbsp;·&nbsp; <span style="font-weight:400;font-size:.85rem;color:#3D4451">Generated '+ds+' &nbsp;·&nbsp; Age '+curAge+', converting '+fmt(cvtAmt)+' &nbsp;·&nbsp; Traditional IRA: '+fmt(tradBal)+'</span>';
+  }
+
+  // ── D3 SENSITIVITY SURFACE ──
+  if(needSensChart){
+    var leAge = isCouple && leJoint ? leJoint : le;
+    try{ renderSensChart({
+      tradBal:tradBal, rothBal:rothBal, rothIn:rothIn, cvtAmt:cvtAmt,
+      g:g, totalRetR:totalRetR, effR:effR, stRetR:stRetR, taxableFrac:taxableFrac,
+      curAge:curAge, retAge:retAge, le:leAge, leJoint:leJoint,
+      isCouple:isCouple, sex:sex, spouseAge:spouseAge, spouseSex:spouseSex,
+      stEx:stD.ex, taxSrc:taxSrc
+    }); }catch(e){ console.warn("Sensitivity chart error:", e); }
+  }
+}
+document.getElementById('taxYearTitle').textContent=new Date().getFullYear();
+loadSavedInputs();
+calc();
+</script>
+</body>
+</html>

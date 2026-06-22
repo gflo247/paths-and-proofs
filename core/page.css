@@ -1,0 +1,42 @@
+/* core/page.css
+   Layout and typography shared by every calculator page. Pairs with tokens.css
+   (color) and components.css (controls + summary). A site's index.html supplies
+   only content, never its own styles. */
+
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 17px; line-height: 1.6; margin: 0;
+  background: var(--bg); color: var(--fg);
+}
+main { max-width: 640px; margin: 0 auto; padding: 48px 20px 80px; }
+
+.eyebrow { font-size: 13px; letter-spacing: .08em; text-transform: uppercase;
+           color: var(--accent); font-weight: 600; margin: 0 0 8px; }
+h1 { font-size: clamp(28px, 6vw, 40px); line-height: 1.15; font-weight: 650;
+     margin: 0 0 16px; letter-spacing: -0.01em; }
+.lede { font-size: 18px; margin: 0 0 32px; }
+.lede .muted { color: var(--muted); }
+
+section { margin: 36px 0; }
+h2 { font-size: 15px; font-weight: 600; text-transform: uppercase;
+     letter-spacing: .06em; color: var(--muted); margin: 0 0 16px; }
+
+.presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.preset {
+  font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); color: inherit; cursor: pointer;
+}
+.preset:hover { border-color: var(--accent); }
+.preset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.chart { width: 100%; }
+.caption { font-size: 14px; color: var(--muted); margin: 8px 2px 0; }
+
+.backlink { display: inline-block; margin-bottom: 24px; font-size: 14px; color: var(--accent); text-decoration: none; }
+.backlink:hover { text-decoration: underline; }
+
+details { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 48px; }
+summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+details p { font-size: 15px; color: var(--muted); }
+footer { margin-top: 40px; font-size: 13px; color: var(--muted); }

@@ -1,0 +1,15 @@
+{
+  "name": "paths-and-proofs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A family of privacy-first, local-first financial decision tools. Each resolves to a breakeven.",
+  "type": "module",
+  "scripts": {
+    "verify": "node _dev/verify-all.mjs",
+    "serve": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "d3": "^7.9.0",
+    "jsdom": "^24.0.0"
+  }
+}
