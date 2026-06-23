@@ -678,7 +678,20 @@ Income Tax Rates report and state sources.
   conversion taxes anywhere). SS exempt.
 - **Arizona** — **2.5% flat confirmed** (lowest flat rate nationally). SS exempt.
 
-### ✅ AUDIT COMPLETE — all 54 entries primary-sourced (June 2026)
+### ✅ AUDIT COMPLETE — all 50 states + DC primary-sourced (June 2026)
+
+**Count correction (discovered during extraction prep):** earlier records cited
+"54 entries," but that number came from `grep -c "ex:true\|ex:false"`, which counted
+the **52 real table entries** (50 states + DC + 1 blank "no state selected"
+placeholder) PLUS **2 incidental `ex:false` fallbacks** in helper functions
+(`ST[code]||{...ex:false}` at ~lines 1136 and 1986). The true table contents are
+**50 states + DC = 51 real entries + 1 placeholder = 52 entries.** A structural
+parse (`_dev/parse-states.mjs`) confirms all 50 states + DC present, none missing
+or duplicated. The audit work is unaffected — every state was edited by key/name
+and visually confirmed, never by position — but the count we should cite going
+forward is **50 states + DC**, and the grep-count guard happened to flag deletions
+correctly only by arithmetic coincidence (52 + 2 = 54; losing a state dropped it to
+53). The extraction guard replaces that grep with a structural check.
 
 Every entry in the `STATES` table has been verified against a state Department of
 Revenue or equivalent primary source. Error archetypes found and fixed across the
