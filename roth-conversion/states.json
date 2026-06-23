@@ -1,7 +1,38 @@
 {
+  "_schema": {
+    "_comment": "SCHEMA DOCUMENTATION — read before editing. This file is the canonical source for state tax data in Paths and Proofs. It is kept in sync with the inline ST table in roth-conversion/index.html by _dev/check-states-json.mjs (run via npm run verify).",
+    "layering": {
+      "facts": "STATUTORY rate structure and tax treatment, INDEPENDENT of any tool. facts.brackets is the actual income-tax bracket table the state levies. This answers \"what is this state's income tax?\" — true regardless of whether you are modeling a conversion, an RMD, wages, or relocation. Future tools should read facts and apply their OWN interpretation.",
+      "roth": "CONVERSION-SPECIFIC interpretation for the Roth conversion tool. roth.cr = representative marginal rate used in the calc; roth.ex = whether a Roth conversion is exempt from state tax; roth.note = user-facing copy. This layer is guard-locked byte-for-byte to the inline ST table in index.html.",
+      "importantWarning": "facts and roth can LEGITIMATELY DIFFER and may look contradictory. Example: Illinois facts.brackets shows 4.95% (its real flat rate) while roth.ex=true (a conversion is exempt). Both are correct — they answer different questions. Do NOT \"fix\" an apparent contradiction by zeroing a facts rate; that would corrupt the rate structure other tools depend on. For ex:true states, roth.cr is the rate that WOULD apply if the exemption did not (the engine zeroes it via the ex flag)."
+    },
+    "fields": {
+      "facts.brackets": "Array of {rate, upTo}. rate is a decimal (0.0495 = 4.95%). upTo is the upper income bound of that bracket; the final (open-ended) bracket uses upTo:null. Thresholds strictly ascending. No-income-tax states use a single {rate:0, upTo:null}.",
+      "facts.ssTreatment": "Sourced prose on Social Security and retirement-income treatment, including the IRA-include-vs-exclude distinction where relevant.",
+      "facts.incomeTax": "Boolean; false for the nine no-income-tax states.",
+      "facts.source": "Primary-source URL (state Department of Revenue preferred)."
+    }
+  },
   "AL": {
     "facts": {
-      "name": "Alabama"
+      "name": "Alabama",
+      "brackets": [
+        {
+          "rate": 0.02,
+          "upTo": 500
+        },
+        {
+          "rate": 0.04,
+          "upTo": 3000
+        },
+        {
+          "rate": 0.05,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security and defined-benefit pensions exempt, but traditional IRA/401(k) distributions FULLY TAXABLE (a conversion is IRA income); $6,000 exclusion at 65+. Federal income tax is deductible from AL taxable income, lowering effective rate.",
+      "incomeTax": true,
+      "source": "https://www.revenue.alabama.gov/faqs/what-is-alabamas-individual-income-tax-rate/"
     },
     "roth": {
       "cr": 0.05,
@@ -11,7 +42,16 @@
   },
   "AK": {
     "facts": {
-      "name": "Alaska"
+      "name": "Alaska",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "No state income tax; Social Security and all retirement income untaxed.",
+      "incomeTax": false,
+      "source": "https://tax.alaska.gov/"
     },
     "roth": {
       "cr": 0,
@@ -21,7 +61,16 @@
   },
   "AZ": {
     "facts": {
-      "name": "Arizona"
+      "name": "Arizona",
+      "brackets": [
+        {
+          "rate": 0.025,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. Flat 2.5% on IRA/conversion income.",
+      "incomeTax": true,
+      "source": "https://azdor.gov/"
     },
     "roth": {
       "cr": 0.025,
@@ -31,17 +80,88 @@
   },
   "AR": {
     "facts": {
-      "name": "Arkansas"
+      "name": "Arkansas",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": 5599
+        },
+        {
+          "rate": 0.02,
+          "upTo": 11199
+        },
+        {
+          "rate": 0.03,
+          "upTo": 15999
+        },
+        {
+          "rate": 0.034,
+          "upTo": 26399
+        },
+        {
+          "rate": 0.037,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt below $100k federal AGI (taxable above, modified federal method). $6,000 retirement exemption covers traditional IRA but only at 59.5+; early distributions excluded. Net-income two-table system: filers over ~$94,700 use a compressed schedule.",
+      "incomeTax": true,
+      "source": "https://tax.thomsonreuters.com/news/arkansas-cuts-individual-and-corporate-income-tax-rates/"
     },
     "roth": {
-      "cr": 0.039,
+      "cr": 0.037,
       "ex": false,
-      "note": "Top rate 3.9% (2026), reached at low income, so a conversion is effectively taxed near 3.9%. A $6,000 retirement exemption covers traditional IRA income but only at 59.5+ (early distributions do not qualify), and it is a small cap a conversion exceeds. Social Security is exempt below $100k AGI; a large conversion could push past that."
+      "note": "Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000 retirement exemption covers traditional IRA income but only at 59.5+ (early distributions do not qualify), and it is a small cap a conversion exceeds. Social Security is exempt below $100k AGI; a large conversion could push past that."
     }
   },
   "CA": {
     "facts": {
-      "name": "California"
+      "name": "California",
+      "brackets": [
+        {
+          "rate": 0.01,
+          "upTo": 10756
+        },
+        {
+          "rate": 0.02,
+          "upTo": 25499
+        },
+        {
+          "rate": 0.04,
+          "upTo": 40245
+        },
+        {
+          "rate": 0.06,
+          "upTo": 55866
+        },
+        {
+          "rate": 0.08,
+          "upTo": 70606
+        },
+        {
+          "rate": 0.093,
+          "upTo": 360659
+        },
+        {
+          "rate": 0.103,
+          "upTo": 432787
+        },
+        {
+          "rate": 0.113,
+          "upTo": 721314
+        },
+        {
+          "rate": 0.123,
+          "upTo": 1000000
+        },
+        {
+          "rate": 0.133,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. All other retirement income — IRA, 401(k), pension, and Roth conversions — taxed as ordinary income (no preferential rate, no retirement exclusion). Top 13.3% includes the 1% Behavioral Health surcharge over $1M; thresholds inflation-indexed annually by FTB.",
+      "bracketsNote": "Single-filer thresholds, current FTB schedule; inflation-indexed yearly. MFJ thresholds ~2x except the $1M surcharge (not doubled).",
+      "incomeTax": true,
+      "source": "https://www.ftb.ca.gov/"
     },
     "roth": {
       "cr": 0.093,
@@ -51,7 +171,16 @@
   },
   "CO": {
     "facts": {
-      "name": "Colorado"
+      "name": "Colorado",
+      "brackets": [
+        {
+          "rate": 0.044,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Fully exempts SS at 65+; on the SS-taxing list below that age. Flat 4.4% (TABOR may reduce). Pension/annuity subtraction covers IRA but excludes pre-59.5 distributions.",
+      "incomeTax": true,
+      "source": "https://tax.colorado.gov/income-tax-topics-social-security-pensions-and-annuities"
     },
     "roth": {
       "cr": 0.044,
@@ -61,7 +190,41 @@
   },
   "CT": {
     "facts": {
-      "name": "Connecticut"
+      "name": "Connecticut",
+      "brackets": [
+        {
+          "rate": 0.02,
+          "upTo": 10000
+        },
+        {
+          "rate": 0.045,
+          "upTo": 50000
+        },
+        {
+          "rate": 0.055,
+          "upTo": 100000
+        },
+        {
+          "rate": 0.06,
+          "upTo": 200000
+        },
+        {
+          "rate": 0.065,
+          "upTo": 250000
+        },
+        {
+          "rate": 0.069,
+          "upTo": 500000
+        },
+        {
+          "rate": 0.0699,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "On the SS-taxing list: SS exempt below $75k single / $100k joint AGI, partial above. IRA/pension exemption reaches 100% in 2026 but ONLY under an AGI cliff ($75k/$100k full, phasing to zero at $100k/$150k) — a conversion raises AGI and a sizable one blows past the cliff, making it taxable (NJ-style). Military/railroad retirement fully exempt. Tax-recapture provision can lift effective rates for high earners.",
+      "bracketsNote": "Single-filer thresholds; MFJ ~2x. Source: CT OLR 2026-R-0057 + DRS CT-1040 instructions.",
+      "incomeTax": true,
+      "source": "https://portal.ct.gov/DRS"
     },
     "roth": {
       "cr": 0.055,
@@ -71,7 +234,41 @@
   },
   "DE": {
     "facts": {
-      "name": "Delaware"
+      "name": "Delaware",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": 2000
+        },
+        {
+          "rate": 0.022,
+          "upTo": 5000
+        },
+        {
+          "rate": 0.039,
+          "upTo": 10000
+        },
+        {
+          "rate": 0.048,
+          "upTo": 20000
+        },
+        {
+          "rate": 0.052,
+          "upTo": 25000
+        },
+        {
+          "rate": 0.0555,
+          "upTo": 60000
+        },
+        {
+          "rate": 0.066,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt; no sales tax. At 60+, a $12,500 exclusion covers combined pension + eligible retirement income (includes IRA), but it is a small cap a meaningful conversion exceeds, and early (pre-59.5) distributions do not qualify. The 6.6% top applies above $60k; a typical conversion lands in the 5.55% band.",
+      "bracketsNote": "Confirmed against DE Division of Revenue official rate table (software-developer page). Same thresholds for all filing statuses. NOTE: HB13 proposed new brackets above $125k (6.75%+) but is NOT enacted for 2026 — the DE DOR table still shows 6.6% top; several secondary sources wrongly reported the proposal as law. Revisit if HB13 passes.",
+      "incomeTax": true,
+      "source": "https://revenue.delaware.gov/software-developer/tax-rate-changes/"
     },
     "roth": {
       "cr": 0.0555,
@@ -81,7 +278,16 @@
   },
   "FL": {
     "facts": {
-      "name": "Florida"
+      "name": "Florida",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "No state income tax; constitutionally prohibited. SS and retirement income untaxed.",
+      "incomeTax": false,
+      "source": "https://floridarevenue.com/"
     },
     "roth": {
       "cr": 0,
@@ -91,27 +297,100 @@
   },
   "GA": {
     "facts": {
-      "name": "Georgia"
+      "name": "Georgia",
+      "brackets": [
+        {
+          "rate": 0.0499,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt. Flat 4.99% (HB 463, signed May 2026, down from 5.39%). Retirement income exclusion is a CAP — $65,000/person at 65+ ($35,000 at 62-64) — covering pension/IRA/401k; a conversion exceeding the cap is taxable on the excess.",
+      "bracketsNote": "Flat tax (no brackets) since 2024 HB 1437 transition; HB 463 accelerated to 4.99% for 2026. Verified vs GA DOR.",
+      "incomeTax": true,
+      "source": "https://dor.georgia.gov/"
     },
     "roth": {
-      "cr": 0.0539,
+      "cr": 0.0499,
       "ex": false,
-      "note": "Georgia excludes retirement income up to a CAP — $65,000 per person at 65+ ($35,000 at 62-64) — then taxes the rest at its flat rate (about 5.39% for 2026, falling on a trigger schedule). A Roth conversion is large income that can exceed the cap, so the excess is taxable; this tool assumes the conversion is taxable, though a small conversion that fits under your exclusion may not be. Social Security is fully exempt and does not use up the cap."
+      "note": "Georgia excludes retirement income up to a CAP — $65,000 per person at 65+ ($35,000 at 62-64) — then taxes the rest at its flat 4.99% rate (cut from 5.39% under HB 463, signed May 2026). A Roth conversion is large income that can exceed the cap, so the excess is taxable; this tool assumes the conversion is taxable, though a small conversion that fits under your exclusion may not be. Social Security is fully exempt and does not use up the cap."
     }
   },
   "HI": {
     "facts": {
-      "name": "Hawaii"
+      "name": "Hawaii",
+      "brackets": [
+        {
+          "rate": 0.014,
+          "upTo": 2400
+        },
+        {
+          "rate": 0.032,
+          "upTo": 4800
+        },
+        {
+          "rate": 0.055,
+          "upTo": 9600
+        },
+        {
+          "rate": 0.064,
+          "upTo": 14400
+        },
+        {
+          "rate": 0.068,
+          "upTo": 19200
+        },
+        {
+          "rate": 0.072,
+          "upTo": 24000
+        },
+        {
+          "rate": 0.076,
+          "upTo": 36000
+        },
+        {
+          "rate": 0.079,
+          "upTo": 48000
+        },
+        {
+          "rate": 0.0825,
+          "upTo": 150000
+        },
+        {
+          "rate": 0.09,
+          "upTo": 175000
+        },
+        {
+          "rate": 0.1,
+          "upTo": 200000
+        },
+        {
+          "rate": 0.11,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security and employer-funded PENSIONS fully exempt (HRS 235-7(a)(3)), but traditional IRA/401(k) income is fully taxable — a conversion is IRA income, so Hawaii taxes it. A pension-holder should not assume the conversion is also exempt.",
+      "bracketsNote": "Single-filer, Act 46 current schedule, exact thresholds from Tax Foundation of Hawaii (HRS Ch.235): 12 brackets 1.4%-11%, 11% top over $200k. Act 46 widens thresholds in stages through 2031, so upper edges shift in TY2027/2029. MFJ thresholds ~2x.",
+      "incomeTax": true,
+      "source": "https://tax.hawaii.gov/"
     },
     "roth": {
-      "cr": 0.08,
+      "cr": 0.0825,
       "ex": false,
-      "note": "Graduated 1.4% to 11% across twelve brackets; the 11% top only applies above $200k single / $400k joint, and a 2024 reform (Act 46) widened the brackets, so a typical conversion lands near 8% (used here) and the rate keeps falling through 2031. Hawaii fully exempts pensions and Social Security, but traditional IRA and 401(k) income is fully taxable — a Roth conversion is IRA income, so Hawaii taxes it."
+      "note": "Graduated 1.4% to 11% across twelve brackets; the 11% top only applies above $200k single / $400k joint, and Act 46 (2024) is widening the brackets in stages through 2031. A typical conversion lands in the 8.25% band ($48k-$150k single, used here). Hawaii fully exempts pensions and Social Security, but traditional IRA and 401(k) income is fully taxable — a Roth conversion is IRA income, so Hawaii taxes it."
     }
   },
   "ID": {
     "facts": {
-      "name": "Idaho"
+      "name": "Idaho",
+      "brackets": [
+        {
+          "rate": 0.053,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. Flat 5.3% (HB40 2025, retroactive) on IRA/conversion income.",
+      "incomeTax": true,
+      "source": "https://tax.idaho.gov/"
     },
     "roth": {
       "cr": 0.053,
@@ -121,7 +400,16 @@
   },
   "IL": {
     "facts": {
-      "name": "Illinois"
+      "name": "Illinois",
+      "brackets": [
+        {
+          "rate": 0.0495,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. Flat 4.95%, but qualified retirement income — including the taxable portion of a Roth conversion — is exempt via Schedule M with no age/income/cliff condition (roth.ex=true).",
+      "incomeTax": true,
+      "source": "https://tax.illinois.gov/questionsandanswers/answer.99.html"
     },
     "roth": {
       "cr": 0.0495,
@@ -131,7 +419,16 @@
   },
   "IN": {
     "facts": {
-      "name": "Indiana"
+      "name": "Indiana",
+      "brackets": [
+        {
+          "rate": 0.0295,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. Flat 2.95% for 2026 (falling toward ~2.9% in 2027); some counties add local income tax.",
+      "incomeTax": true,
+      "source": "https://www.in.gov/dor/"
     },
     "roth": {
       "cr": 0.0295,
@@ -161,7 +458,16 @@
   },
   "KY": {
     "facts": {
-      "name": "Kentucky"
+      "name": "Kentucky",
+      "brackets": [
+        {
+          "rate": 0.035,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. Flat 3.5% (cut from 4% Jan 1 2026 via revenue trigger); modest retirement exclusion.",
+      "incomeTax": true,
+      "source": "https://revenue.ky.gov/"
     },
     "roth": {
       "cr": 0.035,
@@ -201,7 +507,20 @@
   },
   "MA": {
     "facts": {
-      "name": "Massachusetts"
+      "name": "Massachusetts",
+      "brackets": [
+        {
+          "rate": 0.05,
+          "upTo": 1000000
+        },
+        {
+          "rate": 0.09,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. Flat 5% with NO retirement exclusion (IRA/401k fully taxed); 4% surtax stacks above $1M income (9% effective on the excess) — a very large conversion can trip it.",
+      "incomeTax": true,
+      "source": "https://www.mass.gov/orgs/massachusetts-department-of-revenue"
     },
     "roth": {
       "cr": 0.05,
@@ -211,7 +530,16 @@
   },
   "MI": {
     "facts": {
-      "name": "Michigan"
+      "name": "Michigan",
+      "brackets": [
+        {
+          "rate": 0.0425,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. Flat 4.25%; PA4 retirement deduction phase-in complete 2026 (deduct ~$67,610 single / $135,220 joint of retirement income).",
+      "incomeTax": true,
+      "source": "https://www.michigan.gov/taxes"
     },
     "roth": {
       "cr": 0.0425,
@@ -271,7 +599,16 @@
   },
   "NV": {
     "facts": {
-      "name": "Nevada"
+      "name": "Nevada",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "No state income tax; constitutionally entrenched. SS and retirement income untaxed.",
+      "incomeTax": false,
+      "source": "https://tax.nv.gov/"
     },
     "roth": {
       "cr": 0,
@@ -281,7 +618,16 @@
   },
   "NH": {
     "facts": {
-      "name": "New Hampshire"
+      "name": "New Hampshire",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "No tax on wages or retirement income; Interest & Dividends Tax repealed effective Jan 1 2025 (never applied to IRA income).",
+      "incomeTax": false,
+      "source": "https://www.revenue.nh.gov/news-and-media/repeal-nh-interest-and-dividends-tax-now-effect"
     },
     "roth": {
       "cr": 0,
@@ -321,7 +667,16 @@
   },
   "NC": {
     "facts": {
-      "name": "North Carolina"
+      "name": "North Carolina",
+      "brackets": [
+        {
+          "rate": 0.0399,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. Flat 3.99% for 2026 (phasedown continuing toward 2.99% by 2028).",
+      "incomeTax": true,
+      "source": "https://www.ncdor.gov/"
     },
     "roth": {
       "cr": 0.0399,
@@ -371,7 +726,16 @@
   },
   "PA": {
     "facts": {
-      "name": "Pennsylvania"
+      "name": "Pennsylvania",
+      "brackets": [
+        {
+          "rate": 0.0307,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. Flat 3.07%, but retirement income is exempt once at retirement age (59.5 for IRAs), so a conversion at 59.5+ is PA-tax-free (roth.ex=true); an early distribution could be taxed.",
+      "incomeTax": true,
+      "source": "https://www.revenue.pa.gov/"
     },
     "roth": {
       "cr": 0.0307,
@@ -401,7 +765,16 @@
   },
   "SD": {
     "facts": {
-      "name": "South Dakota"
+      "name": "South Dakota",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "No state income tax. SS and retirement income untaxed.",
+      "incomeTax": false,
+      "source": "https://dor.sd.gov/"
     },
     "roth": {
       "cr": 0,
@@ -411,7 +784,16 @@
   },
   "TN": {
     "facts": {
-      "name": "Tennessee"
+      "name": "Tennessee",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "No income tax; Hall tax on interest/dividends repealed Jan 1 2021; constitutionally protected (Amendment 3, 2014). SS and retirement income untaxed.",
+      "incomeTax": false,
+      "source": "https://revenue.support.tn.gov/hc/en-us/articles/360057371832"
     },
     "roth": {
       "cr": 0,
@@ -421,7 +803,16 @@
   },
   "TX": {
     "facts": {
-      "name": "Texas"
+      "name": "Texas",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "No state income tax; constitutionally prohibited. SS and retirement income untaxed.",
+      "incomeTax": false,
+      "source": "https://comptroller.texas.gov/"
     },
     "roth": {
       "cr": 0,
@@ -431,7 +822,16 @@
   },
   "UT": {
     "facts": {
-      "name": "Utah"
+      "name": "Utah",
+      "brackets": [
+        {
+          "rate": 0.045,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "On the SS-taxing list (taxes SS with a phased credit for lower incomes). Flat 4.5% (recently cut); small income-phased retirement credit.",
+      "incomeTax": true,
+      "source": "https://incometax.utah.gov/"
     },
     "roth": {
       "cr": 0.045,
@@ -461,7 +861,16 @@
   },
   "WA": {
     "facts": {
-      "name": "Washington"
+      "name": "Washington",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "No income tax on ordinary income (7% capital-gains tax exempts retirement accounts). NOTE: ESSB 6346 adds a 9.9% tax on household income >$1M effective Jan 1 2028, counting conversion income; revisit before TY2028.",
+      "incomeTax": false,
+      "source": "https://dor.wa.gov/taxes-rates/other-taxes/capital-gains-tax"
     },
     "roth": {
       "cr": 0,
@@ -491,7 +900,16 @@
   },
   "WY": {
     "facts": {
-      "name": "Wyoming"
+      "name": "Wyoming",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "No state income tax. SS and retirement income untaxed.",
+      "incomeTax": false,
+      "source": "https://revenue.wyo.gov/"
     },
     "roth": {
       "cr": 0,
@@ -501,7 +919,41 @@
   },
   "DC": {
     "facts": {
-      "name": "Washington D.C."
+      "name": "Washington D.C.",
+      "brackets": [
+        {
+          "rate": 0.04,
+          "upTo": 10000
+        },
+        {
+          "rate": 0.06,
+          "upTo": 40000
+        },
+        {
+          "rate": 0.065,
+          "upTo": 60000
+        },
+        {
+          "rate": 0.085,
+          "upTo": 250000
+        },
+        {
+          "rate": 0.0925,
+          "upTo": 500000
+        },
+        {
+          "rate": 0.0975,
+          "upTo": 1000000
+        },
+        {
+          "rate": 0.1075,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt. All other retirement income — pension, IRA, 401(k), and Roth conversions — taxed at ordinary rates; no retirement-income exclusion. The 8.5% band covers the broad $60k-$250k range where most conversion income lands; 10.75% only above $1M.",
+      "bracketsNote": "Same thresholds for all filing statuses (no MFJ doubling). Source: DC OTR + Tax Foundation 2026.",
+      "incomeTax": true,
+      "source": "https://otr.cfo.dc.gov/page/dc-individual-and-fiduciary-income-tax-rates"
     },
     "roth": {
       "cr": 0.085,

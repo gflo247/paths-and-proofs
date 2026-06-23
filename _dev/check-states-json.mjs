@@ -37,7 +37,7 @@ let json;
 try { json = JSON.parse(readFileSync(jsonPath, 'utf8')); }
 catch (e) { fail(`could not read/parse states.json: ${e.message}`); }
 
-const jsonCodes = Object.keys(json).sort();
+const jsonCodes = Object.keys(json).filter((k) => k !== '_schema').sort();
 const missing = htmlCodes.filter((c) => !jsonCodes.includes(c));
 const extra = jsonCodes.filter((c) => !htmlCodes.includes(c));
 if (missing.length) fail(`states.json is missing: ${missing.join(', ')}`);
@@ -55,6 +55,45 @@ for (const code of htmlCodes) {
   if (j.roth.cr !== h.cr) diffs.push(`${code}: cr ${j.roth.cr} != HTML ${h.cr}`);
   if (j.roth.ex !== h.ex) diffs.push(`${code}: ex ${j.roth.ex} != HTML ${h.ex}`);
   if (j.roth.note !== h.note) diffs.push(`${code}: note differs from HTML`);
+
+  // --- Bracket sanity (only for states whose brackets have been transcribed) ---
+  // These are internal-consistency checks; they CANNOT verify a threshold was copied
+  // correctly from the source (no external reference), but they catch transposition,
+  // bad ordering, out-of-range rates, malformed entries, and — importantly — a roth.cr
+  // that doesn't correspond to any bracket (the two layers silently disagreeing).
+  const b = j.facts?.brackets;
+  if (b !== undefined) {
+    if (!Array.isArray(b) || b.length === 0) {
+      diffs.push(`${code}: facts.brackets must be a non-empty array when present`);
+    } else {
+      let prevUpTo = -Infinity;
+      const rates = [];
+      b.forEach((row, i) => {
+        if (typeof row.rate !== 'number' || row.rate < 0 || row.rate > 0.15) {
+          diffs.push(`${code}: bracket[${i}] rate ${row.rate} out of range 0-0.15`);
+        }
+        rates.push(row.rate);
+        // upTo is a number for all but the final (open-ended) bracket, which uses null.
+        const isLast = i === b.length - 1;
+        if (isLast) {
+          if (row.upTo !== null) diffs.push(`${code}: final bracket upTo must be null (open-ended)`);
+        } else {
+          if (typeof row.upTo !== 'number') {
+            diffs.push(`${code}: bracket[${i}] upTo must be a number`);
+          } else if (row.upTo <= prevUpTo) {
+            diffs.push(`${code}: bracket[${i}] upTo ${row.upTo} not strictly ascending`);
+          } else {
+            prevUpTo = row.upTo;
+          }
+        }
+      });
+      // Cross-layer: the representative roth.cr should be one of the bracket rates,
+      // so the interpretation layer can't drift from the facts it's meant to derive from.
+      if (rates.length && !rates.some((r) => Math.abs(r - j.roth.cr) < 1e-9)) {
+        diffs.push(`${code}: roth.cr ${j.roth.cr} is not among facts.brackets rates [${rates.join(', ')}]`);
+      }
+    }
+  }
 }
 
 if (diffs.length) {
