@@ -22,6 +22,9 @@ section { margin: 36px 0; }
 h2 { font-size: 15px; font-weight: 600; text-transform: uppercase;
      letter-spacing: .06em; color: var(--muted); margin: 0 0 16px; }
 
+.presets-label {
+  font-size: 13px; color: var(--muted); margin: 0 0 10px;
+}
 .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
 .preset {
   font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 999px;

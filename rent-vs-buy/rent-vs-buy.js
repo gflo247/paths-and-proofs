@@ -29,8 +29,9 @@ export const inputs = [
 ];
 
 export const presets = {
-  'Typical metro':       { price: 400000, downPct: 20, rate: 6.5, rent: 2200, rentGrowth: 3, appreciation: 4, invReturn: 6, propTax: 1.1, upkeep: 1.5, closingPct: 3, sellPct: 6 },
-  'Pricey market, renting cheap': { price: 700000, downPct: 20, rate: 6.5, rent: 2800, rentGrowth: 3, appreciation: 4, invReturn: 6, propTax: 1.1, upkeep: 1.5, closingPct: 3, sellPct: 6 },
+  'Typical metro':        { price: 400000, downPct: 20, rate: 6.5, rent: 2200, rentGrowth: 3, appreciation: 4, invReturn: 6, propTax: 1.1, upkeep: 1.5, closingPct: 3, sellPct: 6 },
+  'Renting looks cheap':  { price: 700000, downPct: 20, rate: 6.5, rent: 2800, rentGrowth: 3, appreciation: 4, invReturn: 6, propTax: 1.1, upkeep: 1.5, closingPct: 3, sellPct: 6 },
+  'Buying looks cheap':   { price: 300000, downPct: 20, rate: 6.0, rent: 2100, rentGrowth: 4, appreciation: 4, invReturn: 6, propTax: 1.1, upkeep: 1.5, closingPct: 3, sellPct: 6 },
 };
 
 export function compute(values) {
