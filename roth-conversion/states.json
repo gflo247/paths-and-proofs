@@ -438,17 +438,41 @@
   },
   "IA": {
     "facts": {
-      "name": "Iowa"
+      "name": "Iowa",
+      "brackets": [
+        {
+          "rate": 0.038,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt at any age. Since 2023, ALL retirement income — pensions, IRA, 401(k), including Roth conversion income — is fully exempt for residents age 55+ (no dollar cap), so a conversion at 55+ is Iowa-tax-free (roth.ex=true). Under 55, taxed at the flat 3.8% rate. Iowa Code 422.5.",
+      "bracketsNote": "Flat 3.8% for 2025-2026 (SF 2442, May 2024, collapsed the old graduated brackets; rate fell 8.53%/2022 -> 6%/2023 -> 4.82%/2024 -> 3.8%/2025). Verified vs Iowa DOR / LegalClarity citing IDR.",
+      "incomeTax": true,
+      "source": "https://revenue.iowa.gov/taxes/tax-guidance/individual-income-tax/individual-income-tax-provisions"
     },
     "roth": {
-      "cr": 0.039,
+      "cr": 0.038,
       "ex": true,
-      "note": "Since 2023 Iowa fully exempts retirement income — including Roth conversion income — for residents age 55 and older, so a conversion at 55+ is Iowa-tax-free. Under 55, the conversion is taxable at Iowa's flat rate (about 3.9% for 2026, still falling). Social Security is fully exempt at any age."
+      "note": "Since 2023 Iowa fully exempts retirement income — including Roth conversion income — for residents age 55 and older (no dollar cap), so a conversion at 55+ is Iowa-tax-free. Under 55, the conversion is taxable at Iowa's flat 3.8% rate (SF 2442 collapsed the old brackets to a single flat rate for 2025+). Social Security is fully exempt at any age."
     }
   },
   "KS": {
     "facts": {
-      "name": "Kansas"
+      "name": "Kansas",
+      "brackets": [
+        {
+          "rate": 0.052,
+          "upTo": 23000
+        },
+        {
+          "rate": 0.0558,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security FULLY exempt regardless of income (SB 1, TY2024+ — the old $75k threshold is repealed). KPERS, federal, military, and railroad pensions fully exempt; but PRIVATE IRA/401(k) distributions are fully taxable — a conversion is private IRA income, so Kansas taxes it.",
+      "bracketsNote": "Two-bracket SB 1 (2024 Special Session) schedule, confirmed against KS DOR Legislative Changes doc citing K.S.A. 79-32,110(a): 5.2% to $23k, 5.58% above (single; MFJ $46k). A secondary source erroneously cited 3.1%/5.7% — that is wrong per the DOR statute citation.",
+      "incomeTax": true,
+      "source": "https://www.ksrevenue.gov/pdf/LegislativeChanges.pdf"
     },
     "roth": {
       "cr": 0.0558,
@@ -487,7 +511,25 @@
   },
   "ME": {
     "facts": {
-      "name": "Maine"
+      "name": "Maine",
+      "brackets": [
+        {
+          "rate": 0.058,
+          "upTo": 27400
+        },
+        {
+          "rate": 0.0675,
+          "upTo": 64850
+        },
+        {
+          "rate": 0.0715,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt. Maine has a pension income deduction (up to ~$48k, AGI-phaseout over $125k single / $250k joint) — BUT it specifically EXCLUDES Roth conversions (along with 457(f) and early-penalty distributions). So a Roth conversion gets NO shelter and is fully taxable. The old tool note wrongly implied the deduction applied; this is the IRA-exclusion-trap family (cf. RI, MD).",
+      "bracketsNote": "Single-filer, Maine Revenue Services official 2026 schedule (published 09/15/2025): 5.8% <$27,400, 6.75% to $64,850, 7.15% above. MFJ thresholds ~2x. Inflation-indexed annually. Conversion-exclusion from the pension deduction confirmed via Maine guidance during audit.",
+      "incomeTax": true,
+      "source": "https://www.maine.gov/revenue/taxes/income-estate-tax/individual-income-tax-1040me"
     },
     "roth": {
       "cr": 0.0675,
