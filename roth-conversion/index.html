@@ -348,6 +348,31 @@
 <body>
 <div class="print-header" id="printHeader" style="display:none"></div>
 <header class="site-header">
+  <!-- PNP-BRAND-START -->
+  <style>
+    .pnp-brand{
+      display:inline-flex;align-items:center;gap:.4ch;
+      font-family:'Playfair Display',Georgia,'Times New Roman',serif;
+      font-size:.95rem;font-weight:700;line-height:1;letter-spacing:-.01em;
+      text-decoration:none;color:#3A4A5E;
+      padding:.5rem .15rem;margin:0;white-space:nowrap;
+      opacity:.82;transition:opacity .15s ease;
+    }
+    .pnp-brand:hover,.pnp-brand:focus-visible{opacity:1;text-decoration:none;}
+    .pnp-brand:focus-visible{outline:2px solid #D4860A;outline-offset:3px;border-radius:3px;}
+    .pnp-brand .pnp-mark{font-style:italic;color:#B06000;}
+    .pnp-brand .pnp-home{
+      font-family:inherit;font-style:normal;font-weight:600;font-size:.78rem;
+      letter-spacing:.01em;opacity:.6;margin-left:.1ch;
+    }
+    [data-theme="dark"] .pnp-brand{color:#BFD6F2;}
+    [data-theme="dark"] .pnp-brand .pnp-mark{color:#E89A38;}
+  </style>
+  <a class="pnp-brand" href="/" aria-label="Paths and Proofs — back to all tools">
+    Paths and <span class="pnp-mark">Proofs</span>
+    <span class="pnp-home" aria-hidden="true">↩ home</span>
+  </a>
+  <!-- PNP-BRAND-END -->
   <div class="logo">Roth <em>conversion</em></div>
   <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
     <div class="privacy-pill">🔒 Runs in your browser · Nothing leaves your device</div>

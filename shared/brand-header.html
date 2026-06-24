@@ -1,0 +1,43 @@
+<!-- ============================================================================
+     Paths and Proofs — shared brand header (CANONICAL SOURCE)
+     ----------------------------------------------------------------------------
+     This is the single source of truth for the "Paths and Proofs" home link that
+     appears across the calculator family. It is INJECTED into each calculator's
+     index.html by _dev/gen-header.mjs (run `npm run gen`), between the markers
+       <!-- PNP-BRAND-START --> ... <!-- PNP-BRAND-END -->
+     NEVER hand-edit the injected copies — edit THIS file and regenerate.
+     `npm run verify` runs a drift gate that fails if any injected copy differs.
+
+     Design intent:
+       - A quiet brand wordmark that links HOME ("/"), threading the family together
+         so trust in one tool carries to the others (centralized-trust strategy).
+       - SELF-CONTAINED: carries its own scoped (.pnp-brand*) styles + font fallback,
+         so it renders consistently regardless of each tool's differing stylesheet.
+       - Theme-aware via the shared [data-theme] mechanism (light retained exactly;
+         dark handled). No dependency on any single tool's color tokens.
+       - Excluded from the family vault (in-case-im-not-there), which is a separate
+         product, not part of the calculator family.
+     ============================================================================ -->
+<style>
+  .pnp-brand{
+    display:inline-flex;align-items:center;gap:.4ch;
+    font-family:'Playfair Display',Georgia,'Times New Roman',serif;
+    font-size:.95rem;font-weight:700;line-height:1;letter-spacing:-.01em;
+    text-decoration:none;color:#3A4A5E;
+    padding:.5rem .15rem;margin:0;white-space:nowrap;
+    opacity:.82;transition:opacity .15s ease;
+  }
+  .pnp-brand:hover,.pnp-brand:focus-visible{opacity:1;text-decoration:none;}
+  .pnp-brand:focus-visible{outline:2px solid #D4860A;outline-offset:3px;border-radius:3px;}
+  .pnp-brand .pnp-mark{font-style:italic;color:#B06000;}
+  .pnp-brand .pnp-home{
+    font-family:inherit;font-style:normal;font-weight:600;font-size:.78rem;
+    letter-spacing:.01em;opacity:.6;margin-left:.1ch;
+  }
+  [data-theme="dark"] .pnp-brand{color:#BFD6F2;}
+  [data-theme="dark"] .pnp-brand .pnp-mark{color:#E89A38;}
+</style>
+<a class="pnp-brand" href="/" aria-label="Paths and Proofs — back to all tools">
+  Paths and <span class="pnp-mark">Proofs</span>
+  <span class="pnp-home" aria-hidden="true">↩ home</span>
+</a>
