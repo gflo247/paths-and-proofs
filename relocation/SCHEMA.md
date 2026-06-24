@@ -76,7 +76,19 @@ taxRules: {
   // Capital gains. Default "ordinary" = flows through bracketsByStatus (most states).
   capitalGains:
       { treatment: "ordinary" }                         // ~33 states + (0 in no-tax states)
-    | { treatment: "excludedPct", exclusionPct: <0..1> } // WI 0.30 (then ordinary on remainder)
+    | { treatment: "excludedPct",                       // WI 0.30, SC 0.44, AR 0.50
+        exclusionPct: <0..1>,
+        // Optional refinements (NM-style deductions need these):
+        minDeduction: <num> | null,                     // "greater of $X or pct" floor
+        maxGainEligible: <num> | null,                  // pct applies only up to this gain
+        // CRITICAL for a RELOCATION tool modeling PORTFOLIO gains:
+        sourceRestricted: <bool>                         // true => break applies ONLY to in-state
+      }                                                  // real-estate/business gains, NOT to
+                                                         // publicly-traded securities. For a
+                                                         // retiree's brokerage gains, the engine
+                                                         // treats a sourceRestricted break as NOT
+                                                         // applying (ordinary), and the UI discloses
+                                                         // it. NM/CO/ID/LA/OK are source-restricted.
     | { treatment: "separateTax",                        // WA: own excise, ignores brackets
         exemptBelow: <num>,                              // WA 278000
         ladder: [ {rate, upTo}, ... ] }                  // WA 7% to 1M, 9.9% above

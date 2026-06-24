@@ -1,44 +1,181 @@
 {
-  "_note": "STAGING — stress-test encodings for the relocation schema. Proven here against the engine, THEN merged into states.json facts and rolled to all 51. Not read by any live tool.",
-
+  "_note": "STAGING \u2014 stress-test encodings for the relocation schema. Proven here against the engine, THEN merged into states.json facts and rolled to all 51. Not read by any live tool.",
   "NJ": {
     "taxRules": {
       "bracketsByStatus": {
-        "single": [{"rate":0.014,"upTo":20000},{"rate":0.0175,"upTo":35000},{"rate":0.035,"upTo":40000},{"rate":0.05525,"upTo":75000},{"rate":0.0637,"upTo":500000},{"rate":0.0897,"upTo":1000000},{"rate":0.1075,"upTo":null}],
-        "joint":  [{"rate":0.014,"upTo":20000},{"rate":0.0175,"upTo":50000},{"rate":0.0245,"upTo":70000},{"rate":0.035,"upTo":80000},{"rate":0.05525,"upTo":150000},{"rate":0.0637,"upTo":500000},{"rate":0.0897,"upTo":1000000},{"rate":0.1075,"upTo":null}]
+        "single": [
+          {
+            "rate": 0.014,
+            "upTo": 20000
+          },
+          {
+            "rate": 0.0175,
+            "upTo": 35000
+          },
+          {
+            "rate": 0.035,
+            "upTo": 40000
+          },
+          {
+            "rate": 0.05525,
+            "upTo": 75000
+          },
+          {
+            "rate": 0.0637,
+            "upTo": 500000
+          },
+          {
+            "rate": 0.0897,
+            "upTo": 1000000
+          },
+          {
+            "rate": 0.1075,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.014,
+            "upTo": 20000
+          },
+          {
+            "rate": 0.0175,
+            "upTo": 50000
+          },
+          {
+            "rate": 0.0245,
+            "upTo": 70000
+          },
+          {
+            "rate": 0.035,
+            "upTo": 80000
+          },
+          {
+            "rate": 0.05525,
+            "upTo": 150000
+          },
+          {
+            "rate": 0.0637,
+            "upTo": 500000
+          },
+          {
+            "rate": 0.0897,
+            "upTo": 1000000
+          },
+          {
+            "rate": 0.1075,
+            "upTo": null
+          }
+        ]
       },
-      "socialSecurity": {"taxed": false},
+      "socialSecurity": {
+        "taxed": false
+      },
       "retirementIncome": {
         "treatment": "exclusion",
         "ageGate": 62,
         "exclusion": {
-          "capSingle": 75000, "capJoint": 100000,
+          "capSingle": 75000,
+          "capJoint": 100000,
           "cliffType": "hard",
-          "cliffAGI": {"single": 150000, "joint": 150000},
-          "fullBelowAGI": null, "zeroByAGI": null,
+          "cliffAGI": {
+            "single": 150000,
+            "joint": 150000
+          },
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
           "excludesIRA": false
         }
       },
-      "pensionIncome": {"sameAs": "retirementIncome"},
-      "capitalGains": {"treatment": "ordinary"}
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
     },
     "taxContext": {
       "salesTaxRate": 0.06625,
       "salesTaxNote": "groceries, clothing, prescriptions exempt",
       "propertyTaxRateMedian": 0.0223,
-      "estateTax": {"has": false, "kind": null, "exemption": null, "note": "Estate tax repealed 2018; inheritance tax still applies to non-lineal heirs."}
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "Estate tax repealed 2018; inheritance tax still applies to non-lineal heirs."
+      }
     }
   },
-
   "CT": {
     "taxRules": {
       "bracketsByStatus": {
-        "single": [{"rate":0.02,"upTo":10000},{"rate":0.045,"upTo":50000},{"rate":0.055,"upTo":100000},{"rate":0.06,"upTo":200000},{"rate":0.065,"upTo":250000},{"rate":0.069,"upTo":500000},{"rate":0.0699,"upTo":null}],
-        "joint":  [{"rate":0.02,"upTo":20000},{"rate":0.045,"upTo":100000},{"rate":0.055,"upTo":200000},{"rate":0.06,"upTo":400000},{"rate":0.065,"upTo":500000},{"rate":0.069,"upTo":1000000},{"rate":0.0699,"upTo":null}]
+        "single": [
+          {
+            "rate": 0.02,
+            "upTo": 10000
+          },
+          {
+            "rate": 0.045,
+            "upTo": 50000
+          },
+          {
+            "rate": 0.055,
+            "upTo": 100000
+          },
+          {
+            "rate": 0.06,
+            "upTo": 200000
+          },
+          {
+            "rate": 0.065,
+            "upTo": 250000
+          },
+          {
+            "rate": 0.069,
+            "upTo": 500000
+          },
+          {
+            "rate": 0.0699,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.02,
+            "upTo": 20000
+          },
+          {
+            "rate": 0.045,
+            "upTo": 100000
+          },
+          {
+            "rate": 0.055,
+            "upTo": 200000
+          },
+          {
+            "rate": 0.06,
+            "upTo": 400000
+          },
+          {
+            "rate": 0.065,
+            "upTo": 500000
+          },
+          {
+            "rate": 0.069,
+            "upTo": 1000000
+          },
+          {
+            "rate": 0.0699,
+            "upTo": null
+          }
+        ]
       },
       "socialSecurity": {
         "taxed": true,
-        "exemptBelowAGI": {"single": 75000, "joint": 100000},
+        "exemptBelowAGI": {
+          "single": 75000,
+          "joint": 100000
+        },
         "phaseInAboveAGI": null,
         "maxTaxableFraction": 0.25
       },
@@ -46,40 +183,133 @@
         "treatment": "exclusion",
         "ageGate": null,
         "exclusion": {
-          "capSingle": 75000, "capJoint": 100000,
+          "capSingle": 75000,
+          "capJoint": 100000,
           "cliffType": "phaseout",
           "cliffAGI": null,
-          "fullBelowAGI": {"single": 75000, "joint": 100000},
-          "zeroByAGI": {"single": 100000, "joint": 150000},
+          "fullBelowAGI": {
+            "single": 75000,
+            "joint": 100000
+          },
+          "zeroByAGI": {
+            "single": 100000,
+            "joint": 150000
+          },
           "excludesIRA": false
         }
       },
-      "pensionIncome": {"sameAs": "retirementIncome"},
-      "capitalGains": {"treatment": "ordinary"}
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
     },
     "taxContext": {
       "salesTaxRate": 0.0635,
       "salesTaxNote": "groceries, prescriptions exempt; no local add-on",
       "propertyTaxRateMedian": 0.0179,
-      "estateTax": {"has": true, "kind": "estate", "exemption": 13990000, "note": "Matches federal exemption (2026); flat 12% above."}
+      "estateTax": {
+        "has": true,
+        "kind": "estate",
+        "exemption": 13990000,
+        "note": "Matches federal exemption (2026); flat 12% above."
+      }
     }
   },
-
   "MD": {
     "taxRules": {
       "bracketsByStatus": {
-        "single": [{"rate":0.02,"upTo":1000},{"rate":0.03,"upTo":2000},{"rate":0.0475,"upTo":100000},{"rate":0.05,"upTo":125000},{"rate":0.0525,"upTo":150000},{"rate":0.055,"upTo":250000},{"rate":0.0575,"upTo":500000},{"rate":0.0625,"upTo":1000000},{"rate":0.065,"upTo":null}],
-        "joint":  [{"rate":0.02,"upTo":1000},{"rate":0.03,"upTo":2000},{"rate":0.0475,"upTo":150000},{"rate":0.05,"upTo":175000},{"rate":0.0525,"upTo":225000},{"rate":0.055,"upTo":300000},{"rate":0.0575,"upTo":600000},{"rate":0.0625,"upTo":1200000},{"rate":0.065,"upTo":null}]
+        "single": [
+          {
+            "rate": 0.02,
+            "upTo": 1000
+          },
+          {
+            "rate": 0.03,
+            "upTo": 2000
+          },
+          {
+            "rate": 0.0475,
+            "upTo": 100000
+          },
+          {
+            "rate": 0.05,
+            "upTo": 125000
+          },
+          {
+            "rate": 0.0525,
+            "upTo": 150000
+          },
+          {
+            "rate": 0.055,
+            "upTo": 250000
+          },
+          {
+            "rate": 0.0575,
+            "upTo": 500000
+          },
+          {
+            "rate": 0.0625,
+            "upTo": 1000000
+          },
+          {
+            "rate": 0.065,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.02,
+            "upTo": 1000
+          },
+          {
+            "rate": 0.03,
+            "upTo": 2000
+          },
+          {
+            "rate": 0.0475,
+            "upTo": 150000
+          },
+          {
+            "rate": 0.05,
+            "upTo": 175000
+          },
+          {
+            "rate": 0.0525,
+            "upTo": 225000
+          },
+          {
+            "rate": 0.055,
+            "upTo": 300000
+          },
+          {
+            "rate": 0.0575,
+            "upTo": 600000
+          },
+          {
+            "rate": 0.0625,
+            "upTo": 1200000
+          },
+          {
+            "rate": 0.065,
+            "upTo": null
+          }
+        ]
       },
-      "socialSecurity": {"taxed": false},
+      "socialSecurity": {
+        "taxed": false
+      },
       "retirementIncome": {
         "treatment": "exclusion",
         "ageGate": 65,
         "exclusion": {
-          "capSingle": 39500, "capJoint": 39500,
+          "capSingle": 39500,
+          "capJoint": 39500,
           "cliffType": "hard",
           "cliffAGI": null,
-          "fullBelowAGI": null, "zeroByAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
           "excludesIRA": true
         }
       },
@@ -87,123 +317,730 @@
         "treatment": "exclusion",
         "ageGate": 65,
         "exclusion": {
-          "capSingle": 39500, "capJoint": 39500,
-          "cliffType": "hard", "cliffAGI": null,
-          "fullBelowAGI": null, "zeroByAGI": null,
+          "capSingle": 39500,
+          "capJoint": 39500,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
           "excludesIRA": false
         }
       },
-      "capitalGains": {"treatment": "ordinary"}
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
     },
     "taxContext": {
       "salesTaxRate": 0.06,
       "salesTaxNote": "groceries, prescriptions exempt",
       "propertyTaxRateMedian": 0.0105,
-      "estateTax": {"has": true, "kind": "both", "exemption": 5000000, "note": "Estate tax ($5M exemption) AND inheritance tax on non-lineal heirs. Plus mandatory county income tax 2.25-3.30% (Tier-2: not modeled)."}
+      "estateTax": {
+        "has": true,
+        "kind": "both",
+        "exemption": 5000000,
+        "note": "Estate tax ($5M exemption) AND inheritance tax on non-lineal heirs. Plus mandatory county income tax 2.25-3.30% (Tier-2: not modeled)."
+      }
     }
   },
-
   "MN": {
     "taxRules": {
       "bracketsByStatus": {
-        "single": [{"rate":0.0535,"upTo":33310},{"rate":0.068,"upTo":109430},{"rate":0.0785,"upTo":203150},{"rate":0.0985,"upTo":null}],
-        "joint":  [{"rate":0.0535,"upTo":48680},{"rate":0.068,"upTo":193470},{"rate":0.0785,"upTo":345050},{"rate":0.0985,"upTo":null}]
+        "single": [
+          {
+            "rate": 0.0535,
+            "upTo": 33310
+          },
+          {
+            "rate": 0.068,
+            "upTo": 109430
+          },
+          {
+            "rate": 0.0785,
+            "upTo": 203150
+          },
+          {
+            "rate": 0.0985,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0535,
+            "upTo": 48680
+          },
+          {
+            "rate": 0.068,
+            "upTo": 193470
+          },
+          {
+            "rate": 0.0785,
+            "upTo": 345050
+          },
+          {
+            "rate": 0.0985,
+            "upTo": null
+          }
+        ]
       },
       "socialSecurity": {
         "taxed": true,
-        "exemptBelowAGI": {"single": 82190, "joint": 105380},
-        "phaseInAboveAGI": {"single": 82190, "joint": 105380},
+        "exemptBelowAGI": {
+          "single": 82190,
+          "joint": 105380
+        },
+        "phaseInAboveAGI": {
+          "single": 82190,
+          "joint": 105380
+        },
         "maxTaxableFraction": 0.85
       },
-      "retirementIncome": {"treatment": "taxed", "ageGate": null, "exclusion": null},
-      "pensionIncome": {"sameAs": "retirementIncome"},
-      "capitalGains": {"treatment": "ordinary"}
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
     },
     "taxContext": {
       "salesTaxRate": 0.06875,
       "salesTaxNote": "groceries, clothing, prescriptions exempt",
       "propertyTaxRateMedian": 0.0102,
-      "estateTax": {"has": true, "kind": "estate", "exemption": 3000000, "note": "$3M exemption, 13-16% rates."}
+      "estateTax": {
+        "has": true,
+        "kind": "estate",
+        "exemption": 3000000,
+        "note": "$3M exemption, 13-16% rates."
+      }
     }
   },
-
   "PA": {
     "taxRules": {
       "bracketsByStatus": {
-        "single": [{"rate":0.0307,"upTo":null}],
-        "joint":  [{"rate":0.0307,"upTo":null}]
+        "single": [
+          {
+            "rate": 0.0307,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0307,
+            "upTo": null
+          }
+        ]
       },
-      "socialSecurity": {"taxed": false},
-      "retirementIncome": {"treatment": "ageExempt", "ageGate": 59.5, "exclusion": null},
-      "pensionIncome": {"sameAs": "retirementIncome"},
-      "capitalGains": {"treatment": "ordinary"}
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "ageExempt",
+        "ageGate": 59.5,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
     },
     "taxContext": {
       "salesTaxRate": 0.06,
       "salesTaxNote": "groceries, clothing, prescriptions exempt; some localities (Philadelphia, Allegheny) add 1-2% (Tier-2: not modeled)",
       "propertyTaxRateMedian": 0.0149,
-      "estateTax": {"has": true, "kind": "inheritance", "exemption": 0, "note": "Inheritance tax 0% spouse / 4.5% lineal / 12-15% others; no exemption floor for non-spouse."}
+      "estateTax": {
+        "has": true,
+        "kind": "inheritance",
+        "exemption": 0,
+        "note": "Inheritance tax 0% spouse / 4.5% lineal / 12-15% others; no exemption floor for non-spouse."
+      }
     }
   },
-
   "WA": {
     "taxRules": {
       "bracketsByStatus": {
-        "single": [{"rate":0,"upTo":null}],
-        "joint":  [{"rate":0,"upTo":null}]
+        "single": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ]
       },
-      "socialSecurity": {"taxed": false},
-      "retirementIncome": {"treatment": "exempt", "ageGate": null, "exclusion": null},
-      "pensionIncome": {"sameAs": "retirementIncome"},
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
       "capitalGains": {
         "treatment": "separateTax",
         "exemptBelow": 278000,
-        "ladder": [{"rate":0.07,"upTo":1000000},{"rate":0.099,"upTo":null}]
+        "ladder": [
+          {
+            "rate": 0.07,
+            "upTo": 1000000
+          },
+          {
+            "rate": 0.099,
+            "upTo": null
+          }
+        ]
       }
     },
     "taxContext": {
       "salesTaxRate": 0.065,
       "salesTaxNote": "state 6.5%; local add-ons push combined to ~9-10% (Tier-2: state rate only modeled)",
       "propertyTaxRateMedian": 0.0076,
-      "estateTax": {"has": true, "kind": "estate", "exemption": 2193000, "note": "$2.193M exemption, 10-20% rates (one of the lowest exemption floors)."}
+      "estateTax": {
+        "has": true,
+        "kind": "estate",
+        "exemption": 2193000,
+        "note": "$2.193M exemption, 10-20% rates (one of the lowest exemption floors)."
+      }
     }
   },
-
   "WI": {
     "taxRules": {
       "bracketsByStatus": {
-        "single": [{"rate":0.035,"upTo":14680},{"rate":0.044,"upTo":29370},{"rate":0.053,"upTo":323290},{"rate":0.0765,"upTo":null}],
-        "joint":  [{"rate":0.035,"upTo":19580},{"rate":0.044,"upTo":39150},{"rate":0.053,"upTo":431060},{"rate":0.0765,"upTo":null}]
+        "single": [
+          {
+            "rate": 0.035,
+            "upTo": 14680
+          },
+          {
+            "rate": 0.044,
+            "upTo": 29370
+          },
+          {
+            "rate": 0.053,
+            "upTo": 323290
+          },
+          {
+            "rate": 0.0765,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.035,
+            "upTo": 19580
+          },
+          {
+            "rate": 0.044,
+            "upTo": 39150
+          },
+          {
+            "rate": 0.053,
+            "upTo": 431060
+          },
+          {
+            "rate": 0.0765,
+            "upTo": null
+          }
+        ]
       },
-      "socialSecurity": {"taxed": false},
-      "retirementIncome": {"treatment": "taxed", "ageGate": null, "exclusion": null},
-      "pensionIncome": {"sameAs": "retirementIncome"},
-      "capitalGains": {"treatment": "excludedPct", "exclusionPct": 0.30}
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "excludedPct",
+        "exclusionPct": 0.3
+      }
     },
     "taxContext": {
       "salesTaxRate": 0.05,
       "salesTaxNote": "groceries, prescriptions exempt; counties add ~0.5%",
       "propertyTaxRateMedian": 0.0151,
-      "estateTax": {"has": false, "kind": null, "exemption": null, "note": "No estate or inheritance tax."}
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
     }
   },
-
   "FL": {
     "taxRules": {
       "bracketsByStatus": {
-        "single": [{"rate":0,"upTo":null}],
-        "joint":  [{"rate":0,"upTo":null}]
+        "single": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ]
       },
-      "socialSecurity": {"taxed": false},
-      "retirementIncome": {"treatment": "exempt", "ageGate": null, "exclusion": null},
-      "pensionIncome": {"sameAs": "retirementIncome"},
-      "capitalGains": {"treatment": "ordinary"}
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
     },
     "taxContext": {
       "salesTaxRate": 0.06,
       "salesTaxNote": "groceries, prescriptions exempt; counties add up to 2%",
       "propertyTaxRateMedian": 0.0091,
-      "estateTax": {"has": false, "kind": null, "exemption": null, "note": "No estate or inheritance tax; no state income tax."}
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax; no state income tax."
+      }
+    }
+  },
+  "SC": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.0199,
+            "upTo": 30000
+          },
+          {
+            "rate": 0.0521,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0199,
+            "upTo": 30000
+          },
+          {
+            "rate": 0.0521,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": null,
+        "exclusion": {
+          "capSingle": 10000,
+          "capJoint": 10000,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "excludedPct",
+        "exclusionPct": 0.44,
+        "minDeduction": null,
+        "maxGainEligible": null,
+        "sourceRestricted": false
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.06,
+      "salesTaxNote": "groceries exempt; counties add up to 3%",
+      "propertyTaxRateMedian": 0.0051,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    }
+  },
+  "AR": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": 5599
+          },
+          {
+            "rate": 0.02,
+            "upTo": 11199
+          },
+          {
+            "rate": 0.03,
+            "upTo": 15999
+          },
+          {
+            "rate": 0.034,
+            "upTo": 26399
+          },
+          {
+            "rate": 0.037,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": 5599
+          },
+          {
+            "rate": 0.02,
+            "upTo": 11199
+          },
+          {
+            "rate": 0.03,
+            "upTo": 15999
+          },
+          {
+            "rate": 0.034,
+            "upTo": 26399
+          },
+          {
+            "rate": 0.037,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": true,
+        "exemptBelowAGI": {
+          "single": 100000,
+          "joint": 100000
+        },
+        "phaseInAboveAGI": null,
+        "maxTaxableFraction": 0.85
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": 59.5,
+        "exclusion": {
+          "capSingle": 6000,
+          "capJoint": 6000,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "excludedPct",
+        "exclusionPct": 0.5,
+        "minDeduction": null,
+        "maxGainEligible": null,
+        "sourceRestricted": false
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.065,
+      "salesTaxNote": "groceries taxed at reduced 0.125%; high local add-ons (~9.5% combined)",
+      "propertyTaxRateMedian": 0.0061,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    }
+  },
+  "NM": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.015,
+            "upTo": 5500
+          },
+          {
+            "rate": 0.032,
+            "upTo": 16500
+          },
+          {
+            "rate": 0.043,
+            "upTo": 33500
+          },
+          {
+            "rate": 0.047,
+            "upTo": 66500
+          },
+          {
+            "rate": 0.049,
+            "upTo": 210000
+          },
+          {
+            "rate": 0.059,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.015,
+            "upTo": 8000
+          },
+          {
+            "rate": 0.032,
+            "upTo": 25000
+          },
+          {
+            "rate": 0.043,
+            "upTo": 50000
+          },
+          {
+            "rate": 0.047,
+            "upTo": 100000
+          },
+          {
+            "rate": 0.049,
+            "upTo": 315000
+          },
+          {
+            "rate": 0.059,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": true,
+        "exemptBelowAGI": {
+          "single": 100000,
+          "joint": 150000
+        },
+        "phaseInAboveAGI": null,
+        "maxTaxableFraction": 0.85
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": 65,
+        "exclusion": {
+          "capSingle": 8000,
+          "capJoint": 8000,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "excludedPct",
+        "exclusionPct": 0.5,
+        "minDeduction": 2500,
+        "maxGainEligible": 1000000,
+        "sourceRestricted": true
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.04875,
+      "salesTaxNote": "Gross Receipts Tax ~5% state (taxes services too); ~7.9-8.4% combined",
+      "propertyTaxRateMedian": 0.0067,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    }
+  },
+  "ME": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.058,
+            "upTo": 27400
+          },
+          {
+            "rate": 0.0675,
+            "upTo": 64850
+          },
+          {
+            "rate": 0.0715,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.058,
+            "upTo": 54800
+          },
+          {
+            "rate": 0.0675,
+            "upTo": 129700
+          },
+          {
+            "rate": 0.0715,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": null,
+        "exclusion": {
+          "capSingle": 48216,
+          "capJoint": 48216,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": true
+        }
+      },
+      "pensionIncome": {
+        "treatment": "exclusion",
+        "ageGate": null,
+        "exclusion": {
+          "capSingle": 48216,
+          "capJoint": 48216,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.055,
+      "salesTaxNote": "groceries, prescriptions exempt; no local add-on",
+      "propertyTaxRateMedian": 0.0109,
+      "estateTax": {
+        "has": true,
+        "kind": "estate",
+        "exemption": 7000000,
+        "note": "~$7M exemption (2026), 8-12% rates."
+      }
+    }
+  },
+  "RI": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.0375,
+            "upTo": 82050
+          },
+          {
+            "rate": 0.0475,
+            "upTo": 186450
+          },
+          {
+            "rate": 0.0599,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0375,
+            "upTo": 82050
+          },
+          {
+            "rate": 0.0475,
+            "upTo": 186450
+          },
+          {
+            "rate": 0.0599,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": true,
+        "exemptBelowAGI": {
+          "single": 107000,
+          "joint": 133750
+        },
+        "phaseInAboveAGI": null,
+        "maxTaxableFraction": 0.85
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": 67,
+        "exclusion": {
+          "capSingle": 50000,
+          "capJoint": 50000,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": true
+        }
+      },
+      "pensionIncome": {
+        "treatment": "exclusion",
+        "ageGate": 67,
+        "exclusion": {
+          "capSingle": 50000,
+          "capJoint": 50000,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.07,
+      "salesTaxNote": "groceries, clothing under $250 exempt; no local add-on",
+      "propertyTaxRateMedian": 0.014,
+      "estateTax": {
+        "has": true,
+        "kind": "estate",
+        "exemption": 1802431,
+        "note": "~$1.8M exemption (one of the lowest), 0.8-16% rates."
+      }
     }
   }
 }

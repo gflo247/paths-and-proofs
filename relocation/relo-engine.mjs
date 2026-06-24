@@ -96,7 +96,19 @@ export function computeStateIncomeTax(rules, status, income) {
   const cg = rules.capitalGains;
   let cgOrdinary = 0, cgSeparateTax = 0;
   if (cg.treatment === "ordinary") cgOrdinary = capGains;
-  else if (cg.treatment === "excludedPct") cgOrdinary = capGains * (1 - cg.exclusionPct);
+  else if (cg.treatment === "excludedPct") {
+    // sourceRestricted breaks (NM/CO/ID/LA/OK) apply ONLY to in-state real-estate/business
+    // gains, NOT to a retiree's publicly-traded portfolio. For this tool's use case we treat
+    // them as fully ordinary (the realistic outcome) and disclose the nuance in the UI.
+    if (cg.sourceRestricted) {
+      cgOrdinary = capGains;
+    } else {
+      const eligible = cg.maxGainEligible != null ? Math.min(capGains, cg.maxGainEligible) : capGains;
+      let deduction = eligible * cg.exclusionPct;
+      if (cg.minDeduction != null) deduction = Math.max(deduction, Math.min(cg.minDeduction, capGains));
+      cgOrdinary = Math.max(0, capGains - deduction);
+    }
+  }
   else if (cg.treatment === "separateTax") {
     const taxableCG = Math.max(0, capGains - cg.exemptBelow);
     cgSeparateTax = bracketTax(taxableCG, cg.ladder);
