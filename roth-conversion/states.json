@@ -501,12 +501,22 @@
   },
   "LA": {
     "facts": {
-      "name": "Louisiana"
+      "name": "Louisiana",
+      "brackets": [
+        {
+          "rate": 0.03,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt; most LA government, federal, railroad, and military pensions also exempt. Private IRA/401(k)/conversion income taxable, but a $12,000-per-person retirement-income exclusion at 65+ (doubled from $6k under Act 11, inflation-adjusted from 2026) shelters part of it. Louisiana also lets you deduct federal income tax paid, lowering the effective rate.",
+      "bracketsNote": "Flat 3% (Act 11, 2024 3rd Extraordinary Session, effective Jan 1 2025; replaced the old 1.85%-4.25% graduated structure). Confirmed against LA DOR FAQ. Revenue-trigger mechanism may cut the rate further from 2026.",
+      "incomeTax": true,
+      "source": "https://revenue.louisiana.gov/tax-education-and-faqs/faqs/income-tax-reform/what-are-the-individual-income-tax-rates-and-brackets/"
     },
     "roth": {
-      "cr": 0.0425,
+      "cr": 0.03,
       "ex": false,
-      "note": "Flat 4.25% (2026); IRA and conversion income is taxable, with a $6,000 retirement-income exclusion per person at 65+. A conversion above that is fully taxable."
+      "note": "Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a $12,000 retirement-income exclusion per person at 65+ (doubled from $6k, inflation-adjusted). A conversion above that is taxable at 3%. Social Security and most LA government/military pensions are fully exempt."
     }
   },
   "ME": {
@@ -539,7 +549,49 @@
   },
   "MD": {
     "facts": {
-      "name": "Maryland"
+      "name": "Maryland",
+      "brackets": [
+        {
+          "rate": 0.02,
+          "upTo": 1000
+        },
+        {
+          "rate": 0.03,
+          "upTo": 2000
+        },
+        {
+          "rate": 0.0475,
+          "upTo": 100000
+        },
+        {
+          "rate": 0.05,
+          "upTo": 125000
+        },
+        {
+          "rate": 0.0525,
+          "upTo": 150000
+        },
+        {
+          "rate": 0.055,
+          "upTo": 250000
+        },
+        {
+          "rate": 0.0575,
+          "upTo": 500000
+        },
+        {
+          "rate": 0.0625,
+          "upTo": 1000000
+        },
+        {
+          "rate": 0.065,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt. The pension exclusion (~$36k-$41k at 65+) covers QUALIFIED employer-plan/pension income but EXCLUDES traditional IRA and 401(k) distributions — a Roth conversion is IRA income, so it gets NO shelter and is fully taxable. (Rolling a 401k into an IRA even forfeits exclusion eligibility.) IRA-exclusion-trap family (cf. ME, RI). Note: every county adds a mandatory 2.25%-3.30% local tax on top of the state rate.",
+      "bracketsNote": "Single-filer; 4.75% band (k-$100k) is where most retirement income lands; 5.75% only over $250k. NEW 2026 brackets (H.B. 352 / FY26 budget): 6.25% over $500k, 6.5% over $1M. roth.cr kept at 5.75% (state portion; county tax 2.25-3.3% adds on top, roughly offsetting). Plus 2% capital-gains surtax over $350k FAGI. Source: MD Comptroller 2026 withholding.",
+      "incomeTax": true,
+      "source": "https://www.marylandtaxes.gov/"
     },
     "roth": {
       "cr": 0.0575,
@@ -591,7 +643,29 @@
   },
   "MN": {
     "facts": {
-      "name": "Minnesota"
+      "name": "Minnesota",
+      "brackets": [
+        {
+          "rate": 0.0535,
+          "upTo": 33310
+        },
+        {
+          "rate": 0.068,
+          "upTo": 109430
+        },
+        {
+          "rate": 0.0785,
+          "upTo": 203150
+        },
+        {
+          "rate": 0.0985,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "On the SS-taxing list: SS fully exempt below $82,190 single / $105,380 joint AGI (2026), phasing out above. NO retirement-income exclusion — pension, IRA, 401(k), and Roth conversion income all taxed as ordinary income at full rates. A conversion both adds taxable income and can push past the SS-subtraction threshold, pulling more benefits into tax.",
+      "bracketsNote": "Single-filer, MN DOR official 2026 schedule (inflation-adjusted, via kare11/MN Revenue): 9.85% top only over $203,150. MFJ thresholds wider. roth.cr 7.85% representative (top only above $203k).",
+      "incomeTax": true,
+      "source": "https://www.revenue.state.mn.us/minnesota-income-tax-rates-and-brackets"
     },
     "roth": {
       "cr": 0.0785,
@@ -601,7 +675,21 @@
   },
   "MS": {
     "facts": {
-      "name": "Mississippi"
+      "name": "Mississippi",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": 10000
+        },
+        {
+          "rate": 0.044,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt. Mississippi exempts QUALIFIED retirement income (IRA, 401k, pension) once retirement requirements met (generally 59.5) — so a conversion at 59.5+ is MS-tax-free (roth.ex=true). An EARLY distribution before 59.5 does NOT qualify and is taxed at the flat rate.",
+      "bracketsNote": "Flat 4.4% above a $10k 0%-bracket for 2026 (stepping down toward 3.75% in coming years under the 2022 phasedown). roth.cr 4.4% is the rate that would apply pre-exemption.",
+      "incomeTax": true,
+      "source": "https://www.dor.ms.gov/"
     },
     "roth": {
       "cr": 0.044,
@@ -611,7 +699,45 @@
   },
   "MO": {
     "facts": {
-      "name": "Missouri"
+      "name": "Missouri",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": 1313
+        },
+        {
+          "rate": 0.02,
+          "upTo": 2626
+        },
+        {
+          "rate": 0.025,
+          "upTo": 3939
+        },
+        {
+          "rate": 0.03,
+          "upTo": 5252
+        },
+        {
+          "rate": 0.035,
+          "upTo": 6565
+        },
+        {
+          "rate": 0.04,
+          "upTo": 7878
+        },
+        {
+          "rate": 0.045,
+          "upTo": 9191
+        },
+        {
+          "rate": 0.047,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt (62+). Private IRA/401(k)/conversion income taxable; only break is a $6,000 private-pension exclusion that phases out under $25k single / $32k joint MAGI, so a meaningful conversion rarely qualifies. Public pensions get a larger exclusion (up to ~$48,967) but that does not cover private IRA income. Capital gains now fully exempt (2025+).",
+      "bracketsNote": "Single-filer (same thresholds all statuses); top 4.7% starts ~$9,191. Top rate cut 4.8%->4.7% Jan 2025 (SB 3 revenue trigger). Inflation-indexed. Source: Mo. Rev. Stat. 143.011 via MO DOR.",
+      "incomeTax": true,
+      "source": "https://dor.mo.gov/taxation/individual/tax-types/income/"
     },
     "roth": {
       "cr": 0.047,
@@ -621,7 +747,21 @@
   },
   "MT": {
     "facts": {
-      "name": "Montana"
+      "name": "Montana",
+      "brackets": [
+        {
+          "rate": 0.047,
+          "upTo": 20500
+        },
+        {
+          "rate": 0.0565,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "On the SS-taxing list: Montana taxes Social Security following the federal formula, so a conversion that raises income pulls more benefits into tax. IRA/conversion income taxable; Montana REPEALED its broader pension/IRA deduction for 2025, leaving only a small (~$5,500) qualified-retirement-income deduction. No sales tax.",
+      "bracketsNote": "Single-filer two-bracket HB337 schedule: 4.7% to ~$20,500, 5.65% above (5.65% for 2026, falling to 5.4% in 2027). MFJ second bracket starts ~$41,000. Source: Tax Foundation 2026 / MT DOR HB337.",
+      "incomeTax": true,
+      "source": "https://mtrevenue.gov/"
     },
     "roth": {
       "cr": 0.0565,
@@ -631,7 +771,25 @@
   },
   "NE": {
     "facts": {
-      "name": "Nebraska"
+      "name": "Nebraska",
+      "brackets": [
+        {
+          "rate": 0.0246,
+          "upTo": 2399
+        },
+        {
+          "rate": 0.0351,
+          "upTo": 17999
+        },
+        {
+          "rate": 0.0455,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security FULLY exempt (2025+) regardless of income — so unlike some neighbors, a conversion here does not pull more SS into tax. IRA/conversion income fully taxable with no special retirement exclusion.",
+      "bracketsNote": "Single-filer 2026 three-bracket schedule (LB 754 collapsed the prior four brackets — the 2025 5.01% and 5.20% rates BOTH drop to 4.55% for 2026, merging into the top bracket). Top 4.55% starts at $18,000 single. Falls to 3.99% in 2027. Thresholds NOT inflation-indexed. Source: Neb. Rev. Stat. 77-2715.03 / NE DOR.",
+      "incomeTax": true,
+      "source": "https://revenue.nebraska.gov/"
     },
     "roth": {
       "cr": 0.0455,
@@ -679,7 +837,41 @@
   },
   "NJ": {
     "facts": {
-      "name": "New Jersey"
+      "name": "New Jersey",
+      "brackets": [
+        {
+          "rate": 0.014,
+          "upTo": 20000
+        },
+        {
+          "rate": 0.0175,
+          "upTo": 35000
+        },
+        {
+          "rate": 0.035,
+          "upTo": 40000
+        },
+        {
+          "rate": 0.05525,
+          "upTo": 75000
+        },
+        {
+          "rate": 0.0637,
+          "upTo": 500000
+        },
+        {
+          "rate": 0.0897,
+          "upTo": 1000000
+        },
+        {
+          "rate": 0.1075,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt at all income levels. NJ has NO broad retirement exclusion like IL/PA. The pension/IRA exclusion (up to $75k single / $100k joint of retirement income) applies for those 62+ ONLY if total income stays at or below a HARD $150k cliff — over $150k, the entire exclusion vanishes. A Roth conversion counts toward that income, so a sizable one blows past the cliff and makes the whole conversion taxable (rates to 10.75%). Note: NJ does not allow a deduction for traditional IRA contributions, so part of a distribution may be NJ basis already taxed.",
+      "bracketsNote": "Single-filer; the 6.37% band (5k-$500k) is where most conversion income lands. Statutory (not inflation-indexed). 8.97% over $500k, 10.75% over $1M. Source: NJ Division of Taxation.",
+      "incomeTax": true,
+      "source": "https://www.nj.gov/treasury/taxation/"
     },
     "roth": {
       "cr": 0.0637,
@@ -689,7 +881,37 @@
   },
   "NM": {
     "facts": {
-      "name": "New Mexico"
+      "name": "New Mexico",
+      "brackets": [
+        {
+          "rate": 0.015,
+          "upTo": 5500
+        },
+        {
+          "rate": 0.032,
+          "upTo": 16500
+        },
+        {
+          "rate": 0.043,
+          "upTo": 33500
+        },
+        {
+          "rate": 0.047,
+          "upTo": 66500
+        },
+        {
+          "rate": 0.049,
+          "upTo": 210000
+        },
+        {
+          "rate": 0.059,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security exempt for AGI under $100k single / $150k joint (2023 reform); ABOVE those thresholds SS is taxed at full rates. IRA/conversion income taxable; those 65+ may deduct up to $8,000 of retirement income but only under income limits. A conversion raises AGI and can blow past BOTH the $8k-deduction limit AND the $100k/$150k SS-exemption threshold — a double cliff. Military retirement fully exempt. No traditional sales tax (Gross Receipts Tax instead).",
+      "bracketsNote": "Single-filer, 6-bracket HB252 structure (added the 4.3% bracket, restructured thresholds). 5.9% top only over $210k single / $315k joint. roth.cr 4.9% representative. Source: NM Taxation & Revenue Dept.",
+      "incomeTax": true,
+      "source": "https://www.tax.newmexico.gov/"
     },
     "roth": {
       "cr": 0.049,
@@ -699,12 +921,54 @@
   },
   "NY": {
     "facts": {
-      "name": "New York"
+      "name": "New York",
+      "brackets": [
+        {
+          "rate": 0.04,
+          "upTo": 8500
+        },
+        {
+          "rate": 0.045,
+          "upTo": 11700
+        },
+        {
+          "rate": 0.0525,
+          "upTo": 13900
+        },
+        {
+          "rate": 0.055,
+          "upTo": 80650
+        },
+        {
+          "rate": 0.06,
+          "upTo": 215400
+        },
+        {
+          "rate": 0.0685,
+          "upTo": 1077550
+        },
+        {
+          "rate": 0.0965,
+          "upTo": 5000000
+        },
+        {
+          "rate": 0.103,
+          "upTo": 25000000
+        },
+        {
+          "rate": 0.109,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security and all government pensions (federal/state/local) fully exempt. Private IRA/401(k)/conversion income taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20k for 2026 — proposed increases NOT enacted). A conversion above $20k is taxable. NYC residents add 3.078%-3.876% city tax; Yonkers adds a surcharge.",
+      "bracketsNote": "Single-filer. The 2026 state budget CUT rates in the lower five brackets (income under ~$215,400); aggregators report a mix of pre- and post-cut figures. These reflect the post-cut ladder (NerdWallet/Wealthvieu): 4/4.5/5.25/5.5/6/6.85/9.65/10.3/10.9. The old 6.25% mid-bracket was replaced — roth.cr refreshed 6.25%->6% to match the current band a typical conversion lands in. High brackets (6.85%+) unchanged, extended through 2032.",
+      "incomeTax": true,
+      "source": "https://www.tax.ny.gov/"
     },
     "roth": {
-      "cr": 0.0625,
+      "cr": 0.06,
       "ex": false,
-      "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6.25% here reflects a typical conversion). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income (per person; still $20,000 for 2026 — proposed increases were not enacted). Government pensions and Social Security are fully exempt. NYC residents also pay city tax up to ~3.876%."
+      "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income (per person; still $20,000 for 2026 — proposed increases were not enacted). Government pensions and Social Security are fully exempt. NYC residents also pay city tax up to ~3.876%."
     }
   },
   "NC": {
@@ -728,7 +992,25 @@
   },
   "ND": {
     "facts": {
-      "name": "North Dakota"
+      "name": "North Dakota",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": 47150
+        },
+        {
+          "rate": 0.0195,
+          "upTo": 244825
+        },
+        {
+          "rate": 0.025,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt. IRA/conversion income taxable but at among the lowest rates in the nation (top 2.5%). The 0% bottom bracket (up to ~$47k single taxable income) means part of a modest conversion may be untaxed entirely.",
+      "bracketsNote": "Single-filer; ND has a 0% bottom bracket then 1.95% and 2.5% (top 2.5% over ~$244,825 single). Two taxable brackets above the zero bracket. Source: ND OST / TurboTax 2026. roth.cr 2.5% is the top (conservative for a sizable conversion).",
+      "incomeTax": true,
+      "source": "https://www.tax.nd.gov/"
     },
     "roth": {
       "cr": 0.025,
@@ -738,7 +1020,21 @@
   },
   "OH": {
     "facts": {
-      "name": "Ohio"
+      "name": "Ohio",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": 26050
+        },
+        {
+          "rate": 0.0275,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt. Military retirement exempt. Private IRA/401(k)/conversion income taxable at the flat 2.75%; a small retirement-income credit (up to ~$200 total) barely offsets a conversion. Some Ohio municipalities levy local income tax, but it generally does not apply to retirement-plan distributions.",
+      "bracketsNote": "HB96 moved Ohio to a FLAT 2.75% on nonbusiness income over $26,050 for 2026 (was two-bracket 2.75%/3.125% in 2025). 0% below $26,050. roth.cr 2.75% confirmed current. Source: Tax Foundation 2026 / OH Dept of Taxation.",
+      "incomeTax": true,
+      "source": "https://tax.ohio.gov/"
     },
     "roth": {
       "cr": 0.0275,
@@ -748,7 +1044,29 @@
   },
   "OK": {
     "facts": {
-      "name": "Oklahoma"
+      "name": "Oklahoma",
+      "brackets": [
+        {
+          "rate": 0,
+          "upTo": 10099
+        },
+        {
+          "rate": 0.025,
+          "upTo": 11249
+        },
+        {
+          "rate": 0.035,
+          "upTo": 13549
+        },
+        {
+          "rate": 0.045,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt. Private IRA/401(k)/conversion income taxable; a $10,000 retirement-income exclusion (65+) DOES include IRA income but is a small cap a meaningful conversion exceeds. Military retirees may exclude the greater of $10k or 75%.",
+      "bracketsNote": "HB2764 (signed May 2025) collapsed six brackets into a 0% bottom plus three taxable rates (2.5%/3.5%/4.5%) for 2026, top cut 4.75%->4.5%. Single-filer thresholds; not inflation-indexed. Revenue-trigger may cut further. roth.cr 4.5% confirmed current. Source: OK Tax Commission 2026 withholding tables.",
+      "incomeTax": true,
+      "source": "https://oklahoma.gov/tax.html"
     },
     "roth": {
       "cr": 0.045,
@@ -758,7 +1076,29 @@
   },
   "OR": {
     "facts": {
-      "name": "Oregon"
+      "name": "Oregon",
+      "brackets": [
+        {
+          "rate": 0.0475,
+          "upTo": 4050
+        },
+        {
+          "rate": 0.0675,
+          "upTo": 10200
+        },
+        {
+          "rate": 0.0875,
+          "upTo": 125000
+        },
+        {
+          "rate": 0.099,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt. Nearly all other retirement income — IRA, 401(k), pension, and Roth conversions — taxed as ordinary income at full rates; the retirement-income credit is limited to low household income and rarely helps a conversion. Oregon allows a federal-tax-paid subtraction (up to ~$7,050 single) that modestly lowers the effective rate. No sales tax. Portland-metro residents owe additional local income taxes (SHS/Metro/PFA).",
+      "bracketsNote": "Single-filer, OR DOR 2026 schedule: 8.75% band runs $10,200-$125,000 (where most conversion income lands), 9.9% above $125k. Oregon does not fully index top brackets. MFJ thresholds differ. roth.cr 8.75% representative.",
+      "incomeTax": true,
+      "source": "https://www.oregon.gov/dor/"
     },
     "roth": {
       "cr": 0.0875,
@@ -787,7 +1127,25 @@
   },
   "RI": {
     "facts": {
-      "name": "Rhode Island"
+      "name": "Rhode Island",
+      "brackets": [
+        {
+          "rate": 0.0375,
+          "upTo": 82050
+        },
+        {
+          "rate": 0.0475,
+          "upTo": 186450
+        },
+        {
+          "rate": 0.0599,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "On the SS-taxing list: SS exempt below ~$107k single / ~$133.75k joint federal AGI (2026), taxed above. Rhode Island has a retirement-income modification (up to $50,000 per person at Full Retirement Age for 2026, up from $20k) — but it covers ONLY 401(k)/403(b)/annuity/pension income and EXPLICITLY EXCLUDES all IRAs (traditional, Roth, SEP, SIMPLE). A Roth conversion is IRA income, so it gets NO shelter and is fully taxable. IRA-exclusion-trap family (cf. ME, MD) — RI is the most explicit, naming Roth. Hard all-or-nothing income cliff: $1 over the limit forfeits the entire exclusion. Military pensions fully exempt.",
+      "bracketsNote": "Same thresholds all filing statuses (no MFJ doubling); inflation-indexed. 5.99% top over $186,450. roth.cr 4.75% representative (typical conversion lands in middle band). Source: RI Division of Taxation 2026.",
+      "incomeTax": true,
+      "source": "https://tax.ri.gov/"
     },
     "roth": {
       "cr": 0.0475,
@@ -797,12 +1155,26 @@
   },
   "SC": {
     "facts": {
-      "name": "South Carolina"
+      "name": "South Carolina",
+      "brackets": [
+        {
+          "rate": 0.0199,
+          "upTo": 30000
+        },
+        {
+          "rate": 0.0521,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt at all ages/incomes. Military retirement fully exempt. The retirement-income deduction ($3,000 under 65 / $10,000 at 65+) DOES cover traditional IRA income; PLUS a separate $15,000 age-65 deduction against ANY income — so post-65 is a favorable conversion window. A qualified Roth distribution is already federally excluded and carries over to SC, but a Roth CONVERSION is taxable income (reduced by available deductions).",
+      "bracketsNote": "H.4216 (signed Mar 30 2026) created a two-bracket 2026 structure: 1.99% to $30k, 5.21% above (SC DOR via LegalClarity). NOTE: sources conflict heavily — older/transitional sources cite 0%/3%/6%, a flat 5%, or 6%/6.2%; the Tax Foundation noted a temp 6% reverting to 6.2% before H.4216 superseded it. The 1.99%/5.21% reflects the newest enacted law. roth.cr refreshed 5.2%->5.21% to match the top bracket. Revenue-triggered cuts begin 2027.",
+      "incomeTax": true,
+      "source": "https://dor.sc.gov/iit"
     },
     "roth": {
-      "cr": 0.052,
+      "cr": 0.0521,
       "ex": false,
-      "note": "Rate cut sharply under 2026 reform (top about 5.2%, down from 7%, with further cuts tied to revenue growth). Unlike many states, the retirement deduction DOES cover traditional IRA income; those 65+ also get a separate $15,000 deduction against any income that can absorb conversion income — so post-65 is a relatively favorable conversion window here. Social Security is fully exempt."
+      "note": "Two-bracket system for 2026 under H.4216 (signed March 2026): 1.99% on the first $30,000, then 5.21% above. The retirement deduction DOES cover traditional IRA income; those 65+ get a $15,000 deduction against any income that can absorb conversion income — so post-65 is a relatively favorable conversion window here. Social Security is fully exempt. (Note: qualified Roth distributions are already federally excluded and carry over, but a Roth conversion is taxable income.)"
     }
   },
   "SD": {
@@ -883,7 +1255,29 @@
   },
   "VT": {
     "facts": {
-      "name": "Vermont"
+      "name": "Vermont",
+      "brackets": [
+        {
+          "rate": 0.0335,
+          "upTo": 47900
+        },
+        {
+          "rate": 0.066,
+          "upTo": 116000
+        },
+        {
+          "rate": 0.076,
+          "upTo": 242000
+        },
+        {
+          "rate": 0.0875,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "On the SS-taxing list: SS exempt below income thresholds (~$50k single / $65k joint AGI), phasing out above. Private IRA/401(k)/conversion income fully taxable; only a small $10,000 deduction for certain government/pension retirement income (income-limited, excludes most IRA). A conversion can also push past the SS-exemption threshold, taxing more benefits that year. Military retirement deduction up to $10k.",
+      "bracketsNote": "Single-filer; 8.75% top near $242k. roth.cr 6.6% representative (typical conversion lands in the 6.6% band, $47,900-$116,000). Inflation-indexed. Source: VT Dept of Taxes.",
+      "incomeTax": true,
+      "source": "https://tax.vermont.gov/"
     },
     "roth": {
       "cr": 0.066,
@@ -893,7 +1287,29 @@
   },
   "VA": {
     "facts": {
-      "name": "Virginia"
+      "name": "Virginia",
+      "brackets": [
+        {
+          "rate": 0.02,
+          "upTo": 3000
+        },
+        {
+          "rate": 0.03,
+          "upTo": 5000
+        },
+        {
+          "rate": 0.05,
+          "upTo": 17000
+        },
+        {
+          "rate": 0.0575,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt. Private IRA/401(k)/pension/conversion income taxed at full rates — and the top 5.75% rate starts at just $17,000, so essentially all conversion income is taxed at 5.75%. Those 65+ get a $12,000 age deduction, but it phases out dollar-for-dollar above $50k single / $75k joint AGI — a conversion raises AGI and a large one can erase the deduction (a cliff). Military retirement up to $40k exempt.",
+      "bracketsNote": "Single-filer; thresholds unchanged for decades, same for all filing statuses. Top 5.75% over $17,000 (effectively near-flat for most). Source: VA Dept of Taxation. NOTE: VA standard deduction is scheduled to revert sharply after TY2026 unless extended.",
+      "incomeTax": true,
+      "source": "https://www.tax.virginia.gov/"
     },
     "roth": {
       "cr": 0.0575,
@@ -922,17 +1338,65 @@
   },
   "WV": {
     "facts": {
-      "name": "West Virginia"
+      "name": "West Virginia",
+      "brackets": [
+        {
+          "rate": 0.0211,
+          "upTo": 10000
+        },
+        {
+          "rate": 0.0281,
+          "upTo": 25000
+        },
+        {
+          "rate": 0.0316,
+          "upTo": 40000
+        },
+        {
+          "rate": 0.0422,
+          "upTo": 60000
+        },
+        {
+          "rate": 0.0458,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security FULLY exempt for all residents as of 2026 (phase-out completed). Private IRA/401(k)/conversion income taxable; seniors 65+ get an $8,000 modification. Military retirement fully exempt. West Virginia is cutting income tax most years via revenue triggers, so rates keep falling.",
+      "bracketsNote": "Single-filer 2026 schedule after SB 392 (2026 session, 5% across-the-board cut, top 4.82%->4.58% eff Jan 1 2026). Exact rates 2.11/2.81/3.16/4.22/4.58 per Thomson Reuters citing the enacted law. Many secondary sources still show the stale 5.12% (two cuts behind) or 4.82% (one behind). roth.cr refreshed to 4.58%. Source: WV State Tax Dept / SB 392.",
+      "incomeTax": true,
+      "source": "https://tax.wv.gov/"
     },
     "roth": {
-      "cr": 0.0486,
+      "cr": 0.0458,
       "ex": false,
-      "note": "Top rate about 4.86% after a 5% cut retroactive to Jan 1 2026 (West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable; seniors 65+ get an $8,000 modification. Social Security is now fully exempt for all residents (phase-out completed in 2026)."
+      "note": "Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable; seniors 65+ get an $8,000 modification. Social Security is now fully exempt for all residents (phase-out completed in 2026)."
     }
   },
   "WI": {
     "facts": {
-      "name": "Wisconsin"
+      "name": "Wisconsin",
+      "brackets": [
+        {
+          "rate": 0.035,
+          "upTo": 14680
+        },
+        {
+          "rate": 0.044,
+          "upTo": 29370
+        },
+        {
+          "rate": 0.053,
+          "upTo": 323290
+        },
+        {
+          "rate": 0.0765,
+          "upTo": null
+        }
+      ],
+      "ssTreatment": "Social Security fully exempt. Private IRA/401(k)/conversion income taxable, BUT 2025 Act 15 lets those 67+ subtract up to $24,000 ($48,000 joint) of retirement income INCLUDING IRA/conversion income — so post-67 part of a conversion may be sheltered (a relatively favorable window). Federal/state government pensions for pre-1964 hires fully exempt.",
+      "bracketsNote": "Single-filer; 7.65% top only over ~$323k, so a typical conversion lands in the broad 5.3% band ($29,370-$323,290). roth.cr 5.3% representative. Inflation-indexed. Source: WI Dept of Revenue.",
+      "incomeTax": true,
+      "source": "https://www.revenue.wi.gov/"
     },
     "roth": {
       "cr": 0.053,
