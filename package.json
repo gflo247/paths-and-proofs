@@ -5,7 +5,8 @@
   "description": "A family of privacy-first, local-first financial decision tools. Each resolves to a breakeven.",
   "type": "module",
   "scripts": {
-    "verify": "node _dev/verify-all.mjs && node _dev/check-states-json.mjs",
+    "gen": "node _dev/gen-st-table.mjs",
+    "verify": "node _dev/gen-st-table.mjs --check && node _dev/verify-all.mjs && node _dev/check-states-json.mjs",
     "serve": "python3 -m http.server 8000"
   },
   "devDependencies": {
