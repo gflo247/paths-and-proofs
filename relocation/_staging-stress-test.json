@@ -2125,5 +2125,1290 @@
       }
     },
     "_note": "I&D tax repealed eff Jan 1 2025 (TY2026 fully zero on retirement income). High property tax (1.61%) is NH primary revenue \u2014 the relevant Tier-2 cost for a NH retiree."
+  },
+  "AZ": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.025,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.025,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.056,
+      "salesTaxNote": "state 5.6%; ~8.4% combined; groceries exempt at state level",
+      "propertyTaxRateMedian": 0.0042,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    }
+  },
+  "IL": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.0495,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0495,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.0625,
+      "salesTaxNote": "state 6.25%; ~8.85% combined; groceries 1% (being eliminated)",
+      "propertyTaxRateMedian": 0.0208,
+      "estateTax": {
+        "has": true,
+        "kind": "estate",
+        "exemption": 4000000,
+        "note": "$4M exemption (no portability), 0.8-16%."
+      }
+    },
+    "_note": "Flat 4.95% on wages/cap-gains but ALL qualified retirement income (pension, IRA, 401k, conversions) is exempt -> a retiree drawing from SS+pension+IRA pays $0 IL income tax. Among the income-tax-but-retirement-exempt club (cf PA, MS). High property tax (2.08%) is the real IL cost."
+  },
+  "IN": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.0295,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0295,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.07,
+      "salesTaxNote": "flat 7% state, no local add-on; groceries exempt",
+      "propertyTaxRateMedian": 0.0084,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "Counties levy local income tax (~1-3%, Tier-2: not modeled). State rate 2.95% falling to ~2.9% 2027."
+  },
+  "KY": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.035,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.035,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": null,
+        "exclusion": {
+          "capSingle": 31110,
+          "capJoint": 31110,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.06,
+      "salesTaxNote": "flat 6% state, no local add-on; groceries exempt",
+      "propertyTaxRateMedian": 0.0083,
+      "estateTax": {
+        "has": true,
+        "kind": "inheritance",
+        "exemption": 0,
+        "note": "Inheritance tax 0% for immediate family (Class A); 4-16% for others."
+      }
+    }
+  },
+  "MI": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.0425,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0425,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": null,
+        "exclusion": {
+          "capSingle": 65987,
+          "capJoint": 131794,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.06,
+      "salesTaxNote": "flat 6% state, no local add-on; groceries exempt",
+      "propertyTaxRateMedian": 0.0124,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "2026 retirement deduction phase-in complete (PA4 2023): $65,987 single/$131,794 joint covers pension+IRA+401k. A couple under the cap pays $0 on retirement income despite the 4.25% rate."
+  },
+  "NC": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.0399,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0399,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.0475,
+      "salesTaxNote": "state 4.75%; ~7% combined; groceries exempt at state level",
+      "propertyTaxRateMedian": 0.0073,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "Rate phasing down 3.99% (2026) toward 2.99% by 2028. Some military/Bailey-settlement pensions exempt but private IRA fully taxable."
+  },
+  "UT": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.045,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.045,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": true,
+        "exemptBelowAGI": {
+          "single": 45000,
+          "joint": 75000
+        },
+        "phaseInAboveAGI": {
+          "single": 45000,
+          "joint": 75000
+        },
+        "maxTaxableFraction": 0.85
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.0485,
+      "salesTaxNote": "state 4.85% (1.75% on groceries); ~7.2% combined",
+      "propertyTaxRateMedian": 0.0047,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "SS-taxing flat state: a nonrefundable SS credit phases out above $45k single/$75k joint MAGI (modeled as SS exemption threshold). Retirement credit small/income-limited -> IRA effectively taxed at 4.5%."
+  },
+  "AL": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.02,
+            "upTo": 500
+          },
+          {
+            "rate": 0.04,
+            "upTo": 3000
+          },
+          {
+            "rate": 0.05,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.02,
+            "upTo": 1000
+          },
+          {
+            "rate": 0.04,
+            "upTo": 6000
+          },
+          {
+            "rate": 0.05,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": 65,
+        "exclusion": {
+          "capSingle": 6000,
+          "capJoint": 6000,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "pensionIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.04,
+      "salesTaxNote": "state 4%; ~9.3% combined (among highest); groceries taxed at reduced 3%",
+      "propertyTaxRateMedian": 0.0041,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "Defined-benefit PENSIONS fully exempt but IRA/401k taxable ($6k excl 65+). Federal income tax deductible from AL income (lowers effective rate; not modeled \u2014 slight overstate)."
+  },
+  "DC": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.04,
+            "upTo": 10000
+          },
+          {
+            "rate": 0.06,
+            "upTo": 40000
+          },
+          {
+            "rate": 0.065,
+            "upTo": 60000
+          },
+          {
+            "rate": 0.085,
+            "upTo": 250000
+          },
+          {
+            "rate": 0.0925,
+            "upTo": 500000
+          },
+          {
+            "rate": 0.0975,
+            "upTo": 1000000
+          },
+          {
+            "rate": 0.1075,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.04,
+            "upTo": 10000
+          },
+          {
+            "rate": 0.06,
+            "upTo": 40000
+          },
+          {
+            "rate": 0.065,
+            "upTo": 60000
+          },
+          {
+            "rate": 0.085,
+            "upTo": 250000
+          },
+          {
+            "rate": 0.0925,
+            "upTo": 500000
+          },
+          {
+            "rate": 0.0975,
+            "upTo": 1000000
+          },
+          {
+            "rate": 0.1075,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.06,
+      "salesTaxNote": "6% (10% meals/alcohol); groceries, prescriptions exempt",
+      "propertyTaxRateMedian": 0.0057,
+      "estateTax": {
+        "has": true,
+        "kind": "estate",
+        "exemption": 4873200,
+        "note": "~$4.87M exemption, 11.2-16%."
+      }
+    }
+  },
+  "DE": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": 2000
+          },
+          {
+            "rate": 0.022,
+            "upTo": 5000
+          },
+          {
+            "rate": 0.039,
+            "upTo": 10000
+          },
+          {
+            "rate": 0.048,
+            "upTo": 20000
+          },
+          {
+            "rate": 0.052,
+            "upTo": 25000
+          },
+          {
+            "rate": 0.0555,
+            "upTo": 60000
+          },
+          {
+            "rate": 0.066,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": 2000
+          },
+          {
+            "rate": 0.022,
+            "upTo": 5000
+          },
+          {
+            "rate": 0.039,
+            "upTo": 10000
+          },
+          {
+            "rate": 0.048,
+            "upTo": 20000
+          },
+          {
+            "rate": 0.052,
+            "upTo": 25000
+          },
+          {
+            "rate": 0.0555,
+            "upTo": 60000
+          },
+          {
+            "rate": 0.066,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": 60,
+        "exclusion": {
+          "capSingle": 12500,
+          "capJoint": 12500,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.0,
+      "salesTaxNote": "NO sales tax",
+      "propertyTaxRateMedian": 0.0058,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "Same brackets all filing statuses. $12,500 retirement exclusion (60+) covers IRA+pension combined."
+  },
+  "GA": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.0499,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0499,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": 65,
+        "exclusion": {
+          "capSingle": 65000,
+          "capJoint": 130000,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.04,
+      "salesTaxNote": "state 4%; ~7.4% combined; groceries exempt at state level",
+      "propertyTaxRateMedian": 0.0072,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "$65k/person exclusion (65+; $130k joint) covers IRA/pension -> most retirees fully sheltered. Flat 4.99% (HB463 2026)."
+  },
+  "IA": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.038,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.038,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "ageExempt",
+        "ageGate": 55,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.06,
+      "salesTaxNote": "state 6%; ~6.9% combined; groceries exempt",
+      "propertyTaxRateMedian": 0.0149,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "Flat 3.8% but ALL retirement income exempt at 55+ (no cap) -> retiree 55+ pays $0 on IRA/pension (cf IL/MS/PA). Inheritance tax fully phased out 2025."
+  },
+  "KS": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.052,
+            "upTo": 23000
+          },
+          {
+            "rate": 0.0558,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.052,
+            "upTo": 46000
+          },
+          {
+            "rate": 0.0558,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.065,
+      "salesTaxNote": "state 6.5% (state grocery tax repealed 2025); ~8.7% combined",
+      "propertyTaxRateMedian": 0.0129,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "SS fully exempt (SB1). KPERS/federal/military pensions exempt but PRIVATE IRA fully taxable (modeled retirement as taxed for portfolio retiree)."
+  },
+  "MO": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": 1313
+          },
+          {
+            "rate": 0.02,
+            "upTo": 2626
+          },
+          {
+            "rate": 0.025,
+            "upTo": 3939
+          },
+          {
+            "rate": 0.03,
+            "upTo": 5252
+          },
+          {
+            "rate": 0.035,
+            "upTo": 6565
+          },
+          {
+            "rate": 0.04,
+            "upTo": 7878
+          },
+          {
+            "rate": 0.045,
+            "upTo": 9191
+          },
+          {
+            "rate": 0.047,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": 1313
+          },
+          {
+            "rate": 0.02,
+            "upTo": 2626
+          },
+          {
+            "rate": 0.025,
+            "upTo": 3939
+          },
+          {
+            "rate": 0.03,
+            "upTo": 5252
+          },
+          {
+            "rate": 0.035,
+            "upTo": 6565
+          },
+          {
+            "rate": 0.04,
+            "upTo": 7878
+          },
+          {
+            "rate": 0.045,
+            "upTo": 9191
+          },
+          {
+            "rate": 0.047,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "excludedPct",
+        "exclusionPct": 1.0,
+        "minDeduction": null,
+        "maxGainEligible": null,
+        "sourceRestricted": false
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.04225,
+      "salesTaxNote": "state 4.225%; ~8.4% combined; groceries 1.225%",
+      "propertyTaxRateMedian": 0.0098,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "FIRST STATE to fully exempt capital gains (HB594, TY2026): 100%% subtraction of federal cap gains -> a retiree living off brokerage gains pays $0 MO on them. SS exempt 62+. Private pension $6k exclusion income-limited (mostly doesnt help IRA). Same brackets all statuses. Kansas City/St Louis local earnings tax (Tier-2: not modeled)."
+  },
+  "MS": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": 10000
+          },
+          {
+            "rate": 0.044,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": 10000
+          },
+          {
+            "rate": 0.044,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "ageExempt",
+        "ageGate": 59.5,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.07,
+      "salesTaxNote": "state 7% (groceries taxed at full 7%, among few that do); ~7.1% combined",
+      "propertyTaxRateMedian": 0.0067,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "ALL qualified retirement income (IRA/401k/pension) exempt at 59.5+ -> retiree pays $0 on it (cf IL/IA/PA). Flat 4.4% (stepping to 3.75%). Early (<59.5) distributions taxed."
+  },
+  "MT": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.047,
+            "upTo": 20500
+          },
+          {
+            "rate": 0.0565,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.047,
+            "upTo": 41000
+          },
+          {
+            "rate": 0.0565,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": true,
+        "exemptBelowAGI": {
+          "single": 25000,
+          "joint": 32000
+        },
+        "phaseInAboveAGI": {
+          "single": 25000,
+          "joint": 32000
+        },
+        "maxTaxableFraction": 0.85
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.0,
+      "salesTaxNote": "NO general sales tax (some resort-town local taxes)",
+      "propertyTaxRateMedian": 0.0074,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "SS-taxing on federal formula. Repealed broad pension/IRA deduction 2025 -> only ~$5,500 retirement deduction; IRA effectively taxed. Top rate 5.65% (2026), 5.4% 2027."
+  },
+  "ND": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": 47150
+          },
+          {
+            "rate": 0.0195,
+            "upTo": 244825
+          },
+          {
+            "rate": 0.025,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": 78775
+          },
+          {
+            "rate": 0.0195,
+            "upTo": 297950
+          },
+          {
+            "rate": 0.025,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "excludedPct",
+        "exclusionPct": 0.4,
+        "minDeduction": null,
+        "maxGainEligible": null,
+        "sourceRestricted": false
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.05,
+      "salesTaxNote": "state 5%; ~7% combined; groceries exempt",
+      "propertyTaxRateMedian": 0.0094,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "Among lowest rates (top 2.5%). 0% bottom bracket shelters ~$47k single/$79k joint. ND excludes 40% of net long-term capital gains (general exclusion, not source-restricted)."
+  },
+  "NE": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.0246,
+            "upTo": 2399
+          },
+          {
+            "rate": 0.0351,
+            "upTo": 17999
+          },
+          {
+            "rate": 0.0455,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0246,
+            "upTo": 4799
+          },
+          {
+            "rate": 0.0351,
+            "upTo": 35999
+          },
+          {
+            "rate": 0.0455,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.055,
+      "salesTaxNote": "state 5.5%; ~6.97% combined; groceries exempt",
+      "propertyTaxRateMedian": 0.0163,
+      "estateTax": {
+        "has": true,
+        "kind": "inheritance",
+        "exemption": 100000,
+        "note": "County inheritance tax: 1% lineal (over $100k), higher for others. No estate tax."
+      }
+    },
+    "_note": "SS fully exempt 2025+. IRA fully taxable, no exclusion. Top 4.55% (2026), 3.99% 2027. High property tax (1.63%)."
+  },
+  "OH": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": 26050
+          },
+          {
+            "rate": 0.0275,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": 26050
+          },
+          {
+            "rate": 0.0275,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.0575,
+      "salesTaxNote": "state 5.75%; ~7.24% combined; groceries exempt",
+      "propertyTaxRateMedian": 0.014,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "Flat 2.75% over $26,050 (HB96 2026); 0% below. SS exempt, military retirement exempt. Municipalities levy local income tax but generally NOT on retirement distributions (Tier-2: not modeled)."
+  },
+  "VA": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.02,
+            "upTo": 3000
+          },
+          {
+            "rate": 0.03,
+            "upTo": 5000
+          },
+          {
+            "rate": 0.05,
+            "upTo": 17000
+          },
+          {
+            "rate": 0.0575,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.02,
+            "upTo": 3000
+          },
+          {
+            "rate": 0.03,
+            "upTo": 5000
+          },
+          {
+            "rate": 0.05,
+            "upTo": 17000
+          },
+          {
+            "rate": 0.0575,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "taxed",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.053,
+      "salesTaxNote": "state 5.3%; ~5.77% combined; groceries 1%",
+      "propertyTaxRateMedian": 0.0072,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "Same brackets all statuses; top 5.75% at just $17k -> essentially flat 5.75% for retirees. $12k age-65 deduction phases out above $50k single/$75k joint AGI (a conversion can erase it; not modeled as cliff here \u2014 slight understate for high earners)."
+  },
+  "WV": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0.0211,
+            "upTo": 10000
+          },
+          {
+            "rate": 0.0281,
+            "upTo": 25000
+          },
+          {
+            "rate": 0.0316,
+            "upTo": 40000
+          },
+          {
+            "rate": 0.0422,
+            "upTo": 60000
+          },
+          {
+            "rate": 0.0458,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0.0211,
+            "upTo": 10000
+          },
+          {
+            "rate": 0.0281,
+            "upTo": 25000
+          },
+          {
+            "rate": 0.0316,
+            "upTo": 40000
+          },
+          {
+            "rate": 0.0422,
+            "upTo": 60000
+          },
+          {
+            "rate": 0.0458,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exclusion",
+        "ageGate": 65,
+        "exclusion": {
+          "capSingle": 8000,
+          "capJoint": 8000,
+          "cliffType": "hard",
+          "cliffAGI": null,
+          "fullBelowAGI": null,
+          "zeroByAGI": null,
+          "excludesIRA": false
+        }
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.06,
+      "salesTaxNote": "state 6%; ~6.57% combined; groceries exempt",
+      "propertyTaxRateMedian": 0.0055,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "SS FULLY exempt 2026 (phase-out complete). $8k retirement modification (65+) partially shelters IRA. Top rate 4.58% (SB392 2026, cutting most years). Same brackets all statuses."
   }
 }
