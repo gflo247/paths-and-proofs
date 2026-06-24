@@ -1823,5 +1823,307 @@
       }
     },
     "_note": "SS phaseout uses VT DOR exact thresholds (tax.vermont.gov): single full<$55k/phase 55-65k/zero>=65k; joint full<$65k/phase 70-80k/zero>=80k. Single brackets from audited states.json baseline; joint ~2x (mid thresholds approximate, refine in rollout validation)."
+  },
+  "AK": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.0,
+      "salesTaxNote": "NO state sales tax (some localities levy up to ~7%); no income tax",
+      "propertyTaxRateMedian": 0.0114,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    }
+  },
+  "NV": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.0685,
+      "salesTaxNote": "state 6.85%; ~8.2% combined w/ local; groceries, prescriptions exempt",
+      "propertyTaxRateMedian": 0.0059,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    }
+  },
+  "SD": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.042,
+      "salesTaxNote": "state 4.2%; ~6.1% combined; groceries taxed",
+      "propertyTaxRateMedian": 0.0108,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    }
+  },
+  "TN": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.07,
+      "salesTaxNote": "state 7% (highest base); ~9.55% combined; groceries taxed at reduced 4%",
+      "propertyTaxRateMedian": 0.0048,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    }
+  },
+  "TX": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.0625,
+      "salesTaxNote": "state 6.25%; ~8.2% combined; groceries, prescriptions exempt",
+      "propertyTaxRateMedian": 0.0136,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    }
+  },
+  "WY": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.04,
+      "salesTaxNote": "state 4%; ~5.4% combined; groceries exempt",
+      "propertyTaxRateMedian": 0.0055,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    }
+  },
+  "NH": {
+    "taxRules": {
+      "bracketsByStatus": {
+        "single": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ],
+        "joint": [
+          {
+            "rate": 0,
+            "upTo": null
+          }
+        ]
+      },
+      "socialSecurity": {
+        "taxed": false
+      },
+      "retirementIncome": {
+        "treatment": "exempt",
+        "ageGate": null,
+        "exclusion": null
+      },
+      "pensionIncome": {
+        "sameAs": "retirementIncome"
+      },
+      "capitalGains": {
+        "treatment": "ordinary"
+      }
+    },
+    "taxContext": {
+      "salesTaxRate": 0.0,
+      "salesTaxNote": "NO general sales tax (8.5% meals & rooms tax); Interest & Dividends tax REPEALED Jan 1 2025 (never applied to IRA income)",
+      "propertyTaxRateMedian": 0.0161,
+      "estateTax": {
+        "has": false,
+        "kind": null,
+        "exemption": null,
+        "note": "No estate or inheritance tax."
+      }
+    },
+    "_note": "I&D tax repealed eff Jan 1 2025 (TY2026 fully zero on retirement income). High property tax (1.61%) is NH primary revenue \u2014 the relevant Tier-2 cost for a NH retiree."
   }
 }
