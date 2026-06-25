@@ -54,7 +54,11 @@ function allowedExclusion(excl, isIRA, agiProxy, status, cap) {
 
 export function computeStateIncomeTax(rules, status, income) {
   const { ss = 0, iraWithdrawal = 0, pension = 0, capGains = 0, wages = 0, age = 67 } = income;
-  const brackets = rules.bracketsByStatus[status];
+  // `status` is one of: single | mfj | mfs | hoh (four filing statuses, for brackets).
+  // SS thresholds and exclusion cliffs are defined single-vs-married only, so map:
+  // mfj -> "joint"; single/mfs/hoh -> "single" (MFS & HoH use single-level thresholds).
+  const tStatus = status === 'mfj' ? 'joint' : 'single';
+  const brackets = rules.bracketsByStatus[status] || rules.bracketsByStatus.single;
   const breakdown = {};
 
   // AGI proxy: the quantity states use for cliff/threshold tests. Full vector total
@@ -62,7 +66,7 @@ export function computeStateIncomeTax(rules, status, income) {
   const agiProxy = ss + iraWithdrawal + pension + capGains + wages;
 
   // --- Social Security ---
-  const tSS = taxableSS(rules.socialSecurity, ss, agiProxy, status);
+  const tSS = taxableSS(rules.socialSecurity, ss, agiProxy, tStatus);
   breakdown.taxableSS = tSS;
 
   // --- IRA / 401k / conversion withdrawal ---
@@ -72,7 +76,7 @@ export function computeStateIncomeTax(rules, status, income) {
   else if (ri.treatment === "ageExempt") iraTaxable = (age >= (ri.ageGate ?? 0)) ? 0 : iraWithdrawal;
   else if (ri.treatment === "exclusion") {
     const gateOk = ri.ageGate == null || age >= ri.ageGate;
-    const exAllowed = gateOk ? allowedExclusion(ri.exclusion, true, agiProxy, status, ri.exclusion.capSingle && status === "joint" ? ri.exclusion.capJoint : ri.exclusion.capSingle) : 0;
+    const exAllowed = gateOk ? allowedExclusion(ri.exclusion, true, agiProxy, tStatus, tStatus === "joint" ? ri.exclusion.capJoint : ri.exclusion.capSingle) : 0;
     iraTaxable = Math.max(0, iraWithdrawal - exAllowed);
   } // "taxed" => unchanged
   breakdown.iraTaxable = iraTaxable;
@@ -84,10 +88,10 @@ export function computeStateIncomeTax(rules, status, income) {
   else if (pr.treatment === "ageExempt") penTaxable = (age >= (pr.ageGate ?? 0)) ? 0 : pension;
   else if (pr.treatment === "exclusion") {
     const gateOk = pr.ageGate == null || age >= pr.ageGate;
-    const cap = status === "joint" ? pr.exclusion.capJoint : pr.exclusion.capSingle;
+    const cap = tStatus === "joint" ? pr.exclusion.capJoint : pr.exclusion.capSingle;
     // Note: a real state shares ONE exclusion pool across IRA+pension; here pension uses its own
     // rule (MD: pension excludable, IRA not). For shared-pool states we model via sameAs.
-    const exAllowed = gateOk ? allowedExclusion(pr.exclusion, false, agiProxy, status, cap) : 0;
+    const exAllowed = gateOk ? allowedExclusion(pr.exclusion, false, agiProxy, tStatus, cap) : 0;
     penTaxable = Math.max(0, pension - exAllowed);
   }
   breakdown.penTaxable = penTaxable;

@@ -33,8 +33,13 @@ the Roth tool keeps reading `facts.brackets` / `facts.roth`; these are new keys.
 taxRules: {
   bracketsByStatus: {
     single: [ {rate, upTo}, ... ],   // upTo:null on the open-ended top bracket
-    joint:  [ {rate, upTo}, ... ]    // MFJ thresholds (NOT just single x2 — encoded per state)
+    mfj:    [ {rate, upTo}, ... ],    // married filing jointly (NOT just single x2 — per state)
+    mfs:    [ {rate, upTo}, ... ],    // married filing separately (often == single, or mfj/2)
+    hoh:    [ {rate, upTo}, ... ]     // head of household (varies: ==single, ==mfj, or own table)
   },
+  // ENGINE NOTE: brackets use the 4-way status. SS thresholds & exclusion cliffs are
+  // defined single-vs-married only, so the engine maps mfj->joint, single/mfs/hoh->single
+  // for those threshold lookups (MFS & HoH use single-level phase-out thresholds).
 
   socialSecurity:
     { taxed: false }                                  // FL, NJ, MD, PA, WA, ...
