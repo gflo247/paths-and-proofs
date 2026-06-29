@@ -29,6 +29,8 @@
     --border:#e3ded3;
     --surface:#ffffff;
     --amber:#b06a1f;    /* in-testing accent, used sparingly */
+    --path:#7a8088;     /* IDENTITY: neutral crossing path (light, 3.56:1 non-text contrast) */
+    --proof:#b0681f;    /* IDENTITY: the breakeven point + "Proofs" — sole brand accent (light, 3.87:1) */
     color-scheme: light dark;
   }
   /* Dark palette applies when the OS prefers dark (unless the visitor has
@@ -48,6 +50,8 @@
       --border:#2b2f3a;
       --surface:#1b1f29;
       --amber:#d2974f;
+      --path:#7d828c;   /* IDENTITY path (dark, 4.61:1) */
+      --proof:#d9943a;  /* IDENTITY proof accent (dark, 6.99:1) */
     }
   }
   :root[data-theme="dark"] {
@@ -207,7 +211,14 @@
 <div class="wrap">
 
   <header>
-    <p class="eyebrow reveal">Paths and Proofs</p>
+    <p class="eyebrow reveal" style="display:flex;align-items:center;gap:.6ch;text-transform:none;letter-spacing:-.01em;color:var(--ink);font-family:'Fraunces','Playfair Display',Georgia,serif;font-size:18px;font-weight:700;">
+      <svg viewBox="0 0 54 34" aria-hidden="true" style="width:30px;height:20px;flex-shrink:0;">
+        <path d="M2 26 C 22 23, 32 12, 52 7" stroke="var(--path)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <path d="M2 8 C 24 11, 34 22, 52 27" stroke="var(--path)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <circle cx="27" cy="17" r="4.1" fill="var(--paper)" stroke="var(--proof)" stroke-width="2.6"/>
+      </svg>
+      <span>Paths <span style="font-weight:600;opacity:.5;">&amp;</span> <span style="font-style:italic;color:var(--proof);">Proofs</span></span>
+    </p>
     <h1 class="display reveal">Big money decisions have a tipping point. Here's yours.</h1>
     <p class="lede reveal">A small family of calculators for a few big, hard-to-reverse money
       choices — when to start Social Security, whether to convert to a Roth, whether to rent or
@@ -225,14 +236,14 @@
         <!-- path A: starts high, rises gently, passing through (250,70) -->
         <path class="draw" style="--len:430"
               d="M8 96 C 110 90, 190 78, 250 70 S 360 58, 412 52"
-              stroke="var(--line-a)" stroke-width="2.5" stroke-linecap="round"/>
+              stroke="var(--path)" stroke-width="2.5" stroke-linecap="round"/>
         <!-- path B: starts low, rises faster, passing through (250,70) and overtaking -->
         <path class="draw" style="--len:470"
               d="M8 126 C 130 118, 205 84, 250 70 S 350 40, 412 26"
-              stroke="var(--line-b)" stroke-width="2.5" stroke-linecap="round"/>
+              stroke="var(--path)" stroke-width="2.5" stroke-linecap="round"/>
         <!-- the breakeven, exactly on the shared anchor -->
         <line x1="250" y1="70" x2="250" y2="138" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 4" opacity="0.6"/>
-        <circle cx="250" cy="70" r="5" fill="var(--paper)" stroke="var(--line-b)" stroke-width="2.5"/>
+        <circle cx="250" cy="70" r="5" fill="var(--paper)" stroke="var(--proof)" stroke-width="2.5"/>
         <text x="250" y="20" text-anchor="middle" font-family="Inter,sans-serif" font-size="12.5" fill="var(--muted)">the breakeven</text>
       </svg>
     </div>
@@ -251,20 +262,20 @@
 
     <div class="legend" aria-hidden="true">
       <span><i>
-        <svg viewBox="0 0 26 14"><path d="M1 11 L25 4" stroke="var(--line-a)" stroke-width="2" fill="none"/><path d="M1 13 L25 1" stroke="var(--line-b)" stroke-width="2" fill="none"/><circle cx="16.5" cy="6" r="2.4" fill="var(--paper)" stroke="var(--line-b)" stroke-width="1.6"/></svg>
+        <svg viewBox="0 0 26 14"><path d="M1 11 L25 4" stroke="var(--path)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M1 13 L25 1" stroke="var(--path)" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="16.5" cy="6" r="2.4" fill="var(--paper)" stroke="var(--proof)" stroke-width="1.8"/></svg>
       </i> live</span>
       <span><i>
-        <svg viewBox="0 0 26 14"><path d="M1 11 L25 5" stroke="var(--line-a)" stroke-width="2" fill="none" opacity="0.85"/><path d="M1 13 L25 4" stroke="var(--amber)" stroke-width="2" fill="none" stroke-dasharray="3 3"/></svg>
+        <svg viewBox="0 0 26 14"><path d="M1 11 L25 5" stroke="var(--path)" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M1 13 L25 4" stroke="var(--path)" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="2.2 2.8"/></svg>
       </i> in testing</span>
       <span><i>
-        <svg viewBox="0 0 26 14"><path d="M1 11 L25 7" stroke="var(--faint)" stroke-width="1.6" fill="none" stroke-dasharray="2 3"/><path d="M1 13 L25 5" stroke="var(--faint)" stroke-width="1.6" fill="none" stroke-dasharray="2 3"/></svg>
+        <svg viewBox="0 0 26 14"><path d="M1 11 L25 7" stroke="var(--path)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-dasharray="2 3"/><path d="M1 13 L25 5" stroke="var(--path)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-dasharray="2 3"/></svg>
       </i> planned</span>
     </div>
 
     <!-- BUILT: Social Security (anchor) -->
     <div class="tool">
       <div class="tool-glyph" aria-hidden="true">
-        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 22 C 20 19, 34 14, 52 9" stroke="var(--line-a)" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M2 28 C 24 25, 34 14, 52 4" stroke="var(--line-b)" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="34" cy="14" r="3.4" fill="var(--paper)" stroke="var(--line-b)" stroke-width="2.2"/></svg>
+        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 22 C 20 19, 34 14, 52 9" stroke="var(--path)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M2 28 C 24 25, 34 14, 52 4" stroke="var(--path)" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="34" cy="14" r="3.5" fill="var(--paper-2)" stroke="var(--proof)" stroke-width="2.3"/></svg>
       </div>
       <p class="tool-name"><a href="/social-security/">Social Security claiming</a></p>
       <span class="badge built">live</span>
@@ -276,7 +287,7 @@
     <!-- BUILT: Roth conversion -->
     <div class="tool">
       <div class="tool-glyph" aria-hidden="true">
-        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 20 C 20 18, 34 15, 52 11" stroke="var(--line-a)" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M2 27 C 26 24, 34 15, 52 5" stroke="var(--line-b)" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="34" cy="15" r="3.4" fill="var(--paper)" stroke="var(--line-b)" stroke-width="2.2"/></svg>
+        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 22 C 20 19, 34 14, 52 9" stroke="var(--path)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M2 28 C 24 25, 34 14, 52 4" stroke="var(--path)" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="34" cy="14" r="3.5" fill="var(--paper-2)" stroke="var(--proof)" stroke-width="2.3"/></svg>
       </div>
       <p class="tool-name"><a href="/roth-conversion/">Roth conversion</a></p>
       <span class="badge built">live</span>
@@ -290,7 +301,7 @@
     <!-- BASIC/TESTING: rent vs buy -->
     <div class="tool">
       <div class="tool-glyph" aria-hidden="true">
-        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 21 C 20 19, 34 16, 52 12" stroke="var(--line-a)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.85"/><path d="M2 27 C 26 25, 38 14, 52 6" stroke="var(--amber)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-dasharray="3.5 3.5"/></svg>
+        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 22 C 20 19, 34 14, 52 9" stroke="var(--path)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M2 28 C 24 25, 34 14, 52 4" stroke="var(--path)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-dasharray="2.5 3.2"/></svg>
       </div>
       <p class="tool-name"><a href="/rent-vs-buy/">Rent versus buy</a></p>
       <span class="badge testing">in testing</span>
@@ -302,7 +313,7 @@
     <!-- PLANNED: Relocation -->
     <div class="tool">
       <div class="tool-glyph" aria-hidden="true">
-        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 23 C 20 21, 34 18, 52 14" stroke="var(--faint)" stroke-width="1.8" fill="none" stroke-dasharray="2.5 3.5"/><path d="M2 28 C 26 25, 38 16, 52 8" stroke="var(--faint)" stroke-width="1.8" fill="none" stroke-dasharray="2.5 3.5"/></svg>
+        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 22 C 20 19, 34 14, 52 9" stroke="var(--path)" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-dasharray="2.5 3.5"/><path d="M2 28 C 24 25, 34 14, 52 4" stroke="var(--path)" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-dasharray="2.5 3.5"/></svg>
       </div>
       <p class="tool-name">Relocation tax comparison</p>
       <span class="badge planned">planned</span>
@@ -314,7 +325,7 @@
     <!-- PLANNED: Medicare -->
     <div class="tool">
       <div class="tool-glyph" aria-hidden="true">
-        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 23 C 20 21, 34 18, 52 14" stroke="var(--faint)" stroke-width="1.8" fill="none" stroke-dasharray="2.5 3.5"/><path d="M2 28 C 26 25, 38 16, 52 8" stroke="var(--faint)" stroke-width="1.8" fill="none" stroke-dasharray="2.5 3.5"/></svg>
+        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 22 C 20 19, 34 14, 52 9" stroke="var(--path)" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-dasharray="2.5 3.5"/><path d="M2 28 C 24 25, 34 14, 52 4" stroke="var(--path)" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-dasharray="2.5 3.5"/></svg>
       </div>
       <p class="tool-name">Medicare: Medigap vs Medicare Advantage</p>
       <span class="badge planned">planned</span>
@@ -324,7 +335,7 @@
     <!-- PLANNED: College ROI -->
     <div class="tool">
       <div class="tool-glyph" aria-hidden="true">
-        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 23 C 20 21, 34 18, 52 14" stroke="var(--faint)" stroke-width="1.8" fill="none" stroke-dasharray="2.5 3.5"/><path d="M2 28 C 26 25, 38 16, 52 8" stroke="var(--faint)" stroke-width="1.8" fill="none" stroke-dasharray="2.5 3.5"/></svg>
+        <svg viewBox="0 0 54 34"><line x1="2" y1="31" x2="52" y2="31" stroke="var(--border)" stroke-width="1"/><path d="M2 22 C 20 19, 34 14, 52 9" stroke="var(--path)" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-dasharray="2.5 3.5"/><path d="M2 28 C 24 25, 34 14, 52 4" stroke="var(--path)" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-dasharray="2.5 3.5"/></svg>
       </div>
       <p class="tool-name">College return on investment</p>
       <span class="badge planned">planned</span>
