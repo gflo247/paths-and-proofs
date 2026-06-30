@@ -162,7 +162,7 @@
   }
   .tool-name a { text-decoration:none; }
   .tool-name a:hover { text-decoration:underline; }
-  .tool-desc { grid-column:2; font-size:15px; color:var(--muted); margin:3px 0 0; max-width:38em; }
+  .tool-desc { grid-column:2 / -1; font-size:15px; color:var(--muted); margin:3px 0 0; max-width:38em; }
   .badge {
     grid-row:1; align-self:start; justify-self:end;
     font-size:11.5px; font-weight:600; letter-spacing:0.04em;
@@ -172,6 +172,20 @@
   .badge.built     { color:var(--teal); border-color:var(--teal-soft); background:var(--teal-soft); }
   .badge.testing   { color:var(--amber); border-color:var(--amber); background:transparent; }
   .badge.planned   { color:var(--faint); border-color:var(--border); background:transparent; }
+
+  /* Mobile: stack the card — glyph + name + badge on top, description full-width below */
+  @media (max-width:560px) {
+    .tool {
+      grid-template-columns:40px 1fr auto;
+      gap:0 12px;
+      padding:16px 0;
+    }
+    .tool-glyph { grid-row:1; align-self:center; }
+    .tool-glyph svg { width:40px; height:25px; }
+    .tool-name { grid-column:2; align-self:center; font-size:17px; }
+    .badge { grid-row:1; }
+    .tool-desc { grid-column:1 / -1; margin-top:10px; max-width:none; }
+  }
 
   /* ---- Maker + privacy ---- */
   .strip { margin:30px 0; padding:22px; background:var(--surface); border:1px solid var(--border); border-radius:14px; }
