@@ -784,15 +784,15 @@
         "single": [
           {
             "rate": 0.035,
-            "upTo": 14680
+            "upTo": 15110
           },
           {
             "rate": 0.044,
-            "upTo": 29370
+            "upTo": 51950
           },
           {
             "rate": 0.053,
-            "upTo": 323290
+            "upTo": 332720
           },
           {
             "rate": 0.0765,
@@ -802,15 +802,15 @@
         "mfj": [
           {
             "rate": 0.035,
-            "upTo": 19580
+            "upTo": 20150
           },
           {
             "rate": 0.044,
-            "upTo": 39150
+            "upTo": 69260
           },
           {
             "rate": 0.053,
-            "upTo": 431060
+            "upTo": 443630
           },
           {
             "rate": 0.0765,
@@ -880,7 +880,8 @@
         "exemption": null,
         "note": "No estate or inheritance tax."
       }
-    }
+    },
+    "_hardening_note": "single+mfj CORRECTED to Tax Foundation 2026 enacted (staged were stale; inflation-adjusted). mfs/hoh STILL pending per-state primary (currently seeded=single)."
   },
   "FL": {
     "taxRules": {
@@ -1308,7 +1309,8 @@
         "exemption": null,
         "note": "No estate or inheritance tax."
       }
-    }
+    },
+    "_hardening_note": "single+mfj VERIFIED vs Tax Foundation 2026 enacted (match). mfs/hoh still pending per-state primary (seeded=single)."
   },
   "ME": {
     "taxRules": {
@@ -1316,11 +1318,11 @@
         "single": [
           {
             "rate": 0.058,
-            "upTo": 27400
+            "upTo": 27399
           },
           {
             "rate": 0.0675,
-            "upTo": 64850
+            "upTo": 64849
           },
           {
             "rate": 0.0715,
@@ -1330,11 +1332,11 @@
         "mfj": [
           {
             "rate": 0.058,
-            "upTo": 54800
+            "upTo": 54849
           },
           {
             "rate": 0.0675,
-            "upTo": 129700
+            "upTo": 129749
           },
           {
             "rate": 0.0715,
@@ -1413,7 +1415,8 @@
         "exemption": 7000000,
         "note": "~$7M exemption (2026), 8-12% rates."
       }
-    }
+    },
+    "_hardening_note": "single+mfj matched TF 2026 to the dollar (was off by $1 rounding, now exact). mfs + HoH still pending per-state primary (ME has distinct HoH). ME IRA-trap: pension/IRA deduction rules need capture in retirementIncome. SS exempt in ME."
   },
   "RI": {
     "taxRules": {
@@ -1825,35 +1828,35 @@
         "single": [
           {
             "rate": 0.01,
-            "upTo": 10756
+            "upTo": 11079
           },
           {
             "rate": 0.02,
-            "upTo": 25499
+            "upTo": 26264
           },
           {
             "rate": 0.04,
-            "upTo": 40245
+            "upTo": 41452
           },
           {
             "rate": 0.06,
-            "upTo": 55866
+            "upTo": 57542
           },
           {
             "rate": 0.08,
-            "upTo": 70606
+            "upTo": 72724
           },
           {
             "rate": 0.093,
-            "upTo": 360659
+            "upTo": 371479
           },
           {
             "rate": 0.103,
-            "upTo": 432787
+            "upTo": 445771
           },
           {
             "rate": 0.113,
-            "upTo": 721314
+            "upTo": 742953
           },
           {
             "rate": 0.123,
@@ -1867,31 +1870,31 @@
         "mfj": [
           {
             "rate": 0.01,
-            "upTo": 21512
+            "upTo": 22158
           },
           {
             "rate": 0.02,
-            "upTo": 50998
+            "upTo": 52528
           },
           {
             "rate": 0.04,
-            "upTo": 80490
+            "upTo": 82904
           },
           {
             "rate": 0.06,
-            "upTo": 111732
+            "upTo": 115084
           },
           {
             "rate": 0.08,
-            "upTo": 141212
+            "upTo": 145448
           },
           {
             "rate": 0.093,
-            "upTo": 721318
+            "upTo": 742958
           },
           {
             "rate": 0.103,
-            "upTo": 865574
+            "upTo": 891542
           },
           {
             "rate": 0.113,
@@ -1899,7 +1902,7 @@
           },
           {
             "rate": 0.123,
-            "upTo": 1442628
+            "upTo": 1485906
           },
           {
             "rate": 0.133,
@@ -1909,35 +1912,35 @@
         "mfs": [
           {
             "rate": 0.01,
-            "upTo": 10756
+            "upTo": 11079
           },
           {
             "rate": 0.02,
-            "upTo": 25499
+            "upTo": 26264
           },
           {
             "rate": 0.04,
-            "upTo": 40245
+            "upTo": 41452
           },
           {
             "rate": 0.06,
-            "upTo": 55866
+            "upTo": 57542
           },
           {
             "rate": 0.08,
-            "upTo": 70606
+            "upTo": 72724
           },
           {
             "rate": 0.093,
-            "upTo": 360659
+            "upTo": 371479
           },
           {
             "rate": 0.103,
-            "upTo": 432787
+            "upTo": 445771
           },
           {
             "rate": 0.113,
-            "upTo": 721314
+            "upTo": 742953
           },
           {
             "rate": 0.123,
@@ -2016,7 +2019,8 @@
         "exemption": null,
         "note": "No estate or inheritance tax (Prop 13 caps property assessment growth)."
       }
-    }
+    },
+    "_hardening_note": "single+mfj CORRECTED to TF 2026 (staged was older-year, CA inflation-adjusts; ~3%25 low). CA mfs==single brackets (CA FTB: MFS uses single schedule). HoH has OWN schedule \u2014 STILL pending (seeded=single). CA does NOT fully index top bracket (TF note nn). 1%25 mental-health surcharge >$1M already in top via 13.3%25. Community-property state (MFS income-split complexity noted)."
   },
   "NY": {
     "taxRules": {
@@ -2218,11 +2222,11 @@
         "single": [
           {
             "rate": 0.0475,
-            "upTo": 4050
+            "upTo": 4550
           },
           {
             "rate": 0.0675,
-            "upTo": 10200
+            "upTo": 11400
           },
           {
             "rate": 0.0875,
@@ -2236,11 +2240,11 @@
         "mfj": [
           {
             "rate": 0.0475,
-            "upTo": 8100
+            "upTo": 9100
           },
           {
             "rate": 0.0675,
-            "upTo": 20400
+            "upTo": 22800
           },
           {
             "rate": 0.0875,
@@ -2313,7 +2317,8 @@
         "exemption": 1000000,
         "note": "$1M exemption (one of the lowest), 10-16% rates."
       }
-    }
+    },
+    "_hardening_note": "single+mfj CORRECTED to Tax Foundation 2026 enacted (staged were stale; inflation-adjusted). mfs/hoh STILL pending per-state primary (currently seeded=single)."
   },
   "HI": {
     "taxRules": {
@@ -3631,7 +3636,8 @@
         "note": "No estate or inheritance tax."
       }
     },
-    "_note": "Defined-benefit PENSIONS fully exempt but IRA/401k taxable ($6k excl 65+). Federal income tax deductible from AL income (lowers effective rate; not modeled \u2014 slight overstate)."
+    "_note": "Defined-benefit PENSIONS fully exempt but IRA/401k taxable ($6k excl 65+). Federal income tax deductible from AL income (lowers effective rate; not modeled \u2014 slight overstate).",
+    "_hardening_note": "single+mfj VERIFIED vs Tax Foundation 2026 enacted (match). mfs/hoh still pending per-state primary (seeded=single)."
   },
   "DC": {
     "taxRules": {
@@ -4134,7 +4140,8 @@
         "note": "No estate or inheritance tax."
       }
     },
-    "_note": "SS fully exempt (SB1). KPERS/federal/military pensions exempt but PRIVATE IRA fully taxable (modeled retirement as taxed for portfolio retiree)."
+    "_note": "SS fully exempt (SB1). KPERS/federal/military pensions exempt but PRIVATE IRA fully taxable (modeled retirement as taxed for portfolio retiree).",
+    "_hardening_note": "single+mfj VERIFIED vs Tax Foundation 2026 enacted (match). mfs/hoh still pending per-state primary (seeded=single)."
   },
   "MO": {
     "taxRules": {
@@ -4386,7 +4393,7 @@
         "single": [
           {
             "rate": 0.047,
-            "upTo": 20500
+            "upTo": 47500
           },
           {
             "rate": 0.0565,
@@ -4396,7 +4403,7 @@
         "mfj": [
           {
             "rate": 0.047,
-            "upTo": 41000
+            "upTo": 95000
           },
           {
             "rate": 0.0565,
@@ -4459,7 +4466,8 @@
         "note": "No estate or inheritance tax."
       }
     },
-    "_note": "SS-taxing on federal formula. Repealed broad pension/IRA deduction 2025 -> only ~$5,500 retirement deduction; IRA effectively taxed. Top rate 5.65% (2026), 5.4% 2027."
+    "_note": "SS-taxing on federal formula. Repealed broad pension/IRA deduction 2025 -> only ~$5,500 retirement deduction; IRA effectively taxed. Top rate 5.65% (2026), 5.4% 2027.",
+    "_hardening_note": "single+mfj CORRECTED to Tax Foundation 2026 enacted (staged were stale; MT HB337 2026 restructure). mfs/hoh STILL pending per-state primary (currently seeded=single)."
   },
   "ND": {
     "taxRules": {
@@ -4976,6 +4984,9 @@
     "hoh_pending": [
       "VT"
     ],
-    "ne_status": "RATES ok, THRESHOLDS disputed \u2014 needs NE DOR 2026 primary schedule"
+    "ne_status": "RATES ok, THRESHOLDS disputed \u2014 needs NE DOR 2026 primary schedule",
+    "spine_done_single_mfj": "CT MN ND NJ VT HI AL KS NM MT OR WI CA ME (14 states single+mfj on TF2026)",
+    "still_pending_mfs_hoh": "AL KS NM MT OR WI (mfs/hoh); CA (hoh); ME (mfs/hoh); plus NE thresholds, OK mfs/hoh+bottom-bkt",
+    "not_started": "MD NY (+ NY recapture, MD has 2025 new top brackets + IRA-trap)"
   }
 }
