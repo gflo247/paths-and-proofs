@@ -104,15 +104,19 @@
           },
           {
             "rate": 0.0175,
-            "upTo": 35000
+            "upTo": 50000
+          },
+          {
+            "rate": 0.0245,
+            "upTo": 70000
           },
           {
             "rate": 0.035,
-            "upTo": 40000
+            "upTo": 80000
           },
           {
             "rate": 0.05525,
-            "upTo": 75000
+            "upTo": 150000
           },
           {
             "rate": 0.0637,
@@ -164,7 +168,8 @@
         "exemption": null,
         "note": "Estate tax repealed 2018; inheritance tax still applies to non-lineal heirs."
       }
-    }
+    },
+    "_hardening_note": "COMPLETE: single==mfs (7-bkt), mfj==hoh (8-bkt). Verified CT OLR 2026-R-0057 + NJ DOR."
   },
   "CT": {
     "taxRules": {
@@ -262,27 +267,27 @@
         "hoh": [
           {
             "rate": 0.02,
-            "upTo": 10000
+            "upTo": 16000
           },
           {
             "rate": 0.045,
-            "upTo": 50000
+            "upTo": 80000
           },
           {
             "rate": 0.055,
-            "upTo": 100000
+            "upTo": 160000
           },
           {
             "rate": 0.06,
-            "upTo": 200000
+            "upTo": 320000
           },
           {
             "rate": 0.065,
-            "upTo": 250000
+            "upTo": 400000
           },
           {
             "rate": 0.069,
-            "upTo": 500000
+            "upTo": 800000
           },
           {
             "rate": 0.0699,
@@ -335,7 +340,8 @@
         "exemption": 13990000,
         "note": "Matches federal exemption (2026); flat 12% above."
       }
-    }
+    },
+    "_hardening_note": "COMPLETE (brackets): single & mfj verified (CT DRS CT-1040 TCS Table B). mfs==single CONFIRMED (single/MFS share schedule & exempt thresholds, CT DRS). hoh own schedule captured (16k/80k/160k/320k/400k/800k, between single & mfj). KNOWN APPROXIMATION (documented, not bracket): CT recapture/phase-out Tables C (2%25 add-back) & D (benefit recapture) modeled approximately \u2014 these add 25-6300 for higher earners, can push effective rate above stated. IRA deduction 75%25 TY2025 -> 100%25 TY2026. SS exempt 75k single/MFS/HoH, 100k MFJ. Pension exempt same thresholds."
   },
   "MD": {
     "taxRules": {
@@ -562,15 +568,15 @@
         "mfj": [
           {
             "rate": 0.0535,
-            "upTo": 48680
+            "upTo": 48700
           },
           {
             "rate": 0.068,
-            "upTo": 193470
+            "upTo": 193480
           },
           {
             "rate": 0.0785,
-            "upTo": 345050
+            "upTo": 337930
           },
           {
             "rate": 0.0985,
@@ -580,15 +586,15 @@
         "mfs": [
           {
             "rate": 0.0535,
-            "upTo": 33310
+            "upTo": 24350
           },
           {
             "rate": 0.068,
-            "upTo": 109430
+            "upTo": 96740
           },
           {
             "rate": 0.0785,
-            "upTo": 203150
+            "upTo": 168965
           },
           {
             "rate": 0.0985,
@@ -598,15 +604,15 @@
         "hoh": [
           {
             "rate": 0.0535,
-            "upTo": 33310
+            "upTo": 41010
           },
           {
             "rate": 0.068,
-            "upTo": 109430
+            "upTo": 164800
           },
           {
             "rate": 0.0785,
-            "upTo": 203150
+            "upTo": 270060
           },
           {
             "rate": 0.0985,
@@ -648,7 +654,8 @@
         "exemption": 3000000,
         "note": "$3M exemption, 13-16% rates."
       }
-    }
+    },
+    "_hardening_note": "COMPLETE: all 4 statuses to-the-dollar from MN DOR primary (revenue.state.mn.us, 2026 tables, last updated 2026-01-09). CORRECTIONS: mfj was 2024-ish approx (48680/193470/345050 -> correct 48700/193480/337930); hoh now own schedule (was seeded=single); mfs now mfj/2-ish own schedule (was seeded=single). single confirmed unchanged. SS 75k/100k confirmed."
   },
   "PA": {
     "taxRules": {
@@ -1809,7 +1816,8 @@
         "exemption": null,
         "note": "No estate or inheritance tax."
       }
-    }
+    },
+    "_hardening_note": "IN PROGRESS \u2014 MAJOR CORRECTION NEEDED. Staged OK is WRONG: has 4-bkt 0/2.5/3.5/4.5%25 @ 10099/11249/13549. ACTUAL OK TY2025 = 6 brackets 0.25/0.75/1.75/2.75/3.75/4.75%25. Single (exact, Valur): 0.25%25<=1000, 0.75%25<=2500, 1.75%25<=3750, 2.75%25<=4900, 3.75%25<=7200, 4.75%25 above. MFS = MFJ/2 (incometaxpro primary). MFJ ~doubled (0.75 at 2000, top 4.75 at 12200) \u2014 needs exact 511 table. HoH own schedule \u2014 needs 511 table. YEAR DECISION NEEDED: HB2764 (signed 2025) restructures OK to 3 brackets top 4.5%25 for TY2026 (filed 2027) \u2014 but TY2026 thresholds may not be published yet. Family standard is 2026; may need to use TY2025 6-bkt as best-available or confirm 2026 3-bkt published. TODO: pull OK Form 511 instructions tax table for exact MFJ/HoH; resolve 2025-vs-2026 structure. SS exempt. Std ded S/MFS 6350, MFJ 12700, HoH 9350."
   },
   "CA": {
     "taxRules": {
@@ -2463,47 +2471,47 @@
         "hoh": [
           {
             "rate": 0.014,
-            "upTo": 2400
+            "upTo": 3600
           },
           {
             "rate": 0.032,
-            "upTo": 4800
+            "upTo": 7200
           },
           {
             "rate": 0.055,
-            "upTo": 9600
-          },
-          {
-            "rate": 0.064,
             "upTo": 14400
           },
           {
+            "rate": 0.064,
+            "upTo": 21600
+          },
+          {
             "rate": 0.068,
-            "upTo": 19200
+            "upTo": 28800
           },
           {
             "rate": 0.072,
-            "upTo": 24000
-          },
-          {
-            "rate": 0.076,
             "upTo": 36000
           },
           {
+            "rate": 0.076,
+            "upTo": 54000
+          },
+          {
             "rate": 0.079,
-            "upTo": 48000
+            "upTo": 72000
           },
           {
             "rate": 0.0825,
-            "upTo": 150000
+            "upTo": 225000
           },
           {
             "rate": 0.09,
-            "upTo": 175000
+            "upTo": 262500
           },
           {
             "rate": 0.1,
-            "upTo": 200000
+            "upTo": 300000
           },
           {
             "rate": 0.11,
@@ -2538,7 +2546,8 @@
         "exemption": 5490000,
         "note": "~$5.49M exemption, 10-20% rates."
       }
-    }
+    },
+    "_hardening_note": "COMPLETE: single==mfs (12-bkt), mfj==surviving-spouse (doubled), hoh OWN schedule. All from Tax Foundation of Hawaii (Ch 235 primary). HoH top-3 thresholds 1.5x single (225k/262.5k/300k)."
   },
   "MA": {
     "taxRules": {
@@ -2617,15 +2626,15 @@
         "single": [
           {
             "rate": 0.0335,
-            "upTo": 47900
+            "upTo": 49400
           },
           {
             "rate": 0.066,
-            "upTo": 116000
+            "upTo": 119700
           },
           {
             "rate": 0.076,
-            "upTo": 242000
+            "upTo": 249700
           },
           {
             "rate": 0.0875,
@@ -2635,15 +2644,15 @@
         "mfj": [
           {
             "rate": 0.0335,
-            "upTo": 79950
+            "upTo": 82500
           },
           {
             "rate": 0.066,
-            "upTo": 193600
+            "upTo": 199450
           },
           {
             "rate": 0.076,
-            "upTo": 294600
+            "upTo": 304000
           },
           {
             "rate": 0.0875,
@@ -2653,15 +2662,15 @@
         "mfs": [
           {
             "rate": 0.0335,
-            "upTo": 47900
+            "upTo": 49400
           },
           {
             "rate": 0.066,
-            "upTo": 116000
+            "upTo": 119700
           },
           {
             "rate": 0.076,
-            "upTo": 242000
+            "upTo": 249700
           },
           {
             "rate": 0.0875,
@@ -2671,15 +2680,15 @@
         "hoh": [
           {
             "rate": 0.0335,
-            "upTo": 47900
+            "upTo": 49400
           },
           {
             "rate": 0.066,
-            "upTo": 116000
+            "upTo": 119700
           },
           {
             "rate": 0.076,
-            "upTo": 242000
+            "upTo": 249700
           },
           {
             "rate": 0.0875,
@@ -2722,7 +2731,8 @@
         "note": "$5M exemption, flat 16% above."
       }
     },
-    "_note": "SS phaseout uses VT DOR exact thresholds (tax.vermont.gov): single full<$55k/phase 55-65k/zero>=65k; joint full<$65k/phase 70-80k/zero>=80k. Single brackets from audited states.json baseline; joint ~2x (mid thresholds approximate, refine in rollout validation)."
+    "_note": "SS phaseout uses VT DOR exact thresholds (tax.vermont.gov): single full<$55k/phase 55-65k/zero>=65k; joint full<$65k/phase 70-80k/zero>=80k. Single brackets from audited states.json baseline; joint ~2x (mid thresholds approximate, refine in rollout validation).",
+    "_hardening_note": "CORRECTED to TF 2026 statute-based (supersedes earlier SmartAsset 45400/110050/229550 which was WRONG). single/mfs 49400/119700/249700, mfj 82500/199450/304000. mfs==single (IN-111 verified). hoh DEFERRED (seeded=single; capture from IN-111 instructions later). SS exempt <60k single/HoH/MFS <75k MFJ."
   },
   "AK": {
     "taxRules": {
@@ -4457,7 +4467,7 @@
         "single": [
           {
             "rate": 0,
-            "upTo": 47150
+            "upTo": 48475
           },
           {
             "rate": 0.0195,
@@ -4471,11 +4481,11 @@
         "mfj": [
           {
             "rate": 0,
-            "upTo": 78775
+            "upTo": 80975
           },
           {
             "rate": 0.0195,
-            "upTo": 297950
+            "upTo": 298075
           },
           {
             "rate": 0.025,
@@ -4485,11 +4495,11 @@
         "mfs": [
           {
             "rate": 0,
-            "upTo": 47150
+            "upTo": 40475
           },
           {
             "rate": 0.0195,
-            "upTo": 244825
+            "upTo": 149025
           },
           {
             "rate": 0.025,
@@ -4499,11 +4509,11 @@
         "hoh": [
           {
             "rate": 0,
-            "upTo": 47150
+            "upTo": 64950
           },
           {
             "rate": 0.0195,
-            "upTo": 244825
+            "upTo": 271450
           },
           {
             "rate": 0.025,
@@ -4541,7 +4551,8 @@
         "note": "No estate or inheritance tax."
       }
     },
-    "_note": "Among lowest rates (top 2.5%). 0% bottom bracket shelters ~$47k single/$79k joint. ND excludes 40% of net long-term capital gains (general exclusion, not source-restricted)."
+    "_note": "Among lowest rates (top 2.5%). 0% bottom bracket shelters ~$47k single/$79k joint. ND excludes 40% of net long-term capital gains (general exclusion, not source-restricted).",
+    "_hardening_note": "COMPLETE: all 4 statuses from tax.nd.gov DOR primary (enacted 2025 schedule, fetched directly). All 4 DISTINCT. CORRECTIONS: single/mfj updated from staged older-year (47150->48475, mfj 78775->80975/297950->298075); mfs was wrongly seeded=single, ND mfs distinct (40475/149025); hoh was seeded=single, distinct (64950/271450). Resolved fiscal-note discrepancy (note was projection; DOR enacted differs). SS exempt since 2021. 40%25 LT cap-gains exclusion."
   },
   "NE": {
     "taxRules": {
@@ -4591,11 +4602,11 @@
         "hoh": [
           {
             "rate": 0.0246,
-            "upTo": 2399
+            "upTo": 4499
           },
           {
             "rate": 0.0351,
-            "upTo": 17999
+            "upTo": 27999
           },
           {
             "rate": 0.0455,
@@ -4629,7 +4640,8 @@
         "note": "County inheritance tax: 1% lineal (over $100k), higher for others. No estate tax."
       }
     },
-    "_note": "SS fully exempt 2025+. IRA fully taxable, no exclusion. Top 4.55% (2026), 3.99% 2027. High property tax (1.63%)."
+    "_note": "SS fully exempt 2025+. IRA fully taxable, no exclusion. Top 4.55% (2026), 3.99% 2027. High property tax (1.63%).",
+    "_hardening_note": "RATES CONFIRMED (2.46/3.51/4.55%25, top 4.55%25 TY2026 LB754, ->3.99%25 2027; single==mfs, mfj doubled, hoh own schedule structure). THRESHOLDS IN DISPUTE across sources \u2014 must get NE DOR 2026 published rate schedule (Form 1040N / Circular EN) to settle: staged 2399/17999/18000; Tax Foundation 2026 shows 4130/24760 (inflation-adjusted); VisaVerge claims 2026 thresholds FIXED not adjusted; Kiplinger ~2999 single / 29000 top. Statute 77-2715.03(3) DOES mandate annual inflation adjustment, so TF inflation-adjusted likely correct \u2014 but CONFIRM from DOR primary before encoding. HoH/MFS structure (own/==single) still also pending exact thresholds. NOT DONE \u2014 was prematurely marked complete; downgraded pending DOR 2026 schedule."
   },
   "OH": {
     "taxRules": {
@@ -4959,6 +4971,11 @@
       "WI"
     ],
     "count_trivial": 33,
-    "count_need_verification": 18
+    "count_need_verification": 18,
+    "batch1_status": "NJ COMPLETE. CT/HI/MN/VT: single+mfj+mfs verified; hoh schedules pending capture.",
+    "hoh_pending": [
+      "VT"
+    ],
+    "ne_status": "RATES ok, THRESHOLDS disputed \u2014 needs NE DOR 2026 primary schedule"
   }
 }
