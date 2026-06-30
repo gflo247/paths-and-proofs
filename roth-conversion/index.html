@@ -65,14 +65,16 @@
     html{font-size:17px;scroll-behavior:smooth;}
     body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--text);line-height:1.70;-webkit-font-smoothing:antialiased;}
     .site-header{background:var(--navy);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:300;box-shadow:0 2px 12px rgba(28,58,94,.28);}
-    .logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:#fff;letter-spacing:-.01em;}
-    .logo em{font-style:normal;color:var(--amber-lt);}
+    /* The header bar is dark navy in BOTH themes, so the brand logo must always use its
+       light-on-dark colors here — not the page-theme-keyed defaults (which go dark-on-dark
+       in light mode and vanish). Context overrides theme. */
+    .site-header .pnp-brand{--pnp-path:#9fb3cc;--pnp-proof:#d9943a;--pnp-ink:#ffffff;}
     .privacy-pill{font-size:.74rem;font-weight:500;color:rgba(255,255,255,.78);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:4px 13px;border-radius:40px;display:flex;align-items:center;gap:5px;}
     .privacy-note{display:flex;align-items:center;justify-content:center;gap:7px;max-width:1100px;margin:0 auto 1.1rem;padding:0 1.5rem;font-size:.82rem;font-weight:500;color:var(--muted);}
     .privacy-note svg{flex-shrink:0;opacity:.7;}
     .hero{max-width:720px;margin:0 auto;padding:3rem 1.5rem 2rem;text-align:center;}
     .hero h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3rem);font-weight:700;line-height:1.18;color:var(--navy);margin-bottom:.85rem;}
-    .hero h1 i{font-style:italic;color:var(--amber);}
+    .hero h1 i{font-style:italic;color:inherit;}
     .hero-lead{font-size:1.05rem;color:var(--muted);max-width:560px;margin:0 auto 1.5rem;}
     /* ── Hero visual ── */
     .hero-vis{display:flex;gap:1rem;align-items:flex-start;justify-content:center;margin:1.25rem auto .75rem;max-width:400px;}
@@ -293,7 +295,7 @@
     /* ── Print button ── */
     .print-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.9);border-radius:40px;padding:4px 13px;font-size:.74rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px;transition:background .15s;white-space:nowrap;}
     .print-btn:hover{background:rgba(255,255,255,.27);}
-    .clear-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.75);border-radius:40px;padding:4px 13px;font-size:.74rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;transition:background .15s,color .15s;white-space:nowrap;}
+    .clear-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.9);border-radius:40px;padding:4px 13px;font-size:.74rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;transition:background .15s,color .15s;white-space:nowrap;}
     .clear-btn:hover{background:rgba(220,80,60,.35);color:white;border-color:rgba(255,255,255,.4);}
     /* ── Mobile ── */
     @media(max-width:740px){
@@ -308,8 +310,9 @@
       .optamt{font-size:1.75rem;}
       .optcard{padding:.9rem 1rem;}
       .optwrap{grid-template-columns:1fr!important;}
-      .site-header{flex-wrap:nowrap;height:auto;padding:.55rem 1rem;gap:.5rem;}
-      .privacy-pill{font-size:.7rem;padding:3px 8px;white-space:normal;flex-basis:100%;text-align:center;justify-content:center;}
+      .site-header{flex-wrap:nowrap;height:auto;min-height:52px;padding:.5rem .9rem;gap:.5rem;}
+      .pnp-brand{font-size:.92rem;min-width:0;}
+      .pnp-brand .pnp-glyph{width:26px;height:17px;}
       .print-btn{font-size:.7rem;padding:3px 10px;white-space:nowrap;flex-shrink:0;}
       .clear-btn{font-size:.7rem;padding:3px 10px;white-space:nowrap;flex-shrink:0;}
     }
@@ -379,7 +382,6 @@
     <span>Paths <span class="pnp-amp">&amp;</span> <span class="pnp-mark">Proofs</span></span>
   </a>
   <!-- PNP-BRAND-END -->
-  <div class="logo">Roth <em>conversion</em></div>
   <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
     <button class="clear-btn" onclick="clearAllInputs()" title="Clear all inputs and saved data">Clear</button>
     <button class="print-btn" onclick="window.print()">Save PDF</button>
