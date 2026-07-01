@@ -821,15 +821,15 @@
         "mfs": [
           {
             "rate": 0.035,
-            "upTo": 14680
+            "upTo": 15110
           },
           {
             "rate": 0.044,
-            "upTo": 29370
+            "upTo": 51950
           },
           {
             "rate": 0.053,
-            "upTo": 323290
+            "upTo": 332720
           },
           {
             "rate": 0.0765,
@@ -839,15 +839,15 @@
         "hoh": [
           {
             "rate": 0.035,
-            "upTo": 14680
+            "upTo": 15110
           },
           {
             "rate": 0.044,
-            "upTo": 29370
+            "upTo": 51950
           },
           {
             "rate": 0.053,
-            "upTo": 323290
+            "upTo": 332720
           },
           {
             "rate": 0.0765,
@@ -882,7 +882,7 @@
         "note": "No estate or inheritance tax."
       }
     },
-    "_hardening_note": "single+mfj CORRECTED TF2026 (3.50/4.40/5.30/7.65 at 15110/51950/332720 s; mfj 20150/69260/443630). BUG FLAGGED: mfs+hoh currently STALE (frozen at pre-correction single 14680/29370/323290) \u2014 need WI Form 1 instructions for exact. WI is COMMUNITY-PROPERTY (MFS income-split). WI HoH: per Form 1, HoH uses own schedule. SS + US govt interest exempt. PENDING mfs/hoh."
+    "_hardening_note": "single+mfj TF2026 (3.50/4.40/5.30/7.65%25). RESOLVED discrepancy: enacted 2025 = 4-bkt (Act 15, signed 7/3/25); the 25-1475 5-bkt/9.80%25 was PROPOSED, NOT enacted (confirmed proposed-vs-enacted trap). HoH==single VERIFIED (WI DOR FAQ primary: single/HoH/estates/trusts share one schedule) \u2014 stale hoh FIXED to single. MFS: WI has DISTINCT mfs schedule (narrower, community-property); provisionally seeded=single, exact 2026 MFS thresholds still to confirm from Form 1 rate schedule. SS + US govt interest exempt; 24k/48k retirement exclusion age67+."
   },
   "FL": {
     "taxRules": {
@@ -1319,11 +1319,11 @@
         "single": [
           {
             "rate": 0.058,
-            "upTo": 27399
+            "upTo": 27400
           },
           {
             "rate": 0.0675,
-            "upTo": 64849
+            "upTo": 64850
           },
           {
             "rate": 0.0715,
@@ -1333,11 +1333,11 @@
         "mfj": [
           {
             "rate": 0.058,
-            "upTo": 54849
+            "upTo": 54850
           },
           {
             "rate": 0.0675,
-            "upTo": 129749
+            "upTo": 129750
           },
           {
             "rate": 0.0715,
@@ -1361,11 +1361,11 @@
         "hoh": [
           {
             "rate": 0.058,
-            "upTo": 27400
+            "upTo": 41100
           },
           {
             "rate": 0.0675,
-            "upTo": 64850
+            "upTo": 97300
           },
           {
             "rate": 0.0715,
@@ -1417,7 +1417,7 @@
         "note": "~$7M exemption (2026), 8-12% rates."
       }
     },
-    "_hardening_note": "single+mfj TF2026 exact (27399/64849 s; 54849/129749 mfj). BUG FLAGGED: mfs+hoh currently STALE (frozen at 27400/64850 pre-correction single) \u2014 need ME 1040 instructions for exact. ME has distinct HoH; mfs likely own. ME IRA-TRAP: pension/IRA deduction rules for retirementIncome. SS exempt. PENDING mfs/hoh."
+    "_hardening_note": "COMPLETE: all 4 statuses to-the-dollar from Maine Revenue Services official 2026 rate schedules (pub 09/15/2025, via Thomson Reuters). single==mfs (5.8/6.75/7.15%25 @ 27400/64850). mfj 54850/129750. hoh OWN schedule 41100/97300. Fixed stale mfs/hoh + $1 rounding. ME IRA-TRAP handled via retirementIncome: pension deduction max $48,216 (2025) reduced by SS/RR benefits, phaseout FAGI>125k single/MFS, 187.5k HoH, 250k MFJ. SS not taxed by ME. Std ded single 15300, mfj 30600, hoh 22950, mfs 15300."
   },
   "RI": {
     "taxRules": {
@@ -1716,73 +1716,105 @@
       "bracketsByStatus": {
         "single": [
           {
-            "rate": 0,
-            "upTo": 10099
+            "rate": 0.0025,
+            "upTo": 1000
           },
           {
-            "rate": 0.025,
-            "upTo": 11249
+            "rate": 0.0075,
+            "upTo": 2500
           },
           {
-            "rate": 0.035,
-            "upTo": 13549
+            "rate": 0.0175,
+            "upTo": 3750
           },
           {
-            "rate": 0.045,
+            "rate": 0.0275,
+            "upTo": 4900
+          },
+          {
+            "rate": 0.0375,
+            "upTo": 7200
+          },
+          {
+            "rate": 0.0475,
             "upTo": null
           }
         ],
         "mfj": [
           {
-            "rate": 0,
-            "upTo": 20199
+            "rate": 0.0025,
+            "upTo": 2000
           },
           {
-            "rate": 0.025,
-            "upTo": 22499
+            "rate": 0.0075,
+            "upTo": 5000
           },
           {
-            "rate": 0.035,
-            "upTo": 27099
+            "rate": 0.0175,
+            "upTo": 7500
           },
           {
-            "rate": 0.045,
+            "rate": 0.0275,
+            "upTo": 9800
+          },
+          {
+            "rate": 0.0375,
+            "upTo": 12200
+          },
+          {
+            "rate": 0.0475,
             "upTo": null
           }
         ],
         "mfs": [
           {
-            "rate": 0,
-            "upTo": 10099
+            "rate": 0.0025,
+            "upTo": 1000
           },
           {
-            "rate": 0.025,
-            "upTo": 11249
+            "rate": 0.0075,
+            "upTo": 2500
           },
           {
-            "rate": 0.035,
-            "upTo": 13549
+            "rate": 0.0175,
+            "upTo": 3750
           },
           {
-            "rate": 0.045,
+            "rate": 0.0275,
+            "upTo": 4900
+          },
+          {
+            "rate": 0.0375,
+            "upTo": 7200
+          },
+          {
+            "rate": 0.0475,
             "upTo": null
           }
         ],
         "hoh": [
           {
-            "rate": 0,
-            "upTo": 10099
+            "rate": 0.0025,
+            "upTo": 2000
           },
           {
-            "rate": 0.025,
-            "upTo": 11249
+            "rate": 0.0075,
+            "upTo": 5000
           },
           {
-            "rate": 0.035,
-            "upTo": 13549
+            "rate": 0.0175,
+            "upTo": 7500
           },
           {
-            "rate": 0.045,
+            "rate": 0.0275,
+            "upTo": 9800
+          },
+          {
+            "rate": 0.0375,
+            "upTo": 12200
+          },
+          {
+            "rate": 0.0475,
             "upTo": null
           }
         ]
@@ -1821,7 +1853,7 @@
         "note": "No estate or inheritance tax."
       }
     },
-    "_hardening_note": "IN PROGRESS \u2014 MAJOR CORRECTION NEEDED. Staged OK is WRONG: has 4-bkt 0/2.5/3.5/4.5%25 @ 10099/11249/13549. ACTUAL OK TY2025 = 6 brackets 0.25/0.75/1.75/2.75/3.75/4.75%25. Single (exact, Valur): 0.25%25<=1000, 0.75%25<=2500, 1.75%25<=3750, 2.75%25<=4900, 3.75%25<=7200, 4.75%25 above. MFS = MFJ/2 (incometaxpro primary). MFJ ~doubled (0.75 at 2000, top 4.75 at 12200) \u2014 needs exact 511 table. HoH own schedule \u2014 needs 511 table. YEAR DECISION NEEDED: HB2764 (signed 2025) restructures OK to 3 brackets top 4.5%25 for TY2026 (filed 2027) \u2014 but TY2026 thresholds may not be published yet. Family standard is 2026; may need to use TY2025 6-bkt as best-available or confirm 2026 3-bkt published. TODO: pull OK Form 511 instructions tax table for exact MFJ/HoH; resolve 2025-vs-2026 structure. SS exempt. Std ded S/MFS 6350, MFJ 12700, HoH 9350."
+    "_hardening_note": "DECISION: latest-published standard -> OK uses TY2025 6-bracket schedule (0.25/0.75/1.75/2.75/3.75/4.75%25), fully published OTC Form 511. single==mfs (1000/2500/3750/4900/7200); mfj==hoh (~2x single: 2000/5000/7500/9800/12200 per OTC). YEAR-MISMATCH FLAG (surface in tool): OK is TY2025 while family trends TY2026 \u2014 HB2764 3-bkt TY2026 (top 4.5%25) enacted but transition thresholds NOT yet published; revisit when OTC releases 2026 Form 511 packet. SS fully exempt. Std ded 6350/12700/9350."
   },
   "CA": {
     "taxRules": {
@@ -4989,6 +5021,7 @@
     "ne_status": "RATES ok, THRESHOLDS disputed \u2014 needs NE DOR 2026 primary schedule",
     "spine_done_single_mfj": "CT MN ND NJ VT HI AL KS NM MT OR WI CA ME (14 states single+mfj on TF2026)",
     "still_pending_mfs_hoh": "AL KS NM MT OR WI (mfs/hoh); CA (hoh); ME (mfs/hoh); plus NE thresholds, OK mfs/hoh+bottom-bkt",
-    "not_started": "MD NY (+ NY recapture, MD has 2025 new top brackets + IRA-trap)"
+    "not_started": "MD NY (+ NY recapture, MD has 2025 new top brackets + IRA-trap)",
+    "latest_published_standard": "ADOPTED: use latest fully-published schedule per state; flag any year-mismatch in tool (e.g. OK TY2025 vs family TY2026). Better transparent-and-complete than absent-or-fabricated."
   }
 }
