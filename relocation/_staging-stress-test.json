@@ -471,27 +471,27 @@
           },
           {
             "rate": 0.0475,
-            "upTo": 100000
-          },
-          {
-            "rate": 0.05,
-            "upTo": 125000
-          },
-          {
-            "rate": 0.0525,
             "upTo": 150000
           },
           {
+            "rate": 0.05,
+            "upTo": 175000
+          },
+          {
+            "rate": 0.0525,
+            "upTo": 225000
+          },
+          {
             "rate": 0.055,
-            "upTo": 250000
+            "upTo": 300000
           },
           {
             "rate": 0.0575,
-            "upTo": 500000
+            "upTo": 600000
           },
           {
             "rate": 0.0625,
-            "upTo": 1000000
+            "upTo": 1200000
           },
           {
             "rate": 0.065,
@@ -542,7 +542,8 @@
         "exemption": 5000000,
         "note": "Estate tax ($5M exemption) AND inheritance tax on non-lineal heirs. Plus mandatory county income tax 2.25-3.30% (Tier-2: not modeled)."
       }
-    }
+    },
+    "_hardening_note": "COMPLETE: single==mfs, mfj==hoh==QSS (MD Comptroller 2025 tax alert primary; BRFA/HB352 added 6.25%25/6.50%25 top brackets TY2025). single/MFS top: 5.75%25>250k, 6.25%25>500k, 6.5%25>1M. mfj/HoH top: 5.75%25>300k, 6.25%25>600k, 6.5%25>1.2M. MD IRA-TRAP: taxes pension/401k/IRA but pension exclusion up to $41,200/taxpayer age65+; SS NOT taxed; 2%25 capgains surtax FAGI>$350k. Std ded S/MFS 3350, MFJ/HoH 6700."
   },
   "MN": {
     "taxRules": {
@@ -881,7 +882,7 @@
         "note": "No estate or inheritance tax."
       }
     },
-    "_hardening_note": "single+mfj CORRECTED to Tax Foundation 2026 enacted (staged were stale; inflation-adjusted). mfs/hoh STILL pending per-state primary (currently seeded=single)."
+    "_hardening_note": "single+mfj CORRECTED TF2026 (3.50/4.40/5.30/7.65 at 15110/51950/332720 s; mfj 20150/69260/443630). BUG FLAGGED: mfs+hoh currently STALE (frozen at pre-correction single 14680/29370/323290) \u2014 need WI Form 1 instructions for exact. WI is COMMUNITY-PROPERTY (MFS income-split). WI HoH: per Form 1, HoH uses own schedule. SS + US govt interest exempt. PENDING mfs/hoh."
   },
   "FL": {
     "taxRules": {
@@ -1416,7 +1417,7 @@
         "note": "~$7M exemption (2026), 8-12% rates."
       }
     },
-    "_hardening_note": "single+mfj matched TF 2026 to the dollar (was off by $1 rounding, now exact). mfs + HoH still pending per-state primary (ME has distinct HoH). ME IRA-trap: pension/IRA deduction rules need capture in retirementIncome. SS exempt in ME."
+    "_hardening_note": "single+mfj TF2026 exact (27399/64849 s; 54849/129749 mfj). BUG FLAGGED: mfs+hoh currently STALE (frozen at 27400/64850 pre-correction single) \u2014 need ME 1040 instructions for exact. ME has distinct HoH; mfs likely own. ME IRA-TRAP: pension/IRA deduction rules for retirementIncome. SS exempt. PENDING mfs/hoh."
   },
   "RI": {
     "taxRules": {
@@ -2214,7 +2215,8 @@
         "note": "~$7.16M exemption with a notorious cliff (estates ~5% over exemption lose the WHOLE exemption)."
       }
     },
-    "_approximation": "NY tax-benefit recapture provision not modeled: bracket-sum understates by ~5% (~$280 at $100k taxable) for incomes above ~$107,650 where NY claws back the lower-bracket benefit. For relocation comparison at typical retiree incomes this is immaterial to rankings, but flag for precise-mode. Validated: single $100k computes $5,432 vs published $5,714."
+    "_approximation": "NY tax-benefit recapture provision not modeled: bracket-sum understates by ~5% (~$280 at $100k taxable) for incomes above ~$107,650 where NY claws back the lower-bracket benefit. For relocation comparison at typical retiree incomes this is immaterial to rankings, but flag for precise-mode. Validated: single $100k computes $5,432 vs published $5,714.",
+    "_hardening_note": "single+mfj VERIFIED (NY Tax Law 601, 9-bkt 4-10.9%25 TY2025). mfs==single (NY convention). HoH DISTINCT schedule \u2014 NOT captured (seeded=single, pending NY IT-201 HoH rate schedule). RECAPTURE (documented approx like CT): NY AGI>$107,650 supplemental tax claws back lower-bracket benefit, ~5%25 low high earners, known-hard. NY pension exclusion $20k/$40k MFJ age59.5+; SS NOT taxed; 2026 rate cut coming (bottom brackets to 3.9%25)."
   },
   "OR": {
     "taxRules": {
@@ -2258,11 +2260,11 @@
         "mfs": [
           {
             "rate": 0.0475,
-            "upTo": 4050
+            "upTo": 4550
           },
           {
             "rate": 0.0675,
-            "upTo": 10200
+            "upTo": 11400
           },
           {
             "rate": 0.0875,
@@ -2318,7 +2320,7 @@
         "note": "$1M exemption (one of the lowest), 10-16% rates."
       }
     },
-    "_hardening_note": "single+mfj CORRECTED to Tax Foundation 2026 enacted (staged were stale; inflation-adjusted). mfs/hoh STILL pending per-state primary (currently seeded=single)."
+    "_hardening_note": "single+mfj verified TF2026 (4.75/6.75/8.75/9.90 at 4550/11400/125000 s; mfj doubled). mfs CORRECTED to mfj/2 (incometaxpro primary; was stale-single from spine correction). HoH: OR has DISTINCT hoh schedule (Form 40 booklet) \u2014 currently stale placeholder, PENDING exact capture. OR 9%25 pension credit low-income 62+; SS not taxed by OR."
   },
   "HI": {
     "taxRules": {
@@ -3637,7 +3639,7 @@
       }
     },
     "_note": "Defined-benefit PENSIONS fully exempt but IRA/401k taxable ($6k excl 65+). Federal income tax deductible from AL income (lowers effective rate; not modeled \u2014 slight overstate).",
-    "_hardening_note": "single+mfj VERIFIED vs Tax Foundation 2026 enacted (match). mfs/hoh still pending per-state primary (seeded=single)."
+    "_hardening_note": "COMPLETE: single==mfs==hoh (AL Form 40 single-schedule for all non-joint; only mfj doubles 0/1000/6000). Rates 2/4/5%25 at 500/3000. AL deducts federal tax paid. SS not taxed; defined-benefit pension exempt."
   },
   "DC": {
     "taxRules": {
@@ -4141,7 +4143,7 @@
       }
     },
     "_note": "SS fully exempt (SB1). KPERS/federal/military pensions exempt but PRIVATE IRA fully taxable (modeled retirement as taxed for portfolio retiree).",
-    "_hardening_note": "single+mfj VERIFIED vs Tax Foundation 2026 enacted (match). mfs/hoh still pending per-state primary (seeded=single)."
+    "_hardening_note": "COMPLETE: single==mfs==hoh (KS K-40 single-schedule for non-joint; mfj doubles 0/46000). 2-bkt 5.2/5.58%25 at 23000 (SB1 2024). SS exempt 2024+ all income. Personal exemption 9160 single/18320 mfj."
   },
   "MO": {
     "taxRules": {
@@ -4413,7 +4415,7 @@
         "mfs": [
           {
             "rate": 0.047,
-            "upTo": 20500
+            "upTo": 47500
           },
           {
             "rate": 0.0565,
@@ -4423,7 +4425,7 @@
         "hoh": [
           {
             "rate": 0.047,
-            "upTo": 20500
+            "upTo": 47500
           },
           {
             "rate": 0.0565,
@@ -4467,7 +4469,7 @@
       }
     },
     "_note": "SS-taxing on federal formula. Repealed broad pension/IRA deduction 2025 -> only ~$5,500 retirement deduction; IRA effectively taxed. Top rate 5.65% (2026), 5.4% 2027.",
-    "_hardening_note": "single+mfj CORRECTED to Tax Foundation 2026 enacted (staged were stale; MT HB337 2026 restructure). mfs/hoh STILL pending per-state primary (currently seeded=single)."
+    "_hardening_note": "COMPLETE: single==mfs==hoh (MT Form 2 single-schedule for non-joint; mfj doubles 0/95000). Post-HB337 2026: 4.70%25<=47500/5.65%25 above. FIXED: mfs/hoh were left stale at 20500 when single corrected to TF2026 47500 \u2014 now consistent. Std ded 14600/29200. MT taxes some SS (federal partial); 40%25 capgains credit."
   },
   "ND": {
     "taxRules": {
