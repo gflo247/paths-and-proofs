@@ -2171,27 +2171,27 @@
         "hoh": [
           {
             "rate": 0.04,
-            "upTo": 8500
+            "upTo": 12800
           },
           {
             "rate": 0.045,
-            "upTo": 11700
+            "upTo": 17650
           },
           {
             "rate": 0.0525,
-            "upTo": 13900
+            "upTo": 20900
           },
           {
             "rate": 0.055,
-            "upTo": 80650
+            "upTo": 107650
           },
           {
             "rate": 0.06,
-            "upTo": 215400
+            "upTo": 269300
           },
           {
             "rate": 0.0685,
-            "upTo": 1077550
+            "upTo": 1616450
           },
           {
             "rate": 0.0965,
@@ -2244,7 +2244,7 @@
       }
     },
     "_approximation": "NY tax-benefit recapture provision not modeled: bracket-sum understates by ~5% (~$280 at $100k taxable) for incomes above ~$107,650 where NY claws back the lower-bracket benefit. For relocation comparison at typical retiree incomes this is immaterial to rankings, but flag for precise-mode. Validated: single $100k computes $5,432 vs published $5,714.",
-    "_hardening_note": "single+mfj+mfs verified (Tax Law 601, 9-bkt 4-10.9%25). mfs==single (NY convention). HoH: NY publishes DISTINCT HoH schedule but exact bracket cutoffs NOT captured from primary this session (embedded in IT-201 tax tables <=107650 + computation worksheet above). hoh seeded=single PENDING \u2014 capture from NY IT-201 tax computation worksheet HoH column (tax.ny.gov/pdf/2025/inc/it201i_2025.pdf). RECAPTURE (documented approx BY DESIGN like CT): NY AGI>107650 supplemental tax. NY pension excl 20k/40k age59.5+; SS not taxed; military exempt."
+    "_hardening_note": "COMPLETE (brackets): all 4 statuses verified from NY IT-201-I 2025 page 33 rate schedule (primary screenshot). single==mfs (filing status 1/3), mfj==QSS (status 2/5), HoH OWN (status 4: 12800/17650/20900/107650/269300/1616450/5M/25M). RECAPTURE stays documented approx BY DESIGN (like CT): NY AGI>107650 supplemental tax claws back lower-bracket benefit \u2014 model approximates for high earners. NY pension exclusion 20k/40k age59.5+; SS not taxed; military retire exempt. 2026 rate cut coming."
   },
   "OR": {
     "taxRules": {
