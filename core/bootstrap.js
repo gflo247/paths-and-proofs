@@ -7,11 +7,11 @@
 import { mount } from './app.js';
 import { applyOSTheme, installThemeToggle } from './theme.js';
 
-export function bootstrap(module) {
+export function bootstrap(module, onResult) {
   applyOSTheme();
   installThemeToggle();
 
-  const api = mount(module, document.getElementById('calc'));
+  const api = mount(module, document.getElementById('calc'), onResult);
 
   const presetsEl = document.getElementById('presets');
   if (presetsEl && module.presets) {

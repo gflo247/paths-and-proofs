@@ -14,7 +14,7 @@ import { drawSummary }   from './summary.js';     // the results card
  * @param {import('./contract.js').CalculatorModule} calculator
  * @param {HTMLElement} root
  */
-export function mount(calculator, root) {
+export function mount(calculator, root, onResult) {
   validateModule(calculator);
 
   // Seed live state from each control's default.
@@ -25,6 +25,7 @@ export function mount(calculator, root) {
     const result = calculator.compute(values);   // pure, domain-owned
     drawChart(result, root.querySelector('[data-chart]'));   // core finds crossovers
     drawSummary(result.summary, root.querySelector('[data-summary]'));
+    if (typeof onResult === 'function') onResult(result); // optional: page-specific blocks
   }
 
   // A control change mutates values and re-runs the loop. That's the entire engine.
