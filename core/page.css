@@ -43,3 +43,26 @@ details { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 48
 summary { cursor: pointer; font-weight: 600; font-size: 15px; }
 details p { font-size: 15px; color: var(--muted); }
 footer { margin-top: 40px; font-size: 13px; color: var(--muted); }
+
+/* Desktop two-column layout — shared across tools that use the #calc pattern.
+   Scoped to main:has(#calc) so it can never touch Roth (no #calc there, and
+   Roth doesn't link this stylesheet at all). Below 900px: unchanged from today.
+   Relocation overrides this with its own page-scoped 4-row version (adds a
+   "context" row for its Tier-2 property/sales/estate table); this generic
+   3-row version is what reaches Social Security and Rent-vs-Buy. */
+@media (min-width: 900px) {
+  main:has(#calc) { max-width: 1080px; }
+
+  #calc {
+    display: grid;
+    grid-template-columns: minmax(300px, 380px) 1fr;
+    grid-template-areas:
+      "inputs chart"
+      "inputs summary";
+    column-gap: 48px;
+    align-items: start;
+  }
+  #calc > section:nth-of-type(1) { grid-area: inputs; }
+  #calc > section:nth-of-type(2) { grid-area: chart; }
+  #calc > section:nth-of-type(3) { grid-area: summary; }
+}
