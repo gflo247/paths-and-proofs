@@ -1048,7 +1048,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
       '<div class="optcard brkt" onclick="setConvert('+opts.bracketAmt+')">'
       +'<div class="optlbl">Fill your '+pct(opts.curBR,0)+' bracket</div>'
       +'<div class="optamt">'+fmt(opts.bracketAmt)+'</div>'
-      +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/((curCvt||0)+opts.bracketAmt)*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>room: '+fmt(opts.bracketAmt)+'</span></div></div>'
+      +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.bracketAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>room: '+fmt(opts.bracketAmt)+'</span></div></div>'
       +'<div class="optnote">Converts up to the top of your current federal bracket — stops right before the next higher rate applies'+
         (ss>0?' (hidden SS tax already accounted for)':'')+
       '</div>'
@@ -1075,7 +1075,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
         '<div class="optcard irm" onclick="setConvert('+opts.irmaaAmt+')">'
         +'<div class="optlbl">Medicare income limit</div>'
         +'<div class="optamt">'+fmt(opts.irmaaAmt)+'</div>'
-        +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/((curCvt||0)+opts.irmaaAmt)*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe room: '+fmt(opts.irmaaAmt)+'</span></div></div>'
+        +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.irmaaAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe room: '+fmt(opts.irmaaAmt)+'</span></div></div>'
         +'<div class="optnote">Keeps your 2026 total income just below $'+(opts.irmaaNext/1000).toFixed(0)+'K — avoids the Medicare surcharge that hits your 2028 premiums</div>'
         +'<div class="optbtn">Explore this →</div>'
         +'</div>'
