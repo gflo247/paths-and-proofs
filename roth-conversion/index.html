@@ -977,7 +977,7 @@ function computeOptTargets(income,ss,status,std,nSr,nMed,taxableFrac){
       var tiw=Math.max(0,aw-std-sdw);
       if(tiw<curBktTop)lo=mid;else hi=mid;
     }
-    bracketAmt=Math.max(0,Math.round(lo/500)*500);
+    bracketAmt=Math.max(0,Math.floor(lo/500)*500);
     bracketState=bracketAmt>0?'ok':'zero';
   }
 
