@@ -24,6 +24,28 @@
     border-left: 3px solid var(--accent);
     font-size: 14px; color: var(--fg);
   }
+
+  /* Desktop two-column layout — Relocation prototype only.
+     Lives here, not core/page.css, so the other three tools are untouched
+     while this is being tried out. Below 900px: today's layout, unchanged. */
+  @media (min-width: 900px) {
+    main { max-width: 1080px; }
+
+    #calc {
+      display: grid;
+      grid-template-columns: minmax(300px, 380px) 1fr;
+      grid-template-areas:
+        "inputs chart"
+        "inputs summary"
+        "inputs context";
+      column-gap: 48px;
+      align-items: start;
+    }
+    #calc > section:nth-of-type(1) { grid-area: inputs; }
+    #calc > section:nth-of-type(2) { grid-area: chart; }
+    #calc > section:nth-of-type(3) { grid-area: summary; }
+    #calc > section:nth-of-type(4) { grid-area: context; }
+  }
 </style>
 </head>
 <body>
