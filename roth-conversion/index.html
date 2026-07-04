@@ -889,16 +889,21 @@ const QX={
     94:221.00,95:239.53,96:258.52,97:277.99,98:298.00,99:318.44,100:338.50}
 };
 function survFrom(sex,from,to){let p=1;for(let a=from;a<Math.min(to,100);a++)p*=1-(QX[sex][a]??400)/1000;return p;}
-// Joint survival: probability at least one of two independent lives reaches age `to`
+// Joint survival: probability at least one of two lives reaches its own age at
+// the same point in time. `to` is person 1's target age; person 2's target age
+// is computed from the SAME elapsed time (to-age1), not from `to` directly —
+// otherwise this silently breaks whenever the two people aren't the same age.
 function survJoint(sex1,age1,sex2,age2,to){
-  return 1-(1-survFrom(sex1,age1,to))*(1-survFrom(sex2,age2,to));
+  const elapsed=to-age1;
+  return 1-(1-survFrom(sex1,age1,to))*(1-survFrom(sex2,age2,age2+elapsed));
 }
 // Expected age of last survivor (numerically computed from QX)
 function lifeExJoint(sex1,age1,sex2,age2){
   const start=Math.min(age1,age2);
   let e=0;
   for(let a=start+1;a<=110;a++){
-    const p1=survFrom(sex1,age1,a), p2=survFrom(sex2,age2,a);
+    const elapsed=a-start;
+    const p1=survFrom(sex1,age1,age1+elapsed), p2=survFrom(sex2,age2,age2+elapsed);
     e+=1-(1-p1)*(1-p2);
   }
   return Math.round((start+e)*10)/10;
@@ -2313,7 +2318,7 @@ function calc(){
       +'<span class="ldot" style="background:var(--success)"></span><strong>At least one of you</strong>';
     sBars = sAges.map(a=>{
       const sy = survFrom(sex,      curAge,   a);
-      const ss2= survFrom(spouseSex,spouseAge,a);
+      const ss2= survFrom(spouseSex,spouseAge,spouseAge+(a-curAge));
       const sj = survJoint(sex,curAge,spouseSex,spouseAge,a);
       return '<div class="srow">'
         +'<div class="sage">Age '+a+'</div>'
