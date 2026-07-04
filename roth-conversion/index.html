@@ -783,7 +783,7 @@ const BRAX={
   hoh:   [{m:17700,r:.10},{m:67450,r:.12},{m:105700,r:.22},{m:201750,r:.24},{m:256200,r:.32},{m:640600,r:.35},{m:1/0,r:.37}],
 };
 const STDD={single:16100,mfj:32200,mfs:16100,hoh:24150};
-function seniorDed(inc,st,n){if(!n)return 0;const full=n*6000,phase=Math.max(0,inc-(st==='mfj'?150000:75000))*.06;return Math.max(0,full-phase);}
+function seniorDed(inc,st,n){if(!n||st==='mfs')return 0;const full=n*6000,phase=Math.max(0,inc-(st==='mfj'?150000:75000))*.06;return Math.max(0,full-phase);}
 const RMDD={73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,85:16,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,95:8.9,96:8.4,97:7.8,98:7.3,99:6.8,100:6.4};
 const ITIERS=[{lbl:'Standard',mult:'1.0x',B:202.90,D:0},{lbl:'Tier 1',mult:'1.4x',B:284.10,D:14.50},{lbl:'Tier 2',mult:'2.0x',B:405.80,D:37.60},{lbl:'Tier 3',mult:'2.6x',B:527.50,D:60.60},{lbl:'Tier 4',mult:'3.2x',B:649.30,D:83.20},{lbl:'Tier 5',mult:'3.4x',B:689.90,D:91.00}];
 const ITHR={single:[0,109000,137000,171000,205000,500000],mfj:[0,218000,274000,342000,410000,750000],mfs:[0,109000,109000,109000,109000,391000]};
@@ -1247,12 +1247,12 @@ function computeMultiYear(income,ss,status,tradBal,rothBal,basis,g,nSr,stD,nMed,
 
     if(retSSV+retPenV>0){
       // Bracket room in retirement (lower income = more room)
-      var gOpts=computeOptTargets(retPenV,retSSV,status,STDD[status],0,nMed,taxableFrac);
+      var gOpts=computeOptTargets(retPenV,retSSV,status,STDD[status],nSr,nMed,taxableFrac);
       var gConv=gOpts.bracketAmt>0?gOpts.bracketAmt:0;
       if(gOpts.irmaaAmt!==null&&gOpts.irmaaAmt>0&&gOpts.irmaaAmt<gConv)gConv=gOpts.irmaaAmt;
 
       if(gConv>500){
-        var gTax=convTax(retPenV,retSSV,status,0,gConv,taxableFrac);
+        var gTax=convTax(retPenV,retSSV,status,nSr,gConv,taxableFrac);
 
         for(var j=0;j<gYears;j++){
           var gcv=Math.min(gConv,tBal);
