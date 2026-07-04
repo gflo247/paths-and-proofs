@@ -52,3 +52,12 @@
 [data-theme="dark"] .theme-toggle .ic-sun { display: none; }
 [data-theme="dark"] .theme-toggle .ic-moon { display: inline-block; }
 .theme-toggle:focus-visible { outline: 2px solid var(--accent, #2c6e6a); outline-offset: 2px; }
+
+/* Desktop two-column layout companion: slightly larger summary text helps the
+   results column's natural height sit closer to the input column's, closing
+   part of the whitespace gap CSS Grid otherwise stretches in. Below 900px:
+   unchanged from today. */
+@media (min-width: 900px) {
+  .summary-label { font-size: 15px; }
+  .summary-primary .summary-value { font-size: 20px; }
+}
