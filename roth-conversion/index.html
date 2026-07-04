@@ -2301,11 +2301,22 @@ function calc(){
 
   // ── PROJECTION TABLE ──
   const tAges=[retAge,retAge+5,retAge+10,retAge+15,retAge+20].filter(a=>a>curAge&&a<=maxAge);
+  const symOf = s => s==='male' ? '&#9794;' : '&#9792;';
   const tRows=tAges.map(a=>{
     const i=ages.indexOf(a);if(i<0)return'';
     const va=vA[i],vb=vB[i],diff=va-vb;
-    const sm=survFrom('male',curAge,a),sf=survFrom('female',curAge,a);
-    return '<tr class="'+(a===beAge?'hl':'')+'"><td><strong>'+a+'</strong>'+(a===beAge?' 🎯':'')+'</td><td>'+fmtK(va)+'</td><td>'+fmtK(vb)+'</td><td class="'+(diff>=0?'bet':'wor')+'">'+(diff>=0?'▲ +':'▼ ')+fmtK(Math.abs(diff))+'</td><td style="font-size:.82rem;color:var(--muted)">&#9794; '+pct(sm,0)+' &#9792; '+pct(sf,0)+'</td></tr>';
+    let survCell;
+    if(isCouple){
+      // Actual entered sexes/ages, not a generic male/female illustration —
+      // and order (primary first, spouse second) rather than sex determines
+      // which number is which, so this reads correctly for same-sex couples too.
+      const sy=survFrom(sex,curAge,a), ss2=survFrom(spouseSex,spouseAge,spouseAge+(a-curAge));
+      survCell=symOf(sex)+' '+pct(sy,0)+' '+symOf(spouseSex)+' '+pct(ss2,0);
+    } else {
+      const sm=survFrom('male',curAge,a),sf=survFrom('female',curAge,a);
+      survCell='&#9794; '+pct(sm,0)+' &#9792; '+pct(sf,0);
+    }
+    return '<tr class="'+(a===beAge?'hl':'')+'"><td><strong>'+a+'</strong>'+(a===beAge?' 🎯':'')+'</td><td>'+fmtK(va)+'</td><td>'+fmtK(vb)+'</td><td class="'+(diff>=0?'bet':'wor')+'">'+(diff>=0?'▲ +':'▼ ')+fmtK(Math.abs(diff))+'</td><td style="font-size:.82rem;color:var(--muted)">'+survCell+'</td></tr>';
   }).join('');
 
   // ── SURVIVAL BARS ──
