@@ -923,8 +923,8 @@ function toggleTip(id){
 document.addEventListener('click',e=>{if(!e.target.closest('.tb')&&!e.target.closest('.ttip')){document.querySelectorAll('.ttip.open').forEach(b=>b.classList.remove('open'));document.querySelectorAll('.tb.open').forEach(b=>b.classList.remove('open'));}});
 
 function buildRateTable(st){
-  const rows=st==='mfj'?[['Under $94,300 combined','→ about 12%'],['$94,300–$211,400','→ about 22%'],['$211,400–$403,550','→ about 24%'],['Over $403,550','→ about 32%+']]:
-    [['Under $47,150','→ about 12%'],['$47,150–$105,700','→ about 22%'],['$105,700–$201,775','→ about 24%'],['Over $201,775','→ about 32%+']];
+  const rows=st==='mfj'?[['Under $100,800 combined','→ about 12%'],['$100,800–$211,400','→ about 22%'],['$211,400–$403,550','→ about 24%'],['Over $403,550','→ about 32%+']]:
+    [['Under $50,400','→ about 12%'],['$50,400–$105,700','→ about 22%'],['$105,700–$201,775','→ about 24%'],['Over $201,775','→ about 32%+']];
   return rows.map(([r,rt])=>`<div class="rerow"><span class="rbkt">${r}</span><span class="rrate">${rt}</span></div>`).join('');
 }
 
