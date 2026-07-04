@@ -58,6 +58,6 @@
    part of the whitespace gap CSS Grid otherwise stretches in. Below 900px:
    unchanged from today. */
 @media (min-width: 900px) {
-  .summary-label { font-size: 15px; }
-  .summary-primary .summary-value { font-size: 20px; }
+  .summary-label { font-size: 16px; }
+  .summary-primary .summary-value { font-size: 22px; }
 }

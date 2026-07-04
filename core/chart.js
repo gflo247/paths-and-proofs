@@ -25,7 +25,7 @@ export function drawChart(result, container) {
 
   const reduceMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const desktop = (globalThis.innerWidth || 0) >= 900;
-  const HEIGHT = desktop ? 380 : 320; // logical height; wider desktop layouts get a taller chart
+  const HEIGHT = desktop ? 420 : 320; // logical height; wider desktop layouts get a taller chart
   const width = Math.max(container.clientWidth || 600, 280);
   const innerW = width - MARGIN.left - MARGIN.right;
   const innerH = HEIGHT - MARGIN.top - MARGIN.bottom;
@@ -66,7 +66,7 @@ export function drawChart(result, container) {
       sel.select('.domain').remove();
     });
   g.append('text').attr('x', innerW / 2).attr('y', innerH + 38)
-    .attr('text-anchor', 'middle').attr('fill', ink).attr('font-size', desktop ? 13 : 12).text(xAxis.label);
+    .attr('text-anchor', 'middle').attr('fill', ink).attr('font-size', desktop ? 14 : 12).text(xAxis.label);
 
   // Lines — monotone curve avoids overshoot that would misstate money.
   const line = d3.line().x((p) => x(p.x)).y((p) => y(p.y)).curve(d3.curveMonotoneX);
@@ -90,7 +90,7 @@ export function drawChart(result, container) {
     g.append('line').attr('x1', x(at)).attr('x2', x(at)).attr('y1', 0).attr('y2', innerH)
       .attr('stroke', ink).attr('stroke-dasharray', '4 4').attr('opacity', 0.6);
     g.append('text').attr('x', x(at)).attr('y', -4).attr('text-anchor', 'middle')
-      .attr('fill', ink).attr('font-size', desktop ? 12 : 11)
+      .attr('fill', ink).attr('font-size', desktop ? 13 : 11)
       .text(`${xAxis.format(at)}${c.label ? ` — ${c.label}` : ''}`);
   });
 
@@ -105,7 +105,7 @@ export function drawChart(result, container) {
       .attr('stroke', mInk).attr('stroke-width', 1).attr('opacity', 0.45);
     if (mk.label) {
       g.append('text').attr('x', x(mk.x)).attr('y', innerH - 6).attr('text-anchor', 'middle')
-        .attr('fill', mInk).attr('font-size', desktop ? 11 : 10).attr('opacity', 0.85).text(mk.label);
+        .attr('fill', mInk).attr('font-size', desktop ? 12 : 10).attr('opacity', 0.85).text(mk.label);
     }
   });
 
