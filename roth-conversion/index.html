@@ -2237,6 +2237,7 @@ function calc(){
   let rmdA=0,rmdB=0;
   const DRAG=g*.72, simRetR=totalRetR*taxableFrac;  // taxable fraction applies equally in retirement
   const ages=[],vA=[],vB=[];
+  const rmdYrA={},rmdYrB={};  // per-year forced withdrawals, captured for the RMD counterfactual card
   const maxAge=Math.min(100,retAge+38);
   for(let age=curAge;age<=maxAge;age++){
     vA.push(rA+tA*(1-simRetR)+rmdA);
@@ -2244,8 +2245,10 @@ function calc(){
     ages.push(age);
     if(age>=73){
       const div=RMDD[Math.min(age,100)]??6.4;
-      if(tA>0){const r=tA/div;tA-=r;rmdA+=r*(1-simRetR);}
-      if(tB>0){const r=tB/div;tB-=r;rmdB+=r*(1-simRetR);}
+      let ra=0,rb=0;
+      if(tA>0){ra=tA/div;tA-=ra;rmdA+=ra*(1-simRetR);}
+      if(tB>0){rb=tB/div;tB-=rb;rmdB+=rb*(1-simRetR);}
+      rmdYrA[age]=ra;rmdYrB[age]=rb;
     }
     rA*=(1+g);tA*=(1+g);rmdA*=(1+DRAG);
     rB*=(1+g);tB*=(1+g);rmdB*=(1+DRAG);
@@ -2479,6 +2482,30 @@ function calc(){
     +nextBody
     +'</div>';
 
+  // ── RMD COUNTERFACTUAL — the forced-withdrawal path without converting ──
+  let rmdCfHTML='';
+  {
+    const cfAges=[73,75,80,85].filter(a=>a>=curAge&&a<=maxAge&&rmdYrB[a]!==undefined);
+    if(tradBal>0&&cfAges.length>0&&(rmdYrB[cfAges[0]]??0)>500){
+      const firstB=rmdYrB[cfAges[0]];
+      let cfRows='';
+      for(const a of cfAges){
+        const wb=rmdYrB[a]??0, wa=rmdYrA[a]??0, gap=wb-wa;
+        cfRows+='<tr><td><strong>'+a+'</strong></td><td>'+fmtK(wb)+'</td><td>'+(wa>0.5?fmtK(wa):'$0')+'</td><td class="'+(gap>0.5?'bet':'')+'">'+(gap>0.5?'\u2212'+fmtK(gap):'\u2014')+'</td></tr>';
+      }
+      rmdCfHTML='<div class="card" style="margin-bottom:1.25rem">'
+      +'<div class="stitle">\u23f3 The Forced Withdrawals You\'d Be Reducing</div>'
+      +'<p style="font-size:.9rem;line-height:1.6;margin-bottom:.85rem">'
+      +(curAge>=73
+        ? 'Your Required Minimum Distributions have already begun. Without converting, at age '+cfAges[0]+' you\'d be required to withdraw about <strong>'+fmt(firstB)+'</strong> from your traditional account \u2014 taxable income whether you need it or not \u2014 and the required share grows each year as the IRS divisor shrinks.'
+        : 'Without converting, at age 73 you\'d be required to withdraw about <strong>'+fmt(firstB)+'</strong> from your traditional account \u2014 taxable income whether you need it or not \u2014 and the required share grows each year as the IRS divisor shrinks.')
+      +' Converting doesn\'t make withdrawals free; it moves the tax to today and shrinks the account those forced withdrawals are calculated from.</p>'
+      +'<div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Age</th><th>Forced withdrawal, no conversion</th><th>With this conversion</th><th>Yearly gap</th></tr></thead><tbody>'+cfRows+'</tbody></table></div>'
+      +'<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">Projected balances at your '+pct(g,0)+' growth assumption; required amounts per the IRS Uniform Lifetime Table (Publication 590-B). Each dollar withdrawn is taxed at your combined '+pct(simRetR)+' retirement rate \u2014 roughly '+fmt(firstB*simRetR)+' of tax in that first year alone without converting.</p>'
+      +'</div>';
+    }
+  }
+
   $('resultsWrap').innerHTML =
     '<div class="fade-up">'
     +'<div class="disclaimer">📌 <strong>Planning tool, not financial advice.</strong> This calculator models common tax rules but cannot see your full picture — estate goals, healthcare subsidies, future moves, charitable plans, and income changes all matter. State rates are approximate. Use this to understand the landscape and size the conversation with your CPA or financial advisor, not to make the decision alone.</div>'
@@ -2486,7 +2513,7 @@ function calc(){
     +'<div class="rgrid">'
     +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(niitCost>0?'<br>Fed: '+fmt(cvtTxFed):''))+(niitCost>0?' + NIIT: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')+'</div></div>'
     +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Not in range')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
-    +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2022 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2022 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'</div></div>'
+    +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'</div></div>'
     +'</div>'
     +buildBeTimeline(curAge,beAge,leAge??le,survBE,isCouple)
     +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n)
@@ -2502,6 +2529,7 @@ function calc(){
     +'<div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Age</th><th>With Conv.</th><th>Without</th><th>Difference</th><th>Odds M/F</th></tr></thead><tbody>'+tRows+'</tbody></table></div>'
     +'<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">🎯 = breakeven age. After-tax uses '+pct(simRetR)+' combined retirement rate. Survival odds from age '+curAge+'.</p>'
     +'</div></div>'
+    +rmdCfHTML
     +'<div class="card"><div class="stitle">❤️ '+(isCouple?'Will At Least One of You Be Around to Benefit?':'Will You Be Around to Benefit?')+'</div>'
     +'<p style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">'
     +(isCouple
@@ -2524,7 +2552,7 @@ function calc(){
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Widow/widower tax cliff.</strong> When a spouse dies, filing status changes from Married (jointly) to Single, often dramatically increasing effective tax rates and compressing Medicare brackets. For married couples, this is one of the strongest arguments for converting while both spouses are alive — not modeled here.</p>'
     +'</div>'
     +'<div><p style="margin-bottom:.45rem"><strong style="color:var(--warn)">Medium impact</strong></p>'
-    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Period vs. cohort life table.</strong> I use a 2022 mortality snapshot. A cohort table accounts for improving life expectancy over time — giving somewhat longer expected lifespans, which further favors the Roth.</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Period vs. cohort life table.</strong> I use a 2023 mortality snapshot. A cohort table accounts for improving life expectancy over time — giving somewhat longer expected lifespans, which further favors the Roth.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Your first dollars of retirement income land in a lower bracket.</strong> They fall in the 10–12% range, not your top rate. Use the rate estimator above to find the true rate on your specific income mix.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Future state of residence.</strong> If you plan to move to a no-income-tax state before retirement, the state tax comparison is reversed — you pay state tax on the conversion today but owe nothing later. Factor this in before converting.</p>'
     +'</div></div>'
