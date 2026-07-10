@@ -1030,9 +1030,9 @@
    "source": "https://revenue.delaware.gov/software-developer/tax-rate-changes/"
   },
   "roth": {
-   "cr": 0.0555,
+   "cr": 0.066,
    "ex": false,
-   "note": "Graduated 2.2% to 6.6%; the 6.6% top only starts at $60k, so a typical conversion lands in the 5.55% band used here. At 60+, a $12,500 exclusion covers combined pension + IRA income, but it is a small cap a meaningful conversion exceeds — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax."
+   "note": "Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k lands at the 6.6% used here (totals under $60k pay 5.55% or less). At 60+, a $12,500 exclusion covers combined pension + IRA income, but it is a small cap a meaningful conversion exceeds — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -2206,9 +2206,9 @@
    "source": "https://www.maine.gov/revenue/taxes/income-estate-tax/individual-income-tax-1040me"
   },
   "roth": {
-   "cr": 0.0675,
+   "cr": 0.0715,
    "ex": false,
-   "note": "Graduated 5.8% to 7.15%; the 7.15% top starts near $65k single / $130k joint, so a typical conversion lands in the 6.75% band used here. Important: Maine's pension income deduction does NOT apply to Roth conversions — they are specifically excluded — so the conversion is fully taxable with no shelter. Social Security is exempt."
+   "note": "Graduated 5.8% to 7.15%; the 7.15% top starts near $65k single / $130k joint, so a conversion that brings total income near $100k lands at the 7.15% used here (smaller totals pay 6.75% or less). Important: Maine's pension income deduction does NOT apply to Roth conversions — they are specifically excluded — so the conversion is fully taxable with no shelter. Social Security is exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -2764,9 +2764,9 @@
    "source": "https://www.revenue.state.mn.us/minnesota-income-tax-rates-and-brackets"
   },
   "roth": {
-   "cr": 0.0785,
+   "cr": 0.068,
    "ex": false,
-   "note": "Graduated 5.35% to 9.85%; the 9.85% top only starts near $193k single / $305k joint, so a typical conversion lands in the 7.85% band used here. IRA and Roth-conversion income is fully taxable (no broad retirement exclusion). Watch a second effect: a conversion raises your income and can shrink Minnesota's Social Security subtraction, pulling more of your benefits into MN tax that year."
+   "note": "Graduated 5.35% to 9.85%; the 6.8% band runs to about $109k single, so a conversion that brings total income near $100k lands at the 6.8% used here (7.85% applies from ~$109k to ~$203k, 9.85% above). IRA and Roth-conversion income is fully taxable (no broad retirement exclusion). Watch a second effect: a conversion raises your income and can shrink Minnesota's Social Security subtraction, pulling more of your benefits into MN tax that year."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -4289,9 +4289,9 @@
    "source": "https://www.tax.nd.gov/"
   },
   "roth": {
-   "cr": 0.025,
+   "cr": 0.0195,
    "ex": false,
-   "note": "Very low rates topping out at 2.5%, applied to IRA and conversion income — among the lowest state taxes on a conversion anywhere. Social Security is exempt. North Dakota has a 0% bottom bracket, so part of a small conversion may not be taxed at all."
+   "note": "Very low rates topping out at 2.5%, applied to IRA and conversion income — among the lowest state taxes on a conversion anywhere. The 2.5% top starts near $245k, so a conversion that brings total income near $100k lands at the 1.95% used here. Social Security is exempt. North Dakota has a 0% bottom bracket, so part of a small conversion may not be taxed at all."
   },
   "taxRules": {
    "bracketsByStatus": {
