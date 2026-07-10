@@ -485,6 +485,10 @@
       <summary>When do I pay the tax?</summary>
       <div class="faq-ans">When you file your return — not immediately. For smaller conversions, your regular withholding may already cover the bill. The larger the conversion, the more likely estimated taxes are due by January 15th to avoid an underpayment penalty. Your tax software will calculate exactly what you owe and when.</div>
     </details>
+    <details class="faq-item">
+      <summary>What does this tool model — and what does it simplify?</summary>
+      <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare IRMAA premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase. Survival modeling ends at age 100. State conversion rates are effective approximations — check your state's own schedule. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
+    </details>
   </div>
   <div class="ex-bar" id="examplesSection">
     <span class="ex-label" style="width:100%;text-align:center;margin-bottom:.2rem">Three example scenarios across the spectrum — click any to explore:</span>
@@ -574,7 +578,7 @@
           <option value="1">Yes, I am 65+ — add $6,000 deduction</option>
           <option value="2">Yes, both spouses are 65+ — add $12,000</option>
         </select>
-        <div class="ttip" id="tip-senior"><strong>New for 2026:</strong> A new law gives people 65+ an extra $6,000 tax deduction per qualifying person, on top of the regular standard deduction. This can meaningfully reduce the tax cost of a conversion. Phases out above $75K (single) or $150K (joint).</div>
+        <div class="ttip" id="tip-senior"><strong>New for 2026:</strong> A new law gives people 65+ an extra $6,000 tax deduction per qualifying person, on top of the regular standard deduction. This can meaningfully reduce the tax cost of a conversion. Phases out above $75K (single) or $150K (joint). <strong>Not available if married filing separately</strong> — the law requires a joint return, so this selection has no effect on MFS calculations.</div>
       </div>
       <div class="field">
         <div class="flr"><label>Your State</label><button class="tb" onclick="toggleTip('state')">ⓘ</button></div>
@@ -757,7 +761,7 @@
 <footer>
   <span style="display:block;margin-bottom:.85rem;color:rgba(255,255,255,.78);font-size:.84rem;line-height:1.7;max-width:580px;margin-left:auto;margin-right:auto">Built by an independent developer after getting frustrated by Roth calculators that ignored state taxes, a hidden Social Security tax effect, and Medicare surcharges — and charged $10–20/month for the privilege. The math uses IRS, SSA, and CMS public data. No ads, no account, no tracking. Just the calculation.</span>
   <strong>Roth conversion</strong> · Runs entirely in your browser · No data collected or transmitted · No sign-in required<br>
-  Survival odds: <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener"><strong>Social Security life expectancy data</strong></a> — ages 20–54 exact; 55–100 from 2022 progression<br>
+  Survival odds: <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener"><strong>Social Security life expectancy data</strong></a> — ages 20–100 exact, SSA 2023 Period Life Table<br>
   Tax brackets: <a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf" target="_blank" rel="noopener"><strong>IRS 2026 tax bracket data</strong></a> + <a href="https://www.congress.gov/bill/119th-congress/house-bill/1" target="_blank" rel="noopener"><strong>One Big Beautiful Bill Act</strong></a> · RMD divisors: <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener"><strong>IRS required minimum withdrawal tables (Appendix B)</strong></a> · Medicare surcharges: <a href="https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles" target="_blank" rel="noopener"><strong>Official Medicare 2026 premium rates</strong></a><br>
   <span style="display:block;margin-top:6px">Planning tool only — not tax or financial advice. State tax rates are approximate; your actual rate may vary. Verify locally. Always consult a CPA, tax professional, or financial advisor before converting. <a href="https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill" target="_blank" rel="noopener" style="font-size:.78rem">IRS 2026 full tax year summary →</a></span>
 </footer>
