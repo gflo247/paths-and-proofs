@@ -518,7 +518,7 @@
 </div>
 <div class="privacy-note" role="note">
   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-  <span>Runs entirely in your browser — your numbers never leave your device.</span>
+  <span>Runs entirely in your browser — input numbers never leave your device.</span>
 </div>
 <div class="input-grid">
   <!-- LEFT COLUMN -->
@@ -578,7 +578,7 @@
           <option value="1">Yes, I am 65+ — add $6,000 deduction</option>
           <option value="2">Yes, both spouses are 65+ — add $12,000</option>
         </select>
-        <div class="ttip" id="tip-senior"><strong>New for 2026:</strong> A new law gives people 65+ an extra $6,000 tax deduction per qualifying person, on top of the regular standard deduction. This can meaningfully reduce the tax cost of a conversion. Phases out above $75K (single) or $150K (joint). <strong>Not available if married filing separately</strong> — the law requires a joint return, so this selection has no effect on MFS calculations.</div>
+        <div class="ttip" id="tip-senior"><strong>New for 2026:</strong> A new law gives people 65+ an extra $6,000 tax deduction per qualifying person, on top of the regular standard deduction. This can meaningfully reduce the tax cost of a conversion. Phases out above $75K (single) or $150K (joint). <strong>Not available if married filing separately</strong> — the law requires a joint return, so this selection has no effect if you file separately.</div>
       </div>
       <div class="field">
         <div class="flr"><label>Your State</label><button class="tb" onclick="toggleTip('state')">ⓘ</button></div>
@@ -1835,7 +1835,7 @@ var PROFILES = {
     context: 'Ohio taxes IRA withdrawals in retirement — I flag the state impact in your results.',
     f: {
       currentAge:63, retirementAge:68, filingStatus:'mfj',
-      sex:'female', spouseAge:61, spouseSex:'male',
+      sex:'male', spouseAge:61, spouseSex:'female',
       seniorDeduction:0, stateCode:'OH',
       income:72000, ssIncome:24000, niiIncome:0,
       convertAmt:20000, tradBal:380000, rothBal:25000, iraBasis:0,
@@ -2036,7 +2036,7 @@ function calc(){
   const spFields = document.getElementById('spouseFields');
   if(spFields) spFields.style.display = isCouple ? 'block' : 'none';
   const spouseAge= isCouple ? (_ae?+_ae.spouseAge:(parseInt(_rv('spouseAge'))||60)) : null;
-  const spouseSex= isCouple ? ($('spouseSex').value) : null;
+  const spouseSex= isCouple ? (_ae ? _ae.spouseSex : $('spouseSex').value) : null;
 
   // Update helper displays
   const rateEl=$('rateEstTbl'); if(rateEl) rateEl.innerHTML=buildRateTable(status);
