@@ -1540,7 +1540,7 @@ function renderSensChart(p){
       .style('font-family','DM Sans, sans-serif').text('Roth wins everywhere');
     g.append('text').attr('x',W/2).attr('y',H*0.18+22).attr('text-anchor','middle')
       .style('font-size','11px').style('fill',tc('#1B6B3A','#54C285'))
-      .style('font-family','DM Sans, sans-serif').text('across all tested scenarios');
+      .style('font-family','DM Sans, sans-serif').text('across every scenario tested here');
   }
 
   // "Roth wins" / "Traditional wins" labels (placed in chart body)
@@ -1564,8 +1564,20 @@ function renderSensChart(p){
     .attr('fill','white').attr('opacity',0.9).attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',2);
   g.append('circle').attr('cx',dx).attr('cy',dy).attr('r',3.5).attr('fill',tc('#1C3A5E','#7DB2EC'));
 
-  // Label: above for all-green (avoids overlap with title text), else smart position
-  var lblDy = (pctRoth===100 || dy > H*0.65) ? -26 : 22;
+  // Label placement: avoid the all-green banner using real geometry rather than
+  // assuming. Banner box spans H*0.18-18 to H*0.18+32. Try above, then below; if
+  // the dot sits inside the banner band so neither clears it, push the label
+  // fully below the banner's bottom edge.
+  var lblDy;
+  if(pctRoth===100){
+    var bTop=H*0.18-18, bBot=H*0.18+32, pad=10;
+    var hits=function(y){ return y > bTop-pad && y < bBot+pad; };
+    if(!hits(dy-26) && dy-26 > 12)      lblDy = -26;               // above, and still on-canvas
+    else if(!hits(dy+22))               lblDy = 22;                // below
+    else                                lblDy = (bBot+pad+6)-dy;   // clear the banner entirely
+  } else {
+    lblDy = (dy > H*0.65) ? -26 : 22;
+  }
   // White pill behind label so dashed line doesn't bleed through
   var lblW = outside ? 162 : 88;
   g.append('rect')
@@ -1931,11 +1943,11 @@ function loadExample(name){
   if(bannerText) bannerText.innerHTML=
     (p.stats?'<span class="ex-stats">'+p.stats+'</span>':'')
     +(p.context?'<span class="ex-context">'+p.context+'</span>':'');
-  // Scroll to inputs and calculate
+  // Scroll to the inputs so the example's numbers are visible — an example is an
+  // exploratory gesture, not a submission; land the reader on what produced the answer.
   _activeExample = f;  // Pass data directly to calc(), bypassing DOM reads
-  // Scroll to top of results so user reads verdict first
   setTimeout(function(){
-    var target=document.getElementById('resultsWrap');
+    var target=document.querySelector('.input-grid');
     if(target){
       var hdrH=(document.querySelector('.site-header')||{offsetHeight:60}).offsetHeight||60;
       window.scrollTo({top:Math.max(0,target.getBoundingClientRect().top+window.scrollY-hdrH-16),behavior:'smooth'});
