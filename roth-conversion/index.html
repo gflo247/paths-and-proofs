@@ -1943,16 +1943,10 @@ function loadExample(name){
   if(bannerText) bannerText.innerHTML=
     (p.stats?'<span class="ex-stats">'+p.stats+'</span>':'')
     +(p.context?'<span class="ex-context">'+p.context+'</span>':'');
-  // Scroll to the inputs so the example's numbers are visible — an example is an
-  // exploratory gesture, not a submission; land the reader on what produced the answer.
+  // No scroll on example selection. The pills, the context banner that just
+  // appeared, and the top of the inputs all sit together — the content comes to
+  // the reader, so moving the viewport would only pull them away from it.
   _activeExample = f;  // Pass data directly to calc(), bypassing DOM reads
-  setTimeout(function(){
-    var target=document.querySelector('.input-grid');
-    if(target){
-      var hdrH=(document.querySelector('.site-header')||{offsetHeight:60}).offsetHeight||60;
-      window.scrollTo({top:Math.max(0,target.getBoundingClientRect().top+window.scrollY-hdrH-16),behavior:'smooth'});
-    }
-  }, 80);
   calc();
   _activeExample = null;
 }
