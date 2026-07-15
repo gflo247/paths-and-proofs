@@ -99,7 +99,7 @@
     .hv-vs{color:var(--muted);font-size:.78rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;flex-shrink:0;align-self:flex-start;margin-top:80px;}
     .hv-caption{font-size:.82rem;color:var(--muted);text-align:center;line-height:1.55;max-width:420px;margin:.25rem auto 1.25rem;font-style:italic;}
     .hv-note{font-size:.65rem;color:var(--muted);text-align:center;opacity:.6;}
-    .faq-section{max-width:560px;margin:.2rem auto 1.1rem;display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+    .faq-section{max-width:560px;margin:1rem auto 1.1rem;display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
     .faq-item{background:var(--card);border:1px solid var(--blight);border-radius:var(--rsm);padding:.6rem .85rem;font-size:.81rem;box-shadow:var(--sh-sm);}
     .faq-item summary{cursor:pointer;font-weight:600;color:var(--navy);list-style:none;line-height:1.4;}
     .faq-item summary::-webkit-details-marker{display:none;}
@@ -1843,7 +1843,7 @@ function clearAllInputs(){
 var PROFILES = {
   couple: {
     label: 'Near-retiree couple in Ohio',
-    stats: 'Ages 63 & 61 · Married · $380K IRA · Ohio',
+    stats: 'Ages 63 & 61 · Married · $380K IRA · converting $20K · Ohio',
     context: 'Ohio taxes IRA withdrawals in retirement — I flag the state impact in your results.',
     f: {
       currentAge:63, retirementAge:68, filingStatus:'mfj',
@@ -1857,7 +1857,7 @@ var PROFILES = {
   },
   single: {
     label: 'Single professional in Illinois',
-    stats: 'Age 57 · Single · $320K IRA · Illinois',
+    stats: 'Age 57 · Single · $320K IRA · converting $18K · Illinois',
     context: 'Illinois doesn\'t tax IRA withdrawals in retirement — a nuance I flag automatically in your results.',
     f: {
       currentAge:57, retirementAge:65, filingStatus:'single',
@@ -1871,7 +1871,7 @@ var PROFILES = {
   },
   borderline: {
     label: 'Late converter in Texas — borderline case',
-    stats: 'Age 68 · Single · $175K IRA',
+    stats: 'Age 68 · Single · $175K IRA · converting $22K',
     context: 'Converting at 24% but expecting 18% in retirement — check the sensitivity chart for the close-call boundary.',
     f: {
       currentAge:68, retirementAge:72, filingStatus:'single',
