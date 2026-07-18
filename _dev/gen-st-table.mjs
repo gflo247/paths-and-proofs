@@ -60,20 +60,65 @@ function buildBlock(json) {
   return lines.join('\n');
 }
 
-function splice(html, block) {
-  const start = html.indexOf(OPEN);
-  if (start === -1) throw new Error(`Could not find "${OPEN}" in ${HTML}`);
-  // Find the closing line that terminates the object, starting from OPEN.
-  const closeIdx = html.indexOf('\n' + CLOSE, start);
-  if (closeIdx === -1) throw new Error(`Could not find closing "${CLOSE}" after ST block`);
-  const end = closeIdx + 1 + CLOSE.length; // include the close line
+// RETDED: a separate, sparse table — only states with a verified flat, non-phased-out
+// retirement-income deduction (see states.json _schema.fields["roth.retDeduction"]) get
+// an entry. Kept out of the ST block so the audited {n,cr,ex,note} shape and its strict
+// parser (parse-states.mjs) never have to change as more states are added here over time.
+const RD_OPEN = 'const RETDED={';
+const RD_CLOSE = '};';
+
+function buildRetDedBlock(json) {
+  const codes = Object.keys(json).filter((k) => k !== '_schema');
+  const lines = [];
+  lines.push(RD_OPEN);
+  for (const code of codes) {
+    const rd = json[code].roth?.retDeduction;
+    if (!rd) continue;
+    lines.push(
+      `  ${code}: {single:${num(rd.single)},mfj:${num(rd.mfj)},mfs:${num(rd.mfs)},hoh:${num(rd.hoh)}},`
+    );
+  }
+  lines.push(RD_CLOSE);
+  return lines.join('\n');
+}
+
+// EXAGE: a separate, sparse table — only ex:true states whose exemption is age-gated
+// (see states.json _schema.fields["roth.exMinAge"]) get an entry. Absence means an
+// ex:true state's exemption is unconditional.
+const EA_OPEN = 'const EXAGE={';
+const EA_CLOSE = '};';
+
+function buildExAgeBlock(json) {
+  const codes = Object.keys(json).filter((k) => k !== '_schema');
+  const lines = [];
+  lines.push(EA_OPEN);
+  for (const code of codes) {
+    const age = json[code].roth?.exMinAge;
+    if (age === undefined) continue;
+    lines.push(`  ${code}: ${num(age)},`);
+  }
+  lines.push(EA_CLOSE);
+  return lines.join('\n');
+}
+
+function splice(html, block, open, close) {
+  const start = html.indexOf(open);
+  if (start === -1) throw new Error(`Could not find "${open}" in ${HTML}`);
+  // Find the closing line that terminates the object, starting from open.
+  const closeIdx = html.indexOf('\n' + close, start);
+  if (closeIdx === -1) throw new Error(`Could not find closing "${close}" after "${open}" block`);
+  const end = closeIdx + 1 + close.length; // include the close line
   return html.slice(0, start) + block + html.slice(end);
 }
 
 const json = JSON.parse(readFileSync(JSON_PATH, 'utf8'));
 const html = readFileSync(HTML, 'utf8');
 const block = buildBlock(json);
-const next = splice(html, block);
+const rdBlock = buildRetDedBlock(json);
+const eaBlock = buildExAgeBlock(json);
+const withSt = splice(html, block, OPEN, CLOSE);
+const withRd = splice(withSt, rdBlock, RD_OPEN, RD_CLOSE);
+const next = splice(withRd, eaBlock, EA_OPEN, EA_CLOSE);
 
 const isCheck = process.argv.includes('--check');
 if (isCheck) {

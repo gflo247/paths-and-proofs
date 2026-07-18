@@ -4,13 +4,15 @@
   "layering": {
    "facts": "STATUTORY rate structure and tax treatment, INDEPENDENT of any tool. facts.brackets is the actual income-tax bracket table the state levies. This answers \"what is this state's income tax?\" — true regardless of whether you are modeling a conversion, an RMD, wages, or relocation. Future tools should read facts and apply their OWN interpretation.",
    "roth": "CONVERSION-SPECIFIC interpretation for the Roth conversion tool. roth.cr = representative marginal rate used in the calc; roth.ex = whether a Roth conversion is exempt from state tax; roth.note = user-facing copy. This layer is guard-locked byte-for-byte to the inline ST table in index.html.",
-   "importantWarning": "facts and roth can LEGITIMATELY DIFFER and may look contradictory. Example: Illinois facts.brackets shows 4.95% (its real flat rate) while roth.ex=true (a conversion is exempt). Both are correct — they answer different questions. Do NOT \"fix\" an apparent contradiction by zeroing a facts rate; that would corrupt the rate structure other tools depend on. For ex:true states, roth.cr is the rate that WOULD apply if the exemption did not (the engine zeroes it via the ex flag)."
+   "importantWarning": "facts and roth can LEGITIMATELY DIFFER and may look contradictory. Example: Illinois facts.brackets shows 4.95% (its real flat rate) while roth.ex=true (a conversion is exempt). Both are correct — they answer different questions. Do NOT \"fix\" an apparent contradiction by zeroing a facts rate; that would corrupt the rate structure other tools depend on. For ex:true states, roth.cr is the rate that WOULD apply if the exemption did not — the engine zeroes the conversion-year state tax when ex:true AND (no roth.exMinAge is set, OR the filer(s) meet it); below exMinAge the real roth.cr still applies, matching the state's actual early-distribution treatment."
   },
   "fields": {
    "facts.brackets": "Array of {rate, upTo}. rate is a decimal (0.0495 = 4.95%). upTo is the upper income bound of that bracket; the final (open-ended) bracket uses upTo:null. Thresholds strictly ascending. No-income-tax states use a single {rate:0, upTo:null}.",
    "facts.ssTreatment": "Sourced prose on Social Security and retirement-income treatment, including the IRA-include-vs-exclude distinction where relevant.",
    "facts.incomeTax": "Boolean; false for the nine no-income-tax states.",
-   "facts.source": "Primary-source URL (state Department of Revenue preferred)."
+   "facts.source": "Primary-source URL (state Department of Revenue preferred).",
+   "roth.retDeduction": "OPTIONAL. Present only for states with a large, flat, non-phased-out retirement-income deduction that a Roth conversion competes for (verified against a primary source). {single, mfj, mfs, hoh} — dollar cap per filing status. The engine computes state tax before/with the conversion (mirroring the federal calc) and subtracts min(cap, pension-income + taxable-conversion) from each side before applying roth.cr, so the deduction correctly shelters conversion income only once the user's other retirement income has not already exhausted the cap. Most states have a SMALLER or more complex cap (age-tiered, phased out by AGI, or a whole-income exemption band) that this simple field does NOT model — those states deliberately still use the flat taxableCvt*cr approximation and disclose it in roth.note. Do not add retDeduction to a state without verifying it fits this exact shape (single flat cap, no age gate, no phase-out) against a primary source.",
+   "roth.exMinAge": "OPTIONAL, only meaningful when roth.ex=true. Minimum qualifying age below which the exemption does NOT apply and the conversion is taxed at the real roth.cr instead (an early-distribution rule). Absent means the ex:true exemption is unconditional (e.g. Illinois). For a joint return the engine requires BOTH spouses to meet the age before treating the whole conversion as exempt — a conservative simplification since the tool does not model per-spouse IRA ownership."
   }
  },
  "AL": {
@@ -1873,6 +1875,7 @@
   "roth": {
    "cr": 0.038,
    "ex": true,
+   "exMinAge": 55,
    "note": "Since 2023 Iowa fully exempts retirement income — including Roth conversion income — for residents age 55 and older (no dollar cap), so a conversion at 55+ is Iowa-tax-free. Under 55, the conversion is taxable at Iowa's flat 3.8% rate (SF 2442 collapsed the old brackets to a single flat rate for 2025+). Social Security is fully exempt at any age."
   },
   "taxRules": {
@@ -2673,7 +2676,13 @@
   "roth": {
    "cr": 0.0425,
    "ex": false,
-   "note": "Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct retirement and pension income (including IRA withdrawals) up to about $67,610 single / $135,220 joint, regardless of birth year. Social Security is fully exempt from Michigan tax. A Roth conversion is taxable IRA income, so whether it falls under the deduction cap depends on your other retirement income — verify for your situation."
+   "note": "Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct retirement and pension income (including IRA withdrawals) up to about $67,610 single / $135,220 joint, regardless of birth year. Social Security is fully exempt from Michigan tax. A Roth conversion is taxable IRA income, so whether it falls under the deduction cap depends on your other retirement income — verify for your situation.",
+   "retDeduction": {
+    "single": 67610,
+    "mfj": 135220,
+    "mfs": 67610,
+    "hoh": 67610
+   }
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -2900,6 +2909,7 @@
   "roth": {
    "cr": 0.044,
    "ex": true,
+   "exMinAge": 59.5,
    "note": "Mississippi exempts qualified retirement income — IRA, 401(k), and pension — once you have met the plan's retirement requirements (generally age 59.5). A conversion at 59.5+ is therefore MS-tax-free; an EARLY distribution before then does not qualify and is taxed at the flat rate (4.4% for 2026, stepping down toward 3.75%). Social Security is fully exempt."
   },
   "taxRules": {
@@ -4806,6 +4816,7 @@
   "roth": {
    "cr": 0.0307,
    "ex": true,
+   "exMinAge": 59.5,
    "note": "Pennsylvania exempts retirement income — IRA, 401(k), and pension distributions — from its flat 3.07% tax once you reach retirement age (59.5 for IRAs). A Roth conversion at 59.5+ is therefore PA-tax-free; a conversion before 59.5 could be taxed as an early distribution. Social Security is fully exempt. (PA also taxes 401(k)/IRA contributions up front, so there is no further state tax at withdrawal.)"
   },
   "taxRules": {

@@ -658,7 +658,7 @@
       <div class="field">
         <div class="flr"><label>Net Investment Income (optional)</label><button class="tb" onclick="toggleTip('nii')">ⓘ</button></div>
         <div class="idollar"><input type="number" id="niiIncome" value="0" min="0" step="500" oninput="calc()"></div>
-        <div class="ttip" id="tip-nii"><strong>What is this field?</strong> A 3.8% federal surcharge applies to investment income — dividends, capital gains, rental income — once your total income tops $200,000 (single) or $250,000 (married). A Roth conversion counts as income and can push you over these thresholds, triggering extra tax on money you'd otherwise owe nothing on. Enter your annual investment income here, or $0 if this doesn't apply to you.</div>
+        <div class="ttip" id="tip-nii"><strong>What is this field?</strong> Dividends, interest, capital gains, and rental income — enter your annual total here. This tool taxes it at your ordinary income rate and includes it in the income that determines your tax bracket, Social Security taxation, and Medicare IRMAA tier, the same as wages or pension income. It also adds the 3.8% federal NIIT surcharge once your total income tops $200,000 (single) or $250,000 (married) — a Roth conversion counts as income and can push you over that threshold. <strong>Note:</strong> qualified dividends and long-term capital gains actually get a lower preferential rate (0/15/20%) in real life; this tool doesn't model that distinction, so it will somewhat overstate the tax on those specific income types. Enter $0 if this doesn't apply to you.</div>
         <div class="hint">Not sure? Enter $0 — only relevant if you have investment income outside your retirement accounts</div>
       </div>
       <div class="field">
@@ -852,6 +852,23 @@ const ST={
   WI: {n:'Wisconsin',cr:.053,ex:false,note:'Graduated 3.5% to 7.65%; the 7.65% top only starts above ~$315k single / ~$420k joint, so a typical conversion lands in the 5.3% band used here. IRA and Roth-conversion income is taxable, but a 2025 law (Act 15) lets those 67+ subtract up to $24,000 ($48,000 joint) of retirement income — including IRA/conversion income — so part of a conversion may be sheltered. Social Security is fully exempt.'},
   WY: {n:'Wyoming',cr:0,ex:true,note:'No state income tax.'},
   DC: {n:'Washington D.C.',cr:.085,ex:false,note:'Graduated 4% to 10.75%; the 10.75% top only applies above $1M, while the 8.5% band covers roughly $60k-$250k where most conversion income lands (used here). IRA, 401(k), and Roth-conversion income is fully taxable; there is no retirement-income exclusion. Social Security is exempt.'},
+};
+
+// RETDED: sparse per-state retirement-income deduction caps. Generated from
+// states.json roth.retDeduction (see its _schema doc) by _dev/gen-st-table.mjs —
+// only states with a verified flat, non-phased-out cap get an entry.
+const RETDED={
+  MI: {single:67610,mfj:135220,mfs:67610,hoh:67610},
+};
+
+// EXAGE: sparse minimum-age gate for ex:true states whose exemption is
+// conditional (early-distribution rule). Absent from this table means an
+// ex:true state's exemption is unconditional. Generated from states.json
+// roth.exMinAge by _dev/gen-st-table.mjs.
+const EXAGE={
+  IA: 55,
+  MS: 59.5,
+  PA: 59.5,
 };
 
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
@@ -1247,17 +1264,24 @@ function computeMultiYear(income,ss,status,tradBal,rothBal,basis,g,nSr,stD,nMed,
     var gYears=Math.min(73-retAge,10);
     var retSSEl=document.getElementById('retSS');
     var retPenEl=document.getElementById('retPen');
+    var retNiiEl=document.getElementById('niiIncome');
     var retSSV=parseFloat(retSSEl&&retSSEl.value)||0;
     var retPenV=parseFloat(retPenEl&&retPenEl.value)||0;
+    // Assumes today's investment income (dividends/interest/gains outside retirement
+    // accounts) continues at the same level into the golden window — matches this
+    // section's existing "income assumed flat within each phase" simplification.
+    // Without this, the golden-window target silently drops it and can understate
+    // the person's real bracket, recommending far too small a conversion.
+    var retNiiV=parseFloat(retNiiEl&&retNiiEl.value)||0;
 
     if(retSSV+retPenV>0){
       // Bracket room in retirement (lower income = more room)
-      var gOpts=computeOptTargets(retPenV,retSSV,status,STDD[status],nSr,nMed,taxableFrac);
+      var gOpts=computeOptTargets(retPenV+retNiiV,retSSV,status,STDD[status],nSr,nMed,taxableFrac);
       var gConv=gOpts.bracketAmt>0?gOpts.bracketAmt:0;
       if(gOpts.irmaaAmt!==null&&gOpts.irmaaAmt>0&&gOpts.irmaaAmt<gConv)gConv=gOpts.irmaaAmt;
 
       if(gConv>500){
-        var gTax=convTax(retPenV,retSSV,status,nSr,gConv,taxableFrac);
+        var gTax=convTax(retPenV+retNiiV,retSSV,status,nSr,gConv,taxableFrac);
 
         for(var j=0;j<gYears;j++){
           var gcv=Math.min(gConv,tBal);
@@ -1572,20 +1596,31 @@ function renderSensChart(p){
   var lblDy;
   if(pctRoth===100){
     var bTop=H*0.18-18, bBot=H*0.18+32, pad=10;
-    var hits=function(y){ return y > bTop-pad && y < bBot+pad; };
-    if(!hits(dy-26) && dy-26 > 12)      lblDy = -26;               // above, and still on-canvas
-    else if(!hits(dy+22))               lblDy = 22;                // below
-    else                                lblDy = (bBot+pad+6)-dy;   // clear the banner entirely
+    // Test the label pill's actual rendered top/bottom edges for a candidate
+    // offset, not just the baseline point — a point-only check let the 16px-tall
+    // pill clip a few px into the banner even when the sampled point cleared it.
+    var hits=function(cand){ var top=dy+cand-12, bot=top+16; return bot > bTop-pad && top < bBot+pad; };
+    if(!hits(-26) && dy-26 > 12)  lblDy = -26;               // above, and still on-canvas
+    else if(!hits(22))            lblDy = 22;                // below
+    else                          lblDy = (bBot+pad+6)-dy;   // clear the banner entirely
   } else {
     lblDy = (dy > H*0.65) ? -26 : 22;
   }
-  // White pill behind label so dashed line doesn't bleed through
+  // White pill behind label so dashed line doesn't bleed through. Clamp both axes
+  // so the pill (up to 162px wide for the "outside chart range" label) never
+  // hangs off the canvas when the dot sits clamped to a plot edge.
   var lblW = outside ? 162 : 88;
+  var lblCx = Math.max(lblW/2, Math.min(W - lblW/2, dx));
+  // Also keep clear of the bottom-left legend strip (x:4-94, y:H-13 to H-4) —
+  // only relevant once the x-clamp above can push a wide pill into that corner.
+  var pillLeft = lblCx - lblW/2, pillRight = lblCx + lblW/2;
+  var pillYMax = (pillRight > 4 && pillLeft < 94) ? H - 13 - 16 - 2 : H - 16;
+  var pillY = Math.max(0, Math.min(pillYMax, dy + lblDy - 12));
   g.append('rect')
-    .attr('x', dx - lblW/2).attr('y', dy + lblDy - 12)
+    .attr('x', lblCx - lblW/2).attr('y', pillY)
     .attr('width', lblW).attr('height', 16)
     .attr('rx', 3).style('fill',tc('rgba(255,255,255,0.78)','rgba(34,39,48,0.88)'));
-  g.append('text').attr('x',dx).attr('y',dy+lblDy).attr('text-anchor','middle')
+  g.append('text').attr('x',lblCx).attr('y',pillY+12).attr('text-anchor','middle')
     .style('font-size','11px').style('font-weight','700').style('fill',tc('#1C3A5E','#7DB2EC'))
     .style('font-family','DM Sans, sans-serif')
     .text(outside ? 'Your situation (outside chart range)' : 'Your situation');
@@ -2021,6 +2056,7 @@ function calc(){
   const sex      = _ae ? _ae.sex              : (_rv('sex')||'female');
   const income   = _ae ? +_ae.income          : _rf('income');
   const ss       = _ae ? +_ae.ssIncome        : _rf('ssIncome');
+  const nii      = _ae ? +_ae.niiIncome       : _rf('niiIncome');
   const cvtAmt   = _ae ? +_ae.convertAmt      : _rf('convertAmt');
   const tradBal  = _ae ? +_ae.tradBal         : _rf('tradBal');
   const rothBal  = _ae ? +_ae.rothBal         : _rf('rothBal');
@@ -2065,13 +2101,16 @@ function calc(){
   }
 
   // ── SS TORPEDO ──
-  const ssBase    = calcTaxableSS(ss, income,        status);
-  const ssWith    = calcTaxableSS(ss, income+taxableCvt, status);
+  // Investment income (nii) counts toward provisional income for SS taxability,
+  // same as wages/pension — it's ordinary income to the SS worksheet regardless
+  // of whether the underlying dividends/gains get a preferential federal rate.
+  const ssBase    = calcTaxableSS(ss, income+nii,        status);
+  const ssWith    = calcTaxableSS(ss, income+nii+taxableCvt, status);
   const torpedoInc= Math.max(0, ssWith - ssBase);
 
   // ── AGI / TAXABLE INCOME ──
-  const agiBase = income + ssBase;
-  const agiWith = income + taxableCvt + ssWith;
+  const agiBase = income + nii + ssBase;
+  const agiWith = income + nii + taxableCvt + ssWith;
   const std     = STDD[status];
   const srD     = seniorDed(agiBase, status, nSr);
   const srDW    = seniorDed(agiWith, status, nSr);
@@ -2089,10 +2128,36 @@ function calc(){
   const torpedoTax      = Math.max(0, txIn - txInNoTorpedo);
 
   // ── STATE TAX ──
-  const cvtTxSt  = taxableCvt * stD.cr;
+  // ex:true states may still tax a conversion below a qualifying age (an
+  // early-distribution rule — EXAGE holds that threshold where one exists;
+  // absent means the exemption is unconditional). For a joint return, require
+  // BOTH spouses to qualify before treating the whole conversion as exempt —
+  // the tool doesn't model per-spouse IRA ownership, so this is the
+  // conservative reading rather than assuming either spouse's age suffices.
+  const exAge      = EXAGE[stateCode];
+  const exQualAge  = isCouple ? Math.min(curAge, spouseAge) : curAge;
+  const exQualifies= stD.ex && (exAge===undefined || exQualAge>=exAge);
+
+  // States in RETDED have a verified flat, non-phased-out retirement-income
+  // deduction that a conversion competes for alongside the user's other
+  // retirement income ("income" — pension/IRA withdrawals, not nii/wages).
+  // Computed before/with the conversion, mirroring the federal calc, so the
+  // deduction only shelters conversion income once "income" hasn't already
+  // used up the cap.
+  const rd = RETDED[stateCode];
+  let cvtTxSt;
+  if(exQualifies){
+    cvtTxSt = 0;
+  } else if(rd){
+    const cap      = rd[status] ?? rd.single;
+    const stTiBase = Math.max(0, income - Math.min(cap, income));
+    const stTiWith = Math.max(0, (income+taxableCvt) - Math.min(cap, income+taxableCvt));
+    cvtTxSt = (stTiWith - stTiBase) * stD.cr;
+  } else {
+    cvtTxSt = taxableCvt * stD.cr;
+  }
 
   // ── NIIT (3.8% on net investment income when MAGI > threshold) ──
-  const nii      = parseFloat($('niiIncome').value)||0;
   const niitThr  = {single:200000,mfj:250000,mfs:125000,hoh:200000}[status]||200000;
   const niitBase = nii>0 ? Math.max(0,Math.min(nii,agiBase-niitThr))*0.038 : 0;
   const niitWith = nii>0 ? Math.max(0,Math.min(nii,agiWith-niitThr))*0.038 : 0;
@@ -2135,8 +2200,8 @@ function calc(){
   // ── BUILD TAX PANEL HTML (precomputed fragments to avoid nested template issues) ──
   let ssSectionHtml = '';
   if(ss > 0){
-    const piBase  = income + ss*0.5;
-    const piWith  = income + cvtAmt + ss*0.5;
+    const piBase  = income + nii + ss*0.5;
+    const piWith  = income + nii + taxableCvt + ss*0.5;
     let torpedoAlert = '';
     if(torpedoInc > 0){
       torpedoAlert =
@@ -2164,12 +2229,20 @@ function calc(){
   let stateSectionHtml = '';
   if(stD.cr > 0){
     let stateNote = '';
-    if(stD.ex){
+    if(stD.ex && exQualifies){
       stateNote =
         '<div class="alert agrn" style="padding:.7rem .9rem;font-size:.84rem;margin-top:6px">'
-        +'<strong>Heads up:</strong> '+stD.n+' exempts IRA withdrawals in retirement. '
+        +'<strong>Good news:</strong> '+stD.n+' exempts this conversion from state tax'
+        +(exAge!==undefined?' (you qualify at age '+exAge+'+)':'')+', the same as a traditional IRA '
+        +'withdrawal in retirement — so there\'s no state-tax cost either way here.</div>';
+    } else if(stD.ex){
+      stateNote =
+        '<div class="alert agrn" style="padding:.7rem .9rem;font-size:.84rem;margin-top:6px">'
+        +'<strong>Heads up:</strong> '+stD.n+' exempts IRA withdrawals in retirement'
+        +(exAge!==undefined?' once you reach age '+exAge+'':'')+'. '
         +'You pay state tax on the conversion today but owe <em>nothing</em> when you '
-        +'eventually withdraw from a traditional IRA later. This tilts the math against converting.</div>';
+        +'eventually withdraw from a traditional IRA later. This tilts the math against converting'
+        +(exAge!==undefined?' — waiting until you qualify would avoid this state tax entirely':'')+'.</div>';
     } else {
       stateNote = '<div style="font-size:.82rem;color:var(--muted);margin-top:4px">'+stD.note+'</div>';
     }
@@ -2195,7 +2268,7 @@ function calc(){
     ? '<div class="btip">💡 <strong>Bracket room:</strong> You can convert <strong>'+fmt(brRoom)+'</strong> more before crossing into the '+pct(nxtBR,0)+' bracket — still at your current '+pct(margA,0)+' federal rate.</div>'
     : '';
 
-  const exemptTip = (stD.cr>0 && stRetR===0)
+  const exemptTip = (stD.cr>0 && stRetR===0 && !exQualifies)
     ? '<div class="btip" style="border-color:#9ECFB2;background:var(--sbg);color:var(--ink-green)"><strong>State exemption note:</strong> Since '+stD.n+' will not tax your traditional IRA withdrawals in retirement, you are paying state tax today that you never owe on the traditional IRA — which tilts the math against converting.</div>'
     : '';
 
@@ -2228,7 +2301,7 @@ function calc(){
 
   // ── OPTIMIZER PANEL (needs all SS/IRMAA vars) ──
   (function(){
-    var optTargets=computeOptTargets(income,ss,status,STDD[status],nSr,nMed,taxableFrac);
+    var optTargets=computeOptTargets(income+nii,ss,status,STDD[status],nSr,nMed,taxableFrac);
     var optEl=document.getElementById('optimizerPanel');
     if(optEl)optEl.innerHTML=buildOptimizerPanel(optTargets,fmt,pct,nMed,ss,cvtAmt);
   })();
@@ -2273,7 +2346,7 @@ function calc(){
   const rateDiff=totalRetR-effR;
 
   // ── BOTTOM LINE TEXT ──
-  const stTodayNote  = stD.cr>0 ? ' (including '+stD.n+' state tax)' : '';
+  const stTodayNote  = cvtTxSt>0 ? ' (including '+stD.n+' state tax)' : '';
   const torpedoNote  = torpedoInc>0 ? ' and a hidden extra tax on your Social Security benefits' : '';
   const stRetNote    = stRetR>0 ? ' + '+pct(stRetR,1)+' '+stD.n+' state' : '';
   let blTxt =
@@ -2297,7 +2370,7 @@ function calc(){
     if(brRoom>2000) blTxt += ' If you still want to convert something, you have room for <strong>'+fmt(brRoom)+'</strong> within your current federal bracket.';
   }
   if(nMed>0 && tCrossed) blTxt += ' <strong>Medicare:</strong> This conversion also crosses an IRMAA threshold, adding roughly <strong>'+fmt(irmDiffTot)+'/year</strong> in Medicare premiums starting in 2028.';
-  if(stD.ex && stD.cr>0) blTxt += ' <strong>'+stD.n+' note:</strong> Your state exempts IRA withdrawals from tax in retirement. Converting today means paying '+pct(stD.cr,1)+' state tax you would never owe if you kept the money in traditional.';
+  if(stD.ex && !exQualifies && stD.cr>0) blTxt += ' <strong>'+stD.n+' note:</strong> Your state exempts IRA withdrawals from tax in retirement, but you don\'t yet qualify for that exemption on a conversion'+(exAge!==undefined?' (age '+exAge+'+)':'')+'. Converting today means paying '+pct(stD.cr,1)+' state tax you would never owe if you waited.';
 
   // ── VERDICT ──
   let vCls,vIco,vHd,vBd;
@@ -2313,7 +2386,7 @@ function calc(){
     vCls='bad';vIco='⚠️';
     vHd='Right now, the numbers slightly favor keeping traditional.';
     vBd='Your expected retirement rate ('+pct(totalRetR)+stRetNote+') is lower than what you\'d pay to convert today ('+pct(effR)+'). That means waiting to pay the tax — at a lower rate — likely leaves you with more money overall.';
-    if(stD.ex) vBd += ' Also: since '+stD.n+' exempts IRA withdrawals from state tax, converting is especially costly — you\'d pay state tax today that you would never owe otherwise.';
+    if(stD.ex && !exQualifies) vBd += ' Also: since '+stD.n+' exempts IRA withdrawals from state tax, converting now is especially costly — you\'d pay state tax today that you would never owe otherwise'+(exAge!==undefined?' once you qualify at age '+exAge+'+':'')+'.';
   }
 
   // ── PROJECTION TABLE ──
@@ -2393,11 +2466,11 @@ function calc(){
   // ── MULTI-YEAR PLAN ──
   var multiYearHTML = '';
   {
-    var myOpts = computeOptTargets(income,ss,status,STDD[status],nSr,nMed,taxableFrac);
+    var myOpts = computeOptTargets(income+nii,ss,status,STDD[status],nSr,nMed,taxableFrac);
     var myConv = myOpts.bracketAmt > 0 ? myOpts.bracketAmt : 0;
     if(myOpts.irmaaAmt!==null && myOpts.irmaaAmt>0 && myOpts.irmaaAmt<myConv) myConv=myOpts.irmaaAmt;
     if(myConv > 500 && tradBal > 0){
-      var myPlan = computeMultiYear(income,ss,status,tradBal,rothBal,basis,g,nSr,stD,nMed,curAge,retAge,taxableFrac,myConv);
+      var myPlan = computeMultiYear(income+nii,ss,status,tradBal,rothBal,basis,g,nSr,stD,nMed,curAge,retAge,taxableFrac,myConv);
       multiYearHTML = buildMultiYearHTML(myPlan,curAge,retAge,fmt,pct,fmtK);
     }
   }
@@ -2406,7 +2479,7 @@ function calc(){
   var sensitivityHTML = '';
   var needSensChart = false;
   if(cvtAmt>0&&tradBal>0){
-    if(stD.ex && taxSrc==='outside'){
+    if(stD.ex && !exQualifies && taxSrc==='outside'){
       // Chart would be misleading: it can't capture the state exemption cost.
       // Show a clear explanation card instead.
       sensitivityHTML = '<div class="card" style="margin-top:1.25rem">'
@@ -2562,6 +2635,7 @@ function calc(){
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Period vs. cohort life table.</strong> I use a 2023 mortality snapshot. A cohort table accounts for improving life expectancy over time — giving somewhat longer expected lifespans, which further favors the Roth.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Your first dollars of retirement income land in a lower bracket.</strong> They fall in the 10–12% range, not your top rate. Use the rate estimator above to find the true rate on your specific income mix.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Future state of residence.</strong> If you plan to move to a no-income-tax state before retirement, the state tax comparison is reversed — you pay state tax on the conversion today but owe nothing later. Factor this in before converting.</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Preferential rates on qualified dividends and long-term capital gains.</strong> This tool taxes all non-Social-Security, non-conversion income — including the Net Investment Income field — at ordinary rates. Real law taxes qualified dividends and long-term capital gains at 0/15/20% instead, so if a meaningful share of your income comes from those sources, your true tax cost is somewhat lower than shown. (The Alternative Minimum Tax isn\'t modeled either, but rarely applies at typical conversion income levels under current law.)</p>'
     +'</div></div>'
     +'<div class="alert anvy" style="margin-top:.85rem;font-size:.85rem">Use this calculator as a starting point for a conversation with a CPA, tax professional, or financial advisor — not as a substitute for one.</div>'
     +'</div>'
