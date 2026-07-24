@@ -4,3 +4,4 @@ node_modules/
 .wrangler/
 .dev.vars
 CLAUDE.md
+_dev/roth-audit-2026-07.md
