@@ -488,7 +488,7 @@
     </details>
     <details class="faq-item">
       <summary>What does this tool model — and what does it simplify?</summary>
-      <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare IRMAA premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase. Survival modeling ends at age 100. State conversion rates are effective approximations — check your state's own schedule. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
+      <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), long-term capital gains and qualified dividend brackets (same source) stacked correctly on top of ordinary income, the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare IRMAA premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase, including the assumption that today's investment income continues unchanged. Survival modeling ends at age 100. State conversion rates are effective approximations, applied to qualified dividends/LTCG the same as ordinary income even though a handful of states treat them differently — check your state's own schedule. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
     </details>
   </div>
   <div class="ex-bar" id="examplesSection">
@@ -656,10 +656,16 @@
         <div class="hint" id="ssHint">Enter your total annual SS benefit, or $0 if not yet receiving</div>
       </div>
       <div class="field">
-        <div class="flr"><label>Net Investment Income (optional)</label><button class="tb" onclick="toggleTip('nii')">ⓘ</button></div>
+        <div class="flr"><label>Other Investment Income (optional)</label><button class="tb" onclick="toggleTip('nii')">ⓘ</button></div>
         <div class="idollar"><input type="number" id="niiIncome" value="0" min="0" step="500" oninput="calc()"></div>
-        <div class="ttip" id="tip-nii"><strong>What is this field?</strong> Dividends, interest, capital gains, and rental income — enter your annual total here. This tool taxes it at your ordinary income rate and includes it in the income that determines your tax bracket, Social Security taxation, and Medicare IRMAA tier, the same as wages or pension income. It also adds the 3.8% federal NIIT surcharge once your total income tops $200,000 (single) or $250,000 (married) — a Roth conversion counts as income and can push you over that threshold. <strong>Note:</strong> qualified dividends and long-term capital gains actually get a lower preferential rate (0/15/20%) in real life; this tool doesn't model that distinction, so it will somewhat overstate the tax on those specific income types. Enter $0 if this doesn't apply to you.</div>
+        <div class="ttip" id="tip-nii"><strong>What is this field?</strong> Interest, non-qualified dividends, short-term capital gains, and rental income — enter your annual total here. This tool taxes it at your ordinary income rate and includes it in the income that determines your tax bracket, Social Security taxation, and Medicare IRMAA tier, the same as wages or pension income. It also adds the 3.8% federal NIIT surcharge once your total income tops $200,000 (single) or $250,000 (married) — a Roth conversion counts as income and can push you over that threshold. <strong>Have qualified dividends or long-term capital gains?</strong> Those get a lower preferential rate (0/15/20%) — enter them in the field below instead, not here. On a 1099-DIV, box 1a (ordinary dividends) already includes box 1b (qualified dividends) as a subset — put only the non-qualified portion (1a minus 1b) here to avoid double-counting. Enter $0 if this doesn't apply to you.</div>
         <div class="hint">Not sure? Enter $0 — only relevant if you have investment income outside your retirement accounts</div>
+      </div>
+      <div class="field">
+        <div class="flr"><label>Qualified Dividends &amp; Long-Term Capital Gains (optional)</label><button class="tb" onclick="toggleTip('ltcg')">ⓘ</button></div>
+        <div class="idollar"><input type="number" id="ltcgIncome" value="0" min="0" step="500" oninput="calc()"></div>
+        <div class="ttip" id="tip-ltcg"><strong>What is this field?</strong> Qualified dividends (1099-DIV box 1b) and net long-term capital gains — these get the federal preferential rate (0%, 15%, or 20%) instead of your ordinary bracket rate, and this tool models that correctly, stacking them on top of your other income the way the IRS actually calculates it. A Roth conversion is ordinary income that stacks underneath this, so converting can push some of this income into a higher preferential-rate bracket — this tool accounts for that too. This income still counts toward Medicare IRMAA, Social Security taxation, and the 3.8% NIIT surcharge, just not your ordinary federal bracket. Enter $0 if this doesn't apply to you.</div>
+        <div class="hint">Not sure? Enter $0 — this is specifically the qualified/long-term portion; short-term gains and non-qualified dividends go in the field above</div>
       </div>
       <div class="field">
         <div class="flr"><label>Amount You'd Like to Convert</label><button class="tb" onclick="toggleTip('convert')">ⓘ</button></div>
@@ -786,6 +792,15 @@ const BRAX={
   mfj:   [{m:24800,r:.10},{m:100800,r:.12},{m:211400,r:.22},{m:403550,r:.24},{m:512450,r:.32},{m:768700,r:.35},{m:1/0,r:.37}],
   mfs:   [{m:12400,r:.10},{m:50400,r:.12},{m:105700,r:.22},{m:201775,r:.24},{m:256225,r:.32},{m:384350,r:.35},{m:1/0,r:.37}],
   hoh:   [{m:17700,r:.10},{m:67450,r:.12},{m:105700,r:.22},{m:201750,r:.24},{m:256200,r:.32},{m:640600,r:.35},{m:1/0,r:.37}],
+};
+// Long-term capital gains / qualified dividend brackets — IRS Rev. Proc. 2025-32,
+// same source as BRAX above (2026 tax year). These stack ON TOP of ordinary taxable
+// income (see calcLTCGTax) — they don't consume ordinary bracket space themselves.
+const LTCGX={
+  single:[{m:49450,r:0},{m:545500,r:.15},{m:1/0,r:.20}],
+  mfj:   [{m:98900,r:0},{m:613700,r:.15},{m:1/0,r:.20}],
+  mfs:   [{m:49450,r:0},{m:306850,r:.15},{m:1/0,r:.20}],
+  hoh:   [{m:66200,r:0},{m:579600,r:.15},{m:1/0,r:.20}],
 };
 const STDD={single:16100,mfj:32200,mfs:16100,hoh:24150};
 function seniorDed(inc,st,n){if(!n||st==='mfs')return 0;const full=n*6000,phase=Math.max(0,inc-(st==='mfj'?150000:75000))*.06;return Math.max(0,full-phase);}
@@ -936,6 +951,22 @@ function lifeExJoint(sex1,age1,sex2,age2){
 function lifeEx(sex,from){let s=1,e=0;for(let a=from;a<=110;a++){const q=(QX[sex][a]??500)/1000;e+=(a+.5)*s*q;s*=(1-q);}return Math.round(e*10)/10;}
 
 function calcTax(ti,st){if(ti<=0)return 0;let t=0,p=0;for(const b of BRAX[st]){if(ti<=p)break;t+=(Math.min(ti,b.m)-p)*b.r;p=b.m;}return t;}
+// Tax on a block of LTCG/qualified-dividend income sitting on top of ordinary
+// taxable income — stackStart is where ordinary income ends (post-deduction),
+// amt is how much LTCG stacks above that. Walks the same bracket boundaries as
+// calcTax but only accumulates the portion actually inside [stackStart, stackStart+amt].
+function calcLTCGTax(stackStart,amt,st){
+  if(amt<=0)return 0;
+  const end=stackStart+amt;
+  let t=0,p=0;
+  for(const b of LTCGX[st]){
+    if(p>=end)break;
+    const top=Math.min(b.m,end);
+    if(top>Math.max(p,stackStart)) t+=(top-Math.max(p,stackStart))*b.r;
+    p=b.m;
+  }
+  return t;
+}
 function margR(ti,st){for(const b of BRAX[st])if(ti<b.m)return b.r;return .37;}
 function roomTo(ti,st){for(const b of BRAX[st])if(ti<b.m)return{room:b.m-ti,cur:b.r};return{room:0,cur:.37};}
 
@@ -974,20 +1005,29 @@ function setConvert(amt){
 }
 
 // ── OPTIMIZER: compute three smart targets ──
-function computeOptTargets(income,ss,status,std,nSr,nMed,taxableFrac){
+// ltcg is kept separate from income (not pre-summed by the caller, unlike nii):
+// it counts toward SS taxability, the senior-deduction phaseout, and IRMAA MAGI
+// (all "total income" measures), but must NOT consume ordinary bracket space —
+// it stacks on top of ordinary income instead (see calcLTCGTax in the main
+// calc() function). Target 1 (bracket fill) therefore stays ordinary-only;
+// Targets 2 and 3 (IRMAA, SS torpedo) use income+ltcg as their income baseline.
+function computeOptTargets(income,ltcg,ss,status,std,nSr,nMed,taxableFrac){
   if(taxableFrac===undefined)taxableFrac=1;
   var iSt=status==='hoh'?'single':status;
-  var ssBase=calcTaxableSS(ss,income,status);
-  var agiBase=income+ssBase;
-  var srD=seniorDed(agiBase,status,nSr);
-  var tiBase=Math.max(0,agiBase-std-srD);
+  // ssBase uses TOTAL income (income+ltcg) — SS taxability depends on all
+  // income regardless of rate character — but ordAgiBase (feeding tiBase) stays
+  // ordinary-only: income + the resulting taxable SS, excluding ltcg itself.
+  var ssBase=calcTaxableSS(ss,income+ltcg,status);
+  var ordAgiBase=income+ssBase;
+  var srD=seniorDed(ordAgiBase+ltcg,status,nSr);
+  var tiBase=Math.max(0,ordAgiBase-std-srD);
 
   // Find current bracket ceiling
   var curBktObj=BRAX[status].find(function(b){return tiBase<b.m;});
   var curBR=curBktObj?curBktObj.r:0.37;
   var curBktTop=curBktObj?curBktObj.m:Infinity;
 
-  // ── Target 1: Fill bracket ──
+  // ── Target 1: Fill bracket (ordinary income only) ──
   // Binary search on TOTAL conversion; only taxableFrac of it hits income.
   // This means you can convert MORE when basis is present.
   var bracketAmt=0, bracketState='full';
@@ -996,9 +1036,9 @@ function computeOptTargets(income,ss,status,std,nSr,nMed,taxableFrac){
     for(var i=0;i<40;i++){
       var mid=(lo+hi)/2;
       var taxMid=mid*taxableFrac;
-      var sw=calcTaxableSS(ss,income+taxMid,status);
+      var sw=calcTaxableSS(ss,income+ltcg+taxMid,status);
       var aw=income+taxMid+sw;
-      var sdw=seniorDed(aw,status,nSr);
+      var sdw=seniorDed(aw+ltcg,status,nSr);
       var tiw=Math.max(0,aw-std-sdw);
       if(tiw<curBktTop)lo=mid;else hi=mid;
     }
@@ -1007,10 +1047,10 @@ function computeOptTargets(income,ss,status,std,nSr,nMed,taxableFrac){
   }
 
   // ── Target 2: IRMAA-safe maximum ──
-  // MAGI uses taxable portion only; same binary search adjustment.
+  // MAGI includes ltcg; same binary search adjustment.
   var irmaaAmt=null, irmaaNext=null, irmaaState='';
   if(nMed>0){
-    var curTier=irmaaT(income+ssBase,iSt);
+    var curTier=irmaaT(ordAgiBase+ltcg,iSt);
     var threshArr=iSt==='mfj'?ITHR.mfj:iSt==='mfs'?ITHR.mfs:ITHR.single;
     if(curTier>=5){irmaaState='maxtier';}
     else{
@@ -1021,8 +1061,8 @@ function computeOptTargets(income,ss,status,std,nSr,nMed,taxableFrac){
         for(var ii=0;ii<40;ii++){
           var imid=(ilo+ihi)/2;
           var taxImid=imid*taxableFrac;
-          var isw=calcTaxableSS(ss,income+taxImid,status);
-          if(income+taxImid+isw<nxtThr)ilo=imid;else ihi=imid;
+          var isw=calcTaxableSS(ss,income+ltcg+taxImid,status);
+          if(income+ltcg+taxImid+isw<nxtThr)ilo=imid;else ihi=imid;
         }
         irmaaAmt=Math.max(0,Math.floor(ilo/500)*500);
         irmaaState=irmaaAmt>0?'ok':'zero';
@@ -1031,24 +1071,24 @@ function computeOptTargets(income,ss,status,std,nSr,nMed,taxableFrac){
   }
 
   // ── Target 3: SS torpedo boundary ──
-  // Provisional income = income + cvt*taxableFrac + ss*0.5
+  // Provisional income = income + ltcg + cvt*taxableFrac + ss*0.5
   var torpOpts=null;
   if(ss>0&&status!=='mfs'){
     var loThr=status==='mfj'?32000:25000;
-    var piBase=income+ss*0.5;
+    var piBase=income+ltcg+ss*0.5;
     // Gross amount needed to keep taxable income below loThr
     var avoidRaw=loThr-piBase;
     var avoidAmt=taxableFrac>0
       ? Math.max(0,Math.floor(avoidRaw/taxableFrac/500)*500)
       : 0;
     var alreadyFiring=piBase>=loThr;
-    var alreadyClear=calcTaxableSS(ss,income,status)>=ss*0.85*0.9999;
+    var alreadyClear=calcTaxableSS(ss,income+ltcg,status)>=ss*0.85*0.9999;
 
     // Find GROSS amount to push fully past the 85% torpedo zone
     var clo=0,chi=1000000;
     for(var ci=0;ci<40;ci++){
       var cm=(clo+chi)/2;
-      if(calcTaxableSS(ss,income+cm*taxableFrac,status)>=ss*0.85*0.9999)chi=cm;else clo=cm;
+      if(calcTaxableSS(ss,income+ltcg+cm*taxableFrac,status)>=ss*0.85*0.9999)chi=cm;else clo=cm;
     }
     var clearAmt=Math.ceil(clo/500)*500;
 
@@ -1230,23 +1270,52 @@ function useRetRate(rate){
 
 
 // ── MULTI-YEAR PLAN COMPUTATION ──
-function computeMultiYear(income,ss,status,tradBal,rothBal,basis,g,nSr,stD,nMed,curAge,retAge,taxableFrac,planConvert){
+function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,planConvert){
   if(planConvert<=0||tradBal<=0)return null;
 
-  // Compute conversion tax for a given income scenario
-  function convTax(inc,ssV,stat,nsr,cvt,tfrac){
+  // Compute conversion tax for a given income scenario, including the LTCG
+  // stack (ltcgAmt) — mirrors the main calc() function's split: ssV/senior-
+  // deduction use total income (pension+nii+ltcgAmt), ordinary tax stays
+  // ordinary-only, and the LTCG delta is added separately since it doesn't
+  // share ordinary bracket space. State tax mirrors the main calc()'s
+  // RETDED-aware logic too — pension (not pension+nii) competes for the
+  // deduction cap, matching how the main calc() excludes nii/ltcg from it.
+  // NOTE: the ex:true age-gated exemption (EXAGE) is intentionally NOT
+  // applied here — it needs spouseAge, which isn't threaded into this
+  // projection helper. ex:true states still use the flat approximation
+  // in the multi-year plan; only RETDED states are corrected here.
+  function convTax(pension,niiAmt,ltcgAmt,ssV,stat,nsr,cvt,tfrac){
+    var inc=pension+niiAmt;
     var tx=cvt*tfrac;
-    var sb=calcTaxableSS(ssV,inc,stat);
-    var sw=calcTaxableSS(ssV,inc+tx,stat);
-    var tiB=Math.max(0,inc+sb-STDD[stat]-seniorDed(inc+sb,stat,nsr));
-    var tiW=Math.max(0,inc+tx+sw-STDD[stat]-seniorDed(inc+tx+sw,stat,nsr));
-    return Math.max(0,calcTax(tiW,stat)-calcTax(tiB,stat))+tx*stD.cr;
+    var sb=calcTaxableSS(ssV,inc+ltcgAmt,stat);
+    var sw=calcTaxableSS(ssV,inc+ltcgAmt+tx,stat);
+    var ordAgiB=inc+sb, ordAgiW=inc+tx+sw;
+    var srdB=seniorDed(ordAgiB+ltcgAmt,stat,nsr), srdW=seniorDed(ordAgiW+ltcgAmt,stat,nsr);
+    var tiB=Math.max(0,ordAgiB-STDD[stat]-srdB);
+    var tiW=Math.max(0,ordAgiW-STDD[stat]-srdW);
+    var ordTax=Math.max(0,calcTax(tiW,stat)-calcTax(tiB,stat));
+    var totalTiB=Math.max(0,(ordAgiB+ltcgAmt)-STDD[stat]-srdB);
+    var totalTiW=Math.max(0,(ordAgiW+ltcgAmt)-STDD[stat]-srdW);
+    var ltcgB=Math.max(0,totalTiB-tiB), ltcgW=Math.max(0,totalTiW-tiW);
+    var ltcgTax=Math.max(0,calcLTCGTax(tiW,ltcgW,stat)-calcLTCGTax(tiB,ltcgB,stat));
+
+    var rd=RETDED[stateCode];
+    var stTax;
+    if(rd){
+      var cap=rd[stat]??rd.single;
+      var stTiB=Math.max(0,pension-Math.min(cap,pension));
+      var stTiW=Math.max(0,(pension+tx)-Math.min(cap,pension+tx));
+      stTax=(stTiW-stTiB)*stD.cr;
+    } else {
+      stTax=tx*stD.cr;
+    }
+    return ordTax+ltcgTax+stTax;
   }
 
   // Pre-retirement phase
   var preRows=[],tBal=tradBal,rBal=rothBal;
   var nWork=Math.min(Math.max(0,retAge-curAge),15);
-  var preTax=planConvert>0?convTax(income,ss,status,nSr,planConvert,taxableFrac):0;
+  var preTax=planConvert>0?convTax(income,nii,ltcg,ss,status,nSr,planConvert,taxableFrac):0;
 
   for(var i=0;i<nWork;i++){
     var cv=Math.min(planConvert,tBal);
@@ -1265,6 +1334,7 @@ function computeMultiYear(income,ss,status,tradBal,rothBal,basis,g,nSr,stD,nMed,
     var retSSEl=document.getElementById('retSS');
     var retPenEl=document.getElementById('retPen');
     var retNiiEl=document.getElementById('niiIncome');
+    var retLtcgEl=document.getElementById('ltcgIncome');
     var retSSV=parseFloat(retSSEl&&retSSEl.value)||0;
     var retPenV=parseFloat(retPenEl&&retPenEl.value)||0;
     // Assumes today's investment income (dividends/interest/gains outside retirement
@@ -1273,15 +1343,19 @@ function computeMultiYear(income,ss,status,tradBal,rothBal,basis,g,nSr,stD,nMed,
     // Without this, the golden-window target silently drops it and can understate
     // the person's real bracket, recommending far too small a conversion.
     var retNiiV=parseFloat(retNiiEl&&retNiiEl.value)||0;
+    var retLtcgV=parseFloat(retLtcgEl&&retLtcgEl.value)||0;
 
     if(retSSV+retPenV>0){
       // Bracket room in retirement (lower income = more room)
-      var gOpts=computeOptTargets(retPenV+retNiiV,retSSV,status,STDD[status],nSr,nMed,taxableFrac);
+      var gOpts=computeOptTargets(retPenV+retNiiV,retLtcgV,retSSV,status,STDD[status],nSr,nMed,taxableFrac);
+      // Bracket room can legitimately round to $0 (already at the top of the
+      // current bracket) while Medicare-safe room is still real — fall back to
+      // it instead of silently giving up on the whole golden-window plan.
       var gConv=gOpts.bracketAmt>0?gOpts.bracketAmt:0;
-      if(gOpts.irmaaAmt!==null&&gOpts.irmaaAmt>0&&gOpts.irmaaAmt<gConv)gConv=gOpts.irmaaAmt;
+      if(gOpts.irmaaAmt!==null&&gOpts.irmaaAmt>0&&(gConv===0||gOpts.irmaaAmt<gConv))gConv=gOpts.irmaaAmt;
 
       if(gConv>500){
-        var gTax=convTax(retPenV+retNiiV,retSSV,status,nSr,gConv,taxableFrac);
+        var gTax=convTax(retPenV,retNiiV,retLtcgV,retSSV,status,nSr,gConv,taxableFrac);
 
         for(var j=0;j<gYears;j++){
           var gcv=Math.min(gConv,tBal);
@@ -1740,7 +1814,7 @@ function buildBeTimeline(curAge,beAge,leAge,survBE,isCouple){
 }
 
 // ── TAX COMPOSITION BAR ──
-function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName){
+function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName,ltcgCost){
   if(!cvtTxTot) return '';
   var segs='',lbls='';
   function seg(w,bg,label,dotClr){
@@ -1750,6 +1824,7 @@ function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName){
   }
   seg(cvtTxFed/cvtTxTot*100,'#1C3A5E','Federal'+(torpedoInc>0?' <em style=\'font-style:normal;opacity:.8\'>(incl. SS hidden tax)</em>':''));
   seg(cvtTxSt/cvtTxTot*100,'#B06000',stName||'State');
+  seg((ltcgCost||0)/cvtTxTot*100,'#2E7D5B','Qual. div./LTCG');
   seg(niitCost/cvtTxTot*100,'#7B5EA7','NIIT');
   return '<div class="tx-wrap"><div class="tx-bar">'+segs+'</div><div class="tx-lbls">'+lbls+'</div></div>';
 }
@@ -1851,7 +1926,7 @@ function clearAllInputs(){
   sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
   sv('sex','female'); sv('spouseAge',58); sv('spouseSex','male');
   sv('seniorDeduction',0); sv('stateCode','');
-  sv('income',72000); sv('ssIncome',24000); sv('niiIncome',0);
+  sv('income',72000); sv('ssIncome',24000); sv('niiIncome',0); sv('ltcgIncome',0);
   sv('convertAmt',0); sv('tradBal',280000); sv('rothBal',40000); sv('iraBasis',0);
   sv('growthRate',7); sv('retRate',22);
   sv('taxSource','outside'); sv('medicareStatus','one'); sv('partD','yes');
@@ -1885,7 +1960,7 @@ var PROFILES = {
       currentAge:63, retirementAge:68, filingStatus:'mfj',
       sex:'male', spouseAge:61, spouseSex:'female',
       seniorDeduction:0, stateCode:'OH',
-      income:72000, ssIncome:24000, niiIncome:0,
+      income:72000, ssIncome:24000, niiIncome:0, ltcgIncome:0,
       convertAmt:20000, tradBal:380000, rothBal:25000, iraBasis:0,
       growthRate:7, retRate:22,
       taxSource:'outside', medicareStatus:'none', partD:'yes'
@@ -1899,7 +1974,7 @@ var PROFILES = {
       currentAge:57, retirementAge:65, filingStatus:'single',
       sex:'female', spouseAge:null, spouseSex:null,
       seniorDeduction:0, stateCode:'IL',
-      income:110000, ssIncome:0, niiIncome:0,
+      income:110000, ssIncome:0, niiIncome:0, ltcgIncome:0,
       convertAmt:18000, tradBal:320000, rothBal:45000, iraBasis:0,
       growthRate:7, retRate:24,
       taxSource:'outside', medicareStatus:'none', partD:'yes'
@@ -1913,7 +1988,7 @@ var PROFILES = {
       currentAge:68, retirementAge:72, filingStatus:'single',
       sex:'male', spouseAge:null, spouseSex:null,
       seniorDeduction:0, stateCode:'TX',
-      income:105000, ssIncome:0, niiIncome:0,
+      income:105000, ssIncome:0, niiIncome:0, ltcgIncome:0,
       convertAmt:22000, tradBal:175000, rothBal:0, iraBasis:0,
       growthRate:6, retRate:18,
       taxSource:'inside', medicareStatus:'one', partD:'yes'
@@ -1928,7 +2003,7 @@ function loadExample(name){
   setVal('currentAge',f.currentAge); setVal('retirementAge',f.retirementAge);
   setVal('filingStatus',f.filingStatus); setVal('sex',f.sex);
   setVal('seniorDeduction',f.seniorDeduction); setVal('stateCode',f.stateCode);
-  setVal('income',f.income); setVal('ssIncome',f.ssIncome); setVal('niiIncome',f.niiIncome);
+  setVal('income',f.income); setVal('ssIncome',f.ssIncome); setVal('niiIncome',f.niiIncome); setVal('ltcgIncome',f.ltcgIncome);
   setVal('convertAmt',f.convertAmt); setVal('tradBal',f.tradBal);
   setVal('rothBal',f.rothBal); setVal('iraBasis',f.iraBasis);
   setVal('growthRate',f.growthRate); setVal('retRate',f.retRate);
@@ -1992,7 +2067,7 @@ function clearExample(){
   function sv(id,v){ var el=document.getElementById(id); if(el) el.value=v; }
   sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
   sv('sex','female'); sv('seniorDeduction',0); sv('stateCode','');
-  sv('income',72000); sv('ssIncome',24000); sv('niiIncome',0);
+  sv('income',72000); sv('ssIncome',24000); sv('niiIncome',0); sv('ltcgIncome',0);
   sv('convertAmt',20000); sv('tradBal',280000); sv('rothBal',40000); sv('iraBasis',0);
   sv('growthRate',7); sv('retRate',22);
   sv('taxSource','outside'); sv('medicareStatus','one'); sv('partD','yes');
@@ -2010,7 +2085,7 @@ function clearExample(){
 // ── INPUT PERSISTENCE ──
 var INPUT_FIELDS = ['currentAge','retirementAge','filingStatus','sex',
   'spouseAge','spouseSex','seniorDeduction','stateCode',
-  'income','ssIncome','niiIncome','convertAmt','tradBal',
+  'income','ssIncome','niiIncome','ltcgIncome','convertAmt','tradBal',
   'rothBal','iraBasis','growthRate','retRate',
   'taxSource','medicareStatus','partD'];
 
@@ -2057,6 +2132,7 @@ function calc(){
   const income   = _ae ? +_ae.income          : _rf('income');
   const ss       = _ae ? +_ae.ssIncome        : _rf('ssIncome');
   const nii      = _ae ? +_ae.niiIncome       : _rf('niiIncome');
+  const ltcg     = _ae ? +_ae.ltcgIncome      : _rf('ltcgIncome');
   const cvtAmt   = _ae ? +_ae.convertAmt      : _rf('convertAmt');
   const tradBal  = _ae ? +_ae.tradBal         : _rf('tradBal');
   const rothBal  = _ae ? +_ae.rothBal         : _rf('rothBal');
@@ -2109,23 +2185,49 @@ function calc(){
   const torpedoInc= Math.max(0, ssWith - ssBase);
 
   // ── AGI / TAXABLE INCOME ──
-  const agiBase = income + nii + ssBase;
-  const agiWith = income + nii + taxableCvt + ssWith;
+  // agiBase/agiWith are TOTAL AGI (includes ltcg) — used for MAGI/IRMAA, the
+  // senior-deduction phaseout, and the NIIT pool, since all of those count
+  // preferential-rate income the same as ordinary income. ordAgiBase/ordAgiWith
+  // exclude ltcg and drive tiBase/tiWith — the ordinary-bracket taxable income —
+  // because LTCG doesn't consume ordinary bracket space; it stacks on top of it
+  // (see calcLTCGTax below). Mixing ltcg into tiBase/tiWith would make the tool
+  // think the filer is in a higher ordinary bracket than they actually are.
+  const agiBase    = income + nii + ltcg + ssBase;
+  const agiWith    = income + nii + ltcg + taxableCvt + ssWith;
+  const ordAgiBase = income + nii + ssBase;
+  const ordAgiWith = income + nii + taxableCvt + ssWith;
   const std     = STDD[status];
   const srD     = seniorDed(agiBase, status, nSr);
   const srDW    = seniorDed(agiWith, status, nSr);
-  const tiBase  = Math.max(0, agiBase - std - srD);
-  const tiWith  = Math.max(0, agiWith - std - srDW);
+  const tiBase  = Math.max(0, ordAgiBase - std - srD);
+  const tiWith  = Math.max(0, ordAgiWith - std - srDW);
 
-  // ── FEDERAL TAX ──
+  // ── FEDERAL TAX (ordinary brackets) ──
   const txOut     = calcTax(tiBase, status);
   const txIn      = calcTax(tiWith, status);
   const cvtTxFed  = txIn - txOut;
 
   // Extra federal tax attributable to the torpedo (approximation)
-  const tiWithNoTorpedo = Math.max(0, agiWith - torpedoInc - std - srDW);
+  const tiWithNoTorpedo = Math.max(0, ordAgiWith - torpedoInc - std - srDW);
   const txInNoTorpedo   = calcTax(tiWithNoTorpedo, status);
   const torpedoTax      = Math.max(0, txIn - txInNoTorpedo);
+
+  // ── LTCG / QUALIFIED DIVIDENDS (preferential-rate stack) ──
+  // Total taxable income INCLUDING ltcg, minus the same deductions — the gap
+  // between this and the ordinary-only tiBase/tiWith is exactly how much ltcg
+  // is actually taxable (naturally handles the edge case where ordinary income
+  // is smaller than the deduction and the leftover deduction spills onto ltcg).
+  // Computed before/with the conversion because the conversion is ordinary
+  // income that raises the floor ltcg stacks on top of — converting can push
+  // some ltcg from a lower preferential bracket into a higher one, a real,
+  // often-missed cost, the capital-gains analog of the SS torpedo above.
+  const totalTiBase = Math.max(0, agiBase - std - srD);
+  const totalTiWith = Math.max(0, agiWith - std - srDW);
+  const ltcgAmtBase = Math.max(0, totalTiBase - tiBase);
+  const ltcgAmtWith = Math.max(0, totalTiWith - tiWith);
+  const ltcgTaxBase = calcLTCGTax(tiBase, ltcgAmtBase, status);
+  const ltcgTaxWith = calcLTCGTax(tiWith, ltcgAmtWith, status);
+  const cvtTxLtcg   = Math.max(0, ltcgTaxWith - ltcgTaxBase);
 
   // ── STATE TAX ──
   // ex:true states may still tax a conversion below a qualifying age (an
@@ -2158,12 +2260,15 @@ function calc(){
   }
 
   // ── NIIT (3.8% on net investment income when MAGI > threshold) ──
+  // Pool is nii+ltcg — both are "net investment income" for NIIT purposes,
+  // regardless of which one gets the preferential ordinary-vs-LTCG rate.
   const niitThr  = {single:200000,mfj:250000,mfs:125000,hoh:200000}[status]||200000;
-  const niitBase = nii>0 ? Math.max(0,Math.min(nii,agiBase-niitThr))*0.038 : 0;
-  const niitWith = nii>0 ? Math.max(0,Math.min(nii,agiWith-niitThr))*0.038 : 0;
+  const niiPool  = nii + ltcg;
+  const niitBase = niiPool>0 ? Math.max(0,Math.min(niiPool,agiBase-niitThr))*0.038 : 0;
+  const niitWith = niiPool>0 ? Math.max(0,Math.min(niiPool,agiWith-niitThr))*0.038 : 0;
   const niitCost = Math.max(0,niitWith-niitBase);
 
-  const cvtTxTot = cvtTxFed + cvtTxSt + niitCost;
+  const cvtTxTot = cvtTxFed + cvtTxSt + niitCost + cvtTxLtcg;
   const effR     = cvtAmt > 0 ? cvtTxTot / cvtAmt : 0;
 
   // State rate on future IRA withdrawals (0 if state exempts retirement income)
@@ -2252,11 +2357,15 @@ function calc(){
       +'<div class="trow"><span class="tl">State tax on conversion (~'+pct(stD.cr,1)+' marginal)</span><span class="tv">'+fmt(cvtTxSt)+'</span></div>'
       + stateNote
       +'<div class="tsep"></div>'
+      +(cvtTxLtcg>0?'<div class="trow"><span class="tl">Qualified div./LTCG bumped to a higher bracket</span><span class="tv">'+fmt(cvtTxLtcg)+'</span></div>':'')
       +(niitCost>0?'<div class="trow"><span class="tl">NIIT (3.8% on investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')+'<div class="trow tgrand"><span class="tl">Total tax cost (all components)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'
       +'<div class="trow"><span class="tl">True effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>';
   } else {
     stateSectionHtml =
-      (niitCost>0?'<div class="tsep"></div>'+'<div class="tsubhead">Federal Surcharge</div>'+'<div class="trow"><span class="tl">NIIT (3.8% on net investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>'+'<div class="trow tgrand"><span class="tl">Total tax cost (federal + NIIT)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'+'<div class="trow"><span class="tl">True effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>':'')
+      (cvtTxLtcg>0||niitCost>0?'<div class="tsep"></div>'+'<div class="tsubhead">Federal Surcharge</div>'
+        +(cvtTxLtcg>0?'<div class="trow"><span class="tl">Qualified div./LTCG bumped to a higher bracket</span><span class="tv">'+fmt(cvtTxLtcg)+'</span></div>':'')
+        +(niitCost>0?'<div class="trow"><span class="tl">NIIT (3.8% on net investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')
+        +'<div class="trow tgrand"><span class="tl">Total tax cost (federal + surcharges)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'+'<div class="trow"><span class="tl">True effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>':'')
       +'<div class="trow"><span class="tl">Effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>';
   }
 
@@ -2301,7 +2410,7 @@ function calc(){
 
   // ── OPTIMIZER PANEL (needs all SS/IRMAA vars) ──
   (function(){
-    var optTargets=computeOptTargets(income+nii,ss,status,STDD[status],nSr,nMed,taxableFrac);
+    var optTargets=computeOptTargets(income+nii,ltcg,ss,status,STDD[status],nSr,nMed,taxableFrac);
     var optEl=document.getElementById('optimizerPanel');
     if(optEl)optEl.innerHTML=buildOptimizerPanel(optTargets,fmt,pct,nMed,ss,cvtAmt);
   })();
@@ -2466,11 +2575,14 @@ function calc(){
   // ── MULTI-YEAR PLAN ──
   var multiYearHTML = '';
   {
-    var myOpts = computeOptTargets(income+nii,ss,status,STDD[status],nSr,nMed,taxableFrac);
+    var myOpts = computeOptTargets(income+nii,ltcg,ss,status,STDD[status],nSr,nMed,taxableFrac);
+    // Bracket room can legitimately round to $0 (already at the top of the
+    // current bracket) while Medicare-safe room is still real — fall back to
+    // it instead of silently giving up on the whole multi-year plan.
     var myConv = myOpts.bracketAmt > 0 ? myOpts.bracketAmt : 0;
-    if(myOpts.irmaaAmt!==null && myOpts.irmaaAmt>0 && myOpts.irmaaAmt<myConv) myConv=myOpts.irmaaAmt;
+    if(myOpts.irmaaAmt!==null && myOpts.irmaaAmt>0 && (myConv===0 || myOpts.irmaaAmt<myConv)) myConv=myOpts.irmaaAmt;
     if(myConv > 500 && tradBal > 0){
-      var myPlan = computeMultiYear(income+nii,ss,status,tradBal,rothBal,basis,g,nSr,stD,nMed,curAge,retAge,taxableFrac,myConv);
+      var myPlan = computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,myConv);
       multiYearHTML = buildMultiYearHTML(myPlan,curAge,retAge,fmt,pct,fmtK);
     }
   }
@@ -2591,12 +2703,12 @@ function calc(){
     +'<div class="disclaimer">📌 <strong>Planning tool, not financial advice.</strong> This calculator models common tax rules but cannot see your full picture — estate goals, healthcare subsidies, future moves, charitable plans, and income changes all matter. State rates are approximate. Use this to understand the landscape and size the conversation with your CPA or financial advisor, not to make the decision alone.</div>'
     +'<div class="bottom-line"><div class="bl-eye">YOUR BOTTOM LINE</div><div class="bl-txt" id="blTxt">'+blTxt+'</div><div class="bl-cav">Estimates only — rough numbers are fine for planning. Scroll down for the full breakdown.</div></div>'
     +'<div class="rgrid">'
-    +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(niitCost>0?'<br>Fed: '+fmt(cvtTxFed):''))+(niitCost>0?' + NIIT: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')+'</div></div>'
+    +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):''))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + NIIT: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')+'</div></div>'
     +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Not in range')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
     +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'</div></div>'
     +'</div>'
     +buildBeTimeline(curAge,beAge,leAge??le,survBE,isCouple)
-    +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n)
+    +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n,cvtTxLtcg)
     +'<div class="verdict '+vCls+'"><div class="vi">'+vIco+'</div><div class="vb"><strong>'+vHd+'</strong><p>'+vBd+'</p></div></div>'
     +sensitivityHTML
     + irmaaHTML
@@ -2635,7 +2747,7 @@ function calc(){
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Period vs. cohort life table.</strong> I use a 2023 mortality snapshot. A cohort table accounts for improving life expectancy over time — giving somewhat longer expected lifespans, which further favors the Roth.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Your first dollars of retirement income land in a lower bracket.</strong> They fall in the 10–12% range, not your top rate. Use the rate estimator above to find the true rate on your specific income mix.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Future state of residence.</strong> If you plan to move to a no-income-tax state before retirement, the state tax comparison is reversed — you pay state tax on the conversion today but owe nothing later. Factor this in before converting.</p>'
-    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Preferential rates on qualified dividends and long-term capital gains.</strong> This tool taxes all non-Social-Security, non-conversion income — including the Net Investment Income field — at ordinary rates. Real law taxes qualified dividends and long-term capital gains at 0/15/20% instead, so if a meaningful share of your income comes from those sources, your true tax cost is somewhat lower than shown. (The Alternative Minimum Tax isn\'t modeled either, but rarely applies at typical conversion income levels under current law.)</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">State-level capital gains treatment.</strong> The Qualified Dividends &amp; LTCG field models the federal preferential rate (0/15/20%) correctly, but state tax on that income is still approximated at your flat conversion rate — nearly every state (including all the ones with large populations of Roth converters) taxes capital gains the same as ordinary income anyway, but a handful of states have their own capital-gains carve-outs this tool doesn\'t model. (The Alternative Minimum Tax isn\'t modeled either, but rarely applies at typical conversion income levels under current law.)</p>'
     +'</div></div>'
     +'<div class="alert anvy" style="margin-top:.85rem;font-size:.85rem">Use this calculator as a starting point for a conversation with a CPA, tax professional, or financial advisor — not as a substitute for one.</div>'
     +'</div>'
