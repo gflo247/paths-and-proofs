@@ -2119,62 +2119,19 @@ function loadSavedInputs(){
   }catch(e){ return false; }
 }
 
-let myChart=null;
-function calc(){
-
-  var _ae = _activeExample;
-  function _rv(id){ var e=document.getElementById(id); return e?e.value:''; }
-  function _rf(id){ return parseFloat(_rv(id))||0; }
-  const curAge   = _ae ? +_ae.currentAge      : (parseInt(_rv('currentAge'))||60);
-  const retAge   = _ae ? +_ae.retirementAge   : (parseInt(_rv('retirementAge'))||67);
-  const status   = _ae ? _ae.filingStatus     : (_rv('filingStatus')||'single');
-  const sex      = _ae ? _ae.sex              : (_rv('sex')||'female');
-  const income   = _ae ? +_ae.income          : _rf('income');
-  const ss       = _ae ? +_ae.ssIncome        : _rf('ssIncome');
-  const nii      = _ae ? +_ae.niiIncome       : _rf('niiIncome');
-  const ltcg     = _ae ? +_ae.ltcgIncome      : _rf('ltcgIncome');
-  const cvtAmt   = _ae ? +_ae.convertAmt      : _rf('convertAmt');
-  const tradBal  = _ae ? +_ae.tradBal         : _rf('tradBal');
-  const rothBal  = _ae ? +_ae.rothBal         : _rf('rothBal');
-
-  // ── PRO-RATA / IRA BASIS ──
-  const basis       = Math.min(_ae?+_ae.iraBasis:_rf('iraBasis'), tradBal);
-  const taxableFrac = tradBal > 0 ? Math.max(0, Math.min(1, (tradBal - basis) / tradBal)) : 1;
-  const taxableCvt  = cvtAmt * taxableFrac;
-  const basisCvt    = cvtAmt - taxableCvt;
-  const g        = _ae ? +_ae.growthRate/100   : (parseFloat(_rv('growthRate'))/100||0.07);
-  const retRate  = _ae ? +_ae.retRate/100      : (parseFloat(_rv('retRate'))/100||0.22);
-  const taxSrc   = _ae ? _ae.taxSource         : _rv('taxSource');
-  const nSr      = _ae ? +_ae.seniorDeduction  : (parseInt(_rv('seniorDeduction'))||0);
-  const medSt    = _ae ? _ae.medicareStatus    : _rv('medicareStatus');
-  const inclD    = (_ae ? _ae.partD : _rv('partD'))==='yes';
-  const nMed     = medSt==='two'?2:medSt==='one'?1:0;
-  const stateCode= _ae ? _ae.stateCode         : _rv('stateCode');
-  const stD      = ST[stateCode]||{n:'',cr:0,ex:false,note:''};
-  const isCouple = (status==='mfj'||status==='mfs');
-  const spFields = document.getElementById('spouseFields');
-  if(spFields) spFields.style.display = isCouple ? 'block' : 'none';
-  const spouseAge= isCouple ? (_ae?+_ae.spouseAge:(parseInt(_rv('spouseAge'))||60)) : null;
-  const spouseSex= isCouple ? (_ae ? _ae.spouseSex : $('spouseSex').value) : null;
-
-  // Update helper displays
-  const rateEl=$('rateEstTbl'); if(rateEl) rateEl.innerHTML=buildRateTable(status);
-  // ── SS hint: clarify combined total for married couples ──
-  const ssHintEl=$('ssHint');
-  if(ssHintEl){
-    ssHintEl.textContent=(status==='mfj'||status==='mfs')
-      ?'Combined total for both spouses · Enter $0 if not yet receiving'
-      :'Enter your total annual benefit · Enter $0 if not yet receiving';
-  }
-
-  const snEl=$('stateRetNote');
-  if(snEl){
-    if(stD.n && stD.ex)
-      snEl.innerHTML='<span style="color:var(--success);font-size:.84rem">'+stD.note+'</span>';
-    else if(stD.n && stD.cr>0)
-      snEl.innerHTML='<span style="color:var(--muted);font-size:.84rem">'+stD.note+'</span>';
-    else snEl.innerHTML='';
-  }
+// ── Per-point conversion-cost computation ──
+// Everything about "how much does converting exactly cvtAmt cost, given this
+// year's other income" lives here. calc() below calls this once for the
+// user's chosen amount; anything that needs the cost at OTHER amounts (a
+// marginal-rate sweep, for instance) should call this too rather than
+// re-deriving the tax logic — computeMultiYear's convTax() had its own
+// hand-copied version of the state-tax math that quietly fell out of sync
+// with this exact logic once (the Michigan-deduction bug), which is the
+// failure mode having one shared function exists to prevent.
+// ctx: {income, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac}
+function computeConversionCost(cvtAmt, ctx){
+  const {income, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac} = ctx;
+  const taxableCvt = cvtAmt * taxableFrac;
 
   // ── SS TORPEDO ──
   // Investment income (nii) counts toward provisional income for SS taxability,
@@ -2271,6 +2228,93 @@ function calc(){
   const cvtTxTot = cvtTxFed + cvtTxSt + niitCost + cvtTxLtcg;
   const effR     = cvtAmt > 0 ? cvtTxTot / cvtAmt : 0;
 
+  // ── IRMAA tier (MAGI = AGI including taxable SS) ──
+  const iSt      = status==='hoh' ? 'single' : status;
+  const tierBase = irmaaT(agiBase, iSt);
+  const tierWith = irmaaT(agiWith, iSt);
+
+  return {
+    taxableCvt,
+    ssBase, ssWith, torpedoInc,
+    agiBase, agiWith, ordAgiBase, ordAgiWith, std, srD, srDW, tiBase, tiWith,
+    txOut, txIn, cvtTxFed, tiWithNoTorpedo, txInNoTorpedo, torpedoTax,
+    totalTiBase, totalTiWith, ltcgAmtBase, ltcgAmtWith, ltcgTaxBase, ltcgTaxWith, cvtTxLtcg,
+    exAge, exQualAge, exQualifies, rd, cvtTxSt,
+    niitThr, niiPool, niitBase, niitWith, niitCost,
+    cvtTxTot, effR,
+    iSt, tierBase, tierWith,
+  };
+}
+
+let myChart=null;
+function calc(){
+
+  var _ae = _activeExample;
+  function _rv(id){ var e=document.getElementById(id); return e?e.value:''; }
+  function _rf(id){ return parseFloat(_rv(id))||0; }
+  const curAge   = _ae ? +_ae.currentAge      : (parseInt(_rv('currentAge'))||60);
+  const retAge   = _ae ? +_ae.retirementAge   : (parseInt(_rv('retirementAge'))||67);
+  const status   = _ae ? _ae.filingStatus     : (_rv('filingStatus')||'single');
+  const sex      = _ae ? _ae.sex              : (_rv('sex')||'female');
+  const income   = _ae ? +_ae.income          : _rf('income');
+  const ss       = _ae ? +_ae.ssIncome        : _rf('ssIncome');
+  const nii      = _ae ? +_ae.niiIncome       : _rf('niiIncome');
+  const ltcg     = _ae ? +_ae.ltcgIncome      : _rf('ltcgIncome');
+  const cvtAmt   = _ae ? +_ae.convertAmt      : _rf('convertAmt');
+  const tradBal  = _ae ? +_ae.tradBal         : _rf('tradBal');
+  const rothBal  = _ae ? +_ae.rothBal         : _rf('rothBal');
+
+  // ── PRO-RATA / IRA BASIS ──
+  const basis       = Math.min(_ae?+_ae.iraBasis:_rf('iraBasis'), tradBal);
+  const taxableFrac = tradBal > 0 ? Math.max(0, Math.min(1, (tradBal - basis) / tradBal)) : 1;
+  const taxableCvt  = cvtAmt * taxableFrac;
+  const basisCvt    = cvtAmt - taxableCvt;
+  const g        = _ae ? +_ae.growthRate/100   : (parseFloat(_rv('growthRate'))/100||0.07);
+  const retRate  = _ae ? +_ae.retRate/100      : (parseFloat(_rv('retRate'))/100||0.22);
+  const taxSrc   = _ae ? _ae.taxSource         : _rv('taxSource');
+  const nSr      = _ae ? +_ae.seniorDeduction  : (parseInt(_rv('seniorDeduction'))||0);
+  const medSt    = _ae ? _ae.medicareStatus    : _rv('medicareStatus');
+  const inclD    = (_ae ? _ae.partD : _rv('partD'))==='yes';
+  const nMed     = medSt==='two'?2:medSt==='one'?1:0;
+  const stateCode= _ae ? _ae.stateCode         : _rv('stateCode');
+  const stD      = ST[stateCode]||{n:'',cr:0,ex:false,note:''};
+  const isCouple = (status==='mfj'||status==='mfs');
+  const spFields = document.getElementById('spouseFields');
+  if(spFields) spFields.style.display = isCouple ? 'block' : 'none';
+  const spouseAge= isCouple ? (_ae?+_ae.spouseAge:(parseInt(_rv('spouseAge'))||60)) : null;
+  const spouseSex= isCouple ? (_ae ? _ae.spouseSex : $('spouseSex').value) : null;
+
+  // Update helper displays
+  const rateEl=$('rateEstTbl'); if(rateEl) rateEl.innerHTML=buildRateTable(status);
+  // ── SS hint: clarify combined total for married couples ──
+  const ssHintEl=$('ssHint');
+  if(ssHintEl){
+    ssHintEl.textContent=(status==='mfj'||status==='mfs')
+      ?'Combined total for both spouses · Enter $0 if not yet receiving'
+      :'Enter your total annual benefit · Enter $0 if not yet receiving';
+  }
+
+  const snEl=$('stateRetNote');
+  if(snEl){
+    if(stD.n && stD.ex)
+      snEl.innerHTML='<span style="color:var(--success);font-size:.84rem">'+stD.note+'</span>';
+    else if(stD.n && stD.cr>0)
+      snEl.innerHTML='<span style="color:var(--muted);font-size:.84rem">'+stD.note+'</span>';
+    else snEl.innerHTML='';
+  }
+
+  // ── PER-POINT TAX COST (shared with any future sweep over other amounts) ──
+  const cc = computeConversionCost(cvtAmt, {
+    income, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac
+  });
+  const {ssBase, ssWith, torpedoInc,
+         agiBase, agiWith, ordAgiBase, ordAgiWith, std, srD, srDW, tiBase, tiWith,
+         txOut, txIn, cvtTxFed, tiWithNoTorpedo, txInNoTorpedo, torpedoTax,
+         totalTiBase, totalTiWith, ltcgAmtBase, ltcgAmtWith, ltcgTaxBase, ltcgTaxWith, cvtTxLtcg,
+         exAge, exQualAge, exQualifies, rd, cvtTxSt,
+         niitThr, niiPool, niitBase, niitWith, niitCost,
+         cvtTxTot, effR} = cc;
+
   // State rate on future IRA withdrawals (0 if state exempts retirement income)
   const stRetR    = stD.ex ? 0 : stD.cr;
   const totalRetR = retRate + stRetR;
@@ -2281,11 +2325,11 @@ function calc(){
   const rothIn  = taxSrc==='inside' ? Math.max(0, cvtAmt-cvtTxFed) : cvtAmt;
 
   // ── IRMAA (MAGI = AGI including taxable SS) ──
-  const iSt      = status==='hoh' ? 'single' : status;
+  const iSt      = cc.iSt;
   const magiBase = agiBase;   // same as agiBase; correct for pro-rata
   const magiWith = agiWith;   // same as agiWith; correct for pro-rata
-  const tBefore  = irmaaT(magiBase, iSt);
-  const tAfter   = irmaaT(magiWith, iSt);
+  const tBefore  = cc.tierBase;
+  const tAfter   = cc.tierWith;
   const tCrossed = tAfter > tBefore;
   function irmaaYrPP(t){ return (ITIERS[t].B - ITIERS[0].B)*12 + (inclD ? ITIERS[t].D*12 : 0); }
   const irmDiffPP  = nMed>0 ? irmaaYrPP(tAfter)-irmaaYrPP(tBefore) : 0;
