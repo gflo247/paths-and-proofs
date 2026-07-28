@@ -1478,6 +1478,284 @@ function simAdvantageForGrid(gv, totalRetR_v, tradBal, rothBal, rothIn, cvtAmt, 
 }
 
 // Build the HTML shell only (D3 fills it in after DOM insertion)
+function buildMarginalChartHTML(){
+  return '<div class="card" style="margin-top:1.25rem">'
+    + '<div class="stitle">📈 Why The Rate Climbs As You Convert More</div>'
+    + '<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55">'
+    + 'The effective cost on each additional dollar converted isn\'t one number to minimize — '
+    + 'it climbs as you cross real thresholds. Converting less always looks cheaper today; '
+    + 'that\'s not the same as it being the better decision. This shows today\'s quick-rate '
+    + 'comparison only — the full breakeven-age simulation below can reach a different '
+    + 'conclusion, since it also accounts for compounding and Required Minimum Distributions.</p>'
+    + '<div id="marginalChartWrap" style="width:100%;position:relative"></div>'
+    + '</div>';
+}
+
+// D3 render — called after innerHTML is set. p: {ctx, tradBal, totalRetR, cvtAmt, stName}
+function renderMarginalChart(p){
+  var container = document.getElementById('marginalChartWrap');
+  if(!container || typeof d3 === 'undefined') return;
+
+  var DARK = document.documentElement.getAttribute('data-theme')==='dark';
+  function tc(l,d){ return DARK ? d : l; }
+
+  var maxAmt = Math.min(p.tradBal, 600000);
+  var sweep = sweepMarginalCurve(p.ctx, maxAmt);
+  if(sweep.points.length < 2) return;
+
+  var totalW = Math.min(container.offsetWidth || 520, 700);
+  var margin = {top:30, right:20, bottom:44, left:50};
+  var W = totalW - margin.left - margin.right;
+  var H = Math.round(W * 0.44);
+  var totalH = H + margin.top + margin.bottom;
+
+  d3.select('#marginalChartWrap').select('svg').remove();
+  var svg = d3.select('#marginalChartWrap').append('svg')
+    .attr('width','100%').attr('height',totalH)
+    .attr('viewBox','0 0 '+totalW+' '+totalH)
+    .attr('preserveAspectRatio','xMidYMid meet');
+  var g = svg.append('g').attr('transform','translate('+margin.left+','+margin.top+')');
+
+  var dataMax = Math.max.apply(null, sweep.points.map(function(pt){ return pt.y; }));
+  var yMax = Math.max(15, Math.ceil((dataMax+2)/5)*5);
+  var xSc = d3.scaleLinear().domain([0, maxAmt]).range([0, W]);
+  var ySc = d3.scaleLinear().domain([0, yMax]).range([H, 0]);
+
+  // Gridlines + y axis
+  var yTicks = ySc.ticks(4);
+  g.selectAll('line.mgrid').data(yTicks).enter().append('line')
+    .attr('x1',0).attr('x2',W).attr('y1',ySc).attr('y2',ySc)
+    .attr('stroke',tc('#E2DAD0','#2C323C')).attr('stroke-width',1);
+  g.selectAll('text.myaxis').data(yTicks).enter().append('text')
+    .attr('x',-8).attr('y',function(d){ return ySc(d)+4; }).attr('text-anchor','end')
+    .style('font-size','10.5px').style('font-family','DM Sans, sans-serif')
+    .style('fill',tc('#3D4451','#A6ABB5')).text(function(d){ return d+'%'; });
+
+  // x axis
+  var xTicks = xSc.ticks(Math.min(6, Math.round(maxAmt/50000)) || 4);
+  g.selectAll('text.mxaxis').data(xTicks).enter().append('text')
+    .attr('x',xSc).attr('y',H+20).attr('text-anchor','middle')
+    .style('font-size','10.5px').style('font-family','DM Sans, sans-serif')
+    .style('fill',tc('#3D4451','#A6ABB5'))
+    .text(function(d){ return d===0 ? '$0' : '$'+Math.round(d/1000)+'K'; });
+  g.append('line').attr('x1',0).attr('x2',W).attr('y1',H).attr('y2',H)
+    .attr('stroke',tc('#CEC6BA','#3A414C')).attr('stroke-width',1);
+
+  // Unlabeled ticks for ordinary-bracket crossings — the expected mechanism,
+  // kept subtle so the labeled markers (surprising cliffs) stand out.
+  sweep.crossings.filter(function(c){ return c.type==='bracket'; }).forEach(function(c){
+    g.append('line').attr('x1',xSc(c.x)).attr('x2',xSc(c.x)).attr('y1',0).attr('y2',H)
+      .attr('stroke',tc('#3D4451','#A6ABB5')).attr('stroke-width',1.25)
+      .attr('stroke-dasharray','2,3').attr('opacity',0.4);
+  });
+
+  // Named markers' x-positions computed first so every other label (reference
+  // line, crossover) can steer clear of their full-height vertical lines —
+  // those can't be dodged vertically.
+  var markerColor = {irmaa:tc('#8B1A1A','#EA7070'), ltcg:tc('#5B4A9E','#A08FE8'), torpedo:tc('#8B3A00','#E89A50')};
+  var shortLabel = {irmaa:function(c){ return 'Medicare '+c.label.split('Tier ')[1]; }, ltcg:function(){ return 'Qual. div./LTCG bumped'; }, torpedo:function(){ return 'SS fully taxable'; }};
+  var named = sweep.crossings.filter(function(c){ return c.type!=='bracket'; });
+  var namedX = named.map(function(c){ return xSc(c.x); });
+
+  // Find the nearest on-canvas x for a label of width w, centered as close to
+  // preferredCx as possible, that clears every obstacle. obstacles are
+  // {x, half} pairs — half is that obstacle's own half-width, since a flat
+  // clearance can't represent both a hairline marker line (half is just a
+  // small visual margin) and a wide label (half is its actual half-width
+  // plus margin) — using the hairline margin for a wide label under-clears
+  // it (found by the sweep below). Searches outward in both directions
+  // rather than only trying two fixed candidates — a left/right-only toggle
+  // has no answer when an obstacle sits on both sides of the preferred
+  // spot, which happens whenever a label and a marker land near the same
+  // edge (found by the systematic sweep in
+  // _dev/test-marginal-chart-labels.mjs, not by eye). Returns a clear cx,
+  // or null if no fully clear spot exists at this width/obstacle layout —
+  // callers use null as the signal to try shorter text rather than
+  // silently rendering an overlap.
+  function clearCx(preferredCx, w, obstacles){
+    var minCx=w/2, maxCx=W-w/2;
+    function isClear(cx){
+      if(cx<minCx-0.01 || cx>maxCx+0.01) return false;
+      return !obstacles.some(function(o){ return Math.abs(o.x-cx) < w/2+o.half; });
+    }
+    var clamped = Math.min(maxCx, Math.max(minCx, preferredCx));
+    if(isClear(clamped)) return clamped;
+    for(var d=4; d<W; d+=4){
+      if(clamped+d<=maxCx && isClear(clamped+d)) return clamped+d;
+      if(clamped-d>=minCx && isClear(clamped-d)) return clamped-d;
+    }
+    return null;
+  }
+  var markerObstacles = namedX.map(function(x){ return {x:x, half:6}; });
+
+  var retPct = p.totalRetR*100;
+  var refDrawn = retPct <= yMax;
+  var refY = ySc(retPct);
+  // Above the line by default, flipped below only when there isn't room for
+  // the pill above the canvas top.
+  var refAbove = refY >= 19;
+  var refRectY0 = refAbove ? refY-19 : refY+5;
+  var refRectY1 = refRectY0+14;
+
+  var refCx = null, refW = 0;
+  if(refDrawn){
+    g.append('line').attr('x1',0).attr('x2',W).attr('y1',refY).attr('y2',refY)
+      .attr('stroke',tc('#3D4451','#A6ABB5')).attr('stroke-width',1.5)
+      .attr('stroke-dasharray','4,4').attr('opacity',0.75);
+    // Right-aligned by default, but the full sentence can be wider than the
+    // whole canvas at narrow widths and this line spans edge-to-edge, so it
+    // can land right under a named marker's label — same full-text/short-text
+    // fallback as the crossover label, steering clear of the same markers.
+    var refTextFull = 'Your expected retirement rate · '+retPct.toFixed(1)+'%';
+    var refWFull = refTextFull.length*5.7+12;
+    var refCxFull = clearCx(W-refWFull/2, refWFull, markerObstacles);
+    var refText;
+    if(refCxFull!==null){
+      refText=refTextFull; refW=refWFull; refCx=refCxFull;
+    } else {
+      refText = retPct.toFixed(1)+'%';
+      refW = refText.length*5.7+12;
+      var refCxShort = clearCx(W-refW/2, refW, markerObstacles);
+      refCx = refCxShort!==null ? refCxShort : Math.min(W-refW/2, Math.max(refW/2, W-refW/2));
+    }
+    var refTextY = refAbove ? refY-9 : refY+15;
+    g.append('rect').attr('x',refCx-refW/2).attr('y',refRectY0).attr('width',refW).attr('height',14).attr('rx',3)
+      .attr('fill',tc('rgba(245,241,235,0.8)','rgba(34,39,48,0.85)'));
+    g.append('text').attr('x',refCx).attr('y',refTextY).attr('text-anchor','middle')
+      .style('font-size','10.5px').style('font-weight','600').style('font-family','DM Sans, sans-serif')
+      .style('fill',tc('#3D4451','#A6ABB5'))
+      .text(refText);
+  }
+
+  // The curve
+  var line = d3.line().x(function(d){ return xSc(d.x); }).y(function(d){ return ySc(Math.min(d.y,yMax)); });
+  g.append('path').datum(sweep.points).attr('fill','none')
+    .attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',2.5)
+    .attr('stroke-linejoin','round').attr('stroke-linecap','round')
+    .attr('d',line);
+
+  // Crossover: where the curve meets the expected-retirement-rate line.
+  // Its y-pixel (ccy) is NOT reliably close to the reference line's own
+  // (refY) — sweepMarginalCurve samples in discrete steps, so wherever the
+  // curve is steep, the first sample past retPct can overshoot it by a lot
+  // (found live: a torpedo-effect profile crossed a 28.2% target within the
+  // first $1,500 of conversion, landing the dot several points higher than
+  // the reference line itself, close enough on screen to collide with it
+  // despite being on the "opposite" side by the numbers). So the two
+  // labels' sides are picked by checking their actual rendered bands
+  // against each other, not by assuming they share a y-position.
+  var crossPt=null;
+  for(var i=1;i<sweep.points.length;i++){
+    if(sweep.points[i-1].y<retPct && sweep.points[i].y>=retPct){ crossPt=sweep.points[i]; break; }
+  }
+  if(crossPt){
+    var ccx=xSc(crossPt.x), ccy=ySc(Math.min(crossPt.y,yMax));
+    g.append('circle').attr('cx',ccx).attr('cy',ccy).attr('r',5)
+      .attr('fill',tc('#F5F1EB','#222730')).attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',2);
+    var band = function(isBelow){
+      var y = isBelow ? ccy+24 : ccy-16;
+      return {below:isBelow, lblY:y, y0:y-11, y1:y+5, fits:(y-11>=0 && y+5<=H)};
+    };
+    var overlapsRef = function(b){ return refDrawn && b.y0<refRectY1 && b.y1>refRectY0; };
+    var primary = band(ccy < H*0.75);
+    var chosen = primary;
+    if(overlapsRef(primary)){
+      var alt = band(!primary.below);
+      if(alt.fits && !overlapsRef(alt)) chosen = alt;
+    }
+    var below = chosen.below, lblY = chosen.lblY;
+    var sameSide = overlapsRef(chosen);
+    // Horizontal: steer clear of the named markers, plus the reference
+    // label's actual footprint when its band still overlaps this label's —
+    // a hairline margin isn't enough clearance for a label that wide, and
+    // when the bands don't overlap there's nothing to avoid here at all.
+    var crossObstacles = sameSide ? markerObstacles.concat([{x:refCx, half:refW/2+6}]) : markerObstacles;
+    // Try the full sentence first; if no spot near the dot is clear of every
+    // obstacle at this width, fall back to just the dollar amount, which
+    // needs far less room — only kicks in on narrow charts with an obstacle
+    // that happens to land right where the full label would (see
+    // _dev/test-marginal-chart-labels.mjs, which is what found this needed
+    // a fallback at all instead of a fixed width breakpoint).
+    var lblTextFull = 'Crosses your rate — '+fmt(crossPt.x);
+    var lblWFull = lblTextFull.length*5.7+12;
+    var cxFull = clearCx(ccx+lblWFull/2+10, lblWFull, crossObstacles);
+    var lblText, lblW, lblCx;
+    if(cxFull!==null){
+      lblText=lblTextFull; lblW=lblWFull; lblCx=cxFull;
+    } else {
+      lblText = fmt(crossPt.x);
+      lblW = lblText.length*5.7+12;
+      var cxShort = clearCx(ccx+lblW/2+10, lblW, crossObstacles);
+      lblCx = cxShort!==null ? cxShort : Math.min(W-lblW/2, Math.max(lblW/2, ccx+lblW/2+10));
+    }
+    g.append('rect').attr('x',lblCx-lblW/2).attr('y',lblY-11).attr('width',lblW).attr('height',16).attr('rx',3)
+      .attr('fill',tc('rgba(245,241,235,0.85)','rgba(34,39,48,0.9)'));
+    g.append('text').attr('x',lblCx).attr('y',lblY).attr('text-anchor','middle')
+      .style('font-size','10.5px').style('font-weight',700).style('font-family','DM Sans, sans-serif')
+      .style('fill',tc('#1C3A5E','#7DB2EC'))
+      .text(lblText);
+  }
+
+  named.forEach(function(c,idx){
+    var lx=xSc(c.x), color=markerColor[c.type];
+    g.append('line').attr('x1',lx).attr('x2',lx).attr('y1',0).attr('y2',H)
+      .attr('stroke',color).attr('stroke-width',1.75).attr('stroke-dasharray','5,3');
+    var above = idx%2===0;
+    var ly = above ? 12 : H-10;
+    var text = shortLabel[c.type](c);
+    var lw = text.length*5.6+10;
+    // Centered on the marker line and clamped to the canvas — width-aware,
+    // unlike a fixed "near the edge" threshold, which let long labels like
+    // "Qual. div./LTCG bumped" overflow when the marker sat mid-chart.
+    var lcx = Math.min(W-lw/2, Math.max(lw/2, lx));
+    g.append('rect').attr('x',lcx-lw/2).attr('y',ly-10).attr('width',lw).attr('height',14).attr('rx',3)
+      .attr('fill',tc('rgba(245,241,235,0.8)','rgba(34,39,48,0.85)'));
+    g.append('text').attr('x',lcx).attr('y',ly).attr('text-anchor','middle')
+      .style('font-size','10px').style('font-weight',700).style('font-family','DM Sans, sans-serif')
+      .style('fill',color).text(text);
+  });
+
+  // Hover crosshair + tooltip
+  var tipId='mtip'+(Math.random()*1e6|0);
+  d3.select(container).selectAll('.mtip').remove();
+  var tip = d3.select(container).append('div').attr('class','mtip')
+    .style('position','absolute').style('pointer-events','none')
+    .style('background',tc('#1C3A5E','#7DB2EC')).style('color',tc('#FFFFFF','#0F1720'))
+    .style('font-family','DM Sans, sans-serif').style('font-size','.76rem')
+    .style('padding','7px 10px').style('border-radius','8px').style('white-space','nowrap')
+    .style('opacity',0).style('transition','opacity .1s').style('z-index',5);
+
+  var hoverLine = g.append('line').attr('y1',0).attr('y2',H)
+    .attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',1).attr('opacity',0.35).style('display','none');
+  var hoverDot = g.append('circle').attr('r',4).attr('fill',tc('#1C3A5E','#7DB2EC')).style('display','none');
+
+  svg.append('rect').attr('x',margin.left).attr('y',margin.top).attr('width',W).attr('height',H)
+    .attr('fill','transparent').style('cursor','crosshair')
+    .on('mousemove', function(event){
+      var mx = d3.pointer(event, g.node())[0];
+      var amt = Math.max(0, Math.min(maxAmt, xSc.invert(mx)));
+      var idx = Math.round(amt/(sweep.points[1].x-sweep.points[0].x));
+      idx = Math.max(0, Math.min(sweep.points.length-1, idx));
+      var pt = sweep.points[idx];
+      var px = xSc(pt.x), py = ySc(Math.min(pt.y,yMax));
+      hoverLine.attr('x1',px).attr('x2',px).style('display','block');
+      hoverDot.attr('cx',px).attr('cy',py).style('display','block');
+      var nearCross = sweep.crossings.find(function(c){ return Math.abs(c.x-pt.x) < maxAmt*0.008; });
+      tip.html('<strong>'+fmt(pt.x)+'</strong> converted — '+pt.y.toFixed(1)+'% effective rate'
+        + (nearCross ? '<br><span style="opacity:.85;font-size:.7rem">'+nearCross.label+'</span>' : ''));
+      var contRect = container.getBoundingClientRect();
+      var svgRect = svg.node().getBoundingClientRect();
+      var scale = svgRect.width/totalW;
+      var tx = (px+margin.left)*scale, ty=(py+margin.top)*scale;
+      tip.style('left', Math.min(contRect.width-180, Math.max(4,tx+10))+'px')
+         .style('top', Math.max(0,ty-40)+'px')
+         .style('opacity',1);
+    })
+    .on('mouseleave', function(){
+      hoverLine.style('display','none'); hoverDot.style('display','none'); tip.style('opacity',0);
+    });
+}
+
 function buildSensitivityHTML(){
   return '<div class="card" style="margin-top:1.25rem">'
     + '<div class="stitle">📊 How Sensitive Is the Conclusion?</div>'
@@ -2246,6 +2524,54 @@ function computeConversionCost(cvtAmt, ctx){
   };
 }
 
+// ── Marginal-rate sweep: effective rate at many conversion amounts ──
+// Calls computeConversionCost repeatedly with the SAME ctx computeConversionCost
+// already needs — no separate tax logic here, just the diffing that turns a
+// series of independent points into named "something changed here" markers.
+// ctx is the same object calc() builds for its own single-point call.
+function sweepMarginalCurve(ctx, maxAmt){
+  const points=[], crossings=[];
+  if(maxAmt<=0) return {points, crossings};
+  const nSteps=400;
+  const step=Math.max(100, Math.round(maxAmt/nSteps));
+  let prevTierWith=null, prevLtcgActive=false, prevBracketTop=null, prevSSCapped=null;
+
+  for(let amt=0; amt<=maxAmt; amt+=step){
+    const cc = computeConversionCost(amt, ctx);
+    points.push({x:amt, y:cc.effR*100});
+
+    if(prevTierWith!==null && cc.tierWith!==prevTierWith){
+      crossings.push({x:amt, type:'irmaa', label:'Medicare Tier '+prevTierWith+'→'+cc.tierWith});
+    }
+    prevTierWith=cc.tierWith;
+
+    const ltcgActive = cc.cvtTxLtcg>1;
+    if(ltcgActive && !prevLtcgActive){
+      crossings.push({x:amt, type:'ltcg', label:'Qualified dividends/LTCG bumped to a higher bracket'});
+    }
+    prevLtcgActive=ltcgActive;
+
+    const bracketTop = BRAX[ctx.status].find(b=>cc.tiWith<b.m)?.m;
+    if(prevBracketTop!==null && bracketTop!==undefined && bracketTop!==prevBracketTop){
+      const rate = BRAX[ctx.status].find(b=>b.m===bracketTop)?.r;
+      crossings.push({x:amt, type:'bracket', label:'Enters the '+Math.round(rate*100)+'% ordinary bracket'});
+    }
+    if(bracketTop!==undefined) prevBracketTop=bracketTop;
+
+    // SS torpedo fully clearing (taxable SS reaches the 85% cap) — mfs status
+    // starts capped from amt=0 already (no torpedo range), so this correctly
+    // never fires for mfs.
+    if(ctx.ss>0){
+      const ssCapped = cc.ssWith >= ctx.ss*0.85*0.999;
+      if(ssCapped && prevSSCapped===false){
+        crossings.push({x:amt, type:'torpedo', label:'Social Security fully taxable (85% cap reached)'});
+      }
+      prevSSCapped=ssCapped;
+    }
+  }
+  return {points, crossings};
+}
+
 let myChart=null;
 function calc(){
 
@@ -2303,10 +2629,9 @@ function calc(){
     else snEl.innerHTML='';
   }
 
-  // ── PER-POINT TAX COST (shared with any future sweep over other amounts) ──
-  const cc = computeConversionCost(cvtAmt, {
-    income, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac
-  });
+  // ── PER-POINT TAX COST (ctx is also what the marginal-rate sweep uses) ──
+  const ccCtx = {income, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac};
+  const cc = computeConversionCost(cvtAmt, ccCtx);
   const {ssBase, ssWith, torpedoInc,
          agiBase, agiWith, ordAgiBase, ordAgiWith, std, srD, srDW, tiBase, tiWith,
          txOut, txIn, cvtTxFed, tiWithNoTorpedo, txInNoTorpedo, torpedoTax,
@@ -2631,6 +2956,9 @@ function calc(){
     }
   }
 
+  // ── MARGINAL-RATE CURVE ──
+  var marginalChartHTML = (cvtAmt>0 && tradBal>0) ? buildMarginalChartHTML() : '';
+
   // ── SCENARIO SENSITIVITY ──
   var sensitivityHTML = '';
   var needSensChart = false;
@@ -2754,6 +3082,7 @@ function calc(){
     +buildBeTimeline(curAge,beAge,leAge??le,survBE,isCouple)
     +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n,cvtTxLtcg)
     +'<div class="verdict '+vCls+'"><div class="vi">'+vIco+'</div><div class="vb"><strong>'+vHd+'</strong><p>'+vBd+'</p></div></div>'
+    +marginalChartHTML
     +sensitivityHTML
     + irmaaHTML
     +widowCliffHTML
@@ -2844,6 +3173,12 @@ function calc(){
     var d=new Date();
     var ds=d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
     ph.innerHTML='Roth Conversion Analysis &nbsp;·&nbsp; <span style="font-weight:400;font-size:.85rem;color:#3D4451">Generated '+ds+' &nbsp;·&nbsp; Age '+curAge+', converting '+fmt(cvtAmt)+' &nbsp;·&nbsp; Traditional IRA: '+fmt(tradBal)+'</span>';
+  }
+
+  // ── D3 MARGINAL-RATE CURVE ──
+  if(cvtAmt>0 && tradBal>0){
+    try{ renderMarginalChart({ctx:ccCtx, tradBal:tradBal, totalRetR:totalRetR, cvtAmt:cvtAmt}); }
+    catch(e){ console.warn("Marginal-rate chart error:", e); }
   }
 
   // ── D3 SENSITIVITY SURFACE ──
