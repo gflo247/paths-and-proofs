@@ -101,6 +101,34 @@ function buildExAgeBlock(json) {
   return lines.join('\n');
 }
 
+// RIX: a third sparse table for states whose retirement-income deduction needs one of
+// the richer shapes built for the relocation tool (age-tiered caps, stepped tables,
+// per-spouse phase-outs, offset-stacked deductions) — genuinely different mechanics than
+// RETDED's single flat cap, so kept in its own block rather than overloading RETDED's
+// simple {single,mfj,mfs,hoh} shape. Sourced from the SAME canonical taxRules.retirementIncome
+// data the relocation tool already consumes (see relocation/relo-engine.mjs) — one fact,
+// two generated views, same as RETDED/EXAGE's relationship to states.json.
+//
+// Deliberately excludes Michigan (already covered by RETDED — untouched, don't duplicate
+// the highest-scrutiny state's calculation across two mechanisms) and West Virginia (its
+// Social-Security-netting question is still an open product decision as of this writing —
+// wiring in the nominal, un-netted cap would overstate the benefit for most real users).
+const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ'];
+const RIX_OPEN = 'const RIX={';
+const RIX_CLOSE = '};';
+
+function buildRixBlock(json) {
+  const lines = [];
+  lines.push(RIX_OPEN);
+  for (const code of RIX_STATES) {
+    const ri = json[code]?.taxRules?.retirementIncome;
+    if (!ri) throw new Error(`states.json: ${code} has no taxRules.retirementIncome for RIX`);
+    lines.push(`  ${code}: ${JSON.stringify(ri)},`);
+  }
+  lines.push(RIX_CLOSE);
+  return lines.join('\n');
+}
+
 function splice(html, block, open, close) {
   const start = html.indexOf(open);
   if (start === -1) throw new Error(`Could not find "${open}" in ${HTML}`);
@@ -116,9 +144,11 @@ const html = readFileSync(HTML, 'utf8');
 const block = buildBlock(json);
 const rdBlock = buildRetDedBlock(json);
 const eaBlock = buildExAgeBlock(json);
+const rixBlock = buildRixBlock(json);
 const withSt = splice(html, block, OPEN, CLOSE);
 const withRd = splice(withSt, rdBlock, RD_OPEN, RD_CLOSE);
-const next = splice(withRd, eaBlock, EA_OPEN, EA_CLOSE);
+const withEa = splice(withRd, eaBlock, EA_OPEN, EA_CLOSE);
+const next = splice(withEa, rixBlock, RIX_OPEN, RIX_CLOSE);
 
 const isCheck = process.argv.includes('--check');
 if (isCheck) {

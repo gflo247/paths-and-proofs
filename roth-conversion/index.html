@@ -886,6 +886,23 @@ const EXAGE={
   PA: 59.5,
 };
 
+// RIX: sparse table for states whose retirement-income deduction needs a richer shape
+// than RETDED's single flat cap (age-tiered caps, stepped tables by AGI, per-spouse
+// phase-outs, offset-stacked deductions) — the same mechanics built for the relocation
+// tool's relo-engine.mjs, generated from the SAME canonical states.json taxRules data by
+// _dev/gen-st-table.mjs. Deliberately excludes Michigan (already covered by RETDED) and
+// West Virginia (its Social-Security-netting question is still an open product decision).
+const RIX={
+  GA: {"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":62,"cap":35000},{"minAge":65,"cap":65000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
+  LA: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":12000,"capJoint":24000,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
+  SC: {"treatment":"offsetStack","ageGate":null,"exclusion":null,"offsetStack":{"tier1AgeGate":65,"tier1CapBelow":3000,"tier1CapAtOrAbove":10000,"tier2AgeGate":65,"tier2Ceiling":15000}},
+  VA: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"perSpousePhaseout","ageGate":65,"perPersonCap":12000,"thresholdAGI":{"single":50000,"joint":75000},"thresholdExcludesSS":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
+  WI: {"treatment":"exclusion","ageGate":67,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":67,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
+  NM: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedAmount","ageGate":65,"perQualifyingSpouse":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"steps":{"single":[{"upTo":18000,"amt":8000},{"upTo":19500,"amt":7000},{"upTo":21000,"amt":6000},{"upTo":22500,"amt":5000},{"upTo":24000,"amt":4000},{"upTo":25500,"amt":3000},{"upTo":27000,"amt":2000},{"upTo":28500,"amt":1000},{"upTo":null,"amt":0}],"joint":[{"upTo":30000,"amt":8000},{"upTo":33000,"amt":7000},{"upTo":36000,"amt":6000},{"upTo":39000,"amt":5000},{"upTo":42000,"amt":4000},{"upTo":45000,"amt":3000},{"upTo":48000,"amt":2000},{"upTo":51000,"amt":1000},{"upTo":null,"amt":0}]}}},
+  CT: {"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":{"single":75000,"joint":100000},"zeroByAGI":{"single":100000,"joint":150000},"excludesIRA":false,"steps":{"single":[{"upTo":74999,"pct":1},{"upTo":77499,"pct":0.85},{"upTo":79999,"pct":0.7},{"upTo":82499,"pct":0.55},{"upTo":84999,"pct":0.4},{"upTo":87499,"pct":0.25},{"upTo":89999,"pct":0.1},{"upTo":94999,"pct":0.05},{"upTo":99999,"pct":0.025},{"upTo":null,"pct":0}],"joint":[{"upTo":99999,"pct":1},{"upTo":104999,"pct":0.85},{"upTo":109999,"pct":0.7},{"upTo":114999,"pct":0.55},{"upTo":119999,"pct":0.4},{"upTo":124999,"pct":0.25},{"upTo":129999,"pct":0.1},{"upTo":139999,"pct":0.05},{"upTo":149999,"pct":0.025},{"upTo":null,"pct":0}]}}},
+  NJ: {"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":75000,"capJoint":100000,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"thresholdExcludesSS":true,"steps":{"single":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.375},{"upTo":150000,"pct":0.1875},{"upTo":null,"pct":0}],"joint":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.5},{"upTo":150000,"pct":0.25},{"upTo":null,"pct":0}]}}},
+};
+
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
 // IRS SS taxation thresholds — NOT inflation-adjusted since 1984/1993
 // otherIncome = wages/pensions/etc, EXCLUDING Social Security
@@ -2406,6 +2423,91 @@ function loadSavedInputs(){
 // hand-copied version of the state-tax math that quietly fell out of sync
 // with this exact logic once (the Michigan-deduction bug), which is the
 // failure mode having one shared function exists to prevent.
+// Resolve the excluded dollar amount for a RIX-table state's retirement-income
+// deduction, given the household's competing amount (mirrors how RETDED already
+// treats "income" as the pension-equivalent that competes with a conversion for a
+// shared cap) and the AGI/SS figures the deduction's own threshold tests against.
+// Ports the same shapes verified for the relocation tool (relo-engine.mjs,
+// computeStateIncomeTax) — kept faithful to that behavior by the parity test in
+// _dev/test-roth-rix.mjs, not by copy-paste discipline alone. Two differences from
+// the relocation port, both intentional: (1) no IRA/pension pooling step, since this
+// tool already has a single "competing amount" the same way RETDED does; (2)
+// agiProxy/ssAmt come from THIS tool's own AGI calc (calcTaxableSS-derived, i.e. the
+// real taxable portion of Social Security), not relo-engine's cruder full-benefit sum.
+function rixExcluded(rix, status, age, spouseAge, competingAmt, agiProxy, ssAmt){
+  const tStatus = status==='mfj' ? 'joint' : 'single';
+  const isJoint = status==='mfj';
+  const ex = rix.exclusion;
+
+  if(rix.treatment==='exclusion' && ex.cliffType==='ageTieredCap'){
+    // GA (two real age tiers) / WI (one tier, but still needs summing so a joint
+    // return with only one qualifying spouse doesn't get the full doubled cap).
+    const tierFor=(a)=>{ let c=0; for(const t of ex.perPersonTiers) if(a>=t.minAge) c=Math.max(c,t.cap); return c; };
+    const cap = tierFor(age) + (isJoint ? tierFor(spouseAge ?? age) : 0);
+    return Math.min(cap, competingAmt);
+  }
+
+  if(rix.treatment==='exclusion' && ex.cliffType==='steppedAmount'){
+    // NM: dollar amount (not %) tiered by AGI, applied x1 or x2 by qualifying-spouse count.
+    const tiers = ex.steps[tStatus];
+    const tier = tiers.find(t=>t.upTo==null || agiProxy<=t.upTo) || tiers[tiers.length-1];
+    const qualifies=(a)=> ex.ageGate==null || a>=ex.ageGate;
+    const count = ex.perQualifyingSpouse
+      ? (qualifies(age)?1:0) + (isJoint && qualifies(spouseAge ?? age) ? 1:0)
+      : (qualifies(age)?1:0);
+    return Math.min(tier.amt*count, competingAmt);
+  }
+
+  if(rix.treatment==='exclusion' && ex.cliffType==='perSpousePhaseout'){
+    // VA: per-person cap summed by qualifying-spouse count, then phased out linearly
+    // above a threshold fixed by filing status (not by qualifying-spouse count).
+    const count = (age>=ex.ageGate?1:0) + (isJoint && (spouseAge??age)>=ex.ageGate ? 1:0);
+    const cap = ex.perPersonCap * count;
+    if(cap<=0) return 0;
+    const threshold = ex.thresholdAGI[tStatus];
+    const thresholdProxy = ex.thresholdExcludesSS ? agiProxy-ssAmt : agiProxy;
+    const zero = threshold+cap;
+    let frac;
+    if(thresholdProxy<=threshold) frac=1;
+    else if(thresholdProxy>=zero) frac=0;
+    else frac = 1-(thresholdProxy-threshold)/(zero-threshold);
+    return Math.min(cap*frac, competingAmt);
+  }
+
+  if(rix.treatment==='offsetStack'){
+    // SC: two deductions sharing one $15,000/person ceiling (not additive to $25k).
+    const os = rix.offsetStack;
+    const personShelter=(personAge)=>{
+      const tier1Cap = personAge>=os.tier1AgeGate ? os.tier1CapAtOrAbove : os.tier1CapBelow;
+      const tier1 = Math.min(tier1Cap, competingAmt);
+      const tier2 = personAge>=os.tier2AgeGate ? Math.max(0, os.tier2Ceiling-tier1) : 0;
+      return Math.min(tier1+tier2, competingAmt);
+    };
+    return isJoint
+      ? Math.min(personShelter(age)+personShelter(spouseAge ?? age), competingAmt)
+      : personShelter(age);
+  }
+
+  // Generic fallback (LA's flat age-gated cap; CT/NJ's stepped-percent-of-actual-income)
+  // — gated on the OUTER ageGate using the primary filer's age only, matching
+  // relo-engine's own longstanding behavior for these states (a pre-existing
+  // simplification — the tool doesn't model per-spouse IRA ownership — not something
+  // introduced by this port).
+  const gateOk = rix.ageGate==null || age>=rix.ageGate;
+  if(!gateOk) return 0;
+  const cap = tStatus==='joint' ? ex.capJoint : ex.capSingle;
+
+  if(ex.cliffType==='steppedPercent'){
+    const thresholdProxy = ex.thresholdExcludesSS ? agiProxy-ssAmt : agiProxy;
+    const tiers = ex.steps[tStatus];
+    const tier = tiers.find(t=>t.upTo==null || thresholdProxy<=t.upTo) || tiers[tiers.length-1];
+    const excluded = competingAmt*tier.pct;
+    return tier.capped ? Math.min(cap, excluded) : excluded;
+  }
+
+  return Math.min(cap ?? 0, competingAmt); // "hard" (LA)
+}
+
 // ctx: {income, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac}
 function computeConversionCost(cvtAmt, ctx){
   const {income, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac} = ctx;
@@ -2481,7 +2583,8 @@ function computeConversionCost(cvtAmt, ctx){
   // Computed before/with the conversion, mirroring the federal calc, so the
   // deduction only shelters conversion income once "income" hasn't already
   // used up the cap.
-  const rd = RETDED[stateCode];
+  const rd  = RETDED[stateCode];
+  const rix = RIX[stateCode];
   let cvtTxSt;
   if(exQualifies){
     cvtTxSt = 0;
@@ -2489,6 +2592,14 @@ function computeConversionCost(cvtAmt, ctx){
     const cap      = rd[status] ?? rd.single;
     const stTiBase = Math.max(0, income - Math.min(cap, income));
     const stTiWith = Math.max(0, (income+taxableCvt) - Math.min(cap, income+taxableCvt));
+    cvtTxSt = (stTiWith - stTiBase) * stD.cr;
+  } else if(rix){
+    // Same before/with delta pattern as RETDED above, using this tool's own more
+    // precise AGI/taxable-SS figures (already computed above) rather than a cruder proxy.
+    const exBase   = rixExcluded(rix, status, curAge, spouseAge, income, agiBase, ssBase);
+    const exWith   = rixExcluded(rix, status, curAge, spouseAge, income+taxableCvt, agiWith, ssWith);
+    const stTiBase = Math.max(0, income - exBase);
+    const stTiWith = Math.max(0, (income+taxableCvt) - exWith);
     cvtTxSt = (stTiWith - stTiBase) * stD.cr;
   } else {
     cvtTxSt = taxableCvt * stD.cr;

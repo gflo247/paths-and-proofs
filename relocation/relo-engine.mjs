@@ -77,12 +77,18 @@ function allowedExclusion(excl, isIRA, agiProxy, status, cap, actualAmount) {
     return Math.min(cap, actualAmount);
   }
   if (excl.cliffType === "phaseout") {
+    // Not currently used by any state (CT migrated to steppedPercent, VA to
+    // perSpousePhaseout) — kept correct rather than removed, in case a future state
+    // fits this simpler shape. Cap the PHASED amount by actual income, not the other
+    // way around: min(cap,actual)*frac and min(cap*frac,actual) diverge whenever
+    // cap > actual and frac < 1 (found via the perSpousePhaseout parity test — the
+    // same order mistake, caught before it could reach a live state's data).
     const full = excl.fullBelowAGI[status], zero = excl.zeroByAGI[status];
     let frac;
     if (agiProxy <= full) frac = 1;
     else if (agiProxy >= zero) frac = 0;
-    else frac = 1 - (agiProxy - full) / (zero - full);  // CT-style: linear ramp to zero
-    return Math.min(cap, actualAmount) * frac;
+    else frac = 1 - (agiProxy - full) / (zero - full);
+    return Math.min(cap * frac, actualAmount);
   }
   if (excl.cliffType === "steppedPercent") {
     // Tiered by AGI; each tier excludes a % of ACTUAL income, found by the tier whose
