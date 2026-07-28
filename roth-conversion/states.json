@@ -959,9 +959,9 @@
     "treatment": "exclusion",
     "ageGate": null,
     "exclusion": {
-     "capSingle": 75000,
-     "capJoint": 100000,
-     "cliffType": "phaseout",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "steppedPercent",
      "cliffAGI": null,
      "fullBelowAGI": {
       "single": 75000,
@@ -971,7 +971,33 @@
       "single": 100000,
       "joint": 150000
      },
-     "excludesIRA": false
+     "excludesIRA": false,
+     "steps": {
+      "single": [
+       {"upTo": 74999, "pct": 1},
+       {"upTo": 77499, "pct": 0.85},
+       {"upTo": 79999, "pct": 0.70},
+       {"upTo": 82499, "pct": 0.55},
+       {"upTo": 84999, "pct": 0.40},
+       {"upTo": 87499, "pct": 0.25},
+       {"upTo": 89999, "pct": 0.10},
+       {"upTo": 94999, "pct": 0.05},
+       {"upTo": 99999, "pct": 0.025},
+       {"upTo": null, "pct": 0}
+      ],
+      "joint": [
+       {"upTo": 99999, "pct": 1},
+       {"upTo": 104999, "pct": 0.85},
+       {"upTo": 109999, "pct": 0.70},
+       {"upTo": 114999, "pct": 0.55},
+       {"upTo": 119999, "pct": 0.40},
+       {"upTo": 124999, "pct": 0.25},
+       {"upTo": 129999, "pct": 0.10},
+       {"upTo": 139999, "pct": 0.05},
+       {"upTo": 149999, "pct": 0.025},
+       {"upTo": null, "pct": 0}
+      ]
+     }
     }
    },
    "pensionIncome": {
@@ -1317,11 +1343,15 @@
    },
    "retirementIncome": {
     "treatment": "exclusion",
-    "ageGate": 65,
+    "ageGate": 62,
     "exclusion": {
-     "capSingle": 65000,
-     "capJoint": 130000,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 62, "cap": 35000},
+      {"minAge": 65, "cap": 65000}
+     ],
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
@@ -2159,7 +2189,7 @@
     "ageGate": 65,
     "exclusion": {
      "capSingle": 12000,
-     "capJoint": 12000,
+     "capJoint": 24000,
      "cliffType": "hard",
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -2718,8 +2748,8 @@
     "treatment": "exclusion",
     "ageGate": null,
     "exclusion": {
-     "capSingle": 65987,
-     "capJoint": 131794,
+     "capSingle": 67610,
+     "capJoint": 135220,
      "cliffType": "hard",
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -3741,14 +3771,26 @@
     "exclusion": {
      "capSingle": 75000,
      "capJoint": 100000,
-     "cliffType": "hard",
-     "cliffAGI": {
-      "single": 150000,
-      "joint": 150000
-     },
+     "cliffType": "steppedPercent",
+     "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
-     "excludesIRA": false
+     "excludesIRA": false,
+     "thresholdExcludesSS": true,
+     "steps": {
+      "single": [
+       {"upTo": 100000, "pct": 1, "capped": true},
+       {"upTo": 125000, "pct": 0.375},
+       {"upTo": 150000, "pct": 0.1875},
+       {"upTo": null, "pct": 0}
+      ],
+      "joint": [
+       {"upTo": 100000, "pct": 1, "capped": true},
+       {"upTo": 125000, "pct": 0.5},
+       {"upTo": 150000, "pct": 0.25},
+       {"upTo": null, "pct": 0}
+      ]
+     }
     }
    },
    "pensionIncome": {
@@ -3929,13 +3971,39 @@
     "treatment": "exclusion",
     "ageGate": 65,
     "exclusion": {
-     "capSingle": 8000,
-     "capJoint": 8000,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "steppedAmount",
+     "ageGate": 65,
+     "perQualifyingSpouse": true,
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
-     "excludesIRA": false
+     "excludesIRA": false,
+     "steps": {
+      "single": [
+       {"upTo": 18000, "amt": 8000},
+       {"upTo": 19500, "amt": 7000},
+       {"upTo": 21000, "amt": 6000},
+       {"upTo": 22500, "amt": 5000},
+       {"upTo": 24000, "amt": 4000},
+       {"upTo": 25500, "amt": 3000},
+       {"upTo": 27000, "amt": 2000},
+       {"upTo": 28500, "amt": 1000},
+       {"upTo": null, "amt": 0}
+      ],
+      "joint": [
+       {"upTo": 30000, "amt": 8000},
+       {"upTo": 33000, "amt": 7000},
+       {"upTo": 36000, "amt": 6000},
+       {"upTo": 39000, "amt": 5000},
+       {"upTo": 42000, "amt": 4000},
+       {"upTo": 45000, "amt": 3000},
+       {"upTo": 48000, "amt": 2000},
+       {"upTo": 51000, "amt": 1000},
+       {"upTo": null, "amt": 0}
+      ]
+     }
     }
    },
    "pensionIncome": {
@@ -5080,16 +5148,15 @@
     "taxed": false
    },
    "retirementIncome": {
-    "treatment": "exclusion",
+    "treatment": "offsetStack",
     "ageGate": null,
-    "exclusion": {
-     "capSingle": 10000,
-     "capJoint": 10000,
-     "cliffType": "hard",
-     "cliffAGI": null,
-     "fullBelowAGI": null,
-     "zeroByAGI": null,
-     "excludesIRA": false
+    "exclusion": null,
+    "offsetStack": {
+     "tier1AgeGate": 65,
+     "tier1CapBelow": 3000,
+     "tier1CapAtOrAbove": 10000,
+     "tier2AgeGate": 65,
+     "tier2Ceiling": 15000
     }
    },
    "pensionIncome": {
@@ -5664,9 +5731,24 @@
     "taxed": false
    },
    "retirementIncome": {
-    "treatment": "taxed",
-    "ageGate": null,
-    "exclusion": null
+    "treatment": "exclusion",
+    "ageGate": 65,
+    "exclusion": {
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "perSpousePhaseout",
+     "ageGate": 65,
+     "perPersonCap": 12000,
+     "thresholdAGI": {
+      "single": 50000,
+      "joint": 75000
+     },
+     "thresholdExcludesSS": true,
+     "cliffAGI": null,
+     "fullBelowAGI": null,
+     "zeroByAGI": null,
+     "excludesIRA": false
+    }
    },
    "pensionIncome": {
     "sameAs": "retirementIncome"
@@ -5904,7 +5986,7 @@
     "ageGate": 65,
     "exclusion": {
      "capSingle": 8000,
-     "capJoint": 8000,
+     "capJoint": 16000,
      "cliffType": "hard",
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -6041,9 +6123,20 @@
     "taxed": false
    },
    "retirementIncome": {
-    "treatment": "taxed",
-    "ageGate": null,
-    "exclusion": null
+    "treatment": "exclusion",
+    "ageGate": 67,
+    "exclusion": {
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 67, "cap": 24000}
+     ],
+     "cliffAGI": null,
+     "fullBelowAGI": null,
+     "zeroByAGI": null,
+     "excludesIRA": false
+    }
    },
    "pensionIncome": {
     "sameAs": "retirementIncome"
