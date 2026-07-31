@@ -413,6 +413,7 @@
     <button class="vt-btn vt-neu" data-vis="borderline" onclick="setVisState('borderline')">⚖ Too close to call</button>
     <button class="vt-btn vt-grn active" data-vis="roth" onclick="setVisState('roth')">↑ Convert to Roth</button>
   </div>
+  <p style="font-size:.68rem;color:var(--muted);text-align:center;margin:.3rem 0 0;opacity:.75">Preview only — switches the illustration below, doesn't load data. For a working example, use the cards further down.</p>
 
   <!-- Toggleable visual -->
   <!-- Toggleable visual -->
@@ -660,13 +661,13 @@
         <div class="flr"><label>Other Investment Income (optional)</label><button class="tb" onclick="toggleTip('nii')">ⓘ</button></div>
         <div class="idollar"><input type="number" id="niiIncome" value="0" min="0" step="500" oninput="calc()"></div>
         <div class="ttip" id="tip-nii"><strong>What is this field?</strong> Interest, non-qualified dividends, short-term capital gains, and rental income — enter your annual total here. This tool taxes it at your ordinary income rate and includes it in the income that determines your tax bracket, Social Security taxation, and Medicare IRMAA tier, the same as wages or pension income. It also adds the 3.8% federal NIIT surcharge once your total income tops $200,000 (single) or $250,000 (married) — a Roth conversion counts as income and can push you over that threshold. <strong>Have qualified dividends or long-term capital gains?</strong> Those get a lower preferential rate (0/15/20%) — enter them in the field below instead, not here. On a 1099-DIV, box 1a (ordinary dividends) already includes box 1b (qualified dividends) as a subset — put only the non-qualified portion (1a minus 1b) here to avoid double-counting. Enter $0 if this doesn't apply to you.</div>
-        <div class="hint">Not sure? Enter $0 — only relevant if you have investment income outside your retirement accounts</div>
+        <div class="hint">Not sure? Enter $0 — this means interest, rent, or investments held under a year. (Held longer? Use the field below instead.)</div>
       </div>
       <div class="field">
         <div class="flr"><label>Qualified Dividends &amp; Long-Term Capital Gains (optional)</label><button class="tb" onclick="toggleTip('ltcg')">ⓘ</button></div>
         <div class="idollar"><input type="number" id="ltcgIncome" value="0" min="0" step="500" oninput="calc()"></div>
         <div class="ttip" id="tip-ltcg"><strong>What is this field?</strong> Qualified dividends (1099-DIV box 1b) and net long-term capital gains — these get the federal preferential rate (0%, 15%, or 20%) instead of your ordinary bracket rate, and this tool models that correctly, stacking them on top of your other income the way the IRS actually calculates it. A Roth conversion is ordinary income that stacks underneath this, so converting can push some of this income into a higher preferential-rate bracket — this tool accounts for that too. This income still counts toward Medicare IRMAA, Social Security taxation, and the 3.8% NIIT surcharge, just not your ordinary federal bracket. Enter $0 if this doesn't apply to you.</div>
-        <div class="hint">Not sure? Enter $0 — this is specifically the qualified/long-term portion; short-term gains and non-qualified dividends go in the field above</div>
+        <div class="hint">Not sure? Enter $0 — this means investments held over a year. (Shorter-term, or other investment income? Use the field above instead.)</div>
       </div>
       <div class="field">
         <div class="flr"><label>Amount You'd Like to Convert</label><button class="tb" onclick="toggleTip('convert')">ⓘ</button></div>
@@ -708,7 +709,7 @@
         <div class="ipct"><input type="number" id="retRate" value="22" min="0" max="60" oninput="calc()"></div>
         <div class="ttip" id="tip-retrate"><strong>Federal only — I add your state rate automatically.</strong> Enter your expected federal bracket rate on IRA withdrawals. Select your state above and I'll fold the state rate in automatically so the comparison is apples-to-apples. Use the estimator below if you are unsure.</div>
         <details class="rest">
-          <summary>Not sure? Calculate your retirement rate here ↗</summary>
+          <summary>Not sure? Calculate your retirement rate here</summary>
           <div class="restb">
             <p style="font-size:.82rem;color:var(--muted);margin-bottom:8px;line-height:1.5">Enter your expected retirement income sources and I'll compute the marginal federal rate on your IRA withdrawals — including how conversions can trigger extra tax on Social Security benefits.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:6px">
@@ -3192,7 +3193,7 @@ function calc(){
     +'<div class="rgrid">'
     +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):''))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + NIIT: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')+'</div></div>'
     +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Not in range')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
-    +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'</div></div>'
+    +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'<br><span style="font-size:.76rem">Full age-by-age odds below ↓</span></div></div>'
     +'</div>'
     +buildBeTimeline(curAge,beAge,leAge??le,survBE,isCouple)
     +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n,cvtTxLtcg)
@@ -3229,7 +3230,7 @@ function calc(){
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">ACA (Affordable Care Act) marketplace subsidies.</strong> If you retire before age 65, Roth conversion income counts toward your ACA marketplace income and can reduce or eliminate premium tax credits — sometimes by thousands of dollars per year. For early retirees, this can completely change the conversion math. Not modeled here at all.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">State rate accuracy.</strong> Rates shown are approximate at moderate incomes. Your actual rate differs based on deductions, local taxes, and income level. Verify locally before converting.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Hidden Social Security tax in retirement.</strong> If you have substantial income in retirement, this effect can also raise your effective retirement rate — potentially making the Roth more favorable than shown.</p>'
-    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Widow/widower tax cliff.</strong> When a spouse dies, filing status changes from Married (jointly) to Single, often dramatically increasing effective tax rates and compressing Medicare brackets. For married couples, this is one of the strongest arguments for converting while both spouses are alive — not modeled here.</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Widow/widower tax cliff.</strong> When a spouse dies, filing status changes from Married (jointly) to Single, often dramatically increasing effective tax rates and compressing Medicare brackets. For married couples, this is one of the strongest arguments for converting while both spouses are alive.'+(status==='mfj'?' The note above shows the general federal brackets that shift — it isn\'t a personalized recalculation of your own results, which is what "not modeled" means here.':' Not modeled here — the numbers above are your own filing status, not a recalculation of what happens after this transition.')+'</p>'
     +'</div>'
     +'<div><p style="margin-bottom:.45rem"><strong style="color:var(--warn)">Medium impact</strong></p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Period vs. cohort life table.</strong> I use a 2023 mortality snapshot. A cohort table accounts for improving life expectancy over time — giving somewhat longer expected lifespans, which further favors the Roth.</p>'
