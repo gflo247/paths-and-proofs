@@ -110,10 +110,12 @@ function buildExAgeBlock(json) {
 // two generated views, same as RETDED/EXAGE's relationship to states.json.
 //
 // Deliberately excludes Michigan (already covered by RETDED — untouched, don't duplicate
-// the highest-scrutiny state's calculation across two mechanisms) and West Virginia (its
-// Social-Security-netting question is still an open product decision as of this writing —
-// wiring in the nominal, un-netted cap would overstate the benefit for most real users).
-const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ'];
+// the highest-scrutiny state's calculation across two mechanisms). West Virginia's
+// Social-Security-netting question (its $8k/$16k modification shares one pool with SS)
+// was resolved 2026-07-31 — netAgainstSS:true on its taxRules.retirementIncome.exclusion
+// nets the SS benefit against the cap before it reaches this table, so it's included below
+// alongside the other RIX-shape states rather than falling back to the flat-cr approximation.
+const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV'];
 const RIX_OPEN = 'const RIX={';
 const RIX_CLOSE = '};';
 

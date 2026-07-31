@@ -50,7 +50,7 @@ function check(label, actual, expected, tolerance = 1) {
 // combinations, comparing rixExcluded's returned excluded-amount against what relo-engine
 // implies (competingAmt - penTaxable, feeding the SAME amount in as `pension` alone so
 // there's nothing to pool).
-const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ'];
+const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV'];
 const statuses = ['single', 'mfj'];
 const ages = [45, 55, 62, 63, 65, 67, 70, 80];
 const competingAmts = [0, 5000, 20000, 50000, 90000, 150000];
@@ -83,5 +83,37 @@ for (const code of RIX_STATES) {
 }
 
 console.log(`Checked ${checked.toLocaleString()} combinations across ${RIX_STATES.length} states.`);
+
+// WV-only supplemental sweep: netAgainstSS nets the SS BENEFIT against the cap, so
+// (unlike every other RIX state) its result actually depends on a nonzero ss — the
+// ss=0 sweep above only exercises the no-netting-effect base case. Feeding the same
+// `ss` value as both rixExcluded's ssGross and relo-engine's income.ss is an
+// equivalence-testing simplification (real callers use taxable-SS for the tool's own
+// ssAmt param, a different, generally smaller figure) — fine here since this test
+// checks the netAgainstSS SHAPE matches, not AGI precision (see file header).
+{
+  const rix = states.WV.taxRules.retirementIncome;
+  const rules = states.WV.taxRules;
+  const ssAmounts = [0, 3000, 8000, 16000, 24000];
+  let wvChecked = 0;
+  for (const status of statuses) {
+    for (const age of ages) {
+      for (const spouseAge of status === 'mfj' ? ages : [age]) {
+        for (const competingAmt of competingAmts) {
+          for (const ss of ssAmounts) {
+            wvChecked++;
+            const agiProxy = competingAmt + ss;
+            const got = rixExcluded(rix, status, age, spouseAge, competingAmt, agiProxy, 0, ss);
+            const relo = computeStateIncomeTax(rules, status, { pension: competingAmt, ss, age, spouseAge });
+            const expected = competingAmt - relo.breakdown.penTaxable;
+            check(`WV ${status} age=${age} spouseAge=${spouseAge} amt=${competingAmt} ss=${ss}`, got, expected);
+          }
+        }
+      }
+    }
+  }
+  console.log(`Checked ${wvChecked.toLocaleString()} additional WV ss-netting combinations.`);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -223,7 +223,16 @@ export function computeStateIncomeTax(rules, status, income) {
     ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, iraWithdrawal, pension));
   } else if (pooled && ri.treatment === "exclusion") {
     const gateOk = ri.ageGate == null || age >= ri.ageGate;
-    const cap = tStatus === "joint" ? ri.exclusion.capJoint : ri.exclusion.capSingle;
+    let cap = tStatus === "joint" ? ri.exclusion.capJoint : ri.exclusion.capSingle;
+    // WV: the $8k/$16k modification shares ONE statutory pool with Social Security
+    // (and other pension exclusions) — net the SS BENEFIT itself against the cap,
+    // not its taxable portion, since WV exempts SS from state tax regardless of
+    // federal taxability (confirmed: W. Va. Code 11-21-12(c)(9)). No per-spouse SS
+    // split is available (only combined household `ss`), so a joint return nets the
+    // full household SS against the full household capJoint — a household-level
+    // approximation, same spirit as how GA/WI/SC apply a per-person formula against
+    // combined household income elsewhere in this file when a true split isn't known.
+    if (ri.exclusion.netAgainstSS) cap = Math.max(0, cap - ss);
     // NJ's threshold is its own "Total Income" line, which excludes Social Security
     // entirely — unlike every other state here, which thresholds off AGI (SS included).
     const thresholdProxy = ri.exclusion.thresholdExcludesSS ? agiProxy - ss : agiProxy;

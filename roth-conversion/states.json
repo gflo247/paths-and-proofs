@@ -5885,7 +5885,7 @@
   "roth": {
    "cr": 0.0458,
    "ex": false,
-   "note": "Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable; seniors 65+ get an $8,000 modification. Social Security is now fully exempt for all residents (phase-out completed in 2026)."
+   "note": "Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable. Seniors 65+ get an $8,000 modification ($16,000 married), but it shares one pool with your Social Security benefit and other pension exclusions (W. Va. Code section 11-21-12(c)(9)) — if your Social Security alone exceeds $8,000, which it does for most retirees already claiming it, there's little or nothing left to shelter IRA or conversion income. This calculator nets your Social Security benefit against the cap automatically, so it's fullest for those who haven't started claiming Social Security yet."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5991,7 +5991,8 @@
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
-     "excludesIRA": false
+     "excludesIRA": false,
+     "netAgainstSS": true
     }
    },
    "pensionIncome": {

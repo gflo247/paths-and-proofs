@@ -271,5 +271,29 @@ function check(label, actual, expected, tolerance = 1) {
   check('WV joint, $16k combined: fully excluded under the fixed $16,000 cap', joint.breakdown.penTaxable + joint.breakdown.iraTaxable, 0);
 }
 
+// --- 11. WV Social-Security netting (netAgainstSS:true, resolved 2026-07-31) ---
+// The $8k/$16k modification shares one pool with SS (W. Va. Code 11-21-12(c)(9)).
+{
+  const wv = states.WV.taxRules;
+  check('WV netAgainstSS flag is set', wv.retirementIncome.exclusion.netAgainstSS, true);
+
+  // Gap-year retiree (hasn't claimed SS yet): full nominal cap still applies.
+  const gapYear = computeStateIncomeTax(wv, 'single', { ss: 0, pension: 8000, age: 65 });
+  check('WV single, no SS yet: full $8,000 still excluded', gapYear.breakdown.penTaxable, 0);
+
+  // SS alone already exceeds the cap: nothing left to shelter IRA/pension income.
+  const ssExceedsCap = computeStateIncomeTax(wv, 'single', { ss: 24000, pension: 8000, age: 65 });
+  check('WV single, SS > $8k: cap fully consumed by SS, $0 excluded', ssExceedsCap.breakdown.penTaxable, 8000);
+
+  // Partial netting: $8,000 - $3,000 SS = $5,000 of cap remains.
+  const partial = computeStateIncomeTax(wv, 'single', { ss: 3000, pension: 8000, age: 65 });
+  check('WV single, SS $3k: $5,000 of the cap remains, $3,000 taxable', partial.breakdown.penTaxable, 3000);
+
+  // Joint, household-level netting (no per-spouse SS split available): $16,000 cap
+  // less the full household SS benefit.
+  const jointPartial = computeStateIncomeTax(wv, 'mfj', { ss: 10000, pension: 10000, iraWithdrawal: 6000, age: 65, spouseAge: 65 });
+  check('WV joint, SS $10k: $6,000 of the $16,000 cap remains', jointPartial.breakdown.penTaxable + jointPartial.breakdown.iraTaxable, 16000 - 6000);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

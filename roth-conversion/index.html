@@ -868,7 +868,7 @@ const ST={
   VT: {n:'Vermont',cr:.066,ex:false,note:'Graduated 3.35% to 8.75%; the 8.75% top only starts near $230k single / $280k joint, so a typical conversion lands in the 6.6% band used here. IRA and Roth-conversion income is fully taxable (only a small $10k deduction for certain pension/government retirement income, income-limited). A conversion can also push you past Vermont\'s Social Security exemption thresholds, taxing more of your benefits that year.'},
   VA: {n:'Virginia',cr:.0575,ex:false,note:'Top rate 5.75% starts at just $17,000, so essentially all conversion income is taxed at 5.75%. IRA and Roth-conversion income is taxable. Those 65+ get a $12,000 age deduction, but it phases out dollar-for-dollar above $50,000 single / $75,000 joint AGI — and a conversion raises your AGI, so a large one can erase the deduction. Social Security is fully exempt.'},
   WA: {n:'Washington',cr:0,ex:true,note:'No income tax, so IRA and Roth-conversion income is untaxed (the 7% capital-gains tax exempts retirement accounts). One thing to watch: a new state income tax of 9.9% on household income above $1 million takes effect in 2028 and counts conversion income toward that threshold — so only a very large conversion in 2028 or later could be affected. Social Security is exempt.'},
-  WV: {n:'West Virginia',cr:.0458,ex:false,note:'Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable; seniors 65+ get an $8,000 modification. Social Security is now fully exempt for all residents (phase-out completed in 2026).'},
+  WV: {n:'West Virginia',cr:.0458,ex:false,note:'Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable. Seniors 65+ get an $8,000 modification ($16,000 married), but it shares one pool with your Social Security benefit and other pension exclusions (W. Va. Code section 11-21-12(c)(9)) — if your Social Security alone exceeds $8,000, which it does for most retirees already claiming it, there\'s little or nothing left to shelter IRA or conversion income. This calculator nets your Social Security benefit against the cap automatically, so it\'s fullest for those who haven\'t started claiming Social Security yet.'},
   WI: {n:'Wisconsin',cr:.053,ex:false,note:'Graduated 3.5% to 7.65%; the 7.65% top only starts above ~$315k single / ~$420k joint, so a typical conversion lands in the 5.3% band used here. IRA and Roth-conversion income is taxable, but a 2025 law (Act 15) lets those 67+ subtract up to $24,000 ($48,000 joint) of retirement income — including IRA/conversion income — so part of a conversion may be sheltered. Social Security is fully exempt.'},
   WY: {n:'Wyoming',cr:0,ex:true,note:'No state income tax.'},
   DC: {n:'Washington D.C.',cr:.085,ex:false,note:'Graduated 4% to 10.75%; the 10.75% top only applies above $1M, while the 8.5% band covers roughly $60k-$250k where most conversion income lands (used here). IRA, 401(k), and Roth-conversion income is fully taxable; there is no retirement-income exclusion. Social Security is exempt.'},
@@ -906,6 +906,7 @@ const RIX={
   NM: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedAmount","ageGate":65,"perQualifyingSpouse":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"steps":{"single":[{"upTo":18000,"amt":8000},{"upTo":19500,"amt":7000},{"upTo":21000,"amt":6000},{"upTo":22500,"amt":5000},{"upTo":24000,"amt":4000},{"upTo":25500,"amt":3000},{"upTo":27000,"amt":2000},{"upTo":28500,"amt":1000},{"upTo":null,"amt":0}],"joint":[{"upTo":30000,"amt":8000},{"upTo":33000,"amt":7000},{"upTo":36000,"amt":6000},{"upTo":39000,"amt":5000},{"upTo":42000,"amt":4000},{"upTo":45000,"amt":3000},{"upTo":48000,"amt":2000},{"upTo":51000,"amt":1000},{"upTo":null,"amt":0}]}}},
   CT: {"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":{"single":75000,"joint":100000},"zeroByAGI":{"single":100000,"joint":150000},"excludesIRA":false,"steps":{"single":[{"upTo":74999,"pct":1},{"upTo":77499,"pct":0.85},{"upTo":79999,"pct":0.7},{"upTo":82499,"pct":0.55},{"upTo":84999,"pct":0.4},{"upTo":87499,"pct":0.25},{"upTo":89999,"pct":0.1},{"upTo":94999,"pct":0.05},{"upTo":99999,"pct":0.025},{"upTo":null,"pct":0}],"joint":[{"upTo":99999,"pct":1},{"upTo":104999,"pct":0.85},{"upTo":109999,"pct":0.7},{"upTo":114999,"pct":0.55},{"upTo":119999,"pct":0.4},{"upTo":124999,"pct":0.25},{"upTo":129999,"pct":0.1},{"upTo":139999,"pct":0.05},{"upTo":149999,"pct":0.025},{"upTo":null,"pct":0}]}}},
   NJ: {"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":75000,"capJoint":100000,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"thresholdExcludesSS":true,"steps":{"single":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.375},{"upTo":150000,"pct":0.1875},{"upTo":null,"pct":0}],"joint":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.5},{"upTo":150000,"pct":0.25},{"upTo":null,"pct":0}]}}},
+  WV: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":8000,"capJoint":16000,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"netAgainstSS":true}},
 };
 
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
@@ -2439,7 +2440,10 @@ function loadSavedInputs(){
 // tool already has a single "competing amount" the same way RETDED does; (2)
 // agiProxy/ssAmt come from THIS tool's own AGI calc (calcTaxableSS-derived, i.e. the
 // real taxable portion of Social Security), not relo-engine's cruder full-benefit sum.
-function rixExcluded(rix, status, age, spouseAge, competingAmt, agiProxy, ssAmt){
+// ssGross is the raw annual SS benefit (unlike ssAmt, NOT the taxable portion) — needed
+// separately for WV's netAgainstSS, which nets against the benefit itself since WV
+// exempts SS from state tax regardless of federal taxability.
+function rixExcluded(rix, status, age, spouseAge, competingAmt, agiProxy, ssAmt, ssGross){
   const tStatus = status==='mfj' ? 'joint' : 'single';
   const isJoint = status==='mfj';
   const ex = rix.exclusion;
@@ -2493,14 +2497,18 @@ function rixExcluded(rix, status, age, spouseAge, competingAmt, agiProxy, ssAmt)
       : personShelter(age);
   }
 
-  // Generic fallback (LA's flat age-gated cap; CT/NJ's stepped-percent-of-actual-income)
-  // — gated on the OUTER ageGate using the primary filer's age only, matching
-  // relo-engine's own longstanding behavior for these states (a pre-existing
-  // simplification — the tool doesn't model per-spouse IRA ownership — not something
-  // introduced by this port).
+  // Generic fallback (LA's flat age-gated cap; CT/NJ's stepped-percent-of-actual-income;
+  // WV's flat cap shared with Social Security) — gated on the OUTER ageGate using the
+  // primary filer's age only, matching relo-engine's own longstanding behavior for these
+  // states (a pre-existing simplification — the tool doesn't model per-spouse IRA
+  // ownership — not something introduced by this port).
   const gateOk = rix.ageGate==null || age>=rix.ageGate;
   if(!gateOk) return 0;
-  const cap = tStatus==='joint' ? ex.capJoint : ex.capSingle;
+  let cap = tStatus==='joint' ? ex.capJoint : ex.capSingle;
+  // WV: nets the gross SS benefit against the cap before it's applied — mirrors
+  // relo-engine's computeStateIncomeTax exactly (see that file for the household-level
+  // approximation this uses when no per-spouse SS split is available).
+  if(ex.netAgainstSS) cap = Math.max(0, (cap ?? 0) - (ssGross || 0));
 
   if(ex.cliffType==='steppedPercent'){
     const thresholdProxy = ex.thresholdExcludesSS ? agiProxy-ssAmt : agiProxy;
@@ -2601,8 +2609,8 @@ function computeConversionCost(cvtAmt, ctx){
   } else if(rix){
     // Same before/with delta pattern as RETDED above, using this tool's own more
     // precise AGI/taxable-SS figures (already computed above) rather than a cruder proxy.
-    const exBase   = rixExcluded(rix, status, curAge, spouseAge, income, agiBase, ssBase);
-    const exWith   = rixExcluded(rix, status, curAge, spouseAge, income+taxableCvt, agiWith, ssWith);
+    const exBase   = rixExcluded(rix, status, curAge, spouseAge, income, agiBase, ssBase, ss);
+    const exWith   = rixExcluded(rix, status, curAge, spouseAge, income+taxableCvt, agiWith, ssWith, ss);
     const stTiBase = Math.max(0, income - exBase);
     const stTiWith = Math.max(0, (income+taxableCvt) - exWith);
     cvtTxSt = (stTiWith - stTiBase) * stD.cr;
