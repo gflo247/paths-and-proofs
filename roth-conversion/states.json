@@ -821,7 +821,7 @@
   "roth": {
    "cr": 0.055,
    "ex": false,
-   "note": "For 2026 Connecticut fully exempts IRA, 401(k), and pension income ONLY if AGI stays under $75,000 single / $100,000 joint, phasing out to nothing at a $100,000 / $150,000 cliff. A Roth conversion raises AGI and a sizable one can blow past the cliff, making it taxable (graduated 2% to 6.99%; about 5.5% is typical). This tool assumes the conversion is taxable; a small one that keeps you under the threshold may not be. Connecticut also taxes Social Security above those same thresholds."
+   "note": "Connecticut shelters a percentage of your actual IRA/401(k)/conversion income — 100% under $75,000 single / $100,000 joint AGI, then stepping down in ten tiers to $0 by $100,000 single / $150,000 joint AGI, with no age requirement at all (unusual — this applies at any age). A Roth conversion raises AGI and can push you into a lower-percentage tier, so a large conversion shelters a smaller share of itself than a small one. This calculator applies the real stepped table. Connecticut also taxes Social Security above those same AGI thresholds; whatever isn't sheltered is taxed at graduated 2%-6.99% rates (about 5.5% is typical for a mid-size conversion)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -1309,7 +1309,7 @@
   "roth": {
    "cr": 0.0499,
    "ex": false,
-   "note": "Georgia excludes retirement income up to a CAP — $65,000 per person at 65+ ($35,000 at 62-64) — then taxes the rest at its flat 4.99% rate (cut from 5.39% under HB 463, signed May 2026). A Roth conversion is large income that can exceed the cap, so the excess is taxable; this tool assumes the conversion is taxable, though a small conversion that fits under your exclusion may not be. Social Security is fully exempt and does not use up the cap."
+   "note": "Georgia excludes retirement income up to an age-tiered cap — $35,000 per person at 62-64, $65,000 at 65+ — then taxes the rest at its flat 4.99% rate (cut from 5.39% under HB 463, signed May 2026; the 65+ tier itself rises to $70,000 starting TY2027). This calculator applies that cap to your conversion: each spouse's own age sets their own tier, summed for a joint return, so how much shelters depends on your age and how much of the cap your other retirement income already uses. Social Security is fully exempt and doesn't use up the cap."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -2152,7 +2152,7 @@
   "roth": {
    "cr": 0.03,
    "ex": false,
-   "note": "Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a $12,000 retirement-income exclusion per person at 65+ (doubled from $6k, inflation-adjusted). A conversion above that is taxable at 3%. Social Security and most LA government/military pensions are fully exempt."
+   "note": "Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a retirement-income exclusion at 65+ — $12,000 single, $24,000 joint (CPI-adjusted; exact TY2026 figures pending LDR's 2026 IT-540i) — that this calculator applies before taxing the rest at 3%. Social Security and most LA government/military pensions are fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -3629,7 +3629,7 @@
   "roth": {
    "cr": 0.0637,
    "ex": false,
-   "note": "New Jersey fully excludes retirement income (including IRA withdrawals) for those 62+ ONLY if total income stays at or below $100,000, phasing out to nothing at a hard $150,000 cliff. A Roth conversion counts toward that income, so a sizable one can push you over the cliff and make the whole conversion taxable at rates up to 10.75% (6.37% is typical). This tool assumes the conversion is taxable; if your total income stays under the threshold it may not be. Social Security is fully exempt."
+   "note": "New Jersey excludes up to $75,000 single / $100,000 joint of retirement income, including a conversion, for those 62+ — below a $100,000 Total Income threshold (NJ's own income line, which excludes Social Security entirely). Between $100,000 and $150,000 the exclusion steps down to a smaller percentage of your actual income rather than disappearing outright; above $150,000 it's $0. This calculator applies the real stepped tiers, taxing whatever isn't sheltered at rates up to 10.75% (6.37% is typical for a mid-size conversion). Social Security is fully exempt from NJ tax."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -3849,7 +3849,7 @@
   "roth": {
    "cr": 0.049,
    "ex": false,
-   "note": "Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands near the 4.9% band used here. IRA and conversion income is taxable; those 65+ can deduct up to $8,000, but only under $100k single / $150k joint AGI. A conversion raises AGI and can blow past that limit — and past the same $100k/$150k threshold above which New Mexico starts taxing Social Security too."
+   "note": "Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands near the 4.9% band used here. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AGI — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico's separate Social Security exemption, not this deduction. This calculator applies the real stepped table."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5099,7 +5099,7 @@
   "roth": {
    "cr": 0.0521,
    "ex": false,
-   "note": "Two-bracket system for 2026 under H.4216 (signed March 2026): 1.99% on the first $30,000, then 5.21% above. The retirement deduction DOES cover traditional IRA income; those 65+ get a $15,000 deduction against any income that can absorb conversion income — so post-65 is a relatively favorable conversion window here. Social Security is fully exempt. (Note: qualified Roth distributions are already federally excluded and carry over, but a Roth conversion is taxable income.)"
+   "note": "Two-bracket system for 2026 under H.4216 (signed March 2026): 1.99% on the first $30,000, then 5.21% above. The retirement deduction covers traditional IRA and conversion income, but it's really two deductions sharing one $15,000-per-person ceiling: under 65 you get up to $3,000, rising to the full $15,000 at 65+. This calculator applies the age-appropriate ceiling, so post-65 is a meaningfully more favorable conversion window here. Social Security is fully exempt. (Note: qualified Roth distributions are already federally excluded and carry over, but a Roth conversion is taxable income.)"
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -6043,7 +6043,7 @@
   "roth": {
    "cr": 0.053,
    "ex": false,
-   "note": "Graduated 3.5% to 7.65%; the 7.65% top only starts above ~$315k single / ~$420k joint, so a typical conversion lands in the 5.3% band used here. IRA and Roth-conversion income is taxable, but a 2025 law (Act 15) lets those 67+ subtract up to $24,000 ($48,000 joint) of retirement income — including IRA/conversion income — so part of a conversion may be sheltered. Social Security is fully exempt."
+   "note": "Graduated 3.5% to 7.65%; the 7.65% top only starts above ~$315k single / ~$420k joint, so a typical conversion lands in the 5.3% band used here. A 2025 law (Act 15) lets those 67+ subtract up to $24,000 of retirement income, including a conversion — but the $48,000 joint figure only applies if BOTH spouses are 67+; if only one is, the household gets $24,000, not a flat doubling. This calculator applies that per-spouse rule. One thing to weigh: claiming this subtraction forfeits every other Wisconsin tax credit for that year. Social Security is fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
