@@ -641,6 +641,67 @@
         </select>
         <div class="ttip" id="tip-state"><strong>Why this matters:</strong> State income taxes can add 3–13% to the cost of a Roth conversion. Some states also exempt IRA withdrawals in retirement — meaning you'd pay state tax on the conversion today but nothing when you withdraw later, which affects the comparison. Selecting your state adds these numbers automatically.</div>
         <div id="stateRetNote" style="margin-top:6px;"></div>
+        <details class="rest">
+          <summary>Planning to move before you convert?</summary>
+          <div class="restb">
+            <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Moving to</label>
+            <select id="reloStateCode" onchange="calc()">
+              <option value="">— Select destination state —</option>
+              <option value="AL">Alabama</option>
+              <option value="AK">Alaska — no income tax ✓</option>
+              <option value="AZ">Arizona</option>
+              <option value="AR">Arkansas</option>
+              <option value="CA">California</option>
+              <option value="CO">Colorado</option>
+              <option value="CT">Connecticut</option>
+              <option value="DE">Delaware</option>
+              <option value="FL">Florida — no income tax ✓</option>
+              <option value="GA">Georgia</option>
+              <option value="HI">Hawaii</option>
+              <option value="ID">Idaho</option>
+              <option value="IL">Illinois</option>
+              <option value="IN">Indiana</option>
+              <option value="IA">Iowa</option>
+              <option value="KS">Kansas</option>
+              <option value="KY">Kentucky</option>
+              <option value="LA">Louisiana</option>
+              <option value="ME">Maine</option>
+              <option value="MD">Maryland</option>
+              <option value="MA">Massachusetts</option>
+              <option value="MI">Michigan</option>
+              <option value="MN">Minnesota</option>
+              <option value="MS">Mississippi</option>
+              <option value="MO">Missouri</option>
+              <option value="MT">Montana</option>
+              <option value="NE">Nebraska</option>
+              <option value="NV">Nevada — no income tax ✓</option>
+              <option value="NH">New Hampshire — no income tax ✓</option>
+              <option value="NJ">New Jersey</option>
+              <option value="NM">New Mexico</option>
+              <option value="NY">New York</option>
+              <option value="NC">North Carolina</option>
+              <option value="ND">North Dakota</option>
+              <option value="OH">Ohio</option>
+              <option value="OK">Oklahoma</option>
+              <option value="OR">Oregon</option>
+              <option value="PA">Pennsylvania</option>
+              <option value="RI">Rhode Island</option>
+              <option value="SC">South Carolina</option>
+              <option value="SD">South Dakota — no income tax ✓</option>
+              <option value="TN">Tennessee — no income tax ✓</option>
+              <option value="TX">Texas — no income tax ✓</option>
+              <option value="UT">Utah</option>
+              <option value="VT">Vermont</option>
+              <option value="VA">Virginia</option>
+              <option value="WA">Washington — no income tax ✓</option>
+              <option value="WV">West Virginia</option>
+              <option value="WI">Wisconsin</option>
+              <option value="WY">Wyoming — no income tax ✓</option>
+              <option value="DC">Washington D.C.</option>
+            </select>
+            <p style="font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.5">Shows what the same conversion would cost if you wait until you're a resident of this state instead — using your same age, income, and conversion amount. See the full breakdown below for the comparison.</p>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -2201,7 +2262,7 @@ function clearAllInputs(){
   function sv(id,v){var el=document.getElementById(id);if(el)el.value=v;}
   sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
   sv('sex','female'); sv('spouseAge',58); sv('spouseSex','male');
-  sv('seniorDeduction',0); sv('stateCode','');
+  sv('seniorDeduction',0); sv('stateCode',''); sv('reloStateCode','');
   sv('income',72000); sv('ssIncome',24000); sv('niiIncome',0); sv('ltcgIncome',0);
   sv('convertAmt',0); sv('tradBal',280000); sv('rothBal',40000); sv('iraBasis',0);
   sv('growthRate',7); sv('retRate',22);
@@ -2342,7 +2403,7 @@ function clearExample(){
   // Reset to original defaults
   function sv(id,v){ var el=document.getElementById(id); if(el) el.value=v; }
   sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
-  sv('sex','female'); sv('seniorDeduction',0); sv('stateCode','');
+  sv('sex','female'); sv('seniorDeduction',0); sv('stateCode',''); sv('reloStateCode','');
   sv('income',72000); sv('ssIncome',24000); sv('niiIncome',0); sv('ltcgIncome',0);
   sv('convertAmt',20000); sv('tradBal',280000); sv('rothBal',40000); sv('iraBasis',0);
   sv('growthRate',7); sv('retRate',22);
@@ -2360,7 +2421,7 @@ function clearExample(){
 
 // ── INPUT PERSISTENCE ──
 var INPUT_FIELDS = ['currentAge','retirementAge','filingStatus','sex',
-  'spouseAge','spouseSex','seniorDeduction','stateCode',
+  'spouseAge','spouseSex','seniorDeduction','stateCode','reloStateCode',
   'income','ssIncome','niiIncome','ltcgIncome','convertAmt','tradBal',
   'rothBal','iraBasis','growthRate','retRate',
   'taxSource','medicareStatus','partD'];
@@ -2739,6 +2800,30 @@ function calc(){
          niitThr, niiPool, niitBase, niitWith, niitCost,
          cvtTxTot, effR} = cc;
 
+  // ── PLANNING TO MOVE? Compare converting now vs. after relocating ──
+  // Reuses computeConversionCost with the SAME ctx except stD/stateCode swapped
+  // to the destination — deliberately not a full move-year timeline (that would
+  // mean threading a move year through computeMultiYear and the RMD counterfactual
+  // too); this answers the one question a relocating user actually has: does it
+  // matter whether I convert before or after the move.
+  const reloStateCode = _ae ? '' : _rv('reloStateCode');
+  let reloCompareHtml = '';
+  if(reloStateCode && stateCode && reloStateCode!==stateCode && cvtAmt>0){
+    const reloStD = ST[reloStateCode]||{n:'',cr:0,ex:false,note:''};
+    const reloCC  = computeConversionCost(cvtAmt, {...ccCtx, stD:reloStD, stateCode:reloStateCode});
+    const delta   = reloCC.cvtTxTot - cvtTxTot;
+    const verbRow = delta===0
+      ? '<div class="trow tgrand"><span class="tl">Waiting to move first</span><span class="tv">No difference</span></div>'
+      : '<div class="trow tgrand"><span class="tl">Waiting to move first '+(delta<0?'saves':'costs')+'</span><span class="tv">'+fmt(Math.abs(delta))+'</span></div>';
+    reloCompareHtml =
+      '<div class="tsep"></div>'
+      +'<div class="tsubhead">If You Move to '+reloStD.n+' First</div>'
+      +'<div class="trow"><span class="tl">Converting now, in '+stD.n+'</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'
+      +'<div class="trow"><span class="tl">Converting after moving to '+reloStD.n+'</span><span class="tv">'+fmt(reloCC.cvtTxTot)+'</span></div>'
+      + verbRow
+      +'<p style="font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.5">Same age, income, and conversion amount either way — only the state\'s tax rules change. Assumes you\'re a full-year resident of the new state when you convert.</p>';
+  }
+
   // State rate on future IRA withdrawals (0 if state exempts retirement income)
   const stRetR    = stD.ex ? 0 : stD.cr;
   const totalRetR = retRate + stRetR;
@@ -2869,6 +2954,7 @@ function calc(){
       +'<div class="trow"><span class="tl">Federal tax with conversion</span><span class="tv">'+fmt(txIn)+'</span></div>'
       +'<div class="trow ttotal"><span class="tl">Federal conversion tax cost</span><span class="tv">'+fmt(cvtTxFed)+'</span></div>'
       + stateSectionHtml
+      + reloCompareHtml
       + taxSrcRow
       + brTip
       + exemptTip;
