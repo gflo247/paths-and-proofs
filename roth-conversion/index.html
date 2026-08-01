@@ -1293,46 +1293,21 @@ function useRetRate(rate){
 
 
 // ── MULTI-YEAR PLAN COMPUTATION ──
-function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,planConvert){
+function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,planConvert,spouseAge,isCouple){
   if(planConvert<=0||tradBal<=0)return null;
 
-  // Compute conversion tax for a given income scenario, including the LTCG
-  // stack (ltcgAmt) — mirrors the main calc() function's split: ssV/senior-
-  // deduction use total income (pension+nii+ltcgAmt), ordinary tax stays
-  // ordinary-only, and the LTCG delta is added separately since it doesn't
-  // share ordinary bracket space. State tax mirrors the main calc()'s
-  // RETDED-aware logic too — pension (not pension+nii) competes for the
-  // deduction cap, matching how the main calc() excludes nii/ltcg from it.
-  // NOTE: the ex:true age-gated exemption (EXAGE) is intentionally NOT
-  // applied here — it needs spouseAge, which isn't threaded into this
-  // projection helper. ex:true states still use the flat approximation
-  // in the multi-year plan; only RETDED states are corrected here.
+  // Compute conversion tax for a given income scenario. A thin adapter around
+  // computeConversionCost (the single shared per-point tax function) rather than
+  // a second hand-rolled implementation — this used to be its own parallel
+  // federal+LTCG+state calculation, which drifted from computeConversionCost
+  // twice (the original Michigan bug, then RIX/EXAGE coverage never reaching
+  // here). Routing through the shared function instead of patching this one a
+  // third time also picks up NIIT, which this hand-rolled version never had.
   function convTax(pension,niiAmt,ltcgAmt,ssV,stat,nsr,cvt,tfrac){
-    var inc=pension+niiAmt;
-    var tx=cvt*tfrac;
-    var sb=calcTaxableSS(ssV,inc+ltcgAmt,stat);
-    var sw=calcTaxableSS(ssV,inc+ltcgAmt+tx,stat);
-    var ordAgiB=inc+sb, ordAgiW=inc+tx+sw;
-    var srdB=seniorDed(ordAgiB+ltcgAmt,stat,nsr), srdW=seniorDed(ordAgiW+ltcgAmt,stat,nsr);
-    var tiB=Math.max(0,ordAgiB-STDD[stat]-srdB);
-    var tiW=Math.max(0,ordAgiW-STDD[stat]-srdW);
-    var ordTax=Math.max(0,calcTax(tiW,stat)-calcTax(tiB,stat));
-    var totalTiB=Math.max(0,(ordAgiB+ltcgAmt)-STDD[stat]-srdB);
-    var totalTiW=Math.max(0,(ordAgiW+ltcgAmt)-STDD[stat]-srdW);
-    var ltcgB=Math.max(0,totalTiB-tiB), ltcgW=Math.max(0,totalTiW-tiW);
-    var ltcgTax=Math.max(0,calcLTCGTax(tiW,ltcgW,stat)-calcLTCGTax(tiB,ltcgB,stat));
-
-    var rd=RETDED[stateCode];
-    var stTax;
-    if(rd){
-      var cap=rd[stat]??rd.single;
-      var stTiB=Math.max(0,pension-Math.min(cap,pension));
-      var stTiW=Math.max(0,(pension+tx)-Math.min(cap,pension+tx));
-      stTax=(stTiW-stTiB)*stD.cr;
-    } else {
-      stTax=tx*stD.cr;
-    }
-    return ordTax+ltcgTax+stTax;
+    var ctx={income:pension,nii:niiAmt,ltcg:ltcgAmt,ss:ssV,status:stat,nSr:nsr,
+              stD:stD,stateCode:stateCode,curAge:curAge,spouseAge:spouseAge,
+              isCouple:isCouple,taxableFrac:tfrac};
+    return computeConversionCost(cvt,ctx).cvtTxTot;
   }
 
   // Pre-retirement phase
@@ -3075,7 +3050,7 @@ function calc(){
     var myConv = myOpts.bracketAmt > 0 ? myOpts.bracketAmt : 0;
     if(myOpts.irmaaAmt!==null && myOpts.irmaaAmt>0 && (myConv===0 || myOpts.irmaaAmt<myConv)) myConv=myOpts.irmaaAmt;
     if(myConv > 500 && tradBal > 0){
-      var myPlan = computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,myConv);
+      var myPlan = computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,myConv,spouseAge,isCouple);
       multiYearHTML = buildMultiYearHTML(myPlan,curAge,retAge,fmt,pct,fmtK);
     }
   }
