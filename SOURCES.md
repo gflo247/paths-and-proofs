@@ -159,18 +159,34 @@ user's own state when accuracy matters to them.
   absent from the eight-state SS disclosure, and the SS tool is correct for Nevada.
 - The tool's entry was already accurate — recorded here for completeness.
 
-#### West Virginia — ✅ fully verified June 2026
+#### West Virginia — ✅ fully verified June 2026, retirement-deduction mechanic corrected 2026-08-01
 
-- **Rate: ~4.86% (corrected from 5.12%).** WV is cutting income tax faster than
-  any other state. The 5.12% reflected the 2023 cut (21.25% across-the-board,
-  6.5%→5.12%); the WV Tax Division then enacted a **5% cut retroactive to Jan 1
-  2026** (W. Va. Code §11-21-4j, effective June 12 2026), bringing the top rate to
-  ~4.86%. Because of the ongoing trigger-based reductions, this rate is a moving
-  target — re-verify each year. Source:
+- **Rate: 4.58% (corrected from ~4.86%).** WV is cutting income tax faster than
+  any other state. The 5% cut enacted for the 2026 session (SB 392) brought the
+  top rate from 4.82% to **4.58% effective Jan 1 2026** — one round further than
+  the ~4.86% this entry previously cited (itself already one round ahead of the
+  older 5.12% figure). Because of the ongoing trigger-based reductions, this rate
+  is a moving target — re-verify each year. Source:
   [WV Tax Division — 2026 rate cut](https://tax.wv.gov/Individuals/Pages/PersonalIncomeTaxReductionBill.aspx).
-  > Fixed June 2026: rate 5.12% → ~4.86%; note rewritten.
-- **Retirement income: taxable (`ex:false` correct).** IRA/401(k)/Roth-conversion
-  income is taxed; seniors 65+ get an $8,000 modification.
+  > Fixed 2026-08-01: rate ~4.86% → 4.58% (SB 392 superseded the cut this entry
+  > had been tracking).
+- **Retirement income: taxable (`ex:false` correct); the $8,000/$16,000
+  modification shares ONE pool with Social Security.** Seniors 65+ get an
+  $8,000 single / $16,000 joint modification against IRA/pension income — but
+  W. Va. Code §11-21-12(c)(9) nets it against the SAME pool as the taxpayer's
+  Social Security benefit and other pension exclusions. Since WV now exempts
+  Social Security in full (see below), most SS-drawing retirees' benefit alone
+  already exceeds $8,000, leaving little or nothing left to shelter IRA or
+  conversion income — the modification is genuinely available in full only to
+  someone 65+ who hasn't started claiming Social Security yet. The tool nets the
+  SS benefit against the cap (`netAgainstSS` on `states.json`'s WV entry) rather
+  than granting the nominal figure unconditionally.
+  > Added 2026-08-01: this shared-pool mechanic was previously undocumented here
+  > and unmodeled in the tool — the modification had been applied as a flat,
+  > un-netted cap, overstating the benefit for most real SS-drawing users. No
+  > per-spouse SS split is available in either engine, so a joint return nets
+  > the full household SS benefit against the full $16,000 household cap — a
+  > household-level approximation, not a true per-spouse netting.
 - **Social Security: now fully exempt (note corrected).** The prior note said
   "some Social Security exemption" — that described the phase-in. HB 4880's
   phase-out **completed in 2026**: SS is 100% exempt for all WV taxpayers
@@ -235,6 +251,12 @@ user's own state when accuracy matters to them.
   Roth interaction: a conversion *raises AGI*, so a large one can erase the
   deduction entirely — added this to the note. (Those born on/before Jan 1 1939
   get it regardless of income, a legacy carve-out not worth tool space.)
+  > Clarified 2026-07-28: confirmed the $12,000 cap is genuinely PER-SPOUSE — if
+  > both spouses are 65+, the cap doubles to $24,000, but the $50k/$75k AGI
+  > threshold does NOT double (one shared test regardless of how many spouses
+  > qualify, per VA's own Form 760 worksheet). Also confirmed VA's AGI test
+  > ("AFAGI") backs Social Security out entirely — the same mechanic later
+  > confirmed for NJ's income threshold, below.
 - **Retirement income: taxable (`ex:false` correct).** IRA/conversion income taxed
   at 5.75%.
 - **Social Security: fully exempt** — confirmed at
@@ -243,28 +265,45 @@ user's own state when accuracy matters to them.
 - Note: qualified *Roth* withdrawals don't raise AGI (preserving the age
   deduction), unlike the conversion itself — a genuine breakeven nuance.
 
-#### New Jersey — ✅ fully verified June 2026 (most consequential fix)
+#### New Jersey — ✅ fully verified June 2026 (most consequential fix); mechanic CORRECTED 2026-07-28 (was NOT a hard cliff)
 
 - **`ex:true` → `ex:false` — this was the meaningful error.** The engine uses
   `ex:true` to set the state retirement-tax rate to **zero** (`stRetR = ex ? 0 :
   cr`), i.e. it assumed a NJ conversion is state-tax-free. But NJ's pension/
-  retirement exclusion has a **hard income cliff**: full exclusion only if total
-  income ≤ $100,000, partial $100k–$150k, and **zero above $150,000**. A Roth
-  conversion is taxable IRA income that *counts toward* that threshold — so a
-  sizable conversion (exactly what this tool models) can blow past the cliff and
-  make the whole thing taxable. `ex:true` told users the conversion was free when
-  it may trigger full taxation — backwards for the tool's core scenario. Now
-  `ex:false`: the tool assumes the conversion is taxable and the note says when it
-  may not be. Sources: [NJ Treasury — Retirement Income Exclusions](https://www.nj.gov/treasury/taxation/njit7.shtml),
-  papolalaw.com (cliff mechanics).
+  retirement exclusion is income-gated, and a Roth conversion is taxable IRA
+  income that *counts toward* that gate — so a sizable conversion (exactly what
+  this tool models) can lose most or all of the exclusion. `ex:true` told users
+  the conversion was free when it may trigger substantial taxation — backwards
+  for the tool's core scenario. Now `ex:false`. Source:
+  [NJ Treasury — Retirement Income Exclusions](https://www.nj.gov/treasury/taxation/njit7.shtml).
 - **Rate: 6.37% (corrected from 10.75%).** 10.75% is NJ's millionaire rate (above
   $1M). 6.37% is the $75k–$500k band where conversion income lands.
-- **Social Security: fully exempt** (and excluded from the gross-income
-  threshold calc) — so NJ is **not** in the eight-state disclosure and the SS tool
-  is correct for NJ.
-- Design note: erring toward "taxable" is the safe direction for a decision tool —
-  over-stating potential cost beats falsely promising an exemption a conversion
-  can destroy. The note tells the user exactly when the assumption may not apply.
+- **Not actually a hard $150,000 cliff — corrected 2026-07-28.** NJ excludes
+  retirement income for those **62+**, up to $75,000 single / $100,000 joint,
+  gated on NJ's own **"Total Income" line — which excludes Social Security
+  entirely**, unlike every other state modeled here, which gates off federal
+  AGI. Between $100,000 and $150,000 the exclusion doesn't vanish outright — it
+  steps down through two intermediate stepped-percentage-of-actual-income tiers
+  (37.5%/50% of actual income, then 18.75%/25%), reaching $0 only above
+  $150,000. The exclusion is also per-spouse: only the qualifying spouse's own
+  retirement income counts. Sources: NJ-1040i, NJ GIT-1&2 instructions.
+  > Fixed 2026-07-28: `states.json`'s `taxRules` (and this entry) previously
+  > modeled a single hard cliff at $150,000 — granting the FULL exclusion to
+  > anyone under $150k total income and $0 above. Real law has two intermediate
+  > tiers between $100k–$150k; the old model materially OVERSTATED the exclusion
+  > for anyone in that band — precisely the zone a Roth conversion is most
+  > likely to land someone in. This was confirmed live in the shipped
+  > relocation tool before the fix (`bcf88b9`), not just a documentation gap.
+  > **Known simplification, not fixed:** NJ's real MFS cap is $50,000, distinct
+  > from the $75,000 single figure — the engine collapses MFS to the
+  > single-filer bucket everywhere, so MFS filers here get a more generous cap
+  > than actual law allows.
+- **Social Security: fully exempt** (and excluded from the Total Income
+  threshold, see above) — so NJ is **not** in the eight-state disclosure and the
+  SS tool is correct for NJ.
+- Design note: erring toward "taxable" was the safe default while the mechanic
+  was unmodeled; now that the real stepped tiers are implemented, the tool
+  computes the actual figure instead of defaulting to worst-case.
 
 #### Pennsylvania — ✅ fully verified June 2026
 
@@ -337,15 +376,22 @@ on the conversion). Audited against primary sources. **Two were actively wrong**
   note. Source: [MS DOR FAQ](https://www.dor.ms.gov/individual/individual-income-tax-frequently-asked-questions),
   35 Miss. Code R. 3-02-07-104.
 
-#### Georgia — ✅ `ex:true` → `ex:false` (WRONG flag, like NJ)
+#### Georgia — ✅ `ex:true` → `ex:false` (WRONG flag, like NJ); cap now MODELED 2026-07-28
 
 - Georgia does **not** fully exempt retirement income — it has a **capped
   exclusion**: $65,000/person at 65+, $35,000 at 62–64, and taxes the rest at its
-  flat rate (~5.39% for 2026). A Roth conversion is large income that **exceeds the
-  cap**, so the excess is taxable — `ex:true` falsely zeroed it. Flipped to
-  `ex:false`; note explains the cap and that a small conversion fitting under the
-  exclusion may not be taxable. Source:
+  flat rate (4.99% for 2026, see below). A Roth conversion is large income that
+  **exceeds the cap**, so the excess is taxable — `ex:true` falsely zeroed it.
+  Flipped to `ex:false`. Source:
   [GA DOR — Retirement Income Exclusion](https://dor.georgia.gov/retirement-income-exclusion).
+  > Fixed 2026-07-28: rate ~5.39% → **4.99%** (HB 463, signed May 2026, cut
+  > effective for TY2026 — this entry hadn't caught up). More importantly, the
+  > cap itself is now actually MODELED rather than just disclosed:
+  > `states.json`'s `taxRules.retirementIncome` (`cliffType: ageTieredCap`)
+  > computes each spouse's own tier from their own age and sums them for a
+  > joint return — a converting spouse only shelters against their own tier; a
+  > non-converting spouse's unused tier doesn't transfer (confirmed GA DOR
+  > practice). The 65+ tier itself rises to $70,000 starting TY2027 (HB 463).
 
 #### Iowa — ✅ `ex:true` kept; rate fixed; age-55 condition added
 
@@ -474,21 +520,33 @@ impact remaining `ex:false` fixes.
 - `ex:false` correct — pensions, 401(k), and IRA all taxable; no retirement
   exclusion. SS exempt.
 
-#### Connecticut — ✅ rate fixed + cliff documented June 2026 (NJ-style structure)
+#### Connecticut — ✅ rate fixed June 2026; mechanic CORRECTED 2026-07-28 (was NOT a cliff)
 
 - **Rate 6.99% → 5.5%.** 6.99% is the top of seven brackets; ~5.5% is
   representative for a conversion.
-- **`ex:false` kept — and it's correct for the NJ reason.** For 2026 CT fully
-  exempts IRA/401(k)/pension income, but **only under an AGI cliff** ($75k single /
-  $100k joint for full exemption, phasing to zero at $100k / $150k). The IRA
-  exemption just completed its phase-in (50%→75%→100% for 2026). A Roth conversion
-  raises AGI and a sizable one **blows past the cliff**, making it taxable — same
-  structure as New Jersey, so assuming taxable is right; note says when a small
-  conversion may stay exempt. Source:
+- **`ex:false` correct, but the mechanic this entry described was wrong.** CT
+  does NOT have a smooth cliff to a hard $100k/$150k cutoff. It's a **10-tier
+  stepped PERCENTAGE-OF-ACTUAL-INCOME table**: 100% sheltered under $75k
+  single/$100k joint AGI, then a discrete step down through nine more tiers
+  (85%, 70%, 55%, 40%, 25%, 10%, 5%, 2.5%, 0%) reaching $0 at $100k single/$150k
+  joint. There is also **no dollar cap and no age gate at all** — CT is a
+  structural outlier among every other state modeled here, where the shelter
+  applies at any age. The IRA exemption's own phase-in (50%→75%→100%) completed
+  for TY2026, so no separate haircut is needed for the tool's target year. A
+  Roth conversion raises AGI and can push the filer into a lower-percentage
+  tier — a large conversion shelters a smaller SHARE of itself than a small
+  one, not an all-or-nothing cliff. Sources:
   [CT OLR 2025-R-0152](https://www.cga.ct.gov/2025/rpt/pdf/2025-R-0152.pdf),
-  [CT DRS](https://portal.ct.gov/DRS).
-- **CT taxes Social Security** above the same thresholds — consistent with its
-  place on the eight-state SS disclosure list.
+  CT-1040 instructions, CT IP 2025(7).
+  > Fixed 2026-07-28: this entry (and the tool's own `taxRules` data) previously
+  > modeled a smooth linear phase-out to a hard cliff — the real law is a
+  > discrete stepped table, confirmed via CT's own IP 2025(7) worksheet.
+  > `states.json`'s `capSingle`/`capJoint` fields for CT had also been
+  > repurposed as dollar caps when CT has no dollar cap at all (those numbers
+  > are AGI thresholds) — a real, live bug in the relocation tool at the time,
+  > fixed the same pass.
+- **CT taxes Social Security** above the same AGI thresholds — consistent with
+  its place on the eight-state SS disclosure list.
 
 #### Vermont — ✅ rate fixed June 2026
 
@@ -500,16 +558,26 @@ impact remaining `ex:false` fixes.
   interaction: a conversion can push past VT's SS-exemption thresholds ($65k joint
   / $55k single). VT is on the eight-state SS disclosure list — consistent.
 
-#### Wisconsin — ✅ rate fixed + new Act 15 subtraction added June 2026
+#### Wisconsin — ✅ rate fixed June 2026; per-spouse mechanic clarified 2026-07-28
 
 - **Rate 7.65% → 5.3%.** 7.65% top only above ~$315k single / ~$420k joint; most
   retirees and conversions land in the 5.3% band.
-- **New for 2025 (Act 15):** taxpayers 67+ can subtract up to **$24,000 ($48,000
-  joint)** of qualifying retirement income — and the WI DOR (Pub. 126) confirms
-  this includes IRA distributions, so part of a conversion may be sheltered. Added
-  to note. `ex:false` stays correct (capped subtraction, not full exemption; the
-  conversion is taxable beyond it). SS fully exempt. Source:
+- **2025 Act 15 subtraction, $24,000 single / $48,000 joint — but $48,000 joint
+  is NOT a flat doubling.** Taxpayers 67+ can subtract up to $24,000 of
+  qualifying retirement income (WI DOR Pub. 126 confirms this includes
+  IRA/conversion distributions), and the $48,000 joint tier requires **BOTH
+  spouses to be 67+** — confirmed via WI DOR's own FAQ. A joint filer where only
+  one spouse is 67+ gets $24,000, based solely on that spouse's own qualifying
+  income, not half of a flat $48,000 household figure. `ex:false` stays correct
+  (capped subtraction, not full exemption). **Claiming it forfeits every other
+  Wisconsin tax credit for that year** — a real trade-off worth surfacing, not
+  previously noted here. SS fully exempt. Source:
   [WI DOR Pub. 126](https://www.revenue.wi.gov/DOR%20Publications/pb126.pdf).
+  > Clarified 2026-07-28: the "both spouses 67+" requirement and the
+  > credit-forfeiture trade-off weren't in this entry before. `states.json`'s
+  > `taxRules` previously modeled WI as `treatment:"taxed"` (unmodeled
+  > entirely) — now `exclusion` with `cliffType:"ageTieredCap"`, summing each
+  > spouse's own verified entitlement rather than assuming a flat doubling.
 
 #### Maine — ✅ rate fixed + note CORRECTED June 2026 (was misleading)
 
@@ -524,6 +592,24 @@ impact remaining `ex:false` fixes.
   old note implied it might. Corrected to state conversions are fully taxable with
   no shelter. `ex:false` correct. SS exempt.
 
+#### Louisiana — ✅ added 2026-07-28 (was undocumented in this file)
+
+- **Rate: flat 3%** (2025 reform, Act 11/HB1, replaced the old graduated
+  structure). Source:
+  [LA DOR](https://revenue.louisiana.gov/tax-education-and-faqs/faqs/income-tax-reform/what-are-the-individual-income-tax-rates-and-brackets/).
+- **`ex:false` correct.** IRA and conversion income is taxable, with a
+  retirement-income exclusion at 65+: $12,000 single, $24,000 joint (per
+  person, doubled for a joint return where both spouses qualify). The TY2026
+  figure is technically CPI-adjusted slightly above $12,000 per statute, but
+  LDR hadn't published the exact 2026 number as of this writing — kept at
+  $12,000 with a note to recheck when LDR's 2026 IT-540i publishes
+  (~Dec 2026/Jan 2027).
+  > Added 2026-07-28: `states.json`'s prior entry had `capJoint` set flat to
+  > $12,000 (same as single) instead of the confirmed per-person $24,000 — a
+  > real, live bug in the relocation tool, fixed the same pass.
+- **Social Security and most LA government/military pensions are fully
+  exempt.**
+
 ### ✅ Mid-rate `ex:false` audits — SS-list states (June 2026)
 
 Five states from the remaining `ex:false` list, four of them on the eight-state SS
@@ -531,14 +617,31 @@ disclosure list (NM, MT, RI; NE and KS recently dropped SS tax). Pattern: mild
 top-bracket overstatements plus several stale rates from recent reforms, plus two
 IRA-specific deduction traps (RI, like ME).
 
-#### New Mexico — ✅ rate fixed June 2026
+#### New Mexico — ✅ rate fixed June 2026; deduction threshold CORRECTED 2026-07-28 (was materially wrong)
 
 - **Rate 5.9% → 4.9%.** 5.9% (HB 252 restructure) only applies above $210k single /
   $315k joint; a typical conversion lands near 4.9%. Source:
   [NM Taxation & Revenue](https://www.tax.newmexico.gov/), HB 252.
-- `ex:false` correct; $8,000 retirement deduction (65+) is AGI-limited under
-  $100k/$150k. Note adds that a conversion can blow past that limit AND past the
-  same $100k/$150k threshold where NM starts taxing Social Security. On SS list.
+- **`ex:false` correct, but this entry's $100k/$150k threshold for the $8,000
+  deduction was wrong — that figure belongs to a different statute.** The
+  $100k single / $150k joint AGI threshold is New Mexico's SEPARATE Social
+  Security exemption (still correctly on the eight-state SS-tax list below).
+  The $8,000 age-65+ retirement-income deduction is its own **stepped table**:
+  8 brackets stepping down by $1,000 as AGI rises, reaching **$0 by $28,500
+  single / $51,000 joint / $25,500 MFS AGI** — over 3x lower than the threshold
+  this entry previously cited. A Roth conversion routinely erases the
+  deduction's real ceiling at a much smaller size than "$100k" would suggest.
+  The bracket is determined once from combined AGI, then the resulting dollar
+  figure applies ×1 or ×2 per qualifying (65+) spouse; HOH filers use the joint
+  table. Source: NM Taxation & Revenue Dept. (TRD) PIT instructions and worked
+  examples.
+  > Fixed 2026-07-28: `states.json`'s prior entry had `cliffType:"hard"` with
+  > `cliffAGI: null` — meaning it granted the FULL $8,000 unconditionally
+  > regardless of income, wrong for most real conversion scenarios. This
+  > SOURCES.md entry independently had the wrong threshold too (confused with
+  > the SS exemption's $100k/$150k, a genuinely different NM statute). Both
+  > corrected the same pass; verified against NM TRD's own worked example
+  > ($35k joint AGI, both 65+ → $12,000 excluded, i.e. $6,000 tier × 2).
 
 #### Montana — ✅ rate fixed June 2026
 
@@ -627,15 +730,32 @@ line-targeted `set-state.mjs` helper (see Tooling note below).
   OTC) but is a small cap a conversion exceeds. SS fully exempt.
 - Full brackets (2026): 0%/0.25%/2.75%/4.5%; top above ~$7,200 (single).
 
-#### South Carolina — ✅ rate fixed, conversion-friendly structure documented June 2026
+#### South Carolina — ✅ rate fixed June 2026; mechanic CORRECTED 2026-07-28 (NOT two stacking deductions)
 
 - **Rate 6.3% → 5.2%** (H.4216 reform from 7%; two brackets 1.99%/5.21% for 2026,
   with further cuts triggered by revenue growth). Source:
   [SC DOR / LegalClarity H.4216 summary](https://dor.sc.gov/).
-- Notably conversion-FRIENDLY: the retirement deduction **includes traditional
-  IRAs**, and a separate $15,000 age-65+ deduction (against any income) **can
-  absorb conversion income** — RCS guide flags post-65 as a favorable conversion
-  window, and explicitly contrasts this with Maryland's IRA exclusion. SS exempt.
+- **Conversion-friendly, but NOT two stacking deductions to $25,000 as this
+  entry used to imply.** SC has ONE shared $15,000-per-person ceiling across
+  two pieces: an age-tiered retirement-income deduction ($3,000 under 65 /
+  $10,000 at 65+, covers traditional IRA/conversion income) and a separate
+  age-65+ deduction against any income, but the second piece is REDUCED by
+  whatever the first already used (`age65Deduction = max(0, 15000 -
+  retirementDeduction)`). Confirmed via SC DOR's own worked examples — NOT
+  additive to $25,000. Post-65 is still a meaningfully favorable conversion
+  window (full $15,000 vs. $3,000 under 65), just not as generous as "two
+  separate deductions" suggested. SS exempt.
+  > Fixed 2026-07-28: this entry previously described "a separate $15,000
+  > deduction... can absorb conversion income" alongside the retirement
+  > deduction, implying they stack. Corrected after SC DOR's worked examples
+  > showed the shared-ceiling offset. `states.json`'s prior entry modeled
+  > neither the age-tiering nor the offset (flat $10k, no age gate) — now
+  > modeled as `treatment: offsetStack`.
+  > **Known simplification, not fixed:** SC's real law lets tier-2's leftover
+  > capacity shelter OTHER (non-retirement) income too if the retirement
+  > deduction doesn't use it all. This tool only applies the shelter to
+  > retirement/conversion income — narrower than real law, but only matters
+  > when tier-2 has leftover room AND the filer has other taxable income.
 - Full brackets (2026): 1.99% to $30k; 5.21% above.
 
 #### Arkansas — ✅ rate confirmed, "verify locally" hedge resolved June 2026
