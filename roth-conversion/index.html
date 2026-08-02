@@ -46,6 +46,7 @@
     /* navy becomes a light accent in dark mode, so re-darken the navy *surfaces* */
     [data-theme="dark"] .site-header{background:#16203A;}
     [data-theme="dark"] .bottom-line{background:#16203A;}
+    [data-theme="dark"] .wayfind-bar{background:#16203A;}
     [data-theme="dark"] footer{background:#16203A;}
     [data-theme="dark"] .btip,[data-theme="dark"] .disclaimer,[data-theme="dark"] .alert.aamb{color:var(--ink-amber);}
     [data-theme="dark"] .alert.ared{color:var(--danger);}
@@ -70,6 +71,16 @@
        in light mode and vanish). Context overrides theme. */
     .site-header .pnp-brand{--pnp-path:#9fb3cc;--pnp-proof:#d9943a;--pnp-ink:#ffffff;}
     .privacy-pill{font-size:.74rem;font-weight:500;color:rgba(255,255,255,.78);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:4px 13px;border-radius:40px;display:flex;align-items:center;gap:5px;}
+    /* Persistent wayfinding cue: appears once the reader has scrolled past the
+       Bottom Line verdict, so a page with 16+ sections doesn't feel like it never
+       resolves. Bottom-fixed (counterpart to the top .site-header) so it never
+       competes with the verdict itself for attention. */
+    .wayfind-bar{position:fixed;left:0;right:0;bottom:0;z-index:250;background:var(--navy);color:#fff;box-shadow:0 -2px 12px rgba(28,58,94,.28);transform:translateY(100%);transition:transform .25s ease;}
+    .wayfind-bar.show{transform:translateY(0);}
+    .wayfind-inner{max-width:1100px;margin:0 auto;padding:.6rem 1.5rem;display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;font-size:.84rem;text-align:center;}
+    .wayfind-inner strong{color:#fff;}
+    .wayfind-top{color:var(--amber-lt);font-weight:700;text-decoration:none;white-space:nowrap;cursor:pointer;background:none;border:none;font:inherit;padding:0;}
+    .wayfind-top:hover{text-decoration:underline;}
     .privacy-note{display:flex;align-items:center;justify-content:center;gap:7px;max-width:1100px;margin:0 auto 1.1rem;padding:0 1.5rem;font-size:.82rem;font-weight:500;color:var(--muted);}
     .privacy-note svg{flex-shrink:0;opacity:.7;}
     .hero{max-width:720px;margin:0 auto;padding:3rem 1.5rem 2rem;text-align:center;}
@@ -332,7 +343,7 @@
       @page{margin:1.5cm 2cm;}
       .site-header,.hero,.input-grid,#optimizerPanel,
       .print-btn,.clear-btn,.tb,.ttip,details,summary+div,.how-to,
-      .optwrap,.disclaimer{display:none!important;}
+      .optwrap,.disclaimer,.wayfind-bar{display:none!important;}
       body{font-size:13px;}
       .page-wrap{padding:0;}
       .card,.verdict,.irmaa-card,.bottom-line,.rgrid{break-inside:avoid;}
@@ -838,6 +849,12 @@
   Tax brackets: <a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf" target="_blank" rel="noopener"><strong>IRS 2026 tax bracket data</strong></a> + <a href="https://www.congress.gov/bill/119th-congress/house-bill/1" target="_blank" rel="noopener"><strong>One Big Beautiful Bill Act</strong></a> · RMD divisors: <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener"><strong>IRS required minimum withdrawal tables (Appendix B)</strong></a> · Medicare surcharges: <a href="https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles" target="_blank" rel="noopener"><strong>Official Medicare 2026 premium rates</strong></a><br>
   <span style="display:block;margin-top:6px">Planning tool only — not tax or financial advice. State tax rates are approximate; your actual rate may vary. Verify locally. Always consult a CPA, tax professional, or financial advisor before converting. <a href="https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill" target="_blank" rel="noopener" style="font-size:.78rem">IRS 2026 full tax year summary →</a></span>
 </footer>
+<div class="wayfind-bar" id="wayfindBar" role="note">
+  <div class="wayfind-inner">
+    <span>✓ <strong>You've seen your bottom line</strong> — everything below it is optional detail.</span>
+    <button class="wayfind-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ Back to top</button>
+  </div>
+</div>
 <script>
 // ── STORAGE GUARD ──
 // Chrome logs a security warning when localStorage is accessed from file:// URLs
@@ -2971,6 +2988,7 @@ function calc(){
 
   if(cvtAmt<=0){
     $('resultsWrap').innerHTML='<div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Enter your IRA or 401(k) balance and annual income in the form above</span></div><div class="ph-step"><span class="ph-num">2</span><span>Set a conversion amount — not sure where to start? <button class="ph-try" onclick="document.getElementById(\'convertAmt\').value=20000;document.getElementById(\'convertAmt\').dispatchEvent(new Event(\'input\'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">3</span><span>Your personalized analysis appears here instantly</span></div></div></div>';
+    updateWayfindBar();
     return;
   }
 
@@ -3377,7 +3395,30 @@ function calc(){
       stEx:stD.ex, taxSrc:taxSrc
     }); }catch(e){ console.warn("Sensitivity chart error:", e); }
   }
+  updateWayfindBar();
 }
+
+// ── WAYFINDING BAR ──
+// Re-queries .bottom-line live rather than using an IntersectionObserver:
+// resultsWrap's innerHTML (and .bottom-line with it) is fully replaced on
+// every calc() call, so an observer attached to one instance would go stale
+// the next render. A stateless live query sidesteps that. Called both on
+// scroll AND at the end of every calc() — clearing the conversion amount
+// removes .bottom-line without necessarily firing a scroll event, so relying
+// on scroll alone left the bar stuck showing after the verdict disappeared.
+var _wayfindTicking = false;
+function updateWayfindBar(){
+  _wayfindTicking = false;
+  var bar = document.getElementById('wayfindBar');
+  if(!bar) return;
+  var bl = document.querySelector('.bottom-line');
+  var seen = !!bl && bl.getBoundingClientRect().bottom < 60;
+  bar.classList.toggle('show', seen);
+}
+window.addEventListener('scroll', function(){
+  if(!_wayfindTicking){ requestAnimationFrame(updateWayfindBar); _wayfindTicking = true; }
+}, {passive:true});
+
 document.getElementById('taxYearTitle').textContent=new Date().getFullYear();
 loadSavedInputs();
 calc();
