@@ -12,6 +12,8 @@ Everything runs in the browser; nothing is sent anywhere.
                         — used by the calculator family only
 /social-security/       Social Security claiming calculator (the anchor tool)
 /rent-vs-buy/           Rent vs buy calculator
+/relocation/            State relocation tax-payback calculator — all 51
+                        jurisdictions, uses /core/ plus its own relo-engine.mjs
 /roth-conversion/       Roth conversion calculator — its own self-contained front
                         end (Playfair/DM Sans, Chart.js). Does NOT use /core/.
 /in-case-im-not-there/  The family vault — a standalone, offline, encrypted
