@@ -2152,7 +2152,7 @@
   "roth": {
    "cr": 0.03,
    "ex": false,
-   "note": "Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a retirement-income exclusion at 65+ — $12,000 single, $24,000 joint (CPI-adjusted; exact TY2026 figures pending LDR's 2026 IT-540i) — that this calculator applies before taxing the rest at 3%. Social Security and most LA government/military pensions are fully exempt."
+   "note": "Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a retirement-income exclusion at 65+ — $12,000 single, $24,000 joint (CPI-adjusted; exact TY2026 figures pending LDR's 2026 IT-540i) — that this calculator applies before taxing the rest at 3%. This exclusion is for pension/retirement-account income specifically, not wages — already receiving a pension? Enter it in the Pension / Retirement-Account field below. Social Security and most LA government/military pensions are fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -2706,7 +2706,7 @@
   "roth": {
    "cr": 0.0425,
    "ex": false,
-   "note": "Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct retirement and pension income (including IRA withdrawals) up to about $67,610 single / $135,220 joint, regardless of birth year. Social Security is fully exempt from Michigan tax. A Roth conversion is taxable IRA income, so whether it falls under the deduction cap depends on your other retirement income — verify for your situation.",
+   "note": "Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint, regardless of birth year — wages don't count toward this cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly.",
    "retDeduction": {
     "single": 67610,
     "mfj": 135220,

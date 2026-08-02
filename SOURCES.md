@@ -91,7 +91,7 @@ already shows "verify locally" notes on the tricky ones. **This is the softest
 area and the first thing to verify on the next pass** — or to spot-check for the
 user's own state when accuracy matters to them.
 
-#### Michigan — ✅ fully verified June 2026
+#### Michigan — ✅ fully verified June 2026; wages-exclusion bug found and fixed 2026-08-01
 
 - **Rate: 4.25%** — confirmed against [MI Treasury, 2026 rate determination](https://www.michigan.gov/treasury/news/2026/04/15/state-individual-income-tax-rate-for-2026-tax-year-determined).
   Note: the 4.05% figure seen in some secondary sources was a **one-time 2023-only**
@@ -104,8 +104,26 @@ user's own state when accuracy matters to them.
   [MI RAB 2026-1](https://www.michigan.gov/taxes/rep-legal/rab/2026-revenue-administrative-bulletins/revenue-administrative-bulletin-2026-1).
   > Fixed June 2026: the prior note said exemptions "vary by birth year" — that
   > described the pre-2026 tiered system the phase-in replaced. Updated to the
-  > 2026 rules. A Roth conversion is taxable IRA income, so whether it fits under
-  > the deduction cap depends on the filer's other retirement income.
+  > 2026 rules.
+- **The deduction is for 1099-R retirement/pension distributions specifically —
+  it does NOT apply to wages, salary, or self-employment income.** Confirmed
+  against MI Treasury's own "Retirement and Pension Benefits" guidance: "wages,
+  salaries, and personal compensation... are additions (not eligible for the
+  subtraction)," and self-employment income is separately excluded too.
+  > Fixed 2026-08-01: the tool's single "income" field previously fed BOTH the
+  > federal calculation AND the amount competing for this cap — meaning a still-
+  > working filer's wages were incorrectly treated as if they were pension income
+  > already using up the $67,610/$135,220 cap, understating the deduction
+  > actually available to shelter a conversion. Added a dedicated "Pension /
+  > Other Retirement-Account Income" field so wages and pension income are
+  > tracked separately; only the pension figure competes for the cap now. The
+  > SAME fix was applied to Louisiana (the only other flat-cap RETDED state) and
+  > to all 8 RIX states (GA/SC/VA/WI/NM/CT/NJ/WV), whose retirement-income
+  > deductions are the same class of mechanism, each independently confirmed via
+  > this project's earlier research to apply to retirement income specifically.
+  > Regression-verified: identical results for pensionIncome=0 and for
+  > pensionIncome equal to the old single income figure, across all 3 pre-
+  > existing examples and all 8 RIX states.
 - **Social Security:** not taxed by Michigan at any income or birth year. (The
   Social Security claiming tool models federal benefits only and applies no state
   tax, which is correct for Michigan.)
