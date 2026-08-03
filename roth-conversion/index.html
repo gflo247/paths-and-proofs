@@ -801,11 +801,15 @@
                 <div class="idollar"><input type="number" id="retSS" value="24000" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate()" style="font-size:.93rem"></div>
               </div>
               <div>
-                <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Pension / other / yr</label>
+                <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Pension / retirement-account income / yr</label>
                 <div class="idollar"><input type="number" id="retPen" value="0" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate()" style="font-size:.93rem"></div>
               </div>
+              <div>
+                <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Wages or other income / yr (optional)</label>
+                <div class="idollar"><input type="number" id="retOther" value="0" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate()" style="font-size:.93rem"></div>
+              </div>
             </div>
-            <p style="font-size:.76rem;color:var(--muted);margin:-2px 0 8px;line-height:1.4">SS and pension start filled in from what you entered above — change them here only if you expect different amounts by the time you retire.</p>
+            <p style="font-size:.76rem;color:var(--muted);margin:-2px 0 8px;line-height:1.4">SS and pension start filled in from what you entered above — change them here only if you expect different amounts by the time you retire. Keep continued work or consulting income in "Wages or other" — a few states, including Michigan, shelter pension income differently than wages.</p>
             <div style="margin-bottom:8px">
               <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Annual IRA / 401(k) withdrawal</label>
               <div class="idollar"><input type="number" id="retWd" value="30000" min="0" step="500" oninput="updateRetRate()" style="font-size:.93rem"></div>
@@ -887,7 +891,11 @@ var _activeExample = null;
 // ssIncome/pensionIncome — otherwise the golden-window recommendation silently
 // uses those unrelated defaults instead of the person's actual numbers. Once
 // the user touches either field directly, syncing stops (they're modeling a
-// deliberately different retirement-year scenario at that point).
+// deliberately different retirement-year scenario at that point). retOther
+// (wages/other income during the golden window) deliberately does NOT sync
+// from today's wages — the golden window is specifically the post-retirement
+// period, so defaulting it to today's full salary would overstate it far more
+// than defaulting to $0 (no continued work assumed unless the user says so).
 var _retFieldsTouched = false;
 function syncRetFieldsFromMain(){
   if(_retFieldsTouched) return;
@@ -1347,16 +1355,17 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
 }
 
 function updateRetRate(){
-  var retSS  = parseFloat(document.getElementById('retSS')&&document.getElementById('retSS').value)||0;
-  var retPen = parseFloat(document.getElementById('retPen')&&document.getElementById('retPen').value)||0;
+  var retSS    = parseFloat(document.getElementById('retSS')&&document.getElementById('retSS').value)||0;
+  var retPen   = parseFloat(document.getElementById('retPen')&&document.getElementById('retPen').value)||0;
+  var retOther = parseFloat(document.getElementById('retOther')&&document.getElementById('retOther').value)||0;
   var retWd  = parseFloat(document.getElementById('retWd')&&document.getElementById('retWd').value)||0;
   var status = $('filingStatus').value;
   var el     = document.getElementById('retRateResult');
   if(!el) return;
-  if(retSS+retPen+retWd<=0){ el.innerHTML=''; return; }
+  if(retSS+retPen+retOther+retWd<=0){ el.innerHTML=''; return; }
 
   var std     = STDD[status];
-  var othInc  = retPen + retWd;
+  var othInc  = retPen + retOther + retWd;
 
   // Marginal rate: tax difference from adding $1000 more IRA withdrawal
   var ssT0 = calcTaxableSS(retSS, othInc,      status);
@@ -1440,10 +1449,17 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
     var gYears=Math.min(73-retAge,10);
     var retSSEl=document.getElementById('retSS');
     var retPenEl=document.getElementById('retPen');
+    var retOtherEl=document.getElementById('retOther');
     var retNiiEl=document.getElementById('niiIncome');
     var retLtcgEl=document.getElementById('ltcgIncome');
     var retSSV=parseFloat(retSSEl&&retSSEl.value)||0;
     var retPenV=parseFloat(retPenEl&&retPenEl.value)||0;
+    // retOtherV is continued wages/self-employment income the person expects during
+    // the golden window (e.g. part-time consulting after retiring) — kept separate
+    // from retPenV for the SAME reason the main form's income/pensionIncome split
+    // exists: MI/LA/RIX states' retirement-income deductions shelter pension income,
+    // never wages, so only retPenV should ever compete for those caps.
+    var retOtherV=parseFloat(retOtherEl&&retOtherEl.value)||0;
     // Assumes today's investment income (dividends/interest/gains outside retirement
     // accounts) continues at the same level into the golden window — matches this
     // section's existing "income assumed flat within each phase" simplification.
@@ -1452,9 +1468,9 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
     var retNiiV=parseFloat(retNiiEl&&retNiiEl.value)||0;
     var retLtcgV=parseFloat(retLtcgEl&&retLtcgEl.value)||0;
 
-    if(retSSV+retPenV>0){
+    if(retSSV+retPenV+retOtherV>0){
       // Bracket room in retirement (lower income = more room)
-      var gOpts=computeOptTargets(retPenV+retNiiV,retLtcgV,retSSV,status,STDD[status],nSr,nMed,taxableFrac);
+      var gOpts=computeOptTargets(retPenV+retOtherV+retNiiV,retLtcgV,retSSV,status,STDD[status],nSr,nMed,taxableFrac);
       // Bracket room can legitimately round to $0 (already at the top of the
       // current bracket) while Medicare-safe room is still real — fall back to
       // it instead of silently giving up on the whole golden-window plan.
@@ -1462,15 +1478,11 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
       if(gOpts.irmaaAmt!==null&&gOpts.irmaaAmt>0&&(gConv===0||gOpts.irmaaAmt<gConv))gConv=gOpts.irmaaAmt;
 
       if(gConv>500){
-        // retPenV comes from the retirement-rate estimator's own "Pension / other"
-        // field, which — like the main form's income field before this session's
-        // fix — doesn't itself separate wages from pension. Passed as pensionAmt
-        // (not otherInc) here to preserve this phase's existing behavior: it's
-        // been treating the whole figure as pension-competing since before this
-        // fix, and splitting the estimator's OWN field is a separate, deferred
-        // scope. otherInc=0 avoids double-counting retPenV as both wages and
-        // pension in the federal total.
-        var gTax=convTax(0,retNiiV,retLtcgV,retSSV,status,nSr,gConv,taxableFrac,retPenV);
+        // otherInc=retOtherV (not 0): wages/continued-work income feeds the federal
+        // total the same as pension does, but — unlike retPenV — never competes for
+        // a state's retirement-income deduction cap. See computeConversionCost's own
+        // income/pensionIncome split for the general version of this same principle.
+        var gTax=convTax(retOtherV,retNiiV,retLtcgV,retSSV,status,nSr,gConv,taxableFrac,retPenV);
 
         for(var j=0;j<gYears;j++){
           var gcv=Math.min(gConv,tBal);
