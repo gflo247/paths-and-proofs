@@ -798,13 +798,14 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:6px">
               <div>
                 <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">SS benefit / yr</label>
-                <div class="idollar"><input type="number" id="retSS" value="24000" min="0" step="500" oninput="updateRetRate()" style="font-size:.93rem"></div>
+                <div class="idollar"><input type="number" id="retSS" value="24000" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate()" style="font-size:.93rem"></div>
               </div>
               <div>
                 <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Pension / other / yr</label>
-                <div class="idollar"><input type="number" id="retPen" value="0" min="0" step="500" oninput="updateRetRate()" style="font-size:.93rem"></div>
+                <div class="idollar"><input type="number" id="retPen" value="0" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate()" style="font-size:.93rem"></div>
               </div>
             </div>
+            <p style="font-size:.76rem;color:var(--muted);margin:-2px 0 8px;line-height:1.4">SS and pension start filled in from what you entered above — change them here only if you expect different amounts by the time you retire.</p>
             <div style="margin-bottom:8px">
               <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Annual IRA / 401(k) withdrawal</label>
               <div class="idollar"><input type="number" id="retWd" value="30000" min="0" step="500" oninput="updateRetRate()" style="font-size:.93rem"></div>
@@ -879,6 +880,22 @@ var _canStore=(function(){
 
 // Pass example data directly to calc() to avoid onchange race conditions
 var _activeExample = null;
+
+// The retirement-rate estimator's own SS/pension fields (used only by the
+// multi-year plan's golden-window phase) default to $24,000/$0 and, until a
+// user edits them directly, are kept in sync with the main form's real
+// ssIncome/pensionIncome — otherwise the golden-window recommendation silently
+// uses those unrelated defaults instead of the person's actual numbers. Once
+// the user touches either field directly, syncing stops (they're modeling a
+// deliberately different retirement-year scenario at that point).
+var _retFieldsTouched = false;
+function syncRetFieldsFromMain(){
+  if(_retFieldsTouched) return;
+  var retSSEl=document.getElementById('retSS'), retPenEl=document.getElementById('retPen');
+  var ssEl=document.getElementById('ssIncome'), penEl=document.getElementById('pensionIncome');
+  if(retSSEl && ssEl) retSSEl.value = ssEl.value;
+  if(retPenEl && penEl) retPenEl.value = penEl.value;
+}
 
 // ═══ 2026 TAX BRACKETS (IRS Rev. Proc. 2025-32 + OBBBA) ═══
 const BRAX={
@@ -2297,6 +2314,7 @@ function setVisState(name){
 // ── CLEAR ALL INPUTS ──
 function clearAllInputs(){
   if(!confirm('Clear all inputs and start fresh? This also removes your saved data from this browser.')) return;
+  _retFieldsTouched = false;
   // Reset fields to defaults
   function sv(id,v){var el=document.getElementById(id);if(el)el.value=v;}
   sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
@@ -2389,6 +2407,7 @@ var PROFILES = {
 function loadExample(name){
   var p=PROFILES[name]; if(!p) return;
   var f=p.f;
+  _retFieldsTouched = false;
   function setVal(id,v){ var el=$(id); if(el&&v!==null&&v!==undefined) el.value=v; }
   setVal('currentAge',f.currentAge); setVal('retirementAge',f.retirementAge);
   setVal('filingStatus',f.filingStatus); setVal('sex',f.sex);
@@ -2454,6 +2473,7 @@ function loadExample(name){
 
 function clearExample(){
   // Reset to original defaults
+  _retFieldsTouched = false;
   function sv(id,v){ var el=document.getElementById(id); if(el) el.value=v; }
   sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
   sv('sex','female'); sv('seniorDeduction',0); sv('stateCode',''); sv('reloStateCode','');
@@ -2815,6 +2835,7 @@ function calc(){
   const income   = _ae ? +_ae.income          : _rf('income');
   const pensionIncome = _ae ? +(_ae.pensionIncome||0) : _rf('pensionIncome');
   const ss       = _ae ? +_ae.ssIncome        : _rf('ssIncome');
+  syncRetFieldsFromMain();
   const nii      = _ae ? +_ae.niiIncome       : _rf('niiIncome');
   const ltcg     = _ae ? +_ae.ltcgIncome      : _rf('ltcgIncome');
   const cvtAmt   = _ae ? +_ae.convertAmt      : _rf('convertAmt');
