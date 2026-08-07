@@ -199,7 +199,7 @@
     .rw input[type=range]{flex:1;-webkit-appearance:none;height:5px;background:var(--border);border-radius:3px;outline:none;padding:0;border:none;box-shadow:none;}
     .rw input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:var(--navy);border-radius:50%;cursor:pointer;box-shadow:0 1px 5px rgba(28,58,94,.25);}
     .rv{min-width:42px;text-align:right;font-weight:700;font-size:.95rem;color:var(--navy);}
-    .tb{width:20px;height:20px;border-radius:50%;background:var(--navy-pale);border:1.5px solid var(--tip-bdr);color:var(--navy);font-size:.72rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
+    .tb{width:30px;height:30px;border-radius:50%;background:var(--navy-pale);border:1.5px solid var(--tip-bdr);color:var(--navy);font-size:.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;}
     .tb:hover,.tb.open{background:var(--navy);color:white;}
     .ttip{display:none;background:var(--tip-bg);border:1px solid var(--tip-bdr);border-left:3px solid var(--navy);border-radius:var(--rsm);padding:.85rem 1rem;font-size:.88rem;color:var(--ink-pale);line-height:1.6;margin-top:6px;}
     .ttip.open{display:block;animation:tipIn .18s ease;}
@@ -405,7 +405,7 @@
   <!-- PNP-BRAND-END -->
   <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
     <button class="clear-btn" onclick="clearAllInputs()" title="Clear all inputs and saved data">Clear</button>
-    <button class="print-btn" onclick="window.print()">Save PDF</button>
+    <button class="print-btn" onclick="window.print()" title="Opens your browser's print dialog — choose &quot;Save as PDF&quot; as the destination">Print / PDF</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Switch to dark mode" aria-label="Switch to dark mode">
       <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
       <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -611,6 +611,7 @@
           <option value="2">Yes, both spouses are 65+ — add $12,000</option>
         </select>
         <div class="ttip" id="tip-senior"><strong>New for 2026:</strong> A new law gives people 65+ an extra $6,000 tax deduction per qualifying person, on top of the regular standard deduction. This can meaningfully reduce the tax cost of a conversion. Phases out above $75K (single) or $150K (joint). <strong>Not available if married filing separately</strong> — the law requires a joint return, so this selection has no effect if you file separately.</div>
+        <div class="hint" id="seniorMfsNote" style="display:none">Not available for Married Filing Separately — this deduction requires a joint return, so it won't change your results even if selected.</div>
       </div>
       <div class="field">
         <div class="flr"><label>Your State</label><button class="tb" onclick="toggleTip('state')">ⓘ</button></div>
@@ -859,7 +860,7 @@
     </div>
     <div class="card">
       <div class="stitle">📊 <span id="taxYearTitle">2026</span> Tax Analysis</div>
-      <details class="rest">
+      <details class="rest" id="taxDetails">
         <summary>See the full number-by-number breakdown</summary>
         <div class="restb" id="taxPanel"><div style="font-size:.9rem;color:var(--muted)">Enter a conversion amount above to see the full tax breakdown.</div></div>
       </details>
@@ -868,7 +869,7 @@
 </div>
 <div id="optimizerPanel" style="padding:0 0 0 0"></div>
 <div id="resultsWrap">
-  <div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Enter your IRA or 401(k) balance and annual income in the form above</span></div><div class="ph-step"><span class="ph-num">2</span><span>Set a conversion amount — not sure where to start? <button class="ph-try" onclick="document.getElementById('convertAmt').value=20000;document.getElementById('convertAmt').dispatchEvent(new Event('input'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">3</span><span>Your personalized analysis appears here instantly</span></div></div></div>
+  <div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Set a conversion amount above — not sure where to start? <button class="ph-try" onclick="document.getElementById('convertAmt').value=20000;document.getElementById('convertAmt').dispatchEvent(new Event('input'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>
 </div>
 </div>
 <footer>
@@ -2884,6 +2885,10 @@ function calc(){
   const isCouple = (status==='mfj'||status==='mfs');
   const spFields = document.getElementById('spouseFields');
   if(spFields) spFields.style.display = isCouple ? 'block' : 'none';
+  const seniorSelEl = document.getElementById('seniorDeduction');
+  const seniorMfsNoteEl = document.getElementById('seniorMfsNote');
+  if(seniorSelEl){ seniorSelEl.disabled = (status==='mfs'); seniorSelEl.style.opacity = (status==='mfs') ? '.55' : ''; }
+  if(seniorMfsNoteEl) seniorMfsNoteEl.style.display = (status==='mfs') ? 'block' : 'none';
   const spouseAge= isCouple ? (_ae?+_ae.spouseAge:(parseInt(_rv('spouseAge'))||60)) : null;
   const spouseSex= isCouple ? (_ae ? _ae.spouseSex : $('spouseSex').value) : null;
 
@@ -2903,6 +2908,8 @@ function calc(){
       snEl.innerHTML='<span style="color:var(--success);font-size:.84rem">'+stD.note+'</span>';
     else if(stD.n && stD.cr>0)
       snEl.innerHTML='<span style="color:var(--muted);font-size:.84rem">'+stD.note+'</span>';
+    else if(!stateCode)
+      snEl.innerHTML='<span style="color:var(--ink-amber);font-size:.84rem">Add your state above — without it, every number below leaves out state tax entirely, which can add several percentage points.</span>';
     else snEl.innerHTML='';
   }
 
@@ -3046,6 +3053,15 @@ function calc(){
       +(cvtTxLtcg>0?'<div class="trow"><span class="tl">Qualified div./LTCG bumped to a higher bracket</span><span class="tv">'+fmt(cvtTxLtcg)+'</span></div>':'')
       +(niitCost>0?'<div class="trow"><span class="tl">NIIT (3.8% on investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')+'<div class="trow tgrand"><span class="tl">Total tax cost (all components)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'
       +'<div class="trow"><span class="tl">True effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>';
+  } else if(!stateCode){
+    stateSectionHtml =
+      '<div class="tsep"></div>'
+      +'<div class="tsubhead">State Tax</div>'
+      +'<div class="alert aamb" style="padding:.7rem .9rem;font-size:.84rem;margin-top:2px"><strong>Not included:</strong> No state selected above, so this is a federal-only estimate. State tax can add 0–13% depending on where you live — select your state for a complete number.</div>'
+      +(cvtTxLtcg>0?'<div class="trow"><span class="tl">Qualified div./LTCG bumped to a higher bracket</span><span class="tv">'+fmt(cvtTxLtcg)+'</span></div>':'')
+      +(niitCost>0?'<div class="trow"><span class="tl">NIIT (3.8% on investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')
+      +'<div class="trow tgrand"><span class="tl">Total tax cost (federal only)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'
+      +'<div class="trow"><span class="tl">Effective rate on conversion (federal only)</span><span class="tv">'+pct(effR)+'</span></div>';
   } else {
     stateSectionHtml =
       (cvtTxLtcg>0||niitCost>0?'<div class="tsep"></div>'+'<div class="tsubhead">Federal Surcharge</div>'
@@ -3104,7 +3120,7 @@ function calc(){
   })();
 
   if(cvtAmt<=0){
-    $('resultsWrap').innerHTML='<div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Enter your IRA or 401(k) balance and annual income in the form above</span></div><div class="ph-step"><span class="ph-num">2</span><span>Set a conversion amount — not sure where to start? <button class="ph-try" onclick="document.getElementById(\'convertAmt\').value=20000;document.getElementById(\'convertAmt\').dispatchEvent(new Event(\'input\'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">3</span><span>Your personalized analysis appears here instantly</span></div></div></div>';
+    $('resultsWrap').innerHTML='<div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Set a conversion amount above — not sure where to start? <button class="ph-try" onclick="document.getElementById(\'convertAmt\').value=20000;document.getElementById(\'convertAmt\').dispatchEvent(new Event(\'input\'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>';
     updateWayfindBar();
     return;
   }
@@ -3150,6 +3166,7 @@ function calc(){
   let blTxt =
     'Converting '+fmt(cvtAmt)+(basis>0&&taxableFrac<0.9999?' ('+fmt(taxableCvt)+' taxable after your '+fmt(basis)+' in after-tax basis)':'')+' this year costs <strong>'+fmt(cvtTxTot)+'</strong> in taxes'
     +stTodayNote+torpedoNote+' — an all-in rate of <strong>'+pct(effR)+'</strong>.';
+  if(!stateCode) blTxt += ' <strong>This is federal-only</strong> — no state selected above, so state tax (0–13% depending on where you live) isn\'t in this number.';
 
   const youOrOneOfYou = isCouple ? 'at least one of you' : 'you';
   const chanceNote = survBE ? ' — <strong>'+pct(survBE,0)+' chance</strong> '+youOrOneOfYou+' will be there.' : '.';
@@ -3395,7 +3412,7 @@ function calc(){
     +'<div class="disclaimer">📌 <strong>Planning tool, not financial advice.</strong> This calculator models common tax rules but cannot see your full picture — estate goals, healthcare subsidies, future moves, charitable plans, and income changes all matter. State rates are approximate. Use this to understand the landscape and size the conversation with your CPA or financial advisor, not to make the decision alone.</div>'
     +'<div class="bottom-line"><div class="bl-eye">YOUR BOTTOM LINE</div><div class="bl-txt" id="blTxt">'+blTxt+'</div><div class="bl-cav">Estimates only — rough numbers are fine for planning. Scroll down for the full breakdown.</div></div>'
     +'<div class="rgrid">'
-    +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):''))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + NIIT: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')+'</div></div>'
+    +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(!stateCode?'<br>Federal only — no state selected':(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):'')))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + NIIT: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')+'</div></div>'
     +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Not in range')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
     +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'<br><span style="font-size:.76rem">Full age-by-age odds below ↓</span></div></div>'
     +'</div>'
@@ -3538,6 +3555,13 @@ window.addEventListener('scroll', function(){
 
 document.getElementById('taxYearTitle').textContent=new Date().getFullYear();
 loadSavedInputs();
+// On desktop, the right-column card holding this panel is otherwise shorter than
+// the left column, leaving a stretched, empty gap below it (CSS grid stretches both
+// columns to match the taller one). Open it by default only above the same 740px
+// breakpoint the layout itself collapses at — mobile keeps it collapsed, since
+// there it precedes the verdict in reading order and staying compact still matters.
+var _taxDetailsEl = document.getElementById('taxDetails');
+if(_taxDetailsEl && window.innerWidth > 740) _taxDetailsEl.open = true;
 calc();
 </script>
 </body>
