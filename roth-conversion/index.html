@@ -122,6 +122,15 @@
     .faq-expand summary{font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:.5rem;}
     .faq-expand summary::-webkit-details-marker{display:none;}
     .faq-expand[open] summary{margin-bottom:.6rem;}
+    /* Illustrative hero example: open by default (it's the page's main "show, don't
+       tell" hook for a first-time visitor) but collapsible for anyone who's already
+       seen it and wants it out of the way on a re-visit. */
+    .hero-ex-summary{cursor:pointer;list-style:none;display:flex;justify-content:center;align-items:center;gap:.6ch;margin-bottom:.5rem;}
+    .hero-ex-summary::-webkit-details-marker{display:none;}
+    .hero-ex-toggle{font-size:.72rem;font-weight:600;color:var(--navy-mid);opacity:.75;white-space:nowrap;}
+    .hero-ex-summary:hover .hero-ex-toggle{opacity:1;text-decoration:underline;}
+    .hero-ex-details:not([open]) .hero-ex-label-open{display:none;}
+    .hero-ex-details[open] .hero-ex-label-closed{display:none;}
     .faq-body{font-size:.81rem;color:var(--muted);line-height:1.65;padding-top:.1rem;}
     .faq-body strong{color:var(--ink-pale);}
     .ph-title{font-size:1.05rem;font-weight:700;color:var(--navy);margin:.5rem 0 .85rem;}
@@ -417,59 +426,63 @@
       <p><strong>Have an old 401(k) from a previous job?</strong> You can roll it into a traditional IRA at any time — no deadline, no penalty. This calculator applies to that money too.</p>
     </div>
   </details>
-  <div style="display:flex;justify-content:center;margin-bottom:.5rem"><span class="ex-pill" style="font-size:.72rem;padding:3px 13px">EXAMPLE — NOT YOUR NUMBERS</span></div>
-  <p style="font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);text-align:center;margin:0 0 .6rem;opacity:.75">$300K IRA Converted Gradually</p>
-  <p style="font-size:.78rem;color:var(--muted);text-align:center;line-height:1.5;max-width:440px;margin:0 auto .9rem;font-style:italic">Totals over a full retirement, not a single year — these assume the conversion is spread across several years to stay in lower brackets, the approach this tool recommends.</p>
-  <div class="vis-toggle">
-    <button class="vt-btn vt-amb" data-vis="traditional" onclick="setVisState('traditional')">↓ Keep traditional</button>
-    <button class="vt-btn vt-neu" data-vis="borderline" onclick="setVisState('borderline')">⚖ Too close to call</button>
-    <button class="vt-btn vt-grn active" data-vis="roth" onclick="setVisState('roth')">↑ Convert to Roth</button>
-  </div>
-  <p style="font-size:.68rem;color:var(--muted);text-align:center;margin:.3rem 0 0;opacity:.75">Preview only — switches the illustration below, doesn't load data. For a working example, use the cards further down.</p>
-
-  <!-- Toggleable visual -->
-  <!-- Toggleable visual -->
-  <div class="hero-vis" id="heroVis">
-    <div class="hv-col">
-      <div class="hv-bar">
-        <div class="hv-gseg" id="hvTradGreen" style="height:194px">
-          <div class="hv-damt" id="hvTradGreenAmt">$198K</div>
-          <div class="hv-seg-pct" id="hvTradPct">~66%</div>
-          <div class="hv-slbl">estimated net</div>
-          <div class="hv-chip">⚠️ annual withdrawals required</div>
-        </div>
-        <div class="hv-aseg" id="hvTradAmber" style="height:106px">
-          <div class="hv-damt" id="hvTradAmberAmt">$102K</div>
-          <div class="hv-seg-pct" id="hvTradAmberPct">~34%</div>
-          <div class="hv-slbl" id="hvTradAmberLbl">to IRS</div>
-        </div>
-      </div>
-      <div class="hv-col-lbl">Traditional IRA</div>
-      <div class="hv-col-sub" id="hvTradSub">Large tax owed on every withdrawal — and it compounds too</div>
+  <details class="hero-ex-details" open>
+    <summary class="hero-ex-summary">
+      <span class="ex-pill" style="font-size:.72rem;padding:3px 13px">EXAMPLE — NOT YOUR NUMBERS</span>
+      <span class="hero-ex-toggle"><span class="hero-ex-label-open">hide example ↑</span><span class="hero-ex-label-closed">show example ↓</span></span>
+    </summary>
+    <p style="font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);text-align:center;margin:.6rem 0 .6rem;opacity:.75">$300K IRA Converted Gradually</p>
+    <p style="font-size:.78rem;color:var(--muted);text-align:center;line-height:1.5;max-width:440px;margin:0 auto .9rem;font-style:italic">Totals over a full retirement, not a single year — these assume the conversion is spread across several years to stay in lower brackets, the approach this tool recommends.</p>
+    <div class="vis-toggle">
+      <button class="vt-btn vt-amb" data-vis="traditional" onclick="setVisState('traditional')">↓ Keep traditional</button>
+      <button class="vt-btn vt-neu" data-vis="borderline" onclick="setVisState('borderline')">⚖ Too close to call</button>
+      <button class="vt-btn vt-grn active" data-vis="roth" onclick="setVisState('roth')">↑ Convert to Roth</button>
     </div>
+    <p style="font-size:.68rem;color:var(--muted);text-align:center;margin:.3rem 0 0;opacity:.75">Preview only — switches the illustration below, doesn't load data. For a working example, use the cards further down.</p>
 
-    <div class="hv-vs">VS</div>
-
-    <div class="hv-col">
-      <div class="hv-bar" style="animation-delay:.3s">
-        <div class="hv-gseg hv-win" id="hvRothGreen" style="height:212px">
-          <div class="hv-damt" id="hvRothGreenAmt">$234K</div>
-          <div class="hv-seg-pct" id="hvRothGreenPct">~78%</div>
-          <div class="hv-slbl">tax-free · guaranteed</div>
-          <div class="hv-chip">✓ no withdrawals required</div>
+    <!-- Toggleable visual -->
+    <div class="hero-vis" id="heroVis">
+      <div class="hv-col">
+        <div class="hv-bar">
+          <div class="hv-gseg" id="hvTradGreen" style="height:194px">
+            <div class="hv-damt" id="hvTradGreenAmt">$198K</div>
+            <div class="hv-seg-pct" id="hvTradPct">~66%</div>
+            <div class="hv-slbl">estimated net</div>
+            <div class="hv-chip">⚠️ annual withdrawals required</div>
+          </div>
+          <div class="hv-aseg" id="hvTradAmber" style="height:106px">
+            <div class="hv-damt" id="hvTradAmberAmt">$102K</div>
+            <div class="hv-seg-pct" id="hvTradAmberPct">~34%</div>
+            <div class="hv-slbl" id="hvTradAmberLbl">to IRS</div>
+          </div>
         </div>
-        <div class="hv-aseg" id="hvRothAmber" style="height:88px;animation:none">
-          <div class="hv-damt" id="hvRothAmberAmt">$66K</div>
-          <div class="hv-seg-pct" id="hvRothAmberPct">~22%</div>
-          <div class="hv-slbl">total tax to convert</div>
-        </div>
+        <div class="hv-col-lbl">Traditional IRA</div>
+        <div class="hv-col-sub" id="hvTradSub">Large tax owed on every withdrawal — and it compounds too</div>
       </div>
-      <div class="hv-col-lbl">After Converting</div>
-      <div class="hv-col-sub" id="hvRothSub">More take-home — grows tax-free from here</div>
+
+      <div class="hv-vs">VS</div>
+
+      <div class="hv-col">
+        <div class="hv-bar" style="animation-delay:.3s">
+          <div class="hv-gseg hv-win" id="hvRothGreen" style="height:212px">
+            <div class="hv-damt" id="hvRothGreenAmt">$234K</div>
+            <div class="hv-seg-pct" id="hvRothGreenPct">~78%</div>
+            <div class="hv-slbl">tax-free · guaranteed</div>
+            <div class="hv-chip">✓ no withdrawals required</div>
+          </div>
+          <div class="hv-aseg" id="hvRothAmber" style="height:88px;animation:none">
+            <div class="hv-damt" id="hvRothAmberAmt">$66K</div>
+            <div class="hv-seg-pct" id="hvRothAmberPct">~22%</div>
+            <div class="hv-slbl">total tax to convert</div>
+          </div>
+        </div>
+        <div class="hv-col-lbl">After Converting</div>
+        <div class="hv-col-sub" id="hvRothSub">More take-home — grows tax-free from here</div>
+      </div>
     </div>
-  </div>
-  <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$36K in total taxes vs keeping traditional</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in a known rate — more take-home, no forced withdrawals</div></div>
-  <p class="hv-note" style="margin-top:.85rem;font-style:normal;font-weight:500;color:var(--navy-mid)">Want more detail? Scroll down to plug in your own numbers ↓</p>
+    <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$36K in total taxes vs keeping traditional</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in a known rate — more take-home, no forced withdrawals</div></div>
+    <p class="hv-note" style="margin-top:.85rem;font-style:normal;font-weight:500;color:var(--navy-mid)">Want more detail? Scroll down to plug in your own numbers ↓</p>
+  </details>
   <div class="how-to" style="margin-top:1.25rem;">
     <div class="how-to-step"><div class="sc">1</div><div>Fill in your details — approximate is fine</div></div>
     <div class="how-to-step"><div class="sc">2</div><div>See the true all-in cost — including the often-missed hidden tax on Social Security</div></div>
