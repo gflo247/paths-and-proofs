@@ -515,7 +515,7 @@
     </details>
     <details class="faq-item">
       <summary>What does this tool model — and what does it simplify?</summary>
-      <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), long-term capital gains and qualified dividend brackets (same source) stacked correctly on top of ordinary income, the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare IRMAA premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase, including the assumption that today's investment income continues unchanged. Survival modeling ends at age 100. State conversion rates are effective approximations, applied to qualified dividends/LTCG the same as ordinary income even though a handful of states treat them differently — check your state's own schedule. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
+      <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), long-term capital gains and qualified dividend brackets (same source) stacked correctly on top of ordinary income, the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare IRMAA premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase, including the assumption that today's investment income continues unchanged. Survival modeling ends at age 100. State-rate accuracy and capital-gains treatment have their own caveats — see "What This Calculator Doesn't Model" further down the results. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
     </details>
   </div>
   <div class="ex-bar" id="examplesSection">
@@ -1363,7 +1363,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
     +cards.join('')
     +'</div>'
     +'<p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;line-height:1.4">'
-    +'Click any card to load that amount and see the full analysis. Adjust manually from there. Discuss with a CPA or financial advisor before acting.'
+    +'Click any card to load that amount and see the full analysis. Adjust manually from there.'
     +'</p>'
     +'</div>';
 }
@@ -3041,7 +3041,7 @@ function calc(){
         +'eventually withdraw from a traditional IRA later. This tilts the math against converting'
         +(exAge!==undefined?' — waiting until you qualify would avoid this state tax entirely':'')+'.</div>';
     } else {
-      stateNote = '<div style="font-size:.82rem;color:var(--muted);margin-top:4px">'+stD.note+'</div>';
+      stateNote = '<div style="font-size:.82rem;color:var(--muted);margin-top:4px">See the note under "Your State" above for how '+stD.n+' treats this.</div>';
     }
     stateSectionHtml =
       '<div class="tsep"></div>'
@@ -3459,7 +3459,6 @@ function calc(){
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Future state of residence.</strong> If you plan to move to a no-income-tax state before retirement, the state tax comparison is reversed — you pay state tax on the conversion today but owe nothing later. Factor this in before converting.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">State-level capital gains treatment.</strong> The Qualified Dividends &amp; LTCG field models the federal preferential rate (0/15/20%) correctly, but state tax on that income is still approximated at your flat conversion rate — nearly every state (including all the ones with large populations of Roth converters) taxes capital gains the same as ordinary income anyway, but a handful of states have their own capital-gains carve-outs this tool doesn\'t model. (The Alternative Minimum Tax isn\'t modeled either, but rarely applies at typical conversion income levels under current law.)</p>'
     +'</div></div>'
-    +'<div class="alert anvy" style="margin-top:.85rem;font-size:.85rem">Use this calculator as a starting point for a conversation with a CPA, tax professional, or financial advisor — not as a substitute for one.</div>'
     +'</div>'
     +nextStepsHTML
     +'</div>';
