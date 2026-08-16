@@ -54,6 +54,7 @@
     [data-theme="dark"] .ex-btn[data-ex="borderline"]{background:var(--blight)!important;color:var(--text)!important;border-color:#6A7080!important;}
     [data-theme="dark"] .ex-btn[data-ex="couple"]{background:var(--sbg)!important;color:var(--ink-green)!important;border-color:var(--success)!important;}
     [data-theme="dark"] .ex-btn[data-ex="michigan"]{background:var(--navy-pale)!important;color:var(--navy-mid)!important;border-color:var(--navy-mid)!important;}
+    [data-theme="dark"] .ex-btn[data-ex="michSingle"]{background:var(--navy-pale)!important;color:var(--navy-mid)!important;border-color:var(--navy-mid)!important;}
     [data-theme="dark"] .sb,[data-theme="dark"] .sc,[data-theme="dark"] .ph-num,[data-theme="dark"] .ex-pill,[data-theme="dark"] .tb:hover,[data-theme="dark"] .tb.open{background:#2C4A72;}
     [data-theme="dark"] .be-wait{background:#3A414C;}
     [data-theme="dark"] .vt-neu{color:var(--muted);border-color:#6A7080;}
@@ -519,7 +520,7 @@
     </details>
   </div>
   <div class="ex-bar" id="examplesSection">
-    <span class="ex-label" style="width:100%;text-align:center;margin-bottom:.2rem">Four example scenarios across the spectrum — click any to explore:</span>
+    <span class="ex-label" style="width:100%;text-align:center;margin-bottom:.2rem">Five example scenarios across the spectrum — click any to explore:</span>
     <button class="ex-btn" data-ex="single" onclick="loadExample('single')"
       style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
       ↓ Illinois · Keep traditional
@@ -535,6 +536,10 @@
     <button class="ex-btn" data-ex="michigan" onclick="loadExample('michigan')"
       style="border-color:#1C3A5E;color:#1C3A5E;background:#EAF0F7">
       ↑ Michigan couple · Convert to Roth
+    </button>
+    <button class="ex-btn" data-ex="michSingle" onclick="loadExample('michSingle')"
+      style="border-color:#1C3A5E;color:#1C3A5E;background:#EAF0F7">
+      ↑ Michigan single · Convert to Roth
     </button>
   </div>
 </div>
@@ -2427,6 +2432,20 @@ var PROFILES = {
       growthRate:7, retRate:22,
       taxSource:'outside', medicareStatus:'one', partD:'yes'
     }
+  },
+  michSingle: {
+    label: 'Retired teacher, single, in Michigan',
+    stats: 'Age 70 · Single · $265K IRA · converting $30K · Michigan',
+    context: 'Michigan shelters up to $67,610 of pension and retirement-account income for single filers — but this $40,000 pension plus the $30,000 conversion totals $70,000, so $2,390 spills over the cap and gets taxed at Michigan\'s 4.25% rate. Most of the conversion still lands sheltered; this shows what happens right at the edge of it.',
+    f: {
+      currentAge:70, retirementAge:65, filingStatus:'single',
+      sex:'female', spouseAge:null, spouseSex:null,
+      seniorDeduction:1, stateCode:'MI',
+      income:0, pensionIncome:40000, ssIncome:24000, niiIncome:0, ltcgIncome:0,
+      convertAmt:30000, tradBal:265000, rothBal:35000, iraBasis:0,
+      growthRate:7, retRate:22,
+      taxSource:'outside', medicareStatus:'one', partD:'yes'
+    }
   }
 };
 
@@ -2456,7 +2475,7 @@ function loadExample(name){
     b.classList.toggle('active', b.dataset.ex===name);
   });
   // Sync hero visual toggle (without triggering loadExample again)
-  var visMap={couple:'roth',borderline:'borderline',single:'traditional',michigan:'roth'};
+  var visMap={couple:'roth',borderline:'borderline',single:'traditional',michigan:'roth',michSingle:'roth'};
   var visName=visMap[name];
   if(visName){
     var s=VIS_STATES[visName];
