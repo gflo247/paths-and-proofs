@@ -1,0 +1,501 @@
+{
+ "_schema": {
+  "_comment": "CANONICAL SOURCE of state Medigap (Medicare Supplement) regulatory data for the planned Medicare (Medigap vs. Medicare Advantage) tool. Deliberately a SEPARATE file from roth-conversion/states.json — that file's own _schema documents it as the canonical source of state TAX data specifically; Medigap rating and switching-rights rules are insurance regulation, a different domain, and mixing them would blur the single-purpose boundary each canonical file is supposed to have (see README.md's 'note on the engine boundary'). All data here traces back to _dev/medicare-research-2026-08.md, the research working doc this file was built from — consult it for the full reasoning, corrections made mid-research, and what's still unverified.",
+  "scopeDecision": "This tool does NOT assert a dollar premium for any state — there is no primary source for actual Medigap premiums (insurer-set, vary by company/age/state, no IRS-Rev-Proc equivalent exists). The user supplies their own real quoted premium, same pattern as Roth's retRate field. This file's job is to correctly model the STATE RULES that shape how that premium behaves over time and what switching rights exist, not to guess the premium itself.",
+  "confidenceLevels": {
+   "PRIMARY": "Read the actual statute/regulation text or an official government page directly.",
+   "OFFICIAL-SUMMARY": "Confirmed via an official government page/press release, but the underlying statute text itself wasn't read directly.",
+   "SECONDARY-CORROBORATED": "Confirmed only via summaries of secondary sources (law firm blogs, insurance broker sites, aggregators), but a specific citation was named and multiple independent sources agree.",
+   "UNVERIFIED": "Sources disagree or no citation was found. Present in the schema as a real gap, not silently omitted — do not treat as fact."
+  },
+  "fields": {
+   "benefitStructure": "\"standard\" for the 47 states using the federal A-N lettered plan system, or \"custom\" for Massachusetts, Minnesota, and Wisconsin, which standardize Medigap differently. Custom states have a customPlanNote pointing to the plain-language description in the research doc rather than a full re-encoded benefit grid — that grid is reference/educational content, not something the breakeven computation needs to consume, so it's deliberately not modeled field-by-field here.",
+   "rating.method": "One of: \"community\" (premium never varies by age within your Medicare-eligibility category — see rating.disabilitySplit), \"issueAgeMandated\" (Florida only — insurer MUST price by enrollment age, cannot use attained-age), \"attainedAgeBanned\" (attained-age specifically prohibited, but issuer may choose issue-age OR community — Arizona, Georgia), \"noMandate\" (no state law restricts the method; attained-age is the prevailing market default but this is insurer choice, not a guarantee), or \"unverified\" (Missouri — sources conflict, do not encode a specific method).",
+   "rating.disabilitySplit": "Boolean. true means the state's community-rating law explicitly permits a SEPARATE community rate for people who qualify for Medicare by disability rather than by age (Idaho, Vermont, Washington). The accurate description of these states' rule is 'premium doesn't vary by age within your eligibility category', not a flat 'never varies by age' — do not drop this qualifier when surfacing the fact to a user.",
+   "guaranteedIssuePeriods": "Array, can hold zero or more entries — most states have zero (federal one-time 6-month window only). Each entry describes ONE distinct annual/ongoing right to switch or newly enroll in a Medigap plan without medical underwriting, beyond the federal baseline. Deliberately an array of typed objects (not fixed fields for 'birthday rule' specifically) so a future guaranteed-issue trigger type — e.g. employer retiree-coverage-change GI, ~28 states, explicitly deferred out of v1, see the research doc's known-gaps section — can be added as a new trigger value without a schema change.",
+   "guaranteedIssuePeriods[].trigger": "\"birthday\" | \"policyAnniversary\" (Missouri — the POLICY's anniversary date, not the person's birthday) | \"annualEnrollmentPeriod\" (Rhode Island — tied to the federal Oct15-Dec7 AEP calendar) | \"insurerChosenWindow\" (Maine — a fixed annual window whose TIMING the insurer picks, not anchored to the person's birthday, the policy date, or a state-set calendar) | \"continuous\" (no window at all — right exists year-round).",
+   "guaranteedIssuePeriods[].appliesTo": "\"existingHoldersOnly\" (must already hold a Medigap policy — true for Washington, Missouri, and all the birthday-rule states) vs \"anyone\" (the right extends to people who never had Medigap before — confirmed for New York, Connecticut, and Massachusetts). This distinction was wrong in an earlier draft of this file (NY/CT/MA were incorrectly narrowed to existingHoldersOnly, matching Washington) — caught and fixed during the adversarial pass, see git history.",
+   "guaranteedIssuePeriods[].windowDays": "Integer, or null for trigger:\"continuous\".",
+   "guaranteedIssuePeriods[].windowAnchor": "Free-text description of when the window starts relative to the trigger, e.g. \"30 days before, 30+ after\" or \"1st of birthday month\" — deliberately not further structured since the shapes genuinely vary per state (see research doc section 5) and forcing them into rigid start/end offset fields lost real precision when drafted that way.",
+   "guaranteedIssuePeriods[].insurerScope": "\"any\" | \"sameInsurer\" | \"sameOrAffiliatedInsurer\".",
+   "guaranteedIssuePeriods[].benefitLevel": "\"equalOrLesser\" (the near-universal restriction) | \"any\" (Rhode Island only, confirmed more generous).",
+   "guaranteedIssuePeriods[].restrictions": "Free-text: age caps, prior-coverage requirements, or other conditions that don't fit the structured fields above (e.g. Illinois' ages-65-to-75 cap, West Virginia's 24-month continuous-prior-coverage requirement).",
+   "guaranteedIssuePeriods[].effectiveDate": "ISO date. May be in the future (New Mexico: 2027-01-01) — check against today's date before treating as live; see notYetEffective.",
+   "guaranteedIssuePeriods[].notYetEffective": "Boolean, present and true only for laws enacted but not yet in force as of this file's last update. Same pattern as Roth's Oklahoma bracket handling: use the state's prior/baseline status until the effective date passes, and disclose the pending change.",
+   "citation": "Legal citation (statute/regulation number) where found, or a plain description of the source (official agency page, press release) when no statute number was pinned down.",
+   "confidence": "One of the four confidenceLevels above.",
+   "lastVerified": "ISO date this specific fact was last checked against a source. Recheck triggers in the research doc (Delaware effective-date ambiguity, West Virginia and New Mexico's effective dates, Rhode Island's very-new law) should be re-verified before this file backs a live, shipped tool."
+  }
+ },
+
+ "AL": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "AK": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "AZ": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "attainedAgeBanned",
+   "citation": "Ariz. Rev. Stat. § 20-1133; A.A.C. R20-6-1101",
+   "confidence": "SECONDARY-CORROBORATED",
+   "note": "Attained-age prohibited; issue-age or community-rating both allowed, insurer's choice."
+  },
+  "guaranteedIssuePeriods": []
+ },
+ "AR": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "community",
+   "citation": "Ark. Code Ann. § 23-79-109",
+   "confidence": "SECONDARY-CORROBORATED",
+   "effectiveDate": "1990-01-01",
+   "note": "\"Composite age basis only.\""
+  },
+  "guaranteedIssuePeriods": []
+ },
+ "CA": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 60,
+    "windowAnchor": "starts on birthday",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "no age cap; carrier must notify policyholder 30-60 days before the window opens",
+    "citation": "Cal. Ins. Code §§ 10192.11-10192.12",
+    "confidence": "SECONDARY-CORROBORATED"
+   }
+  ]
+ },
+ "CO": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "CT": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "community",
+   "citation": "Conn. Gen. Stat. § 38a-495c",
+   "confidence": "SECONDARY-CORROBORATED",
+   "effectiveDate": "2006-01-01",
+   "note": "Public Act 05-20; no age/gender/claims-history/medical-condition variation."
+  },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "continuous",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "citation": "Conn. Gen. Stat. § 38a-495c",
+    "confidence": "SECONDARY-CORROBORATED",
+    "restrictions": "applies broadly, including to people who never previously held Medigap — contrast with Washington's genuinely existing-holders-only right below"
+   }
+  ]
+ },
+ "DE": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": null,
+    "windowAnchor": "30 days before through 30+ days after birthday",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "citation": "DE Senate Bill 71 (2025)",
+    "confidence": "OFFICIAL-SUMMARY",
+    "effectiveDate": "2026-01-01",
+    "restrictions": "signed 2025-09-03; effective date imprecise — one source says Jan 2026, Delaware's own press release covering the rule is dated 2026-05-13. Confirm before relying on it."
+   }
+  ]
+ },
+ "DC": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "FL": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "issueAgeMandated",
+   "citation": "Fla. Stat. § 627.6741; Fla. Admin. Code Ch. 69O-156",
+   "confidence": "SECONDARY-CORROBORATED",
+   "note": "The one state of the three attained-age-restricting states (AZ/FL/GA) that mandates issue-age specifically, not just bans attained-age. Missouri is not counted here since there is no evidence it restricts attained-age at all."
+  },
+  "guaranteedIssuePeriods": []
+ },
+ "GA": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "attainedAgeBanned",
+   "citation": "Ga. Code Ann. §§ 33-43-3 to -5",
+   "confidence": "SECONDARY-CORROBORATED",
+   "effectiveDate": "2009-01-01",
+   "note": "Issue-age typical in practice; community-rating technically also allowed."
+  },
+  "guaranteedIssuePeriods": []
+ },
+ "HI": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "ID": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "community",
+   "disabilitySplit": true,
+   "citation": "Idaho Code § 41-4404",
+   "confidence": "SECONDARY-CORROBORATED",
+   "effectiveDate": "2022-02-28",
+   "note": "SB 1143 (signed 2021-04-22). 65+ community-rated; insurers may charge up to 150% of that rate for under-65 disability-eligible enrollees."
+  },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 63,
+    "windowAnchor": "starts on birthday",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "new plan effective the 1st of the month following the birthday month",
+    "citation": "Idaho Code § 41-4404 (same SB 1143)",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": "2022-02-28"
+   }
+  ]
+ },
+ "IL": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 45,
+    "windowAnchor": "starts on birthday",
+    "insurerScope": "sameInsurer",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "ages 65-75 only",
+    "citation": "215 ILCS 5/363",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": "2022-01-01"
+   }
+  ]
+ },
+ "IN": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": null,
+    "windowAnchor": "31 days before through 31 days after birthday",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "same plan letter only, different carrier allowed",
+    "citation": "HEA 1226 (2025), as amended by HEA 1260",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": "2026-03-15",
+    "note": "Effective date was pushed mid-research from an originally reported 2026-01-01 to 2026-03-15 — recheck before relying on it."
+   }
+  ]
+ },
+ "IA": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "KS": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "KY": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "LA": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 63,
+    "windowAnchor": "starts on birthday",
+    "insurerScope": "sameOrAffiliatedInsurer",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "affiliate insurers added by a 2023 amendment (originally same-issuer only)",
+    "citation": "La. R.S. 22:1112",
+    "confidence": "SECONDARY-CORROBORATED"
+   }
+  ]
+ },
+ "ME": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "community",
+   "citation": "Me. Rev. Stat. tit. 24-A § 5011(1)",
+   "confidence": "PRIMARY",
+   "effectiveDate": "1993-01-01",
+   "note": "No age/gender/health/claims/duration/industry/occupation variation. Tobacco-based rating separately banned by a 2024 amendment."
+  },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "insurerChosenWindow",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 30,
+    "windowAnchor": "insurer picks a 1-month window annually — NOT anchored to the person's birthday",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "Plan A only, not all plans. NOT year-round despite a loose secondary source claiming otherwise mid-research — corrected. Separately, Maine also gives a guaranteed right to switch to equal-or-lesser coverage if there's been no coverage gap over 90 days since first enrolling in Medigap (a second, distinct protection layered on top of this one).",
+    "citation": "Me. Rev. Stat. tit. 24-A § 5012",
+    "confidence": "SECONDARY-CORROBORATED",
+    "note": "Downgraded from PRIMARY during the adversarial pass: unlike section 5011 (fetched and read directly), section 5012's content came from a WebSearch summary during a later cross-check, not a direct page read."
+   }
+  ]
+ },
+ "MD": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 30,
+    "windowAnchor": "starts on birthday",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "citation": "exact bill/statute number not pinned down; confirmed via insurance.maryland.gov",
+    "confidence": "OFFICIAL-SUMMARY",
+    "effectiveDate": "2023-07-01"
+   }
+  ]
+ },
+ "MA": {
+  "benefitStructure": "custom",
+  "customPlanNote": "Core / Supplement 1 / Supplement 1A, not the A-N system. Full benefit grid in _dev/medicare-research-2026-08.md section 2 — deliberately not re-encoded here, see _schema.fields.benefitStructure.",
+  "rating": {
+   "method": "community",
+   "citation": "Mass. Gen. Laws ch. 176K § 7",
+   "confidence": "SECONDARY-CORROBORATED"
+  },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "continuous",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "citation": "Mass. Gen. Laws ch. 176K § 7",
+    "confidence": "SECONDARY-CORROBORATED",
+    "restrictions": "applies broadly, including to people who never previously held Medigap, as current market practice. But the statutory FLOOR is only an annual Feb1-Mar31 window; every insurer currently offers year-round access in practice, not as a hard legal guarantee — flag this gap between legal minimum and current practice to the user rather than presenting it as a permanent right."
+   }
+  ]
+ },
+ "MI": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "MN": {
+  "benefitStructure": "custom",
+  "customPlanNote": "Basic / Extended Basic, not the A-N system (MN also offers its own versions of K/L/M/N and a high-deductible F for those Medicare-eligible before 2020-01-01). Full benefit grid in _dev/medicare-research-2026-08.md section 2.",
+  "rating": {
+   "method": "community",
+   "citation": "Minn. Stat. § 62A.31",
+   "confidence": "SECONDARY-CORROBORATED",
+   "effectiveDate": "1993-01-01"
+  },
+  "guaranteedIssuePeriods": []
+ },
+ "MS": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "MO": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "unverified",
+   "confidence": "UNVERIFIED",
+   "note": "Sources directly conflict on attained-age vs. issue-age; no statute found confirming either as a mandate, and no evidence Missouri bans attained-age at all. Do not encode a specific method — surface as unknown if this state is selected."
+  },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "policyAnniversary",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": null,
+    "windowAnchor": "30 days before through 30 days after the POLICY's own anniversary date (not the person's birthday)",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "same plan letter only (e.g. Plan G to Plan G with a different carrier); switching to a different letter generally requires medical underwriting",
+    "citation": "§ 376.684 RSMo; 20 CSR 400-3.650(13)",
+    "confidence": "SECONDARY-CORROBORATED",
+    "note": "Missouri is the only state using a policy-anniversary trigger rather than a birthday trigger."
+   }
+  ]
+ },
+ "MT": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "NE": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "NV": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 60,
+    "windowAnchor": "starts 1st of birthday month",
+    "insurerScope": "sameInsurer",
+    "benefitLevel": "equalOrLesser",
+    "citation": "Nev. Rev. Stat. § 687B.352 (AB 250)",
+    "confidence": "SECONDARY-CORROBORATED",
+    "note": "Distinct from, and not treated as, the federal/NAC 687B.2056 guaranteed-issue right (a different, narrower set of triggers like losing employer coverage)."
+   }
+  ]
+ },
+ "NH": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "NJ": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "NM": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 60,
+    "windowAnchor": "starts 1st of birthday month",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "citation": "NM SB 21 (signed 2026-03-11)",
+    "confidence": "OFFICIAL-SUMMARY",
+    "effectiveDate": "2027-01-01",
+    "notYetEffective": true,
+    "note": "Not effective yet as of this file's last update — treat NM as having NO special guaranteed-issue right until this date passes, same handling as Roth's Oklahoma pending-bracket pattern."
+   }
+  ]
+ },
+ "NY": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "community",
+   "citation": "N.Y. Ins. Law § 3231",
+   "confidence": "SECONDARY-CORROBORATED",
+   "note": "Explicitly names Medicare supplemental insurance in the statute text."
+  },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "continuous",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "citation": "N.Y. Ins. Law § 3231",
+    "confidence": "SECONDARY-CORROBORATED",
+    "restrictions": "applies broadly, including to people who never previously held Medigap — contrast with Washington's genuinely existing-holders-only right below"
+   }
+  ]
+ },
+ "NC": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "ND": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "OH": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "OK": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "OR": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": null,
+    "windowAnchor": "30 days before through 30 days after birthday",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "citation": "OAR 836-052-0143; ORS 743.683",
+    "confidence": "SECONDARY-CORROBORATED",
+    "note": "A loose secondary source claimed a '31-day window starting on birthday' mid-research — the more precise source (Oregon DFR itself) gives the 30-before/30-after shape used here; the loose figure was not used."
+   }
+  ]
+ },
+ "PA": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "RI": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "annualEnrollmentPeriod",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": null,
+    "windowAnchor": "the federal Medicare AEP window, Oct 15 - Dec 7",
+    "insurerScope": "any",
+    "benefitLevel": "any",
+    "restrictions": "no coverage gap over 90 days since Initial Enrollment Period; more generous than most states since it's not restricted to equal-or-lesser coverage",
+    "citation": "R.I. Gen. Laws § 27-18.2-3(h)",
+    "confidence": "OFFICIAL-SUMMARY",
+    "effectiveDate": "2025-09-26",
+    "note": "Very recently enacted (signed 2025-07-02) — worth a currency check before this backs anything live."
+   }
+  ]
+ },
+ "SC": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "SD": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "TN": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "TX": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "UT": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "VT": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "community",
+   "disabilitySplit": true,
+   "citation": "Vt. Stat. Ann. tit. 8 § 4080e",
+   "confidence": "SECONDARY-CORROBORATED"
+  },
+  "guaranteedIssuePeriods": []
+ },
+ "VA": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "WA": {
+  "benefitStructure": "standard",
+  "rating": {
+   "method": "community",
+   "disabilitySplit": true,
+   "citation": "Wash. Rev. Code § 48.66.045(3)",
+   "confidence": "SECONDARY-CORROBORATED",
+   "effectiveDate": "1996-01-01",
+   "note": "Up to two rating pools (age- vs. disability-eligible); spousal-discount and payment-method variation also allowed."
+  },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "continuous",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": null,
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "requires 90+ days of PRIOR Medigap coverage — this is a switching right for existing holders, NOT an open door for first-time enrollees outside their initial window. Also restricted to switching within the same plan group (Plan A to another Plan A, or any B-through-N plan to another B-through-N plan), not any letter to any letter.",
+    "citation": "Wash. Rev. Code § 48.66.055",
+    "confidence": "SECONDARY-CORROBORATED"
+   }
+  ]
+ },
+ "WV": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 60,
+    "windowAnchor": "starts 1st of birthday month",
+    "insurerScope": "sameOrAffiliatedInsurer",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "requires 24 MONTHS of continuous prior coverage under the same policy — the most restrictive prior-coverage requirement found in this research",
+    "citation": "WV House Bill 4869",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": "2026-06-11",
+    "note": "Recheck this effective date before relying on it — Indiana's slipped mid-research from an originally reported date."
+   }
+  ]
+ },
+ "WI": {
+  "benefitStructure": "custom",
+  "customPlanNote": "Not multiple lettered plans at all — ONE base plan (Part A coinsurance for hospital/SNF/hospice, 175 lifetime days of extra inpatient mental health care, 40 extra home health visits, Part B 20% coinsurance, 3 pints of blood/year, state-mandated benefits) with OPTIONAL add-on riders (Part A deductible, more home health visits, Part B deductible, Part B excess charge, foreign travel, a partial Part A deductible option, Part B copay/coinsurance). Separate '50%/25% Cost-Sharing Plans' resemble K/L; a high-deductible variant also exists. Full detail in _dev/medicare-research-2026-08.md section 2.",
+  "rating": {
+   "method": "noMandate",
+   "confidence": "SECONDARY-CORROBORATED",
+   "note": "No community-rating, issue-age, or switching-rights mandate found for WI beyond its unique benefit structure above — treat as baseline for rating/switching purposes despite the custom benefitStructure."
+  },
+  "guaranteedIssuePeriods": []
+ },
+ "WY": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 63,
+    "windowAnchor": "starts on birthday",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "citation": "Wyo. Ins. Reg. Ch. 35 (DOI Bulletin 06-2025)",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": "2025-06-04"
+   }
+  ]
+ }
+}

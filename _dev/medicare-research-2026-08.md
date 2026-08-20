@@ -1,0 +1,294 @@
+# Medicare (Medigap vs. Medicare Advantage) — research working doc
+
+Status: **research only, not yet backing any live code.** This is the raw findings from
+the discovery pass run 2026-08-19/20, written down before any schema or UI decisions,
+per this project's standing rule to verify before encoding (see CLAUDE.md — "no
+unsourced numbers"). Once the tool actually ships, settled citations here should
+migrate into `SOURCES.md` proper, the way the Roth and Relocation research eventually
+did. Until then this file is the single place tracking what's confirmed, what's
+secondary-corroborated only, and what's still open.
+
+## Scope decision (settled, see conversation 2026-08-19)
+
+The tool will **not** assert a dollar premium for any state — there is no primary
+source for actual Medigap premiums (they're insurer-set, vary by company/age/state,
+no IRS-Rev-Proc equivalent exists). The user supplies their own real quoted premium,
+same pattern as Roth's `retRate` field. The tool's value-add is correctly modeling the
+**state regulatory rules** that shape how that premium behaves over time and what
+switching rights exist — not guessing the premium itself.
+
+## Confidence key
+
+- **PRIMARY** — read the actual statute/regulation text or an official state/federal
+  government page directly (via browser, not just a WebSearch summary).
+- **OFFICIAL-SUMMARY** — confirmed via an official government page/press release, but
+  the underlying statute text itself wasn't read directly.
+- **SECONDARY-CORROBORATED** — confirmed only via WebSearch summaries of secondary
+  sources (law firm blogs, insurance broker sites, aggregators), but a specific
+  citation was named and multiple independent sources agree.
+- **UNVERIFIED / CONFLICTING** — sources disagree or no citation was found. Do not
+  encode as fact.
+
+---
+
+## 1. National CMS baseline (applies to all states unless noted)
+
+### Medigap standardized benefit chart — PRIMARY
+Source: medicare.gov/health-drug-plans/medigap/basics/compare-plan-benefits (read
+directly via browser, 2026-08-19)
+
+| Benefit | A | B | C | D | F* | G* | K | L | M | N |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Part A coinsurance + 365 extra hospital days | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Part B coinsurance/copay | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 50% | 75% | ✓ | ✓*** |
+| Blood (first 3 pints) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 50% | 75% | ✓ | ✓ |
+| Part A hospice coinsurance/copay | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 50% | 75% | ✓ | ✓ |
+| Skilled nursing facility coinsurance | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | 50% | 75% | ✓ | ✓ |
+| Part A deductible | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | 50% | 75% | 50% | ✓ |
+| Part B deductible | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Part B excess charge | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Foreign travel emergency | ✗ | ✗ | 80% | 80% | 80% | 80% | ✗ | ✗ | 80% | 80% |
+| Out-of-pocket limit (2026) | N/A | N/A | N/A | N/A | N/A | N/A | $8,000 | $4,000 | N/A | N/A |
+
+Footnotes (from the same page): Plans C & F closed to anyone turning 65 on/after Jan 1,
+2020. F/G high-deductible variant: $2,950 deductible (2026). K/L's out-of-pocket limit
+only applies after *also* meeting the $283 Part B deductible. Plan N excludes copays on
+some office/ER visits.
+
+### Part A/B costs (2026) — OFFICIAL-SUMMARY
+Source: CMS fact sheet, same one Roth cites
+(cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles),
+confirmed via WebSearch of CMS's Nov 14, 2025 release, not read directly (medicare.gov
+blocks WebFetch with 403; browser-fetch wasn't attempted for this specific page since
+the figures matched Roth's already-verified numbers).
+
+- Part A inpatient hospital deductible: $1,736
+- Part A coinsurance: $434/day (days 61-90), $868/day (lifetime reserve days), $217/day
+  (skilled nursing, days 21-100)
+- Part B standard premium: $202.90/month
+- Part B deductible: $283/year
+
+### Medicare Advantage out-of-pocket ceiling (2026) — OFFICIAL-SUMMARY
+CMS-set cap: $9,250 in-network / $13,900 combined. Confirmed via KFF and CMS's own MA
+out-of-pocket-limits page (cms.gov/medicare/health-drug-plans/medigap/k-l-out-of-pocket-limits-announcements
+surfaced in search results, not read directly).
+
+### IRMAA — PRIMARY (reused)
+Already fully sourced and verified in `roth-conversion/index.html`'s `ITIERS`/`ITHR`
+tables. No new research needed — direct reuse.
+
+---
+
+## 2. States with their own benefit-standardization scheme (not the A-N system)
+
+### Massachusetts — PRIMARY
+Source: medicare.gov/health-drug-plans/medigap/basics/compare-plan-benefits/massachusetts,
+read directly via browser (screenshot-verified for checkmark cells).
+
+Three plans: **Core**, **Supplement 1**, **Supplement 1A**.
+
+| Benefit | Core | Supp 1 | Supp 1A |
+|---|---|---|---|
+| Basic benefits (inpatient hosp, medical costs, blood, Part A hospice) | ✓ | ✓ | ✓ |
+| Part A: inpatient hospital deductible | ✗ | ✓ | ✓ |
+| Part A: skilled nursing facility coinsurance | ✗ | ✓ | ✓ |
+| Part B: deductible | ✗ | ✓ | ✗ |
+| Foreign travel emergency | ✗ | ✓ | ✓ |
+| Inpatient mental health hospital days | 60/cal yr | 120/benefit yr | 120/benefit yr |
+| State-mandated benefits (Pap/mammogram) | ✗ | ✓ | ✓ |
+
+### Minnesota — PRIMARY
+Source: medicare.gov/health-drug-plans/medigap/basics/compare-plan-benefits/minnesota,
+read directly via browser.
+
+Two plans: **Basic**, **Extended Basic** (insurers can add optional riders to Basic:
+Part A deductible, Part B deductible, usual/customary fees, non-Medicare preventive
+care). MN also offers its own versions of standard K/L/M/N, and a high-deductible F
+version limited to those Medicare-eligible before Jan 1, 2020.
+
+| Benefit | Basic | Extended Basic |
+|---|---|---|
+| Basic benefits | ✓ | ✓ |
+| Part A: inpatient hospital deductible | ✗ | ✓ |
+| Part A: SNF coinsurance | ✓ (100 days) | ✓ (120 days) |
+| Part B: deductible | ✗ | ✓ |
+| Foreign travel emergency | 80% | 80% |
+| Outpatient mental health | 50% | 50% |
+| Usual and customary fees | ✗ | 80% |
+| Medicare-covered preventive care | ✓ | ✓ |
+| Physical therapy | 20% | 20% |
+| Coverage while in a foreign country | ✗ | 80% |
+| State-mandated benefits | ✓ | ✓ |
+
+### Wisconsin — PRIMARY
+Source: medicare.gov/health-drug-plans/medigap/basics/compare-plan-benefits/wisconsin,
+read directly via browser (text-only page, no checkmark-icon ambiguity).
+
+**One base plan**, not multiple letters: Part A coinsurance (hospital/SNF/hospice), 175
+lifetime days of extra inpatient mental health care, 40 extra home health visits, Part
+B 20% coinsurance, 3 pints of blood/year, state-mandated benefits. Optional add-on
+riders: Part A deductible, more home health visits, Part B deductible, Part B excess
+charge, foreign travel, a partial (50%) Part A deductible option, Part B copay/
+coinsurance. Separate "50%/25% Cost-Sharing Plans" resemble K/L; a high-deductible
+variant also exists.
+
+**No community-rating, issue-age, or switching-rights mandate found for WI** beyond
+this benefit structure — treat as baseline for rating/switching purposes.
+
+---
+
+## 3. Community-rating states (9) — premium doesn't vary by age
+
+| State | Citation | Confidence | Effective | Notes |
+|---|---|---|---|---|
+| Arkansas | Ark. Code Ann. § 23-79-109 | SECONDARY-CORROBORATED | 1990 | "composite age basis only" |
+| Connecticut | Conn. Gen. Stat. § 38a-495c | SECONDARY-CORROBORATED | 2006 (PA 05-20) | no age/gender/claims/condition variation |
+| Idaho | Idaho Code § 41-4404 | SECONDARY-CORROBORATED | 2022 (SB 1143, signed 2021) | 65+ only; insurers can charge up to 150% for under-65 |
+| Maine | Me. Rev. Stat. tit. 24-A § 5011(1) | **PRIMARY** (read via legislature.maine.gov) | 1993 | no age/gender/health/claims/duration/industry/occupation variation; tobacco-rating also banned as of 2024 amendment |
+| Massachusetts | Mass. Gen. Laws ch. 176K § 7 | SECONDARY-CORROBORATED | — | on top of Core/Supp1/Supp1A system |
+| Minnesota | Minn. Stat. § 62A.31 | SECONDARY-CORROBORATED | 1993 | on top of Basic/Extended Basic system |
+| New York | N.Y. Ins. Law § 3231 | SECONDARY-CORROBORATED | — | explicitly names Medicare supplemental insurance |
+| Vermont | Vt. Stat. Ann. tit. 8 § 4080e | SECONDARY-CORROBORATED | — | separate community rate allowed for age- vs. disability-eligible |
+| Washington | Wash. Rev. Code § 48.66.045(3) | SECONDARY-CORROBORATED | 1996 | up to two rating pools (age vs disability); spousal/payment-method variation allowed |
+
+**Pattern worth preserving precisely, not flattening:** Idaho, Vermont, and Washington
+all permit a *separate* community rate for Medicare-by-disability enrollees vs.
+Medicare-by-age enrollees. The accurate fact is "doesn't vary by age within your
+eligibility category," not a flat "never varies by age."
+
+---
+
+## 4. States that ban attained-age rating (premium doesn't rise with age, though it
+## does still vary person-to-person by enrollment age or insurer)
+
+Note the header change from an earlier draft of this doc: only Florida actually
+*mandates* issue-age specifically. Arizona and Georgia ban attained-age but leave
+insurers free to choose issue-age *or* community-rating — a real distinction worth
+keeping precise rather than flattening all three into "issue-age states."
+
+| State | Citation | Confidence | Notes |
+|---|---|---|---|
+| Arizona | Ariz. Rev. Stat. § 20-1133 / A.A.C. R20-6-1101 | SECONDARY-CORROBORATED | attained-age prohibited; issue-age or community-rating both allowed |
+| Florida | Fla. Stat. § 627.6741 / Fla. Admin. Code Ch. 69O-156 | SECONDARY-CORROBORATED | issue-age specifically mandatory, the one true "issue-age state" of the three |
+| Georgia | Ga. Code Ann. §§ 33-43-3 to -5 | SECONDARY-CORROBORATED | attained-age banned since 2009; issue-age typical in practice, community-rating technically also allowed |
+| Missouri | — | **UNVERIFIED / CONFLICTING** | sources directly disagree on whether MO uses attained-age or issue-age; no statute found confirming either as a mandate, and no evidence found that MO bans attained-age at all. Do not encode. |
+
+---
+
+## 5. Birthday-rule / annual switching-window states (12)
+
+All give **existing** Medigap holders (not first-time buyers) an annual window to
+switch to equal-or-lesser coverage without medical underwriting.
+
+| State | Citation | Confidence | Window | Restrictions |
+|---|---|---|---|---|
+| California | Cal. Ins. Code §§ 10192.11–.12 | SECONDARY-CORROBORATED | 60 days from birthday | any insurer, no age cap; carrier must notify 30-60 days ahead |
+| Idaho | Idaho Code § 41-4404 | SECONDARY-CORROBORATED | 63 days from birthday | any insurer; new plan effective 1st of month after birthday month |
+| Oregon | OAR 836-052-0143 / ORS 743.683 | SECONDARY-CORROBORATED | 30 days before–30 after | any insurer |
+| Nevada | Nev. Rev. Stat. § 687B.352 (AB 250) | SECONDARY-CORROBORATED | 60 days from birthday month | same insurer's other offerings |
+| Wyoming | Wyo. Ins. Reg. Ch. 35 (DOI Bulletin 06-2025) | SECONDARY-CORROBORATED | 63 days from birthday | eff. Jun 4, 2025 |
+| Delaware | DE SB 71 (2025) | OFFICIAL-SUMMARY (news.delaware.gov) | 30 before–30+ after | signed Sep 3, 2025; effective date imprecise — one source says Jan 2026, Delaware's own press release covering it is dated May 13, 2026. Confirm the actual effective date before relying on it. |
+| Maryland | — (exact bill not pinned down) | OFFICIAL-SUMMARY (insurance.maryland.gov) | 30 days from birthday | eff. Jul 1, 2023 |
+| Illinois | 215 ILCS 5/363 | SECONDARY-CORROBORATED | 45 days from birthday | **ages 65-75 only**, same issuer only |
+| Indiana | HEA 1226 (2025) / HEA 1260 | SECONDARY-CORROBORATED | 31 before–31 after | same plan letter, different carrier OK; **eff. Mar 15, 2026** (pushed from original Jan 1, 2026) |
+| Louisiana | La. R.S. 22:1112 | SECONDARY-CORROBORATED | 63 days from birthday | same issuer or affiliate only (affiliate added 2023) |
+| West Virginia | WV HB 4869 | SECONDARY-CORROBORATED | 60 days from birthday month | **needs 24 months' continuous prior coverage**, same/affiliated insurer only; **eff. Jun 11, 2026 — recheck** |
+| New Mexico | NM SB 21 | OFFICIAL-SUMMARY (aging.nm.gov) | 60 days from birthday month | **not effective until Jan 1, 2027 — do not treat as live yet** |
+
+## 6. Policy-anniversary state (different trigger, same effect)
+
+**Missouri** — § 376.684 RSMo / 20 CSR 400-3.650(13). 30 days before/after the
+*policy's own anniversary date* (not the person's birthday), same plan letter only,
+different carrier OK. SECONDARY-CORROBORATED.
+
+## 7. Year-round guaranteed issue (no window needed — strongest protection)
+
+| State | Citation | Confidence | Scope |
+|---|---|---|---|
+| New York | N.Y. Ins. Law § 3231 | SECONDARY-CORROBORATED | continuous, any time, ties to its community-rating law |
+| Connecticut | Conn. Gen. Stat. § 38a-495c | SECONDARY-CORROBORATED | continuous, any time |
+| Washington | Wash. Rev. Code § 48.66.055 | SECONDARY-CORROBORATED | **existing holders only** — needs 90+ days prior Medigap coverage, switch restricted to same plan group (A→A, or B-N→B-N) |
+| Massachusetts | Mass. Gen. Laws ch. 176K § 7 | SECONDARY-CORROBORATED | statutory floor is only Feb 1–Mar 31 annually; **all insurers currently offer it year-round in practice** — flag the gap between legal minimum and current market behavior, don't hardcode "year-round" as a legal guarantee |
+
+**Important distinction to preserve:** NY/CT/MA's right applies broadly (including to
+people who didn't previously have Medigap); Washington's specifically requires the
+person to already hold a Medigap policy for 90+ days. These are not the same right.
+
+**Maine is NOT year-round**, despite a loose secondary source claiming otherwise —
+corrected during this research. Maine's actual mandate (§ 5012) is a minimum
+one-month annual window for Plan A only, insurer's choice of timing, plus a separate
+90-day-no-gap continuous-switch right. Weaker than NY/CT/WA/MA.
+
+## 8. Annual-Enrollment-Period-tied guaranteed issue (distinct mechanism)
+
+**Rhode Island** — R.I. Gen. Laws § 27-18.2-3(h). Signed Jul 2, 2025, effective Sep 26,
+2025 (confirmed via Rhode Island's own OHIC Bulletin 2025-05). Guaranteed issue for
+**any** plan an issuer currently offers (more generous than the equal-or-lesser
+restriction most other states use) tied to the Medicare Annual Enrollment Period
+(Oct 15–Dec 7), for anyone with no coverage gap over 90 days since their Initial
+Enrollment Period. OFFICIAL-SUMMARY confidence.
+
+---
+
+## 9. Baseline states — no special provision found (25)
+
+AL, AK, CO, DC, HI, IA, KS, KY, MI, MS, MT, NE, NH, NJ, NC, ND, OH, OK, PA, SC, SD, TN,
+TX, UT, VA.
+
+These follow the federal floor only: one-time 6-month guaranteed-issue window
+starting the month the person turns 65 and enrolls in Part B; after that, insurers may
+medically underwrite new applications or switches. Attained-age rating is the
+prevailing market practice in most of these (insurer's choice, not state-mandated —
+distinct from the issue-age-mandated states in section 4).
+
+**This list has NOT been individually verified per state** — it's the residual after
+extensive multi-angle searching (community-rating, issue-age, birthday-rule,
+year-round, AEP-tied) failed to surface anything for these 26. That's a reasonable
+basis for treating them as baseline, but it is not the same rigor as reading each
+state's own statute, which is what sections 3-8 got.
+
+---
+
+## 9a. States split across multiple sections above
+
+This doc is organized by category (matching how the research happened), which means a
+few states' full picture requires reading more than one section. Flagging here so
+nothing gets missed when this becomes a per-state schema:
+
+- **Massachusetts** — own benefit structure (§2), community-rated (§3), year-round in
+  practice though statutory floor is narrower (§7)
+- **Minnesota** — own benefit structure (§2), community-rated (§3)
+- **Idaho** — community-rated for 65+ (§3), birthday rule (§5)
+- **Washington** — community-rated (§3), year-round for existing holders only (§7)
+- **New York** — community-rated (§3), year-round (§7)
+- **Connecticut** — community-rated (§3), year-round (§7)
+- **Missouri** — rating method unverified (§4), policy-anniversary switching rule (§6)
+- **Maine** — community-rated (§3), narrower-than-expected 1-month/Plan-A-only annual
+  window plus separate 90-day-no-gap right (§7)
+
+## 10. Known gaps — explicitly not yet done
+
+1. **Employer-retiree-coverage guaranteed issue.** A CRS/NAIC-cited summary
+   (via WebSearch only, original PDF and congress.gov page both failed to fetch —
+   PDF parsing failed, congress.gov blocked by bot-detection) mentioned ~28 states
+   require Medigap guaranteed issue when an employer changes retiree health coverage.
+   This is a distinct trigger from everything in sections 3-8 and has not been
+   chased per-state at all.
+2. **Missouri's rating method** — see section 4, genuinely conflicting sources.
+3. **Exact statute citations for Maryland's birthday rule** and a few others where
+   only the official government *page* was found, not the underlying bill number.
+4. Almost everything above is SECONDARY-CORROBORATED, not PRIMARY. Before this data
+   backs a live tool, the highest-value verification pass would be reading the actual
+   statute text (not just WebSearch summaries of it) for at least the states with the
+   most consequential/least intuitive rules — West Virginia (24-month lookback),
+   Illinois (age 65-75 cap), Rhode Island (any-plan right), and the four
+   issue-age states.
+
+## 11. Recheck triggers (facts with a known future change)
+
+- **New Mexico** SB 21 — not effective until Jan 1, 2027. Don't treat as live before
+  then; recheck closer to that date in case of amendment or repeal.
+- **West Virginia** HB 4869 — effective Jun 11, 2026. Recheck that the effective date
+  didn't slip (Indiana's did, from Jan 1 to Mar 15, 2026, mid-research).
+- **Rhode Island** § 27-18.2-3(h) — very new (Sep 2025), worth a currency check before
+  this backs anything live.
