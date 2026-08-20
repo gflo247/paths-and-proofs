@@ -880,11 +880,15 @@ statute/bill text (`PRIMARY`); most other states remain `SECONDARY-CORROBORATED`
 Missouri's rating method is `UNVERIFIED` on purpose — sources conflict and no
 statute was found either way, so no guess was encoded.
 
-**Scope note:** does not model employer-retiree-coverage-change guaranteed issue
-(~28 states, never researched, explicitly deferred — see the research doc's
-known-gaps section), prescription drug coverage on the Advantage side, or
-plan-letter-specific cost-sharing detail (e.g., Plan N's small office-visit
-copays). All stated in the tool's own on-page disclosure.
+**Scope note:** employer-retiree-coverage-change guaranteed issue (28 states, added
+2026-08-20 — see research doc section 12) is modeled as Yes/No only: the right's
+existence is sourced to KFF's state survey, but window length, insurer scope, and
+benefit-level detail were not independently confirmed per state and are left
+unset rather than guessed, same `SECONDARY-CORROBORATED` discipline as everything
+else in this file that isn't traced to a primary source. Also not modeled:
+prescription drug coverage on the Advantage side, or plan-letter-specific
+cost-sharing detail (e.g., Plan N's small office-visit copays). All stated in the
+tool's own on-page disclosure.
 
 ---
 

@@ -276,12 +276,13 @@ nothing gets missed when this becomes a per-state schema:
 
 ## 10. Known gaps — explicitly not yet done
 
-1. **Employer-retiree-coverage guaranteed issue.** A CRS/NAIC-cited summary
-   (via WebSearch only, original PDF and congress.gov page both failed to fetch —
-   PDF parsing failed, congress.gov blocked by bot-detection) mentioned ~28 states
-   require Medigap guaranteed issue when an employer changes retiree health coverage.
-   This is a distinct trigger from everything in sections 3-8 and has not been
-   chased per-state at all.
+1. **Employer-retiree-coverage guaranteed issue.** ~~A CRS/NAIC-cited summary~~
+   ~~mentioned ~28 states require Medigap guaranteed issue when an employer changes~~
+   ~~retiree health coverage. This is a distinct trigger from everything in sections~~
+   ~~3-8 and has not been chased per-state at all.~~ **Done (2026-08-20), see section
+   12** — the actual source turned out to be KFF (not CRS/NAIC), and 28 of the ~29
+   states are now encoded, with a documented gap on which state changed between the
+   2018 and 2024 KFF counts.
 2. **Missouri's rating method** — see section 4, genuinely conflicting sources.
 3. **Exact statute citations for Maryland's birthday rule** and a few others where
    only the official government *page* was found, not the underlying bill number.
@@ -306,3 +307,51 @@ nothing gets missed when this becomes a per-state schema:
 - **Rhode Island** § 27-18.2-3(h) — confirmed via primary text (2026-08-20): effective
   Jul 2, 2025 per the statute's own History line. No further recheck needed unless
   amended.
+- **Employer-retiree-coverage-change GI (section 12)** — the state list is sourced to
+  2017 data (published 2018); KFF's 2024 update reports one more state (29 vs 28) but
+  its per-state table wasn't extractable (see section 12 for why). Recheck against a
+  fuller source if one becomes fetchable, and before treating any single state's
+  "no" as durable — the gap is which specific state changed, not whether the count
+  changed.
+
+## 12. Employer-retiree-coverage-change guaranteed issue (2026-08-20)
+
+The category flagged as an unresearched gap in section 10 turns out to trace to KFF,
+not CRS/NAIC as originally guessed from a WebSearch snippet. Two KFF briefs cover it:
+
+- **["Medigap Enrollment and Consumer Protections Vary Across States"](https://www.kff.org/medicare/medigap-enrollment-and-consumer-protections-vary-across-states/)**
+  (Jul 2018, data as of 2017) — Table 3 gives a full state-by-state Yes/No breakdown
+  for this exact qualifying event ("Upon Retiree Benefit Changes"), read directly via
+  browser `get_page_text` (plain HTML table, no PDF/fetch issues). Counting the "Yes"
+  rows gives exactly 28 states, confirming this is the source of the original "~28
+  states" figure. **This is the list encoded into `medicare/states.json` below.**
+- **["Medigap May Be Elusive for Medicare Beneficiaries with Pre-Existing Conditions"](https://www.kff.org/medicare/medigap-may-be-elusive-for-medicare-beneficiaries-with-pre-existing-conditions/)**
+  (Oct 2024, updated for Minnesota's 2025/2026 law) — KFF's own page says this
+  supersedes the 2018 brief. Its methodology is stronger (state regulations plus
+  direct contact with state insurance departments/SHIP offices where public
+  documents were silent), and its text says the count is now **29 states**, not 28.
+  But its actual state-by-state table (Appendix Table 2) is rendered as an
+  interactive Datawrapper chart, not static HTML or a downloadable CSV/JSON — tried
+  the standard Datawrapper CSV path (`/dataset.csv`) and the public API
+  (`api.datawrapper.de/v3/charts/{id}/data`), both failed (404 / 401 unauthorized).
+  Reading a 51-row legal-compliance table off chart screenshots was judged too
+  error-prone to attempt. **Net effect: we know the count is now 29, not which state
+  changed from the 28 below.**
+
+**Scope decision, made with the user 2026-08-20**: encode the 28-state Yes/No list
+from the 2018 table as `hasProtection: true` for this trigger, SECONDARY-CORROBORATED,
+explicitly WITHOUT fabricating window length, insurer scope, or benefit-level detail
+— neither KFF brief specifies those per state, only the Yes/No/count. This mirrors
+the project's existing "don't guess" discipline (see Missouri's rating method, section
+4): the right is real and sourced, but its exact mechanics for most states are not.
+
+**The 28 states** (from the 2018 table, "Upon Retiree Benefit Changes" = Yes):
+Alaska, Arkansas, California, Colorado, Florida, Idaho, Illinois, Indiana, Iowa,
+Kansas, Louisiana, Maine, Minnesota, Missouri, Montana, Nebraska, Nevada, New Jersey,
+New Mexico, Ohio, Oklahoma, Oregon, Pennsylvania, Texas, Vermont, Virginia, West
+Virginia, Wisconsin.
+
+Connecticut, Massachusetts, and New York are excluded from this list — not because
+they lack the right, but because their existing `continuous`/`anyone` guaranteed-issue
+right (section 7) already covers this and every other qualifying event; adding a
+second, narrower entry for them would be redundant, not additive.

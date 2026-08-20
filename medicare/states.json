@@ -12,13 +12,13 @@
    "benefitStructure": "\"standard\" for the 47 states using the federal A-N lettered plan system, or \"custom\" for Massachusetts, Minnesota, and Wisconsin, which standardize Medigap differently. Custom states have a customPlanNote pointing to the plain-language description in the research doc rather than a full re-encoded benefit grid — that grid is reference/educational content, not something the breakeven computation needs to consume, so it's deliberately not modeled field-by-field here.",
    "rating.method": "One of: \"community\" (premium never varies by age within your Medicare-eligibility category — see rating.disabilitySplit), \"issueAgeMandated\" (Florida only — insurer MUST price by enrollment age, cannot use attained-age), \"attainedAgeBanned\" (attained-age specifically prohibited, but issuer may choose issue-age OR community — Arizona, Georgia), \"noMandate\" (no state law restricts the method; attained-age is the prevailing market default but this is insurer choice, not a guarantee), or \"unverified\" (Missouri — sources conflict, do not encode a specific method).",
    "rating.disabilitySplit": "Boolean. true means the state's community-rating law explicitly permits a SEPARATE community rate for people who qualify for Medicare by disability rather than by age (Idaho, Vermont, Washington). The accurate description of these states' rule is 'premium doesn't vary by age within your eligibility category', not a flat 'never varies by age' — do not drop this qualifier when surfacing the fact to a user.",
-   "guaranteedIssuePeriods": "Array, can hold zero or more entries — most states have zero (federal one-time 6-month window only). Each entry describes ONE distinct annual/ongoing right to switch or newly enroll in a Medigap plan without medical underwriting, beyond the federal baseline. Deliberately an array of typed objects (not fixed fields for 'birthday rule' specifically) so a future guaranteed-issue trigger type — e.g. employer retiree-coverage-change GI, ~28 states, explicitly deferred out of v1, see the research doc's known-gaps section — can be added as a new trigger value without a schema change.",
-   "guaranteedIssuePeriods[].trigger": "\"birthday\" | \"policyAnniversary\" (Missouri — the POLICY's anniversary date, not the person's birthday) | \"annualEnrollmentPeriod\" (Rhode Island — tied to the federal Oct15-Dec7 AEP calendar) | \"insurerChosenWindow\" (Maine — a fixed annual window whose TIMING the insurer picks, not anchored to the person's birthday, the policy date, or a state-set calendar) | \"continuous\" (no window at all — right exists year-round) | \"lossOfMedicaidEligibility\" (West Virginia — a specific life-event trigger, not a calendar window; found by reading a state's full primary-source bill text rather than secondary summaries, which is exactly the kind of thing this schema's extensible trigger-type design (rather than fixed fields) exists to accommodate without a restructure).",
+   "guaranteedIssuePeriods": "Array, can hold zero or more entries — most states have zero (federal one-time 6-month window only). Each entry describes ONE distinct annual/ongoing right to switch or newly enroll in a Medigap plan without medical underwriting, beyond the federal baseline. Deliberately an array of typed objects (not fixed fields for 'birthday rule' specifically) so a new guaranteed-issue trigger type can be added without a schema change — validated twice: once for West Virginia's lossOfMedicaidEligibility, and again for the employerRetireeCoverageChange trigger (28 states, see research doc section 12).",
+   "guaranteedIssuePeriods[].trigger": "\"birthday\" | \"policyAnniversary\" (Missouri — the POLICY's anniversary date, not the person's birthday) | \"annualEnrollmentPeriod\" (Rhode Island — tied to the federal Oct15-Dec7 AEP calendar) | \"insurerChosenWindow\" (Maine — a fixed annual window whose TIMING the insurer picks, not anchored to the person's birthday, the policy date, or a state-set calendar) | \"continuous\" (no window at all — right exists year-round) | \"lossOfMedicaidEligibility\" (West Virginia — a specific life-event trigger, not a calendar window; found by reading a state's full primary-source bill text rather than secondary summaries, which is exactly the kind of thing this schema's extensible trigger-type design (rather than fixed fields) exists to accommodate without a restructure) | \"employerRetireeCoverageChange\" (28 states — a life-event trigger fired when an employer changes, but doesn't eliminate, a Medicare beneficiary's retiree health coverage; broader than the federal baseline, which only covers full elimination. Sourced to KFF's Yes/No state list, not per-state statute text — see windowDays/insurerScope/benefitLevel below for what's deliberately left unverified on these entries.).",
    "guaranteedIssuePeriods[].appliesTo": "\"existingHoldersOnly\" (must already hold a Medigap policy — true for Washington, Missouri, and all the birthday-rule states) vs \"anyone\" (the right extends to people who never had Medigap before — confirmed for New York, Connecticut, and Massachusetts). This distinction was wrong in an earlier draft of this file (NY/CT/MA were incorrectly narrowed to existingHoldersOnly, matching Washington) — caught and fixed during the adversarial pass, see git history.",
-   "guaranteedIssuePeriods[].windowDays": "Integer, or null for trigger:\"continuous\".",
-   "guaranteedIssuePeriods[].windowAnchor": "Free-text description of when the window starts relative to the trigger, e.g. \"30 days before, 30+ after\" or \"1st of birthday month\" — deliberately not further structured since the shapes genuinely vary per state (see research doc section 5) and forcing them into rigid start/end offset fields lost real precision when drafted that way.",
-   "guaranteedIssuePeriods[].insurerScope": "\"any\" | \"sameInsurer\" | \"sameOrAffiliatedInsurer\".",
-   "guaranteedIssuePeriods[].benefitLevel": "\"equalOrLesser\" (the near-universal restriction) | \"any\" (Rhode Island only, confirmed more generous).",
+   "guaranteedIssuePeriods[].windowDays": "Integer, or null. null means either trigger:\"continuous\" (no window applies), OR the window length genuinely isn't known — the source only confirmed the right exists, not its exact parameters (all 28 employerRetireeCoverageChange entries; distinguish the two null cases via the confidence/note fields, not this field alone).",
+   "guaranteedIssuePeriods[].windowAnchor": "Free-text description of when the window starts relative to the trigger, e.g. \"30 days before, 30+ after\" or \"1st of birthday month\" — deliberately not further structured since the shapes genuinely vary per state (see research doc section 5) and forcing them into rigid start/end offset fields lost real precision when drafted that way. null when not independently known (see windowDays).",
+   "guaranteedIssuePeriods[].insurerScope": "\"any\" | \"sameInsurer\" | \"sameOrAffiliatedInsurer\" | null (not independently verified — do not assume \"any\" as a default; the 28 employerRetireeCoverageChange entries deliberately leave this null rather than guess).",
+   "guaranteedIssuePeriods[].benefitLevel": "\"equalOrLesser\" (the near-universal restriction) | \"any\" (Rhode Island only, confirmed more generous) | null (not independently verified — same employerRetireeCoverageChange caveat as insurerScope).",
    "guaranteedIssuePeriods[].restrictions": "Free-text: age caps, prior-coverage requirements, or other conditions that don't fit the structured fields above (e.g. Illinois' ages-65-to-75 cap, West Virginia's 24-month continuous-prior-coverage requirement).",
    "guaranteedIssuePeriods[].effectiveDate": "ISO date. May be in the future (New Mexico: 2027-01-01) — check against today's date before treating as live; see notYetEffective.",
    "guaranteedIssuePeriods[].notYetEffective": "Boolean, present and true only for laws enacted but not yet in force as of this file's last update. Same pattern as Roth's Oklahoma bracket handling: use the state's prior/baseline status until the effective date passes, and disclose the pending change.",
@@ -29,7 +29,21 @@
  },
 
  "AL": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
- "AK": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "AK": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
  "AZ": {
   "benefitStructure": "standard",
   "rating": {
@@ -49,7 +63,21 @@
    "effectiveDate": "1990-01-01",
    "note": "\"Composite age basis only.\""
   },
-  "guaranteedIssuePeriods": []
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ]
  },
  "CA": {
   "benefitStructure": "standard",
@@ -65,10 +93,37 @@
     "restrictions": "no age cap; carrier must notify policyholder 30-60 days before the window opens",
     "citation": "Cal. Ins. Code §§ 10192.11-10192.12",
     "confidence": "SECONDARY-CORROBORATED"
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
- "CO": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "CO": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
  "CT": {
   "benefitStructure": "standard",
   "rating": {
@@ -118,7 +173,21 @@
    "confidence": "SECONDARY-CORROBORATED",
    "note": "The one state of the three attained-age-restricting states (AZ/FL/GA) that mandates issue-age specifically, not just bans attained-age. Missouri is not counted here since there is no evidence it restricts attained-age at all."
   },
-  "guaranteedIssuePeriods": []
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ]
  },
  "GA": {
   "benefitStructure": "standard",
@@ -154,6 +223,19 @@
     "citation": "Idaho Code § 41-4404 (same SB 1143)",
     "confidence": "SECONDARY-CORROBORATED",
     "effectiveDate": "2022-02-28"
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
@@ -168,11 +250,24 @@
     "windowAnchor": "starts on birthday",
     "insurerScope": "sameOrAffiliatedInsurer",
     "benefitLevel": "equalOrLesser",
-    "restrictions": "ages 65-75 only. The statute separately guarantees under-65 disabled Medicare enrollees issue in several situations (losing employer coverage, an Advantage plan leaving their area, insurer insolvency) and bars charging them more than the highest 65+ rate for the same plan (215 ILCS 5/363(6),(10)) — a distinct disability-linked category, not modeled here as it mirrors the deferred employer-retiree-coverage-change category rather than adding a new trigger shape.",
+    "restrictions": "ages 65-75 only. The statute separately guarantees under-65 disabled Medicare enrollees issue in several situations (fully losing employer coverage, an Advantage plan leaving their area, insurer insolvency) and bars charging them more than the highest 65+ rate for the same plan (215 ILCS 5/363(6),(10)) — a distinct, under-65 disability-linked category, not modeled here. Not to be confused with the employerRetireeCoverageChange entry below, which is a different, 65-and-older right triggered by a coverage CHANGE rather than a full loss.",
     "citation": "215 ILCS 5/363(8)",
     "confidence": "PRIMARY",
     "effectiveDate": null,
     "note": "Read directly from the statute text (ilga.gov, 2026-08-20), upgraded from SECONDARY-CORROBORATED. Corrected insurerScope from sameInsurer to sameOrAffiliatedInsurer — the statute reads 'the same issuer or any affiliate,' the same pattern already found in West Virginia and Louisiana, not a strict same-issuer restriction. Dropped the prior 2022-01-01 effective date: the statute's own Source line lists only recent amending Public Acts (103-102 eff. 6-16-23; 103-747 eff. 1-1-26; 104-417 eff. 8-15-25), none of which is confirmed as the act that introduced subsection (8) itself, so that date wasn't actually verifiable from this primary text and shouldn't be asserted. Separately, subsection (9) grants a 63-day guaranteed-issue right after losing Illinois Medicaid eligibility, but its text ties it explicitly to COVID-19 Public Health Emergency-era termination — a historical unwinding provision, not an ongoing right like West Virginia's Medicaid-loss trigger — so it is not encoded as an active guaranteedIssuePeriods entry."
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
@@ -192,11 +287,52 @@
     "confidence": "SECONDARY-CORROBORATED",
     "effectiveDate": "2026-03-15",
     "note": "Effective date was pushed mid-research from an originally reported 2026-01-01 to 2026-03-15 — recheck before relying on it."
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
- "IA": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
- "KS": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "IA": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
+ "KS": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
  "KY": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
  "LA": {
   "benefitStructure": "standard",
@@ -212,6 +348,19 @@
     "restrictions": "affiliate insurers added by a 2023 amendment (originally same-issuer only)",
     "citation": "La. R.S. 22:1112",
     "confidence": "SECONDARY-CORROBORATED"
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
@@ -236,6 +385,19 @@
     "citation": "Me. Rev. Stat. tit. 24-A § 5012",
     "confidence": "SECONDARY-CORROBORATED",
     "note": "Downgraded from PRIMARY during the adversarial pass: unlike section 5011 (fetched and read directly), section 5012's content came from a WebSearch summary during a later cross-check, not a direct page read."
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
@@ -287,7 +449,21 @@
    "confidence": "SECONDARY-CORROBORATED",
    "effectiveDate": "1993-01-01"
   },
-  "guaranteedIssuePeriods": []
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ]
  },
  "MS": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
  "MO": {
@@ -309,11 +485,52 @@
     "citation": "§ 376.684 RSMo; 20 CSR 400-3.650(13)",
     "confidence": "SECONDARY-CORROBORATED",
     "note": "Missouri is the only state using a policy-anniversary trigger rather than a birthday trigger."
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
- "MT": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
- "NE": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "MT": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
+ "NE": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
  "NV": {
   "benefitStructure": "standard",
   "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
@@ -328,11 +545,38 @@
     "citation": "Nev. Rev. Stat. § 687B.352 (AB 250)",
     "confidence": "SECONDARY-CORROBORATED",
     "note": "Distinct from, and not treated as, the federal/NAC 687B.2056 guaranteed-issue right (a different, narrower set of triggers like losing employer coverage)."
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
  "NH": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
- "NJ": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "NJ": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
  "NM": {
   "benefitStructure": "standard",
   "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
@@ -349,6 +593,19 @@
     "effectiveDate": "2027-01-01",
     "notYetEffective": true,
     "note": "Not effective yet as of this file's last update — treat NM as having NO special guaranteed-issue right until this date passes, same handling as Roth's Oklahoma pending-bracket pattern."
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
@@ -375,8 +632,36 @@
  },
  "NC": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
  "ND": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
- "OH": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
- "OK": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "OH": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
+ "OK": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
  "OR": {
   "benefitStructure": "standard",
   "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
@@ -391,10 +676,37 @@
     "citation": "OAR 836-052-0143; ORS 743.683",
     "confidence": "SECONDARY-CORROBORATED",
     "note": "A loose secondary source claimed a '31-day window starting on birthday' mid-research — the more precise source (Oregon DFR itself) gives the 30-before/30-after shape used here; the loose figure was not used."
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
- "PA": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "PA": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
  "RI": {
   "benefitStructure": "standard",
   "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
@@ -410,14 +722,28 @@
     "citation": "R.I. Gen. Laws § 27-18.2-3(h)",
     "confidence": "PRIMARY",
     "effectiveDate": "2025-07-02",
-    "note": "Read directly from the statute text (webserver.rilegislature.gov, 2026-08-20), upgraded from OFFICIAL-SUMMARY. Corrected appliesTo from existingHoldersOnly to anyone — the statute's own text covers anyone continuously covered by 'any Medicare supplement policy(s) or Medicare Advantage plan(s)', which includes someone on Medicare Advantage using this right to newly enroll in Medigap, not just existing Medigap holders switching plans — the same shape as the NY/CT/MA correction found earlier in this project. Effective date corrected to 2025-07-02, the date given directly in the statute's own History line for the two 2025 Public Laws (ch. 433 and ch. 434) most recently amending this section, replacing the earlier secondary-sourced 2025-09-26 figure. Subsection (h)(2) separately extends this same right to under-65 disabled Medicare Advantage/Medigap-Plan-A enrollees for every plan an issuer offers — a disability-linked extension, not modeled as a separate entry, matching the West Virginia/Illinois precedent of leaving that category to the deferred employer-retiree-coverage-change research."
+    "note": "Read directly from the statute text (webserver.rilegislature.gov, 2026-08-20), upgraded from OFFICIAL-SUMMARY. Corrected appliesTo from existingHoldersOnly to anyone — the statute's own text covers anyone continuously covered by 'any Medicare supplement policy(s) or Medicare Advantage plan(s)', which includes someone on Medicare Advantage using this right to newly enroll in Medigap, not just existing Medigap holders switching plans — the same shape as the NY/CT/MA correction found earlier in this project. Effective date corrected to 2025-07-02, the date given directly in the statute's own History line for the two 2025 Public Laws (ch. 433 and ch. 434) most recently amending this section, replacing the earlier secondary-sourced 2025-09-26 figure. Subsection (h)(2) separately extends this same right to under-65 disabled Medicare Advantage/Medigap-Plan-A enrollees for every plan an issuer offers — a distinct, under-65 disability-linked extension, not modeled as a separate entry (same category left unmodeled for West Virginia and Illinois, not to be confused with the now-modeled employerRetireeCoverageChange trigger, which is a different, 65-and-older right)."
    }
   ]
  },
  "SC": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
  "SD": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
  "TN": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
- "TX": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "TX": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
  "UT": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
  "VT": {
   "benefitStructure": "standard",
@@ -427,9 +753,37 @@
    "citation": "Vt. Stat. Ann. tit. 8 § 4080e",
    "confidence": "SECONDARY-CORROBORATED"
   },
-  "guaranteedIssuePeriods": []
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ]
  },
- "VA": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "VA": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ] },
  "WA": {
   "benefitStructure": "standard",
   "rating": {
@@ -481,7 +835,20 @@
     "citation": "W. Va. Code § 33-15F-1(c) (HB 4869, 2026 Reg. Sess.)",
     "confidence": "PRIMARY",
     "effectiveDate": "2026-06-01",
-    "note": "A second, entirely separate guaranteed-issue right under the same bill — missed by every secondary source found during the original research pass, caught only by reading the full enrolled bill text directly. Structurally the same kind of life-event trigger as the deferred employer-retiree-coverage-change category, but this one surfaced naturally while verifying an already-in-scope state rather than from expanding scope to chase it."
+    "note": "A second, entirely separate guaranteed-issue right under the same bill — missed by every secondary source found during the original research pass, caught only by reading the full enrolled bill text directly. Structurally the same kind of life-event trigger as employerRetireeCoverageChange (now also modeled, see that entry below), but this one surfaced naturally while verifying an already-in-scope state rather than from expanding scope to chase it."
+   },
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ]
  },
@@ -493,7 +860,21 @@
    "confidence": "SECONDARY-CORROBORATED",
    "note": "No community-rating, issue-age, or switching-rights mandate found for WI beyond its unique benefit structure above — treat as baseline for rating/switching purposes despite the custom benefitStructure."
   },
-  "guaranteedIssuePeriods": []
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "employerRetireeCoverageChange",
+    "appliesTo": "anyone",
+    "windowDays": null,
+    "windowAnchor": null,
+    "insurerScope": null,
+    "benefitLevel": null,
+    "restrictions": "Confirmed only as a Yes/No via KFF's state-by-state survey of insurance regulations — this state requires Medigap insurers to issue a policy when an employer changes (but doesn't fully eliminate) a beneficiary's retiree coverage, but the exact window length, insurer scope, and benefit-level restriction were not independently confirmed for this state and are deliberately left unset rather than guessed. (For comparison, federally-required guaranteed-issue windows are generally 63 days, but that figure is NOT confirmed as this state's actual window.)",
+    "citation": "KFF, \"Medigap Enrollment and Consumer Protections Vary Across States\" (Jul 2018, Table 3, 2017 data); KFF's Oct 2024 update reports the national count rose from 28 to 29 states but its per-state table wasn't extractable — see _dev/medicare-research-2026-08.md section 12.",
+    "confidence": "SECONDARY-CORROBORATED",
+    "effectiveDate": null,
+    "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
+   }
+  ]
  },
  "WY": {
   "benefitStructure": "standard",

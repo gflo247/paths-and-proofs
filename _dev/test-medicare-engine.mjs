@@ -104,20 +104,32 @@ check('default coinsurance rate', DEFAULT_COINSURANCE_RATE, 0.20);
 {
   const r = computeMedigapBreakeven(states.FL, { medigapMonthlyPremium: 200 });
   check('FL: rating method', r.ratingContext.method, 'issueAgeMandated');
-  check('FL: GI hasProtection (Florida has none)', r.guaranteedIssueContext.hasProtection, false);
+  check('FL: GI hasProtection (employerRetireeCoverageChange, added 2026-08-20)', r.guaranteedIssueContext.hasProtection, true);
+  check('FL: GI trigger', r.guaranteedIssueContext.periods[0].trigger, 'employerRetireeCoverageChange');
 }
 
 // ── State context: attained-age banned (Arizona) ──
 {
   const r = computeMedigapBreakeven(states.AZ, { medigapMonthlyPremium: 200 });
   check('AZ: rating method', r.ratingContext.method, 'attainedAgeBanned');
+  check('AZ: GI hasProtection (genuinely none, not in the employerRetireeCoverageChange list)', r.guaranteedIssueContext.hasProtection, false);
 }
 
 // ── State context: no mandate, baseline (Ohio) ──
 {
   const r = computeMedigapBreakeven(states.OH, { medigapMonthlyPremium: 200 });
   check('OH: rating method', r.ratingContext.method, 'noMandate');
-  check('OH: GI hasProtection', r.guaranteedIssueContext.hasProtection, false);
+  check('OH: GI hasProtection (employerRetireeCoverageChange, added 2026-08-20)', r.guaranteedIssueContext.hasProtection, true);
+}
+
+// ── State context: employerRetireeCoverageChange has no fabricated mechanics ──
+{
+  const r = computeMedigapBreakeven(states.AK, { medigapMonthlyPremium: 200 });
+  const p = r.guaranteedIssueContext.periods[0];
+  check('AK: GI trigger', p.trigger, 'employerRetireeCoverageChange');
+  check('AK: GI windowDays left null, not guessed', p.windowDays, null);
+  check('AK: GI insurerScope left null, not guessed', p.insurerScope, null);
+  check('AK: GI benefitLevel left null, not guessed', p.benefitLevel, null);
 }
 
 // ── State context: unverified (Missouri) ──
