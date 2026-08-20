@@ -189,10 +189,10 @@ switch to equal-or-lesser coverage without medical underwriting.
 | Wyoming | Wyo. Ins. Reg. Ch. 35 (DOI Bulletin 06-2025) | SECONDARY-CORROBORATED | 63 days from birthday | eff. Jun 4, 2025 |
 | Delaware | DE SB 71 (2025) | OFFICIAL-SUMMARY (news.delaware.gov) | 30 before–30+ after | signed Sep 3, 2025; effective date imprecise — one source says Jan 2026, Delaware's own press release covering it is dated May 13, 2026. Confirm the actual effective date before relying on it. |
 | Maryland | — (exact bill not pinned down) | OFFICIAL-SUMMARY (insurance.maryland.gov) | 30 days from birthday | eff. Jul 1, 2023 |
-| Illinois | 215 ILCS 5/363 | SECONDARY-CORROBORATED | 45 days from birthday | **ages 65-75 only**, same issuer only |
+| Illinois | 215 ILCS 5/363(8) | PRIMARY (read direct 2026-08-20) | 45 days from birthday | **ages 65-75 only**, same issuer **or affiliate** (corrected — not same-issuer-only as first recorded); statute separately guarantees under-65 disabled enrollees issue in several situations (215 ILCS 5/363(6),(10)), not modeled here (same shape as the deferred employer-retiree-coverage-change category) |
 | Indiana | HEA 1226 (2025) / HEA 1260 | SECONDARY-CORROBORATED | 31 before–31 after | same plan letter, different carrier OK; **eff. Mar 15, 2026** (pushed from original Jan 1, 2026) |
 | Louisiana | La. R.S. 22:1112 | SECONDARY-CORROBORATED | 63 days from birthday | same issuer or affiliate only (affiliate added 2023) |
-| West Virginia | WV HB 4869 | SECONDARY-CORROBORATED | 60 days from birthday month | **needs 24 months' continuous prior coverage**, same/affiliated insurer only; **eff. Jun 11, 2026 — recheck** |
+| West Virginia | W. Va. Code § 33-15F-1(b) | PRIMARY (read direct from enrolled bill text, 2026-08-20) | 60 days from birthday month | **needs 24 months' continuous prior coverage**, same/affiliated insurer only; each replacement resets the clock; eff. Jun 1, 2026 for the underlying policy per the bill's own applicability clause (subsection (g)), distinct from the bill's general 90-days-from-passage effective date on its cover page. **A second, separate guaranteed-issue right was found in the same bill** (§ 33-15F-1(c)): anyone 65+ losing Medicaid (Title XIX) eligibility gets a 63-day window, any insurer, any plan — missed by every secondary source in the original pass. |
 | New Mexico | NM SB 21 | OFFICIAL-SUMMARY (aging.nm.gov) | 60 days from birthday month | **not effective until Jan 1, 2027 — do not treat as live yet** |
 
 ## 6. Policy-anniversary state (different trigger, same effect)
@@ -221,12 +221,20 @@ one-month annual window for Plan A only, insurer's choice of timing, plus a sepa
 
 ## 8. Annual-Enrollment-Period-tied guaranteed issue (distinct mechanism)
 
-**Rhode Island** — R.I. Gen. Laws § 27-18.2-3(h). Signed Jul 2, 2025, effective Sep 26,
-2025 (confirmed via Rhode Island's own OHIC Bulletin 2025-05). Guaranteed issue for
-**any** plan an issuer currently offers (more generous than the equal-or-lesser
-restriction most other states use) tied to the Medicare Annual Enrollment Period
-(Oct 15–Dec 7), for anyone with no coverage gap over 90 days since their Initial
-Enrollment Period. OFFICIAL-SUMMARY confidence.
+**Rhode Island** — R.I. Gen. Laws § 27-18.2-3(h). PRIMARY confidence (read direct
+2026-08-20). Effective Jul 2, 2025, per the statute's own History line for the two
+2025 Public Laws (ch. 433 and 434) most recently amending this section — corrects an
+earlier secondary-sourced Sep 26, 2025 figure. Guaranteed issue for **any** plan an
+issuer currently offers (more generous than the equal-or-lesser restriction most
+other states use) tied to the Medicare Annual Enrollment Period (Oct 15–Dec 7, for
+Jan 1 coverage), for anyone with no coverage gap over 90 days since their Initial
+Enrollment Period. **Correction: applies to anyone continuously covered by either a
+Medigap policy or a Medicare Advantage plan** — including someone on Advantage using
+this right to newly enroll in Medigap — not existing Medigap holders only as first
+recorded; same shape as the NY/CT/MA correction in section 7. Subsection (h)(2)
+separately extends this right to under-65 disabled Advantage/Medigap-Plan-A
+enrollees, not modeled here (same deferred category as Illinois's disability
+provision above).
 
 ---
 
@@ -277,18 +285,24 @@ nothing gets missed when this becomes a per-state schema:
 2. **Missouri's rating method** — see section 4, genuinely conflicting sources.
 3. **Exact statute citations for Maryland's birthday rule** and a few others where
    only the official government *page* was found, not the underlying bill number.
-4. Almost everything above is SECONDARY-CORROBORATED, not PRIMARY. Before this data
-   backs a live tool, the highest-value verification pass would be reading the actual
-   statute text (not just WebSearch summaries of it) for at least the states with the
-   most consequential/least intuitive rules — West Virginia (24-month lookback),
-   Illinois (age 65-75 cap), Rhode Island (any-plan right), and the four
-   issue-age states.
+4. Most of the above is still SECONDARY-CORROBORATED, not PRIMARY. **Done (2026-08-20):**
+   West Virginia, Illinois, and Rhode Island were upgraded to PRIMARY by reading the
+   actual statute/bill text directly — all three turned up real corrections (West
+   Virginia's second Medicaid-loss GI right, Illinois's same-issuer-or-affiliate scope,
+   Rhode Island's anyone-not-just-existing-holders scope and effective date), which is
+   why this remains worth doing for the rest. Remaining candidates, roughly by stakes:
+   the four issue-age states (section 3), and NY/CT/MA's year-round right (section 7,
+   already corrected once on `appliesTo` from a secondary source, worth confirming
+   against the statute directly).
 
 ## 11. Recheck triggers (facts with a known future change)
 
 - **New Mexico** SB 21 — not effective until Jan 1, 2027. Don't treat as live before
   then; recheck closer to that date in case of amendment or repeal.
-- **West Virginia** HB 4869 — effective Jun 11, 2026. Recheck that the effective date
-  didn't slip (Indiana's did, from Jan 1 to Mar 15, 2026, mid-research).
-- **Rhode Island** § 27-18.2-3(h) — very new (Sep 2025), worth a currency check before
-  this backs anything live.
+- **West Virginia** HB 4869 — confirmed via the enrolled bill text (2026-08-20): the
+  operative effective date for the birthday-rule policy is Jun 1, 2026 (subsection
+  (g)'s specific applicability clause), not the bill's general Jun 11, 2026
+  90-days-from-passage cover-page date. No further recheck needed unless amended.
+- **Rhode Island** § 27-18.2-3(h) — confirmed via primary text (2026-08-20): effective
+  Jul 2, 2025 per the statute's own History line. No further recheck needed unless
+  amended.

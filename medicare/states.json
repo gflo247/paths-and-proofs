@@ -13,7 +13,7 @@
    "rating.method": "One of: \"community\" (premium never varies by age within your Medicare-eligibility category — see rating.disabilitySplit), \"issueAgeMandated\" (Florida only — insurer MUST price by enrollment age, cannot use attained-age), \"attainedAgeBanned\" (attained-age specifically prohibited, but issuer may choose issue-age OR community — Arizona, Georgia), \"noMandate\" (no state law restricts the method; attained-age is the prevailing market default but this is insurer choice, not a guarantee), or \"unverified\" (Missouri — sources conflict, do not encode a specific method).",
    "rating.disabilitySplit": "Boolean. true means the state's community-rating law explicitly permits a SEPARATE community rate for people who qualify for Medicare by disability rather than by age (Idaho, Vermont, Washington). The accurate description of these states' rule is 'premium doesn't vary by age within your eligibility category', not a flat 'never varies by age' — do not drop this qualifier when surfacing the fact to a user.",
    "guaranteedIssuePeriods": "Array, can hold zero or more entries — most states have zero (federal one-time 6-month window only). Each entry describes ONE distinct annual/ongoing right to switch or newly enroll in a Medigap plan without medical underwriting, beyond the federal baseline. Deliberately an array of typed objects (not fixed fields for 'birthday rule' specifically) so a future guaranteed-issue trigger type — e.g. employer retiree-coverage-change GI, ~28 states, explicitly deferred out of v1, see the research doc's known-gaps section — can be added as a new trigger value without a schema change.",
-   "guaranteedIssuePeriods[].trigger": "\"birthday\" | \"policyAnniversary\" (Missouri — the POLICY's anniversary date, not the person's birthday) | \"annualEnrollmentPeriod\" (Rhode Island — tied to the federal Oct15-Dec7 AEP calendar) | \"insurerChosenWindow\" (Maine — a fixed annual window whose TIMING the insurer picks, not anchored to the person's birthday, the policy date, or a state-set calendar) | \"continuous\" (no window at all — right exists year-round).",
+   "guaranteedIssuePeriods[].trigger": "\"birthday\" | \"policyAnniversary\" (Missouri — the POLICY's anniversary date, not the person's birthday) | \"annualEnrollmentPeriod\" (Rhode Island — tied to the federal Oct15-Dec7 AEP calendar) | \"insurerChosenWindow\" (Maine — a fixed annual window whose TIMING the insurer picks, not anchored to the person's birthday, the policy date, or a state-set calendar) | \"continuous\" (no window at all — right exists year-round) | \"lossOfMedicaidEligibility\" (West Virginia — a specific life-event trigger, not a calendar window; found by reading a state's full primary-source bill text rather than secondary summaries, which is exactly the kind of thing this schema's extensible trigger-type design (rather than fixed fields) exists to accommodate without a restructure).",
    "guaranteedIssuePeriods[].appliesTo": "\"existingHoldersOnly\" (must already hold a Medigap policy — true for Washington, Missouri, and all the birthday-rule states) vs \"anyone\" (the right extends to people who never had Medigap before — confirmed for New York, Connecticut, and Massachusetts). This distinction was wrong in an earlier draft of this file (NY/CT/MA were incorrectly narrowed to existingHoldersOnly, matching Washington) — caught and fixed during the adversarial pass, see git history.",
    "guaranteedIssuePeriods[].windowDays": "Integer, or null for trigger:\"continuous\".",
    "guaranteedIssuePeriods[].windowAnchor": "Free-text description of when the window starts relative to the trigger, e.g. \"30 days before, 30+ after\" or \"1st of birthday month\" — deliberately not further structured since the shapes genuinely vary per state (see research doc section 5) and forcing them into rigid start/end offset fields lost real precision when drafted that way.",
@@ -166,12 +166,13 @@
     "appliesTo": "existingHoldersOnly",
     "windowDays": 45,
     "windowAnchor": "starts on birthday",
-    "insurerScope": "sameInsurer",
+    "insurerScope": "sameOrAffiliatedInsurer",
     "benefitLevel": "equalOrLesser",
-    "restrictions": "ages 65-75 only",
-    "citation": "215 ILCS 5/363",
-    "confidence": "SECONDARY-CORROBORATED",
-    "effectiveDate": "2022-01-01"
+    "restrictions": "ages 65-75 only. The statute separately guarantees under-65 disabled Medicare enrollees issue in several situations (losing employer coverage, an Advantage plan leaving their area, insurer insolvency) and bars charging them more than the highest 65+ rate for the same plan (215 ILCS 5/363(6),(10)) — a distinct disability-linked category, not modeled here as it mirrors the deferred employer-retiree-coverage-change category rather than adding a new trigger shape.",
+    "citation": "215 ILCS 5/363(8)",
+    "confidence": "PRIMARY",
+    "effectiveDate": null,
+    "note": "Read directly from the statute text (ilga.gov, 2026-08-20), upgraded from SECONDARY-CORROBORATED. Corrected insurerScope from sameInsurer to sameOrAffiliatedInsurer — the statute reads 'the same issuer or any affiliate,' the same pattern already found in West Virginia and Louisiana, not a strict same-issuer restriction. Dropped the prior 2022-01-01 effective date: the statute's own Source line lists only recent amending Public Acts (103-102 eff. 6-16-23; 103-747 eff. 1-1-26; 104-417 eff. 8-15-25), none of which is confirmed as the act that introduced subsection (8) itself, so that date wasn't actually verifiable from this primary text and shouldn't be asserted. Separately, subsection (9) grants a 63-day guaranteed-issue right after losing Illinois Medicaid eligibility, but its text ties it explicitly to COVID-19 Public Health Emergency-era termination — a historical unwinding provision, not an ongoing right like West Virginia's Medicaid-loss trigger — so it is not encoded as an active guaranteedIssuePeriods entry."
    }
   ]
  },
@@ -400,16 +401,16 @@
   "guaranteedIssuePeriods": [
    {
     "trigger": "annualEnrollmentPeriod",
-    "appliesTo": "existingHoldersOnly",
+    "appliesTo": "anyone",
     "windowDays": null,
-    "windowAnchor": "the federal Medicare AEP window, Oct 15 - Dec 7",
+    "windowAnchor": "the federal Medicare AEP window, Oct 15 - Dec 7, for coverage effective the following Jan 1",
     "insurerScope": "any",
     "benefitLevel": "any",
-    "restrictions": "no coverage gap over 90 days since Initial Enrollment Period; more generous than most states since it's not restricted to equal-or-lesser coverage",
+    "restrictions": "requires continuous coverage under any Medicare supplement policy or Medicare Advantage plan, with no gap over 90 days, since the individual's Medicare Initial Enrollment Period; more generous than most states in two ways: not restricted to equal-or-lesser coverage, and open to people switching in from Medicare Advantage for the first time, not just existing Medigap holders moving between plans.",
     "citation": "R.I. Gen. Laws § 27-18.2-3(h)",
-    "confidence": "OFFICIAL-SUMMARY",
-    "effectiveDate": "2025-09-26",
-    "note": "Very recently enacted (signed 2025-07-02) — worth a currency check before this backs anything live."
+    "confidence": "PRIMARY",
+    "effectiveDate": "2025-07-02",
+    "note": "Read directly from the statute text (webserver.rilegislature.gov, 2026-08-20), upgraded from OFFICIAL-SUMMARY. Corrected appliesTo from existingHoldersOnly to anyone — the statute's own text covers anyone continuously covered by 'any Medicare supplement policy(s) or Medicare Advantage plan(s)', which includes someone on Medicare Advantage using this right to newly enroll in Medigap, not just existing Medigap holders switching plans — the same shape as the NY/CT/MA correction found earlier in this project. Effective date corrected to 2025-07-02, the date given directly in the statute's own History line for the two 2025 Public Laws (ch. 433 and ch. 434) most recently amending this section, replacing the earlier secondary-sourced 2025-09-26 figure. Subsection (h)(2) separately extends this same right to under-65 disabled Medicare Advantage/Medigap-Plan-A enrollees for every plan an issuer offers — a disability-linked extension, not modeled as a separate entry, matching the West Virginia/Illinois precedent of leaving that category to the deferred employer-retiree-coverage-change research."
    }
   ]
  },
@@ -463,11 +464,24 @@
     "windowAnchor": "starts 1st of birthday month",
     "insurerScope": "sameOrAffiliatedInsurer",
     "benefitLevel": "equalOrLesser",
-    "restrictions": "requires 24 MONTHS of continuous prior coverage under the same policy — the most restrictive prior-coverage requirement found in this research",
-    "citation": "WV House Bill 4869",
-    "confidence": "SECONDARY-CORROBORATED",
-    "effectiveDate": "2026-06-11",
-    "note": "Recheck this effective date before relying on it — Indiana's slipped mid-research from an originally reported date."
+    "restrictions": "requires 24 MONTHS of continuous prior coverage under the same or an affiliated insurer, without a lapse; each replacement policy resets the 24-month clock before it can be replaced again — the most restrictive prior-coverage requirement found in this research. Exception: if neither the insurer nor its affiliates have accepted new applications for that plan type in the past 12 months, the right extends to any authorized insurer instead. The 60-day window is an APPLICATION window only — the new policy's effective date doesn't have to fall within it, and can be delayed up to 90 days at the applicant's request to coordinate with the old policy's termination.",
+    "citation": "W. Va. Code § 33-15F-1(b) (HB 4869, 2026 Reg. Sess.)",
+    "confidence": "PRIMARY",
+    "effectiveDate": "2026-06-01",
+    "note": "Read directly from the enrolled bill text (2026-08-20), upgraded from SECONDARY-CORROBORATED. The bill's own cover page cites a general 'in effect 90 days from passage (June 11, 2026)' date, but the substantive applicability clause, subsection (g), specifically ties this right to policies delivered/issued/reissued/extended on or after June 1, 2026 — used the more specific, operative figure. The bill text explicitly excludes Medicare Advantage plans (subsection (f)(4))."
+   },
+   {
+    "trigger": "lossOfMedicaidEligibility",
+    "appliesTo": "anyone",
+    "windowDays": 63,
+    "windowAnchor": "starts the date Medicaid eligibility ends",
+    "insurerScope": "any",
+    "benefitLevel": "any",
+    "restrictions": "must be 65+, entitled to Medicare, and losing Title XIX (Medicaid) eligibility, including full or partial dual eligibility. Applies regardless of whether previously enrolled in a Medigap policy, and regardless of whether the person was Medicaid-eligible when first entitled to Medicare. Does NOT apply solely because of disenrolling from a Medicare Advantage plan.",
+    "citation": "W. Va. Code § 33-15F-1(c) (HB 4869, 2026 Reg. Sess.)",
+    "confidence": "PRIMARY",
+    "effectiveDate": "2026-06-01",
+    "note": "A second, entirely separate guaranteed-issue right under the same bill — missed by every secondary source found during the original research pass, caught only by reading the full enrolled bill text directly. Structurally the same kind of life-event trigger as the deferred employer-retiree-coverage-change category, but this one surfaced naturally while verifying an already-in-scope state rather than from expanding scope to chase it."
    }
   ]
  },
