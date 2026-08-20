@@ -142,12 +142,12 @@ this benefit structure — treat as baseline for rating/switching purposes.
 | State | Citation | Confidence | Effective | Notes |
 |---|---|---|---|---|
 | Arkansas | Ark. Code Ann. § 23-79-109 | SECONDARY-CORROBORATED | 1990 | "composite age basis only" |
-| Connecticut | Conn. Gen. Stat. § 38a-495c | SECONDARY-CORROBORATED | 2006 (PA 05-20) | no age/gender/claims/condition variation |
+| Connecticut | Conn. Gen. Stat. § 38a-495c(a) | **PRIMARY** (read direct 2026-08-20) | 1994 (P.A. 93-390) | no age/gender/claims/condition variation. Effective date corrected: the substantive rule was enacted by P.A. 93-390 (eff. Jan 1, 1994), not PA 05-20 (2006), which only made "technical changes" to already-existing language per the statute's own history note. |
 | Idaho | Idaho Code § 41-4404 | SECONDARY-CORROBORATED | 2022 (SB 1143, signed 2021) | 65+ only; insurers can charge up to 150% for under-65 |
 | Maine | Me. Rev. Stat. tit. 24-A § 5011(1) | **PRIMARY** (read via legislature.maine.gov) | 1993 | no age/gender/health/claims/duration/industry/occupation variation; tobacco-rating also banned as of 2024 amendment |
-| Massachusetts | Mass. Gen. Laws ch. 176K § 7 | SECONDARY-CORROBORATED | — | on top of Core/Supp1/Supp1A system |
+| Massachusetts | Mass. Gen. Laws ch. 176K § 7(a) | **PRIMARY** (read direct 2026-08-20) | — | on top of Core/Supp1/Supp1A system. §7 is community rating ONLY — the guaranteed-issue right is a separate section, §3, see section 7 below; an earlier draft of this file conflated the two under one citation. |
 | Minnesota | Minn. Stat. § 62A.31 | SECONDARY-CORROBORATED | 1993 | on top of Basic/Extended Basic system |
-| New York | N.Y. Ins. Law § 3231 | SECONDARY-CORROBORATED | — | explicitly names Medicare supplemental insurance |
+| New York | N.Y. Ins. Law § 3231(a)(4) | **PRIMARY** (read direct 2026-08-20) | — | explicitly names Medicare supplemental insurance |
 | Vermont | Vt. Stat. Ann. tit. 8 § 4080e | SECONDARY-CORROBORATED | — | separate community rate allowed for age- vs. disability-eligible |
 | Washington | Wash. Rev. Code § 48.66.045(3) | SECONDARY-CORROBORATED | 1996 | up to two rating pools (age vs disability); spousal/payment-method variation allowed |
 
@@ -208,14 +208,25 @@ different carrier OK. SECONDARY-CORROBORATED.
 
 | State | Citation | Confidence | Scope |
 |---|---|---|---|
-| New York | N.Y. Ins. Law § 3231 | SECONDARY-CORROBORATED | continuous, any time, ties to its community-rating law |
-| Connecticut | Conn. Gen. Stat. § 38a-495c | SECONDARY-CORROBORATED | continuous, any time |
+| New York | N.Y. Ins. Law § 3231(a)(2) | **PRIMARY** (read direct 2026-08-20) | continuous, any time, ties to its community-rating law; **any plan**, not equal-or-lesser — see correction below |
+| Connecticut | Conn. Gen. Stat. § 38a-495c(a) | **PRIMARY** (read direct 2026-08-20) | continuous, any time; **any plan**, not equal-or-lesser — see correction below |
 | Washington | Wash. Rev. Code § 48.66.055 | SECONDARY-CORROBORATED | **existing holders only** — needs 90+ days prior Medigap coverage, switch restricted to same plan group (A→A, or B-N→B-N) |
-| Massachusetts | Mass. Gen. Laws ch. 176K § 7 | SECONDARY-CORROBORATED | statutory floor is only Feb 1–Mar 31 annually; **all insurers currently offer it year-round in practice** — flag the gap between legal minimum and current market behavior, don't hardcode "year-round" as a legal guarantee |
+| Massachusetts | Mass. Gen. Laws ch. 176K § 3(a),(d) | **PRIMARY** (read direct 2026-08-20) | statutory floor is only Feb 1–Mar 31 annually; **all insurers currently offer it year-round in practice** — flag the gap between legal minimum and current market behavior, don't hardcode "year-round" as a legal guarantee. Citation corrected: the right is in §3, not §7 (§7 is community rating only, see section 3 above); **any plan**, not equal-or-lesser — see correction below. |
 
 **Important distinction to preserve:** NY/CT/MA's right applies broadly (including to
 people who didn't previously have Medigap); Washington's specifically requires the
 person to already hold a Medigap policy for 90+ days. These are not the same right.
+
+**Correction, 2026-08-20 primary-source pass:** all three (NY/CT/MA) were previously
+encoded in the schema with `benefitLevel: equalOrLesser`, matching the near-universal
+birthday-rule pattern. That's wrong for this category of right. `equalOrLesser` is a
+switching concept — it only makes sense when there's a PRIOR policy to compare
+against, which is exactly what a birthday rule is (switch from your current plan to
+another, no worse). But NY/CT/MA's right covers people with NO prior Medigap at all,
+and both NY (`"any... coverage offered by the insurer"`) and MA (`"all policies...
+which that carrier is authorized to issue"`) use explicit any/all language in the
+statute text — the same shape as Rhode Island's already-correctly-encoded `any`.
+Corrected all three to `benefitLevel: any`.
 
 **Maine is NOT year-round**, despite a loose secondary source claiming otherwise —
 corrected during this research. Maine's actual mandate (§ 5012) is a minimum
@@ -299,10 +310,18 @@ nothing gets missed when this becomes a per-state schema:
    held up on strong current empirical grounds (re-graded OFFICIAL-SUMMARY); Florida's
    "issue-age mandated" claim did NOT survive checking and was downgraded to
    UNVERIFIED — four states checked, three real corrections found, which is the
-   pattern every primary-source pass has hit so far in this project. Remaining
-   candidate: NY/CT/MA's year-round right (section 7, already corrected once on
-   `appliesTo` from a secondary source, worth confirming against the statute
-   directly).
+   pattern every primary-source pass has hit so far in this project. **Also done
+   (2026-08-20):** NY/CT/MA's year-round right (section 7) — all three confirmed as
+   `continuous`/`anyone`, but turned up three more real corrections: `benefitLevel`
+   was wrong for all three (`equalOrLesser` → `any`, a switching-right concept that
+   doesn't apply to a right covering people with no prior Medigap), Connecticut's
+   effective date was wrong by 12 years (1994, not 2006), and Massachusetts's
+   citation pointed at the wrong section entirely (§3, not §7, which is
+   rating-only). Every primary-source pass run in this project has now found at
+   least one real correction — nine states checked (WV, IL, RI, GA, AZ, FL, NY, CT,
+   MA), eight corrected. No remaining high-stakes candidates identified; the
+   remaining gap is breadth (most of the other ~40 states are still
+   SECONDARY-CORROBORATED) rather than a specific known-risky fact.
 
 ## 11. Recheck triggers (facts with a known future change)
 

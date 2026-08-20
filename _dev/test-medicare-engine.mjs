@@ -98,6 +98,16 @@ check('default coinsurance rate', DEFAULT_COINSURANCE_RATE, 0.20);
   check('NY: GI hasProtection', r.guaranteedIssueContext.hasProtection, true);
   check('NY: GI trigger', r.guaranteedIssueContext.periods[0].trigger, 'continuous');
   check('NY: GI appliesTo (the bug caught in the adversarial pass)', r.guaranteedIssueContext.periods[0].appliesTo, 'anyone');
+  check('NY: GI benefitLevel any, not equalOrLesser (corrected 2026-08-20)', r.guaranteedIssueContext.periods[0].benefitLevel, 'any');
+}
+
+// ── State context: continuous GI, benefitLevel corrected from equalOrLesser to any (Connecticut, Massachusetts) ──
+{
+  const ct = computeMedigapBreakeven(states.CT, { medigapMonthlyPremium: 200 });
+  check('CT: GI benefitLevel any, not equalOrLesser (corrected 2026-08-20)', ct.guaranteedIssueContext.periods[0].benefitLevel, 'any');
+  const ma = computeMedigapBreakeven(states.MA, { medigapMonthlyPremium: 200 });
+  check('MA: GI benefitLevel any, not equalOrLesser (corrected 2026-08-20)', ma.guaranteedIssueContext.periods[0].benefitLevel, 'any');
+  check('MA: GI citation points to §3, not §7 (corrected 2026-08-20)', states.MA.guaranteedIssuePeriods[0].citation.includes('§ 3'), true);
 }
 
 // ── State context: rating method downgraded to unverified (Florida) ──

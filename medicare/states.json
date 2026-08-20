@@ -18,7 +18,7 @@
    "guaranteedIssuePeriods[].windowDays": "Integer, or null. null means either trigger:\"continuous\" (no window applies), OR the window length genuinely isn't known — the source only confirmed the right exists, not its exact parameters (all 28 employerRetireeCoverageChange entries; distinguish the two null cases via the confidence/note fields, not this field alone).",
    "guaranteedIssuePeriods[].windowAnchor": "Free-text description of when the window starts relative to the trigger, e.g. \"30 days before, 30+ after\" or \"1st of birthday month\" — deliberately not further structured since the shapes genuinely vary per state (see research doc section 5) and forcing them into rigid start/end offset fields lost real precision when drafted that way. null when not independently known (see windowDays).",
    "guaranteedIssuePeriods[].insurerScope": "\"any\" | \"sameInsurer\" | \"sameOrAffiliatedInsurer\" | null (not independently verified — do not assume \"any\" as a default; the 28 employerRetireeCoverageChange entries deliberately leave this null rather than guess).",
-   "guaranteedIssuePeriods[].benefitLevel": "\"equalOrLesser\" (the near-universal restriction) | \"any\" (Rhode Island only, confirmed more generous) | null (not independently verified — same employerRetireeCoverageChange caveat as insurerScope).",
+   "guaranteedIssuePeriods[].benefitLevel": "\"equalOrLesser\" (the near-universal restriction, applies to switching-type rights where there's a prior policy to compare against — birthday rules, Missouri's anniversary rule) | \"any\" (Rhode Island, New York, Connecticut, Massachusetts — confirmed more generous; note this is also the structurally correct value for any continuous/anyone right, since 'equal or lesser than PRIOR coverage' is a concept that doesn't apply to someone with no prior Medigap policy at all) | null (not independently verified — same employerRetireeCoverageChange caveat as insurerScope).",
    "guaranteedIssuePeriods[].restrictions": "Free-text: age caps, prior-coverage requirements, or other conditions that don't fit the structured fields above (e.g. Illinois' ages-65-to-75 cap, West Virginia's 24-month continuous-prior-coverage requirement).",
    "guaranteedIssuePeriods[].effectiveDate": "ISO date. May be in the future (New Mexico: 2027-01-01) — check against today's date before treating as live; see notYetEffective.",
    "guaranteedIssuePeriods[].notYetEffective": "Boolean, present and true only for laws enacted but not yet in force as of this file's last update. Same pattern as Roth's Oklahoma bracket handling: use the state's prior/baseline status until the effective date passes, and disclose the pending change.",
@@ -128,10 +128,10 @@
   "benefitStructure": "standard",
   "rating": {
    "method": "community",
-   "citation": "Conn. Gen. Stat. § 38a-495c",
-   "confidence": "SECONDARY-CORROBORATED",
-   "effectiveDate": "2006-01-01",
-   "note": "Public Act 05-20; no age/gender/claims-history/medical-condition variation."
+   "citation": "Conn. Gen. Stat. § 38a-495c(a)",
+   "confidence": "PRIMARY",
+   "effectiveDate": "1994-01-01",
+   "note": "No age/gender/claims-history/medical-condition variation. Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED. Effective date corrected: the substantive community-rating/no-denial rule was enacted by P.A. 93-390, effective Jan. 1, 1994 — the previous '2006-01-01 (Public Act 05-20)' figure was wrong; PA 05-20 only made 'technical changes' to already-existing language per the statute's own history note, it didn't originate the rule."
   },
   "guaranteedIssuePeriods": [
    {
@@ -139,10 +139,11 @@
     "appliesTo": "anyone",
     "windowDays": null,
     "insurerScope": "any",
-    "benefitLevel": "equalOrLesser",
-    "citation": "Conn. Gen. Stat. § 38a-495c",
-    "confidence": "SECONDARY-CORROBORATED",
-    "restrictions": "applies broadly, including to people who never previously held Medigap — contrast with Washington's genuinely existing-holders-only right below"
+    "benefitLevel": "any",
+    "citation": "Conn. Gen. Stat. § 38a-495c(a)",
+    "confidence": "PRIMARY",
+    "restrictions": "applies broadly, including to people who never previously held Medigap — contrast with Washington's genuinely existing-holders-only right below",
+    "note": "Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED. Corrected benefitLevel from equalOrLesser to any: the statute reads 'coverage shall not be denied' with no restriction to plans equal-or-lesser than any prior coverage — that concept doesn't apply to a right that covers people with no prior Medigap at all. Same correction made to New York and Massachusetts, whose statutes make the 'any/all policies' scope even more explicit."
    }
   ]
  },
@@ -422,8 +423,9 @@
   "customPlanNote": "Core / Supplement 1 / Supplement 1A, not the A-N system. Full benefit grid in _dev/medicare-research-2026-08.md section 2 — deliberately not re-encoded here, see _schema.fields.benefitStructure.",
   "rating": {
    "method": "community",
-   "citation": "Mass. Gen. Laws ch. 176K § 7",
-   "confidence": "SECONDARY-CORROBORATED"
+   "citation": "Mass. Gen. Laws ch. 176K § 7(a)",
+   "confidence": "PRIMARY",
+   "note": "Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED: '(a) Any policy for medicare supplement insurance... shall be community rated.'"
   },
   "guaranteedIssuePeriods": [
    {
@@ -431,10 +433,11 @@
     "appliesTo": "anyone",
     "windowDays": null,
     "insurerScope": "any",
-    "benefitLevel": "equalOrLesser",
-    "citation": "Mass. Gen. Laws ch. 176K § 7",
-    "confidence": "SECONDARY-CORROBORATED",
-    "restrictions": "applies broadly, including to people who never previously held Medigap, as current market practice. But the statutory FLOOR is only an annual Feb1-Mar31 window; every insurer currently offers year-round access in practice, not as a hard legal guarantee — flag this gap between legal minimum and current practice to the user rather than presenting it as a permanent right."
+    "benefitLevel": "any",
+    "citation": "Mass. Gen. Laws ch. 176K § 3(a),(d)",
+    "confidence": "PRIMARY",
+    "restrictions": "applies broadly, including to people who never previously held Medigap, as current market practice. But the statutory FLOOR is only an annual Feb1-Mar31 window; every insurer currently offers year-round access in practice, not as a hard legal guarantee — flag this gap between legal minimum and current practice to the user rather than presenting it as a permanent right.",
+    "note": "Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED, and corrected two things. Citation: the guaranteed-issue right isn't in §7 (that section is entirely about community rating, not issuance) — it's §3(a) ('No carrier... shall, at any time, deny or condition the issuance of any policy... because of the age, health status, claims experience...') plus §3(d), which is the actual source of the Feb1-Mar31 mandatory-open-enrollment floor already noted below — that existing note held up exactly as written once checked against the real text. benefitLevel corrected from equalOrLesser to any: §3(d) requires carriers to make available 'all policies... which that carrier is authorized to issue,' not merely equal-or-lesser coverage — same correction made to New York and Connecticut."
    }
   ]
  },
@@ -612,9 +615,9 @@
   "benefitStructure": "standard",
   "rating": {
    "method": "community",
-   "citation": "N.Y. Ins. Law § 3231",
-   "confidence": "SECONDARY-CORROBORATED",
-   "note": "Explicitly names Medicare supplemental insurance in the statute text."
+   "citation": "N.Y. Ins. Law § 3231(a)(4)",
+   "confidence": "PRIMARY",
+   "note": "Explicitly names Medicare supplemental insurance in the statute text. Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED: '(4)... For medicare supplemental insurance coverage, community rated means a rating methodology in which the premiums for all persons covered by a policy or contract form is the same... without regard to age, sex, health status, tobacco usage or occupation.'"
   },
   "guaranteedIssuePeriods": [
    {
@@ -622,10 +625,11 @@
     "appliesTo": "anyone",
     "windowDays": null,
     "insurerScope": "any",
-    "benefitLevel": "equalOrLesser",
-    "citation": "N.Y. Ins. Law § 3231",
-    "confidence": "SECONDARY-CORROBORATED",
-    "restrictions": "applies broadly, including to people who never previously held Medigap — contrast with Washington's genuinely existing-holders-only right below"
+    "benefitLevel": "any",
+    "citation": "N.Y. Ins. Law § 3231(a)(2)",
+    "confidence": "PRIMARY",
+    "restrictions": "applies broadly, including to people who never previously held Medigap — contrast with Washington's genuinely existing-holders-only right below",
+    "note": "Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED. Corrected benefitLevel from equalOrLesser to any: the statute requires acceptance 'at all times throughout the year for any hospital and/or medical coverage offered by the insurer,' not merely equal-or-lesser coverage — same correction made to Connecticut and Massachusetts."
    }
   ]
  },
