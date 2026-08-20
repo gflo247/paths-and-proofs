@@ -34,7 +34,8 @@ export const meta = {
 };
 
 export const inputs = [
-  { id: 'stateCode', type: 'select', label: 'Your state', options: STATE_OPTIONS, default: 'OH' },
+  { id: 'stateCode', type: 'select', label: 'Your state', options: STATE_OPTIONS, default: 'OH',
+    help: 'Doesn’t change the numbers above — it changes how your premium is likely to move over time and your rights to switch plans later, both shown below. Make sure this is set to where you actually live, not left on the example.' },
   { id: 'medigapMonthlyPremium', type: 'number', label: 'Your Medigap quote (monthly)', min: 0, max: 1000, step: 5, default: 180, unit: '$',
     help: 'Your own real quote — no state or national average exists worth trusting here.' },
   { id: 'partDMonthlyPremium', type: 'number', label: 'Standalone Part D drug plan (monthly, optional)', min: 0, max: 300, step: 5, default: 0, unit: '$',
@@ -80,11 +81,18 @@ export function compute(values) {
     { name: 'Medicare Advantage (grows with use)', color: '#e06c75', points: advantagePoints },
   ];
 
+  // The headline is framed in OOP dollars (what you'd actually pay), deliberately NOT
+  // the utilization-axis figure the chart plots (what care costs at Medicare's allowed
+  // rates, typically much larger than anyone's real out-of-pocket spending). Putting
+  // premiumDifferential — the same units as the Advantage OOP-cap card right above it —
+  // in the headline avoids two dollar figures that look comparable but aren't; the
+  // Medicare-allowed-charges framing still appears, but only as supporting detail in the
+  // note below, explicitly bridged to this number rather than presented on its own.
   let headline;
   if (result.breakevenUtilization === 0) {
     headline = { label: 'Medigap costs less than Advantage', value: 'even before any care is used', primary: true };
   } else if (result.medigapEverWins) {
-    headline = { label: 'Medigap pays for itself once your yearly care costs pass', value: dollars(result.breakevenUtilization), primary: true };
+    headline = { label: 'Medigap pays for itself once your own Advantage costs would pass', value: dollars(result.premiumDifferential), primary: true };
   } else {
     headline = { label: 'At these premiums, Advantage stays cheaper', value: 'even maxing out its yearly cap', primary: true };
   }
@@ -97,9 +105,11 @@ export function compute(values) {
 
   let note;
   if (result.partDNotIncluded) {
-    note = 'You left the Part D field at $0 — if you actually need drug coverage and plan to pair Medigap with a standalone Part D plan, add that premium above; leaving it out understates Medigap’s real cost.';
+    note = 'You left the Part D field at $0 — if you actually need drug coverage and plan to pair Medigap with a standalone Part D plan, add that premium above; leaving it out understates Medigap’s real cost. The state context below still matters for your premium over time and your switching rights.';
   } else if (!result.medigapEverWins) {
     note = `On this-year math alone, Medicare Advantage is the cheaper choice at these premiums in ${stateName} no matter how much care gets used. The state context below still matters for what happens if you want to switch later.`;
+  } else if (result.breakevenUtilization > 0) {
+    note = `That happens once you've used about ${dollars(result.breakevenUtilization)} of covered care in a year, at Medicare's allowed rates — the cost of the care itself, not what you'd pay out of pocket. This is a this-year snapshot, not a prediction of your actual medical spending — the state context below covers how your Medigap premium is likely to change over time, and what rights you’d have to switch later.`;
   } else {
     note = 'This is a this-year snapshot, not a prediction of your actual medical spending — the state context below covers how your Medigap premium is likely to change over time, and what rights you’d have to switch later.';
   }
