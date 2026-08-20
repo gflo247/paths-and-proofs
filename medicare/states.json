@@ -58,10 +58,10 @@
   "benefitStructure": "standard",
   "rating": {
    "method": "community",
-   "citation": "Ark. Code Ann. § 23-79-109",
-   "confidence": "SECONDARY-CORROBORATED",
+   "citation": "Ark. Code Ann. § 23-79-109(a)(4)",
+   "confidence": "PRIMARY",
    "effectiveDate": "1990-01-01",
-   "note": "\"Composite age basis only.\""
+   "note": "Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED — confirmed exactly: 'On and after January 1, 1990, all Medicare supplement rates shall be based on a composite age basis only and shall not be based on any age banding or other groupings.'"
   },
   "guaranteedIssuePeriods": [
    {
