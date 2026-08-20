@@ -690,6 +690,19 @@
   ] },
  "OK": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
    {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 60,
+    "windowAnchor": "starts on birthday",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "Structured as a compliance safe harbor rather than a flatly stated right: the underlying rule (OAC 365:10-5-129(f)) requires issuers to waive medical underwriting for a same-or-lesser-benefit switch (to the same or a different issuer) as long as there's no coverage gap greater than 90 days since the person's Medigap open enrollment period — an issuer satisfies this by offering a 60-day annual window beginning on the policyholder's birthday, which is how every issuer implements it in practice. A separate subsection, (g), requires 60-90 days' advance notice to under-65 disabled enrollees of their upcoming age-65 open enrollment rights — a different, disability-transition-specific provision, not modeled here.",
+    "citation": "Okla. Admin. Code § 365:10-5-129(f), per OID Bulletin No. 10-2023 (Revised)",
+    "confidence": "OFFICIAL-SUMMARY",
+    "effectiveDate": "2023-09-01",
+    "note": "Found 2026-08-20 via a birthday-rule cross-check against recent secondary sources naming Oklahoma among 2023-2026 enactors — this state's entry previously had only the generic KFF employer-retiree-coverage-change line. Confirmed via the Oklahoma Insurance Department's own bulletin (oid.ok.gov) and a direct read of the codified regulation text — the regulation itself confirms 'issued by the same or different issuer,' 'same or lesser benefits,' and the medical-underwriting waiver in exact language, but as read it states the right in terms of the 90-day continuous-coverage window rather than a universal 60-day clause — the 60-day figure is the Department's own stated compliance safe harbor for issuers, consistently confirmed across the bulletin and secondary sources but not found as an explicit standalone '60 days' clause in the regulation text itself. Graded OFFICIAL-SUMMARY rather than PRIMARY on that basis."
+   },
+   {
     "trigger": "employerRetireeCoverageChange",
     "appliesTo": "anyone",
     "windowDays": null,
@@ -848,6 +861,19 @@
   ]
  },
  "VA": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 60,
+    "windowAnchor": "starts on birthday, guaranteed open at least 60 days (insurer may extend)",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "Narrower than the standard equalOrLesser pattern: the new policy must offer the SAME benefits as current coverage, not merely equal-or-lesser (e.g. Plan G to Plan G only) — same shape as Kentucky's same-plan-only requirement. 'Innovative benefits' (vision, hearing, dental riders) are excluded when comparing benefit levels. If the policyholder bought their Medigap policy in Virginia but has since moved out of state, they still receive the required notice, but any policy they switch to during the window is governed by the laws of their new state of residence, not Virginia's. Insurer must send written notice 15-30 days before the enrollee's birthday, disclosing the window dates, rights, and any benefit/premium changes to the current policy.",
+    "citation": "Va. Code § 38.2-3611, enacted by 2025 Va. Acts chs. 530, 540 (HB 2100)",
+    "confidence": "PRIMARY",
+    "effectiveDate": "2025-07-01",
+    "note": "Found 2026-08-20 via a birthday-rule cross-check against multiple secondary sources naming Virginia as a recent (2024-2026) enactor — this state's entry previously had only the generic KFF employer-retiree-coverage-change line, missing this real, significant right entirely. Confirmed directly against the codified statute text (law.lis.virginia.gov) and the Virginia Bureau of Insurance's own consumer guide, both agreeing precisely: 'annual open enrollment period commencing on the day of the individual's birthday and remaining open for at least 60 days thereafter,' 'any insurer in the Commonwealth,' and 'the same benefits as those provided by the current coverage.'"
+   },
    {
     "trigger": "employerRetireeCoverageChange",
     "appliesTo": "anyone",
