@@ -859,6 +859,51 @@ you live" estimate the user can override), but noted for completeness.
 
 ---
 
+## Relocation (`relocation/relo-engine.mjs`, `relocation/SCHEMA.md`)
+
+The state-vs-state income-tax comparison is computed to the dollar from two layers
+inside `roth-conversion/states.json`, both keyed alongside (not inside) each state's
+existing `facts` block:
+
+**`taxRules` (Tier 1 — computed into the headline breakeven)** — bracket schedules
+for all four filing statuses, plus per-source income treatment (Social Security
+taxability, IRA/401(k) withdrawal exclusions and age gates, pension income, capital
+gains treatment). The bracket schedules themselves are the *same* federal-adjacent,
+primary-source-verified data already checked in the Roth section above — a schema
+guard (`_dev/check-states-json.mjs`, "G2") enforces that `facts.brackets` and
+`taxRules.bracketsByStatus.single` stay identical, so the two representations can't
+silently drift apart.
+
+The income-source-treatment rules (the part that's genuinely new to Relocation, not
+inherited from Roth) have their own regression suite, `_dev/test-relo-exclusions.mjs`
+— 47 checks against exact figures pulled from primary-source state DOR worksheets
+and instructions, covering real bugs caught and fixed along the way: NJ and CT's
+retirement-income cliffs were originally modeled as flat/linear when the real rules
+are stepped multi-tier tables; Michigan's exclusion cap was stale by about $1,600;
+Wisconsin's age-tiered joint cap requires *both* spouses 67+, not a flat doubling;
+Virginia's per-person cap phases out by filing status, not spouse count. ✅ for the
+states this suite covers (MI, GA, WI, NM, SC, VA, WV, NJ, CT, plus the states whose
+figures the suite cross-checks against Roth's own already-verified numbers); ⚠️ for
+the rest of the 51, which use the general flat-exclusion shape without a dedicated
+regression check per state.
+
+**`taxContext` (Tier 2 — disclosed alongside the headline, never computed into it)**
+— sales tax rate, median property tax rate, estate/inheritance tax flag. ⚠️ **NOT
+value-verified.** The schema guard only checks that these fields are *present and
+correctly typed* ("G3 — light — not value verification" per the guard's own
+comment) — no primary-source pass has been run against Tax Foundation, Census, or
+state DOR figures for this layer. This is the same category of gap as the Roth
+state table above, and the tool's own design keeps it low-stakes by construction:
+Tier 2 numbers are shown as disclosed, clearly-labeled estimates and are
+structurally barred from ever feeding the precise headline crossover.
+
+**Scope note:** county/municipal/city income taxes, sub-state property-tax variation
+beyond the state median, vehicle/excise/registration taxes, and editorial
+"tax-friendliness" scores are deliberately not modeled — stated directly in
+`relocation/SCHEMA.md`'s design principles as a disclosed stop line, not an oversight.
+
+---
+
 ## Medicare: Medigap vs. Medicare Advantage (`medicare/medicare-engine.mjs`, `medicare/states.json`)
 
 The three national constants the breakeven math runs on:
