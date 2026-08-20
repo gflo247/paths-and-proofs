@@ -146,10 +146,10 @@ this benefit structure — treat as baseline for rating/switching purposes.
 | Idaho | Idaho Code § 41-4404 | SECONDARY-CORROBORATED | 2022 (SB 1143, signed 2021) | 65+ only; insurers can charge up to 150% for under-65 |
 | Maine | Me. Rev. Stat. tit. 24-A § 5011(1) | **PRIMARY** (read via legislature.maine.gov) | 1993 | no age/gender/health/claims/duration/industry/occupation variation; tobacco-rating also banned as of 2024 amendment |
 | Massachusetts | Mass. Gen. Laws ch. 176K § 7(a) | **PRIMARY** (read direct 2026-08-20) | — | on top of Core/Supp1/Supp1A system. §7 is community rating ONLY — the guaranteed-issue right is a separate section, §3, see section 7 below; an earlier draft of this file conflated the two under one citation. |
-| Minnesota | Minn. Stat. § 62A.31 subd. 1r | **PRIMARY** (read direct 2026-08-20) | 1993 | on top of Basic/Extended Basic system. **Also discovered while verifying this citation**: a genuinely new, currently-unencoded guaranteed-issue right — see the new "9b" section below. |
+| Minnesota | Minn. Stat. § 62A.31 subd. 1r | **PRIMARY** (read direct 2026-08-20) | 1993 | on top of Basic/Extended Basic system. **Also discovered while verifying this citation**: a genuinely new, currently-unencoded guaranteed-issue right — see the Minnesota entry added to section 8 below. |
 | New York | N.Y. Ins. Law § 3231(a)(4) | **PRIMARY** (read direct 2026-08-20) | — | explicitly names Medicare supplemental insurance |
-| Vermont | Vt. Stat. Ann. tit. 8 § 4080e | SECONDARY-CORROBORATED | — | separate community rate allowed for age- vs. disability-eligible |
-| Washington | Wash. Rev. Code § 48.66.045(3) | SECONDARY-CORROBORATED | 1996 | up to two rating pools (age vs disability); spousal/payment-method variation allowed |
+| Vermont | Vt. Stat. Ann. tit. 8 § 4080e(a),(b) | **PRIMARY** (read direct 2026-08-20) | — | separate community rate allowed for age- vs. disability-eligible — confirmed word-for-word |
+| Washington | Wash. Rev. Code § 48.66.045(3) | **PRIMARY** (read direct 2026-08-20) | 1996 | up to two rating pools (age vs disability); spousal/payment-method variation allowed — confirmed word-for-word. **Separately**, the switching-right citation in section 7 below was wrong and has been corrected — see that entry. |
 
 **Pattern worth preserving precisely, not flattening:** Idaho, Vermont, and Washington
 all permit a *separate* community rate for Medicare-by-disability enrollees vs.
@@ -210,12 +210,12 @@ different carrier OK. SECONDARY-CORROBORATED.
 |---|---|---|---|
 | New York | N.Y. Ins. Law § 3231(a)(2) | **PRIMARY** (read direct 2026-08-20) | continuous, any time, ties to its community-rating law; **any plan**, not equal-or-lesser — see correction below |
 | Connecticut | Conn. Gen. Stat. § 38a-495c(a) | **PRIMARY** (read direct 2026-08-20) | continuous, any time; **any plan**, not equal-or-lesser — see correction below |
-| Washington | Wash. Rev. Code § 48.66.055 | SECONDARY-CORROBORATED | **existing holders only** — needs 90+ days prior Medigap coverage, switch restricted to same plan group (A→A, or B-N→B-N) |
+| Washington | Wash. Rev. Code § 48.66.045(1),(2) | **PRIMARY** (read direct 2026-08-20) | **existing holders only** — switch restricted to same plan group (Plan A only replaceable by another Plan A; plans B-L broader within-group). Citation corrected: not § 48.66.055 (Washington's codification of the standard federal-baseline GI categories, entirely unrelated to this right — checked directly, contains nothing about switching). The widely-repeated "90+ days of prior coverage" figure was NOT found in this section, § 48.66.055, or the application-form regulation (WAC 284-66-130) — checked all three directly. Left unconfirmed rather than reasserted; the core switching right itself is confirmed. |
 | Massachusetts | Mass. Gen. Laws ch. 176K § 3(a),(d) | **PRIMARY** (read direct 2026-08-20) | statutory floor is only Feb 1–Mar 31 annually; **all insurers currently offer it year-round in practice** — flag the gap between legal minimum and current market behavior, don't hardcode "year-round" as a legal guarantee. Citation corrected: the right is in §3, not §7 (§7 is community rating only, see section 3 above); **any plan**, not equal-or-lesser — see correction below. |
 
 **Important distinction to preserve:** NY/CT/MA's right applies broadly (including to
 people who didn't previously have Medigap); Washington's specifically requires the
-person to already hold a Medigap policy for 90+ days. These are not the same right.
+person to already hold a Medigap policy. These are not the same right.
 
 **Correction, 2026-08-20 primary-source pass:** all three (NY/CT/MA) were previously
 encoded in the schema with `benefitLevel: equalOrLesser`, matching the near-universal

@@ -767,8 +767,9 @@
   "rating": {
    "method": "community",
    "disabilitySplit": true,
-   "citation": "Vt. Stat. Ann. tit. 8 § 4080e",
-   "confidence": "SECONDARY-CORROBORATED"
+   "citation": "Vt. Stat. Ann. tit. 8 § 4080e(a),(b)",
+   "confidence": "PRIMARY",
+   "note": "Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED: '(a) A health insurance company... shall use a community rating method... (b)... may set different community rates for persons eligible for Medicare by reason of age and persons eligible for Medicare by reason of disability.'"
   },
   "guaranteedIssuePeriods": [
    {
@@ -807,9 +808,9 @@
    "method": "community",
    "disabilitySplit": true,
    "citation": "Wash. Rev. Code § 48.66.045(3)",
-   "confidence": "SECONDARY-CORROBORATED",
+   "confidence": "PRIMARY",
    "effectiveDate": "1996-01-01",
-   "note": "Up to two rating pools (age- vs. disability-eligible); spousal-discount and payment-method variation also allowed."
+   "note": "Up to two rating pools (age- vs. disability-eligible); spousal-discount and payment-method variation also allowed. Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED — confirmed word-for-word: 'may vary premiums based on spousal discounts, frequency of payment, and method of payment... and may develop no more than two rating pools that distinguish between an insured's eligibility for medicare by reason of: (a) Age; or (b) Disability.'"
   },
   "guaranteedIssuePeriods": [
    {
@@ -818,9 +819,10 @@
     "windowDays": null,
     "insurerScope": "any",
     "benefitLevel": "equalOrLesser",
-    "restrictions": "requires 90+ days of PRIOR Medigap coverage — this is a switching right for existing holders, NOT an open door for first-time enrollees outside their initial window. Also restricted to switching within the same plan group (Plan A to another Plan A, or any B-through-N plan to another B-through-N plan), not any letter to any letter.",
-    "citation": "Wash. Rev. Code § 48.66.055",
-    "confidence": "SECONDARY-CORROBORATED"
+    "restrictions": "Existing holders replacing one Medigap policy with another, restricted to switching within the same plan group (Plan A only replaceable by another Plan A; any of plans B/C/D/E/F/G/K/L by another in that same broader group) — confirmed directly. The commonly-repeated '90+ days of prior coverage' figure was NOT found in this section, nor in the related guaranteed-issue statute (§ 48.66.055, entirely federal-baseline-style categories unrelated to this right) or the application-form regulation (WAC 284-66-130) — checked all three directly and none contain it. Left as an unconfirmed, likely broker-sourced detail rather than reasserted as fact; the core switching right itself is confirmed.",
+    "citation": "Wash. Rev. Code § 48.66.045(1),(2)",
+    "confidence": "PRIMARY",
+    "note": "Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED. Corrected citation from § 48.66.055 (Washington's codification of the standard federal-baseline guaranteed-issue categories — employer coverage loss, Advantage plan termination, trial rights — nothing about this switching right) to § 48.66.045(1)-(2), the actual source: issuers must accept a replacement Medigap application without medical underwriting, with plans B-L getting broader within-group portability than Plan A (only replaceable by another Plan A)."
    }
   ]
  },
