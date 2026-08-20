@@ -859,6 +859,35 @@ you live" estimate the user can override), but noted for completeness.
 
 ---
 
+## Medicare: Medigap vs. Medicare Advantage (`medicare/medicare-engine.mjs`, `medicare/states.json`)
+
+The three national constants the breakeven math runs on:
+
+| Constant | Value | Source | Status |
+|---|---|---|---|
+| Part B deductible (2026) | $283/year | [CMS 2026 Parts A&B fact sheet](https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-premiums-deductibles) | ✅ (same fact sheet already verified for IRMAA above) |
+| Medicare Advantage OOP ceiling (2026) | $9,250 in-network / $13,900 combined | CMS-set cap, confirmed via KFF and CMS's own MA out-of-pocket-limits page | ⚠️ found via WebSearch, not read directly from the CMS page itself |
+| Standard Part B coinsurance | 20% | Well-established Medicare structural fact (Social Security Act §1833(a)) | ⚠️ not traced to a specific 2026 primary-source page; treated as a stable structural constant, unlikely to be the softer spot here |
+
+**State-by-state regulatory data (rating method + guaranteed-issue rights, all 51
+jurisdictions)** is deliberately *not* duplicated into this file — it has its own,
+more granular confidence-tagging system (`PRIMARY` / `OFFICIAL-SUMMARY` /
+`SECONDARY-CORROBORATED` / `UNVERIFIED`) directly inside `medicare/states.json` and
+`_dev/medicare-research-2026-08.md`, since per-state citations and per-fact caveats
+don't compress well into this file's per-tool checklist format. As of 2026-08-20,
+West Virginia, Illinois, Rhode Island, and Maine are read direct from primary
+statute/bill text (`PRIMARY`); most other states remain `SECONDARY-CORROBORATED`.
+Missouri's rating method is `UNVERIFIED` on purpose — sources conflict and no
+statute was found either way, so no guess was encoded.
+
+**Scope note:** does not model employer-retiree-coverage-change guaranteed issue
+(~28 states, never researched, explicitly deferred — see the research doc's
+known-gaps section), prescription drug coverage on the Advantage side, or
+plan-letter-specific cost-sharing detail (e.g., Plan N's small office-visit
+copays). All stated in the tool's own on-page disclosure.
+
+---
+
 ## Edge-input robustness — ✅ verified June 2026
 
 Both calculator compute functions were stress-tested against degenerate inputs
