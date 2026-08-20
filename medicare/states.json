@@ -335,7 +335,25 @@
     "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ] },
- "KY": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "KY": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 60,
+    "windowAnchor": "starts on birthday",
+    "insurerScope": "any",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "Must apply to an insurer DIFFERENT from the one that issued the applicant's current Medigap policy — a mandatory different-issuer requirement, the same unusual shape found in Indiana (not merely 'any' insurer being allowed). Also narrower than the standard equalOrLesser pattern: the applicant must seek to maintain the SAME Medicare supplement plan letter, not merely an equal-or-lesser one. Separately, the statute grants under-65 'non-age eligible' Medicare enrollees a parallel guaranteed-issue right, capped at the weighted average aged premium rate — the same under-65-disability category left unmodeled elsewhere in this file (see WV, IL) — not encoded as a separate entry here, consistent with that precedent.",
+    "citation": "KRS 304.14-525, enacted by 2023 Ky. Acts ch. 182 (HB 345)",
+    "confidence": "PRIMARY",
+    "effectiveDate": "2024-01-01",
+    "note": "Read directly from the enrolled bill text (apps.legislature.ky.gov, 2026-08-20) — confirmed exactly: applicant must already hold a Medigap policy at time of application, must apply to an insurer different than their current one, within sixty days of their birthday date, and must seek to maintain the same Medicare supplement plan. 806 KAR 17:570 cites 'KRS 304.14-510, 304.14-525' as its statutory authority, corroborating the section number (the enrolled bill itself didn't specify a final codified section number)."
+   }
+  ]
+ },
  "LA": {
   "benefitStructure": "standard",
   "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
@@ -764,7 +782,25 @@
     "note": "Added 2026-08-20, closing the employer-retiree-coverage-change gap flagged since the tool's original build. Deliberately encoded as Yes/No only per a scoping decision made with the user — see the research doc section 12 for the full sourcing story, including why the more current 2024 KFF brief's fuller table couldn't be read (interactive Datawrapper chart, no accessible data export found)."
    }
   ] },
- "UT": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "UT": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "birthday",
+    "appliesTo": "existingHoldersOnly",
+    "windowDays": 60,
+    "windowAnchor": "starts on birthday",
+    "insurerScope": "sameInsurer",
+    "benefitLevel": "equalOrLesser",
+    "restrictions": "Must switch to a plan offered by the SAME issuer only — no affiliate or different-issuer option, unlike Kentucky and Indiana, which require switching to a genuinely different issuer. KFF's 2017 survey (Table 3) separately flagged Utah as granting a guaranteed-issue right upon loss of Medicaid eligibility, predating this birthday-rule amendment, but that detail wasn't independently confirmed against current primary statute text in this pass (not found in § 31A-22-620 itself; may live in a separate 'guaranteed issue for eligible persons' section/rule, e.g. Utah Admin. Code R590-146-12, not yet read directly) — left unencoded rather than guessed, consistent with this file's no-unsourced-numbers rule.",
+    "citation": "Utah Code § 31A-22-620(3)(g), added by 2025 Utah Laws ch. 376 (H.B. 258 Medicare Supplement Insurance Amendments)",
+    "confidence": "PRIMARY",
+    "effectiveDate": "2025-05-07",
+    "note": "Read directly from the codified statute text (le.utah.gov, 2026-08-20) — confirmed exactly: 'Each year, beginning on an enrollee's birthday and ending 60 days later, an issuer shall allow an enrollee that is enrolled in one of the issuer's Medicare supplement insurance plans to choose a different Medicare supplement insurance plan that is (A) offered by the issuer; and (B) considered a comparable or lower tier plan than the enrollee's current plan. An issuer may not deny enrollment based on medical underwriting...'"
+   }
+  ]
+ },
  "VT": {
   "benefitStructure": "standard",
   "rating": {
