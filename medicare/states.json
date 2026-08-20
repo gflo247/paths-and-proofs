@@ -156,13 +156,14 @@
     "trigger": "birthday",
     "appliesTo": "existingHoldersOnly",
     "windowDays": null,
-    "windowAnchor": "30 days before through 30+ days after birthday",
+    "windowAnchor": "starts 30 days before birthday, stays open at least 30 days after — not a fixed total, since an issuer may extend the post-birthday portion",
     "insurerScope": "any",
     "benefitLevel": "equalOrLesser",
-    "citation": "DE Senate Bill 71 (2025)",
-    "confidence": "OFFICIAL-SUMMARY",
+    "citation": "18 Del. C. § 3411 (SB 71, 2025 Del. Laws)",
+    "confidence": "PRIMARY",
     "effectiveDate": "2026-01-01",
-    "restrictions": "signed 2025-09-03; effective date imprecise — one source says Jan 2026, Delaware's own press release covering the rule is dated 2026-05-13. Confirm before relying on it."
+    "restrictions": "Applies only to someone already enrolled in a Medicare supplement policy or certificate. No language restricts the switch to the current issuer — matches the 'any' insurerScope. Issuers must notify eligible policyholders of this right at least 30 but not more than 60 days before the enrollment period begins.",
+    "note": "Read directly from the enrolled bill text (legis.delaware.gov, 2026-08-20), upgraded from OFFICIAL-SUMMARY. Resolves the effective-date ambiguity flagged in the prior entry: the bill's own clause sets the effective date as 'January 1 following its enactment into law' — SB 71 was signed 2025-09-03, so that's January 1, 2026, confirmed. The 2026-05-13 date some secondary sources cite is just when Delaware's DOI publicized the already-effective rule, not the legal effective date. Confirmed 'same or lesser benefits' language maps to benefitLevel: equalOrLesser, and confirmed the switch isn't restricted to the current carrier."
    }
   ]
  },
@@ -433,9 +434,11 @@
     "windowAnchor": "starts on birthday",
     "insurerScope": "any",
     "benefitLevel": "equalOrLesser",
-    "citation": "exact bill/statute number not pinned down; confirmed via insurance.maryland.gov",
-    "confidence": "OFFICIAL-SUMMARY",
-    "effectiveDate": "2023-07-01"
+    "citation": "Md. Code Ann., Ins. § 15-909(b)(6)(ii)",
+    "confidence": "PRIMARY",
+    "effectiveDate": "2023-07-01",
+    "restrictions": "Issuers must notify insureds of this right at least 30 but not more than 60 days before the insured's birthday.",
+    "note": "Read directly (mgaleg.maryland.gov, 2026-08-20), upgraded from OFFICIAL-SUMMARY, pinning down the exact citation the prior entry lacked. Confirmed exactly: 'During the 30 days following the birthday of an individual enrolled in a Medicare supplement policy, a carrier shall make available to the individual different Medicare supplement policies with benefits that are equal to or less than the benefits of the individual's existing coverage.' Double-checked insurerScope specifically since the statute says 'a carrier' rather than explicitly 'any carrier' — confirmed 'any' is correct via the Maryland Insurance Administration's own consumer page, which states plainly: 'You do not have to stay with your current Medicare Supplement carrier.'"
    }
   ]
  },
