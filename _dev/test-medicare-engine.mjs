@@ -132,6 +132,16 @@ check('default coinsurance rate', DEFAULT_COINSURANCE_RATE, 0.20);
   check('OH: GI hasProtection (employerRetireeCoverageChange, added 2026-08-20)', r.guaranteedIssueContext.hasProtection, true);
 }
 
+// ── State context: Arkansas community rating confirmed, Minnesota's new 2026 GI right ──
+{
+  const ar = computeMedigapBreakeven(states.AR, { medigapMonthlyPremium: 200 });
+  check('AR: rating method', ar.ratingContext.method, 'community');
+  const mn = computeMedigapBreakeven(states.MN, { medigapMonthlyPremium: 200 });
+  check('MN: rating method', mn.ratingContext.method, 'community');
+  check('MN: GI trigger for the new annual right (discovered 2026-08-20)', mn.guaranteedIssueContext.periods[0].trigger, 'annualEnrollmentPeriod');
+  check('MN: GI now has 2 periods (new annual right + employerRetireeCoverageChange)', mn.guaranteedIssueContext.periods.length, 2);
+}
+
 // ── State context: employerRetireeCoverageChange has no fabricated mechanics ──
 {
   const r = computeMedigapBreakeven(states.AK, { medigapMonthlyPremium: 200 });

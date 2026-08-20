@@ -141,12 +141,12 @@ this benefit structure — treat as baseline for rating/switching purposes.
 
 | State | Citation | Confidence | Effective | Notes |
 |---|---|---|---|---|
-| Arkansas | Ark. Code Ann. § 23-79-109 | SECONDARY-CORROBORATED | 1990 | "composite age basis only" |
+| Arkansas | Ark. Code Ann. § 23-79-109(a)(4) | **PRIMARY** (read direct 2026-08-20) | 1990 | "composite age basis only" — confirmed word-for-word: "all Medicare supplement rates shall be based on a composite age basis only and shall not be based on any age banding or other groupings." |
 | Connecticut | Conn. Gen. Stat. § 38a-495c(a) | **PRIMARY** (read direct 2026-08-20) | 1994 (P.A. 93-390) | no age/gender/claims/condition variation. Effective date corrected: the substantive rule was enacted by P.A. 93-390 (eff. Jan 1, 1994), not PA 05-20 (2006), which only made "technical changes" to already-existing language per the statute's own history note. |
 | Idaho | Idaho Code § 41-4404 | SECONDARY-CORROBORATED | 2022 (SB 1143, signed 2021) | 65+ only; insurers can charge up to 150% for under-65 |
 | Maine | Me. Rev. Stat. tit. 24-A § 5011(1) | **PRIMARY** (read via legislature.maine.gov) | 1993 | no age/gender/health/claims/duration/industry/occupation variation; tobacco-rating also banned as of 2024 amendment |
 | Massachusetts | Mass. Gen. Laws ch. 176K § 7(a) | **PRIMARY** (read direct 2026-08-20) | — | on top of Core/Supp1/Supp1A system. §7 is community rating ONLY — the guaranteed-issue right is a separate section, §3, see section 7 below; an earlier draft of this file conflated the two under one citation. |
-| Minnesota | Minn. Stat. § 62A.31 | SECONDARY-CORROBORATED | 1993 | on top of Basic/Extended Basic system |
+| Minnesota | Minn. Stat. § 62A.31 subd. 1r | **PRIMARY** (read direct 2026-08-20) | 1993 | on top of Basic/Extended Basic system. **Also discovered while verifying this citation**: a genuinely new, currently-unencoded guaranteed-issue right — see the new "9b" section below. |
 | New York | N.Y. Ins. Law § 3231(a)(4) | **PRIMARY** (read direct 2026-08-20) | — | explicitly names Medicare supplemental insurance |
 | Vermont | Vt. Stat. Ann. tit. 8 § 4080e | SECONDARY-CORROBORATED | — | separate community rate allowed for age- vs. disability-eligible |
 | Washington | Wash. Rev. Code § 48.66.045(3) | SECONDARY-CORROBORATED | 1996 | up to two rating pools (age vs disability); spousal/payment-method variation allowed |
@@ -249,6 +249,35 @@ recorded; same shape as the NY/CT/MA correction in section 7. Subsection (h)(2)
 separately extends this right to under-65 disabled Advantage/Medigap-Plan-A
 enrollees, not modeled here (same deferred category as Illinois's disability
 provision above).
+
+**Minnesota** — a genuinely new discovery, 2026-08-20, made while verifying the
+community-rating citation (section 3) rather than through the KFF employer-retiree
+project. PRIMARY confidence (read direct: revisor.mn.gov for Minn. Stat. § 62A.31
+subd. 1h(a)(2)/1r(c) and § 62A.3099 subd. 18b; law.cornell.edu for the federal
+cross-reference, 42 CFR 422.62(a)(2)-(4)). Effective **August 1, 2026** — enacted
+2023, delayed one year from an original Aug 1, 2025 date; per this session's date,
+**already live**. Two things distinguish it sharply from Rhode Island's shape:
+
+1. **The window is a combined federal calendar, not a single one.** Minn. Stat.
+   § 62A.3099 subd. 18b defines "open enrollment period" by direct reference to
+   42 CFR 422.62(a)(2)-(4) — that's the federal AEP (Oct 15-Dec 7) *plus* the
+   Medicare Advantage Open Enrollment Period (Jan 1-Mar 31) *plus* (for
+   institutionalized individuals) an unlimited-timing window. A WebSearch summary
+   claimed this was simply "the October 15 - December enrollment window" —
+   checking the actual federal cross-reference directly showed that's incomplete.
+2. **It's an age-capped, one-time right, not a recurring annual one.** § 62A.31
+   subd. 1h(a)(2)(i): restricted to applicants "age 65 to 70," and usable only
+   "for the first time" — someone who ages past 70 without having used it loses
+   it permanently, and someone who uses it once can't use it again. This is a
+   materially different shape from Rhode Island's ongoing annual right, even
+   though both share the `annualEnrollmentPeriod` trigger type in the schema.
+
+A premium surcharge attaches to using it (subd. 1r(b)(4) and (c) — confirmed
+directly: applies to ages 65-70, first-use only, for the life of the policy). The
+*mechanism* is PRIMARY-confirmed; the *specific percentages* are not — KFF's Oct
+2024 brief reports 15% in year one rising to 35% by 2030, but that figure was not
+independently checked against primary text as part of this pass and is flagged as
+such in the schema.
 
 ---
 
