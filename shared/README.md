@@ -24,7 +24,9 @@ rounded).
 
 ## Which icon goes with which vault button
 
-These map directly to the existing buttons in `in-case-im-not-there`:
+The vault tool (`in-case-im-not-there`) was pulled from the codebase for now —
+see git history to restore it. Kept here in case it's rebuilt later; these
+mapped to its buttons:
 
 | Button id    | Label                      | Icon            |
 |--------------|----------------------------|-----------------|

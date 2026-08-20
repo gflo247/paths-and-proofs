@@ -15,8 +15,6 @@ Everything runs in the browser; nothing is sent anywhere.
                         jurisdictions, uses /core/ plus its own relo-engine.mjs
 /roth-conversion/       Roth conversion calculator — its own self-contained front
                         end (Playfair/DM Sans, Chart.js). Does NOT use /core/.
-/in-case-im-not-there/  The family vault — a standalone, offline, encrypted
-                        document tool. Separate product; shares no engine code.
 /shared/                Cross-site icons (theme toggle, print, vault actions).
                         Icons only — no shared palette or fonts (see shared/README.md).
 /_dev/                  Dev tooling (verify-all.mjs). Not served.
@@ -60,6 +58,6 @@ branch gets its own preview URL.
 
 `/core/` is the calculator engine and is domain-free — it knows nothing about
 Social Security or relocation specifically; each calculator supplies its own
-`inputs` and `compute`. The vault and Roth conversion deliberately do **not**
-depend on `/core/`. Keeping that boundary clean is what lets the family share
-trust without coupling unrelated products.
+`inputs` and `compute`. Roth conversion deliberately does **not** depend on
+`/core/`. Keeping that boundary clean is what lets the family share trust
+without coupling unrelated products.

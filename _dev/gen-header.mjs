@@ -7,8 +7,8 @@
 //   diverges), we inject it from ONE canonical source (shared/brand-header.html) into
 //   each tool between marker comments. Same anti-drift discipline as gen-st-table.mjs.
 //
-//   Excluded by design: in-case-im-not-there (the family vault is a SEPARATE product,
-//   not part of the calculator family, so it does not carry the calculator-family brand).
+//   Only the calculator family gets this brand chrome — other standalone products
+//   (e.g. a future non-calculator tool) shouldn't carry it by default.
 //
 // USAGE:
 //   node _dev/gen-header.mjs            # inject/update the header in all target tools
@@ -20,7 +20,7 @@ const SOURCE = 'shared/brand-header.html';
 const START = '<!-- PNP-BRAND-START -->';
 const END = '<!-- PNP-BRAND-END -->';
 
-// The calculator family only — NOT in-case-im-not-there (separate product).
+// The calculator family only.
 const TARGETS = [
   'social-security/index.html',
   'roth-conversion/index.html',
