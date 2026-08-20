@@ -25,6 +25,15 @@
   .medicare-context .gi-period .gi-title { font-weight: 600; font-size: 13px; }
   .medicare-context .gi-period .gi-detail { font-size: 13px; color: var(--muted); margin-top: 2px; }
   .medicare-context .gi-period .gi-flag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; margin-left: 6px; background: #fce8c9; color: #7a4e00; }
+  /* Some restrictions text is written for future researchers (full statutory nuance,
+     cross-references to other states), not a reader trying to answer "can I switch
+     later?" in one pass — collapse it behind a light inline toggle instead of forcing
+     it into view. Overrides core/page.css's heavier top-level <details> styling,
+     which is sized for a full page section, not an inline aside. */
+  .medicare-context details.gi-more { border-top: none; padding-top: 4px; margin-top: 4px; }
+  .medicare-context details.gi-more summary { font-size: 12px; font-weight: 400; color: var(--muted); }
+  .medicare-context details.gi-more summary:hover { color: var(--accent); }
+  .medicare-context details.gi-more .gi-detail { margin-top: 4px; }
   .context-note { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
   .note-emphasis {
     margin: 12px 0 0; padding: 10px 14px;
@@ -253,7 +262,16 @@
           if (p.benefitLevel) bits.push(p.benefitLevel === 'any' ? 'any plan' : 'equal or lesser coverage only');
           if (p.appliesTo === 'anyone') bits.push('applies even if you never previously held Medigap');
           html += `<div class="gi-detail">${bits.join(' · ')}</div>`;
-          if (p.restrictions) html += `<div class="gi-detail">${p.restrictions}</div>`;
+          // employerRetireeCoverageChange restrictions text is an identical templated
+          // paragraph across every state that has it (confirmed only as a KFF yes/no,
+          // window/scope/benefit-level unconfirmed) — showing the same wall of research
+          // methodology 28+ times over doesn't help a reader, so replace it with one
+          // short, honest line instead of rendering the raw field.
+          if (p.trigger === 'employerRetireeCoverageChange') {
+            html += `<div class="gi-detail">Confirmed to exist in this state, but the exact window and terms haven't been independently verified — confirm with your insurer before relying on it.</div>`;
+          } else if (p.restrictions) {
+            html += `<details class="gi-more"><summary>More detail</summary><div class="gi-detail">${p.restrictions}</div></details>`;
+          }
           html += `</div>`;
         });
       }
