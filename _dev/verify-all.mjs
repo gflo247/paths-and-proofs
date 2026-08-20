@@ -4,7 +4,6 @@ import * as d3 from 'd3';
 import { readFileSync } from 'node:fs';
 import { mount } from '../core/app.js';
 import * as socialSecurity from '../social-security/social-security.js';
-import * as rentVsBuy from '../rent-vs-buy/rent-vs-buy.js';
 
 const dom = new JSDOM('<!doctype html><body></body>');
 globalThis.window = dom.window;
@@ -39,6 +38,6 @@ function check(mod) {
   ok('headline result present', !!primary, primary);
 }
 
-[socialSecurity, rentVsBuy, relocation].forEach(check);
+[socialSecurity, relocation].forEach(check);
 console.log(failures ? `\n${failures} failed` : '\nAll calculators run on the shared core.');
 process.exit(failures ? 1 : 0);

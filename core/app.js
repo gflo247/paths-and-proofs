@@ -1,6 +1,6 @@
 // core/app.js
 // The whole point: this file references calculator.inputs / calculator.compute
-// and NOTHING domain-specific. The same code runs Social Security, rent-vs-buy,
+// and NOTHING domain-specific. The same code runs Social Security, relocation,
 // or anything else that satisfies the contract.
 
 import { validateModule } from './contract.js';

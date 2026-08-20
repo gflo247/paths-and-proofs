@@ -11,7 +11,6 @@ Everything runs in the browser; nothing is sent anywhere.
 /core/                  Shared calculator engine (finance, chart, contract, controls)
                         — used by the calculator family only
 /social-security/       Social Security claiming calculator (the anchor tool)
-/rent-vs-buy/           Rent vs buy calculator
 /relocation/            State relocation tax-payback calculator — all 51
                         jurisdictions, uses /core/ plus its own relo-engine.mjs
 /roth-conversion/       Roth conversion calculator — its own self-contained front
@@ -60,7 +59,7 @@ branch gets its own preview URL.
 ## A note on the engine boundary
 
 `/core/` is the calculator engine and is domain-free — it knows nothing about
-Social Security or rent-vs-buy specifically; each calculator supplies its own
+Social Security or relocation specifically; each calculator supplies its own
 `inputs` and `compute`. The vault and Roth conversion deliberately do **not**
 depend on `/core/`. Keeping that boundary clean is what lets the family share
 trust without coupling unrelated products.
