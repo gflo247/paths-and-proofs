@@ -100,10 +100,10 @@ check('default coinsurance rate', DEFAULT_COINSURANCE_RATE, 0.20);
   check('NY: GI appliesTo (the bug caught in the adversarial pass)', r.guaranteedIssueContext.periods[0].appliesTo, 'anyone');
 }
 
-// ── State context: issue-age mandated (Florida) ──
+// ── State context: rating method downgraded to unverified (Florida) ──
 {
   const r = computeMedigapBreakeven(states.FL, { medigapMonthlyPremium: 200 });
-  check('FL: rating method', r.ratingContext.method, 'issueAgeMandated');
+  check('FL: rating method surfaces as unverified, not guessed (downgraded 2026-08-20, no primary source supports issueAgeMandated)', r.ratingContext.method, 'unverified');
   check('FL: GI hasProtection (employerRetireeCoverageChange, added 2026-08-20)', r.guaranteedIssueContext.hasProtection, true);
   check('FL: GI trigger', r.guaranteedIssueContext.periods[0].trigger, 'employerRetireeCoverageChange');
 }

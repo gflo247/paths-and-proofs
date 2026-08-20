@@ -10,7 +10,7 @@
   },
   "fields": {
    "benefitStructure": "\"standard\" for the 47 states using the federal A-N lettered plan system, or \"custom\" for Massachusetts, Minnesota, and Wisconsin, which standardize Medigap differently. Custom states have a customPlanNote pointing to the plain-language description in the research doc rather than a full re-encoded benefit grid — that grid is reference/educational content, not something the breakeven computation needs to consume, so it's deliberately not modeled field-by-field here.",
-   "rating.method": "One of: \"community\" (premium never varies by age within your Medicare-eligibility category — see rating.disabilitySplit), \"issueAgeMandated\" (Florida only — insurer MUST price by enrollment age, cannot use attained-age), \"attainedAgeBanned\" (attained-age specifically prohibited, but issuer may choose issue-age OR community — Arizona, Georgia), \"noMandate\" (no state law restricts the method; attained-age is the prevailing market default but this is insurer choice, not a guarantee), or \"unverified\" (Missouri — sources conflict, do not encode a specific method).",
+   "rating.method": "One of: \"community\" (premium never varies by age within your Medicare-eligibility category — see rating.disabilitySplit), \"issueAgeMandated\" (insurer MUST price by enrollment age, cannot use attained-age — currently unused; Florida was previously classified here but downgraded 2026-08-20 when the claimed citation didn't hold up under direct primary-source checking, see FL's own note), \"attainedAgeBanned\" (attained-age specifically prohibited, but issuer may choose issue-age OR community — Arizona, Georgia), \"noMandate\" (no state law restricts the method; attained-age is the prevailing market default but this is insurer choice, not a guarantee), or \"unverified\" (Missouri, Florida — sources conflict or don't support a specific claim; do not encode a specific method).",
    "rating.disabilitySplit": "Boolean. true means the state's community-rating law explicitly permits a SEPARATE community rate for people who qualify for Medicare by disability rather than by age (Idaho, Vermont, Washington). The accurate description of these states' rule is 'premium doesn't vary by age within your eligibility category', not a flat 'never varies by age' — do not drop this qualifier when surfacing the fact to a user.",
    "guaranteedIssuePeriods": "Array, can hold zero or more entries — most states have zero (federal one-time 6-month window only). Each entry describes ONE distinct annual/ongoing right to switch or newly enroll in a Medigap plan without medical underwriting, beyond the federal baseline. Deliberately an array of typed objects (not fixed fields for 'birthday rule' specifically) so a new guaranteed-issue trigger type can be added without a schema change — validated twice: once for West Virginia's lossOfMedicaidEligibility, and again for the employerRetireeCoverageChange trigger (28 states, see research doc section 12).",
    "guaranteedIssuePeriods[].trigger": "\"birthday\" | \"policyAnniversary\" (Missouri — the POLICY's anniversary date, not the person's birthday) | \"annualEnrollmentPeriod\" (Rhode Island — tied to the federal Oct15-Dec7 AEP calendar) | \"insurerChosenWindow\" (Maine — a fixed annual window whose TIMING the insurer picks, not anchored to the person's birthday, the policy date, or a state-set calendar) | \"continuous\" (no window at all — right exists year-round) | \"lossOfMedicaidEligibility\" (West Virginia — a specific life-event trigger, not a calendar window; found by reading a state's full primary-source bill text rather than secondary summaries, which is exactly the kind of thing this schema's extensible trigger-type design (rather than fixed fields) exists to accommodate without a restructure) | \"employerRetireeCoverageChange\" (28 states — a life-event trigger fired when an employer changes, but doesn't eliminate, a Medicare beneficiary's retiree health coverage; broader than the federal baseline, which only covers full elimination. Sourced to KFF's Yes/No state list, not per-state statute text — see windowDays/insurerScope/benefitLevel below for what's deliberately left unverified on these entries.).",
@@ -48,9 +48,9 @@
   "benefitStructure": "standard",
   "rating": {
    "method": "attainedAgeBanned",
-   "citation": "Ariz. Rev. Stat. § 20-1133; A.A.C. R20-6-1101",
-   "confidence": "SECONDARY-CORROBORATED",
-   "note": "Attained-age prohibited; issue-age or community-rating both allowed, insurer's choice."
+   "citation": "2026 AZ SHIP (State Health Insurance Assistance Program) Medigap comparison booklet, azship.org — surveys every active insurer's actual rating method",
+   "confidence": "OFFICIAL-SUMMARY",
+   "note": "Attained-age prohibited; issue-age or community-rating both allowed, insurer's choice. Upgraded 2026-08-20 from a citation (Ariz. Rev. Stat. § 20-1133; A.A.C. R20-6-1101) that doesn't actually hold up: § 20-1133 covers early-enrollment discounts, not rating method, and R20-6-1101 just incorporates the NAIC model act by reference (which is itself rating-method-agnostic). Couldn't reach the actual modification text to find the real clause (the one candidate PDF 403's from both curl and browser). Upgraded confidence anyway on strong current empirical grounds instead: the state's own 2026 SHIP booklet lists the rating method of all 32 active Medigap insurers in Arizona, and literally zero use attained-age — all are Community or Issue Age. That's real, current confirmation of the practice, just not a citation to the underlying legal text, hence OFFICIAL-SUMMARY rather than PRIMARY."
   },
   "guaranteedIssuePeriods": []
  },
@@ -168,10 +168,9 @@
  "FL": {
   "benefitStructure": "standard",
   "rating": {
-   "method": "issueAgeMandated",
-   "citation": "Fla. Stat. § 627.6741; Fla. Admin. Code Ch. 69O-156",
-   "confidence": "SECONDARY-CORROBORATED",
-   "note": "The one state of the three attained-age-restricting states (AZ/FL/GA) that mandates issue-age specifically, not just bans attained-age. Missouri is not counted here since there is no evidence it restricts attained-age at all."
+   "method": "unverified",
+   "confidence": "UNVERIFIED",
+   "note": "Downgraded 2026-08-20 from issueAgeMandated after the claimed citations didn't hold up: Fla. Stat. § 627.6741 is entirely about guaranteed issue, cancellation, and replacement (no rating-method provision); Fla. Admin. Code R. 69O-156.012 lists 'age' as an allowed rate-classification factor without specifying issue-age vs. attained-age; R. 69O-156.0075 describes issue-age-rated policies as one existing scenario (replacement-policy continuity) without mandating the method generally. Florida's own official consumer overview page (myfloridacfo.com) doesn't mention an issue-age requirement either. 'Florida mandates issue-age' is repeated verbatim across many broker/aggregator sites, but none trace to a specific statute or rule, and none of the primary sources checked support it. Same treatment as Missouri: do not encode a specific method — surface as unknown if this state is selected."
   },
   "guaranteedIssuePeriods": [
    {
@@ -193,10 +192,10 @@
   "benefitStructure": "standard",
   "rating": {
    "method": "attainedAgeBanned",
-   "citation": "Ga. Code Ann. §§ 33-43-3 to -5",
-   "confidence": "SECONDARY-CORROBORATED",
-   "effectiveDate": "2009-01-01",
-   "note": "Issue-age typical in practice; community-rating technically also allowed."
+   "citation": "Ga. Comp. R. & Regs. R. 120-2-8-.15(7)",
+   "confidence": "PRIMARY",
+   "effectiveDate": "2009-09-23",
+   "note": "Issue-age typical in practice; community-rating technically also allowed. Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED: '(7) An issuer shall not present for filing or approval a rate structure for its Medicare supplement policies or certificates issued after the effective date of the amendment of this regulation based upon attained age rating as a structure or methodology.' Citation corrected from the enabling statute (Ga. Code Ann. §§ 33-43-3 to -5, which only grants the Commissioner rulemaking authority) to the actual regulation containing the ban; effective date corrected to the regulation's own precise date (Sept. 23, 2009) rather than a rounded '2009-01-01'."
   },
   "guaranteedIssuePeriods": []
  },

@@ -161,16 +161,19 @@ eligibility category," not a flat "never varies by age."
 ## 4. States that ban attained-age rating (premium doesn't rise with age, though it
 ## does still vary person-to-person by enrollment age or insurer)
 
-Note the header change from an earlier draft of this doc: only Florida actually
-*mandates* issue-age specifically. Arizona and Georgia ban attained-age but leave
-insurers free to choose issue-age *or* community-rating — a real distinction worth
-keeping precise rather than flattening all three into "issue-age states."
+**Update, 2026-08-20 primary-source pass:** the "Florida mandates issue-age"
+claim below did NOT survive direct checking — see the Florida row. Georgia's did,
+cleanly. Arizona's underlying citation was wrong (pointed at provisions that don't
+address rating method at all), but the claim itself is now backed by strong current
+empirical evidence instead of the original citation. Original framing preserved below
+with corrections layered in, rather than rewritten, so the "what changed and why" stays
+visible.
 
 | State | Citation | Confidence | Notes |
 |---|---|---|---|
-| Arizona | Ariz. Rev. Stat. § 20-1133 / A.A.C. R20-6-1101 | SECONDARY-CORROBORATED | attained-age prohibited; issue-age or community-rating both allowed |
-| Florida | Fla. Stat. § 627.6741 / Fla. Admin. Code Ch. 69O-156 | SECONDARY-CORROBORATED | issue-age specifically mandatory, the one true "issue-age state" of the three |
-| Georgia | Ga. Code Ann. §§ 33-43-3 to -5 | SECONDARY-CORROBORATED | attained-age banned since 2009; issue-age typical in practice, community-rating technically also allowed |
+| Arizona | 2026 AZ SHIP Medigap comparison booklet (azship.org) | OFFICIAL-SUMMARY | attained-age prohibited; issue-age or community-rating both allowed. Original citation (Ariz. Rev. Stat. § 20-1133 / A.A.C. R20-6-1101) didn't hold up on direct reading — §20-1133 is about early-enrollment discounts, R20-6-1101 just incorporates the (rating-method-agnostic) NAIC model act. The actual modification text couldn't be reached (candidate PDF 403's from curl and browser alike). Re-grounded instead in the state's own current SHIP booklet, which lists every active insurer's real rating method: 0 of 32 use attained-age, all Community or Issue Age — strong current confirmation of the practice, just not a citation to the underlying legal clause. |
+| Florida | — | **UNVERIFIED** | **Downgraded 2026-08-20.** Checked directly: Fla. Stat. §627.6741 (guaranteed issue/cancellation/replacement only, no rating provision), Fla. Admin. Code R. 69O-156.012 (lists "age" as an allowed rating factor without specifying issue- vs. attained-age), R. 69O-156.0075 (describes issue-age-rated policies as one existing scenario, doesn't mandate it), and Florida's own official consumer overview page (no mention). None support an issue-age mandate. The claim is repeated verbatim across many broker/aggregator sites but traces to no statute or rule found. Same treatment as Missouri now. |
+| Georgia | Ga. Comp. R. & Regs. R. 120-2-8-.15(7) | **PRIMARY** | attained-age banned, confirmed 2026-08-20 via direct regulation text: "An issuer shall not present for filing or approval a rate structure... based upon attained age rating as a structure or methodology," eff. Sept. 23, 2009. Citation corrected from the enabling statute (which only grants rulemaking authority) to the actual regulation. |
 | Missouri | — | **UNVERIFIED / CONFLICTING** | sources directly disagree on whether MO uses attained-age or issue-age; no statute found confirming either as a mandate, and no evidence found that MO bans attained-age at all. Do not encode. |
 
 ---
@@ -290,11 +293,16 @@ nothing gets missed when this becomes a per-state schema:
    West Virginia, Illinois, and Rhode Island were upgraded to PRIMARY by reading the
    actual statute/bill text directly — all three turned up real corrections (West
    Virginia's second Medicaid-loss GI right, Illinois's same-issuer-or-affiliate scope,
-   Rhode Island's anyone-not-just-existing-holders scope and effective date), which is
-   why this remains worth doing for the rest. Remaining candidates, roughly by stakes:
-   the four issue-age states (section 3), and NY/CT/MA's year-round right (section 7,
-   already corrected once on `appliesTo` from a secondary source, worth confirming
-   against the statute directly).
+   Rhode Island's anyone-not-just-existing-holders scope and effective date). **Also
+   done (2026-08-20):** the attained-age-rating states (section 4) — Georgia confirmed
+   clean and upgraded to PRIMARY; Arizona's citation was wrong but the underlying claim
+   held up on strong current empirical grounds (re-graded OFFICIAL-SUMMARY); Florida's
+   "issue-age mandated" claim did NOT survive checking and was downgraded to
+   UNVERIFIED — four states checked, three real corrections found, which is the
+   pattern every primary-source pass has hit so far in this project. Remaining
+   candidate: NY/CT/MA's year-round right (section 7, already corrected once on
+   `appliesTo` from a secondary source, worth confirming against the statute
+   directly).
 
 ## 11. Recheck triggers (facts with a known future change)
 
