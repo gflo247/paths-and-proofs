@@ -766,7 +766,25 @@
  },
  "SC": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
  "SD": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
- "TN": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [] },
+ "TN": {
+  "benefitStructure": "standard",
+  "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" },
+  "guaranteedIssuePeriods": [
+   {
+    "trigger": "lossOfMedicaidEligibility",
+    "appliesTo": "anyone",
+    "windowDays": 63,
+    "windowAnchor": "starts upon notice of involuntary Medicaid disenrollment, ends 63 days after Medicaid coverage terminates",
+    "insurerScope": "any",
+    "benefitLevel": "any",
+    "restrictions": "Must be 65+, eligible for and enrolled in Medicare Part B, and the Medicaid (Title XIX) disenrollment must be involuntary. Applies regardless of whether previously enrolled in a Medigap policy — a new-purchase right, not a suspend/reinstate mechanism (that separate, near-universal federal-baseline mechanism also exists in Tenn. Code Ann. § 71-5-106 and is not modeled here since it isn't a state-added enhancement). Same shape as West Virginia's lossOfMedicaidEligibility trigger. Plans available: A, B, C, F (incl. high-deductible F), K, or L; after Jan 1, 2020: A, B, D, G (incl. high-deductible G), K, or L — the standard federal 'eligible persons' product list.",
+    "citation": "Tenn. Comp. R. & Regs. 0780-01-58-.15",
+    "confidence": "PRIMARY",
+    "effectiveDate": null,
+    "note": "Found 2026-08-20 while checking Tennessee against KFF's 2017 Table 3, which flags TN (uniquely among this project's untouched-state batch) as having a Medicaid-loss guaranteed-issue right rather than being federal-minimum-only. Confirmed directly against the codified rule text (via law.cornell.edu, Tenn. Comp. R. & Regs. 0780-01-58-.15 'Guaranteed Issue for Eligible Persons'): 'The individual is enrolled under Title XIX of the Social Security Act (Medicaid) and the enrollment involuntarily ceases after the individual is sixty-five (65) years of age or older and eligible for and enrolled in Medicare Part B.' Distinguished from the separate, universal federal suspend/reinstate-while-on-Medicaid mechanism (present in nearly every state's minimum-standards regulation, e.g. Hawaii's and Utah's) — this is a genuinely distinct new-purchase right, matching what KFF's Table 3 column measures."
+   }
+  ]
+ },
  "TX": { "benefitStructure": "standard", "rating": { "method": "noMandate", "confidence": "SECONDARY-CORROBORATED" }, "guaranteedIssuePeriods": [
    {
     "trigger": "employerRetireeCoverageChange",
