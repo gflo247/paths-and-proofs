@@ -91,8 +91,9 @@
     "insurerScope": "any",
     "benefitLevel": "equalOrLesser",
     "restrictions": "no age cap; carrier must notify policyholder 30-60 days before the window opens",
-    "citation": "Cal. Ins. Code §§ 10192.11-10192.12",
-    "confidence": "SECONDARY-CORROBORATED"
+    "citation": "Cal. Ins. Code § 10192.11(h)",
+    "confidence": "PRIMARY",
+    "note": "Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED — confirmed exactly: 'An individual shall be entitled to an annual open enrollment period lasting 60 days or more, commencing with the individual's birthday...' and the 30-60 day advance notice requirement, word-for-word."
    },
    {
     "trigger": "employerRetireeCoverageChange",
@@ -206,10 +207,10 @@
   "rating": {
    "method": "community",
    "disabilitySplit": true,
-   "citation": "Idaho Code § 41-4404",
-   "confidence": "SECONDARY-CORROBORATED",
+   "citation": "Idaho Code § 41-4404(3)(k)",
+   "confidence": "OFFICIAL-SUMMARY",
    "effectiveDate": "2022-02-28",
-   "note": "SB 1143 (signed 2021-04-22). 65+ community-rated; insurers may charge up to 150% of that rate for under-65 disability-eligible enrollees."
+   "note": "SB 1143 (signed 2021-04-22). 65+ community-rated; insurers may charge up to 150% of that rate for under-65 disability-eligible enrollees. Read § 41-4404(3)(k) directly (2026-08-20) — it confirms 'attained age rating prohibited; issue age rating prohibited for policies issued after February 28, 2022; and community rating permitted,' matching the method and date exactly, but the 150%-for-under-65 figure specifically was not found in the statute text and remains unconfirmed (not upgraded past OFFICIAL-SUMMARY on that detail)."
   },
   "guaranteedIssuePeriods": [
    {
@@ -220,9 +221,10 @@
     "insurerScope": "any",
     "benefitLevel": "equalOrLesser",
     "restrictions": "new plan effective the 1st of the month following the birthday month",
-    "citation": "Idaho Code § 41-4404 (same SB 1143)",
-    "confidence": "SECONDARY-CORROBORATED",
-    "effectiveDate": "2022-02-28"
+    "citation": "IDAPA 18.04.10, per Idaho Dept. of Insurance's own summary page (doi.idaho.gov)",
+    "confidence": "OFFICIAL-SUMMARY",
+    "effectiveDate": "2022-02-28",
+    "note": "Read directly (2026-08-20) via the Idaho DOI's own official page, upgraded from SECONDARY-CORROBORATED — confirmed exactly: '63-day enrollment period beginning on the policyholder's birthday,' effective 'after February 28, 2022.' The underlying statute (§ 41-4404) only grants rulemaking authority for this ('an annual period during which a policyholder may terminate...'); the specific mechanics live in IDAPA 18.04.10 itself, which wasn't reached directly — hence OFFICIAL-SUMMARY rather than PRIMARY."
    },
    {
     "trigger": "employerRetireeCoverageChange",
@@ -282,11 +284,11 @@
     "windowAnchor": "31 days before through 31 days after birthday",
     "insurerScope": "any",
     "benefitLevel": "equalOrLesser",
-    "restrictions": "same plan letter only, different carrier allowed",
-    "citation": "HEA 1226 (2025), as amended by HEA 1260",
-    "confidence": "SECONDARY-CORROBORATED",
+    "restrictions": "AGE 65+ ONLY — confirmed directly, previously missing from this entry entirely. Same lettered plan (including any variation of that letter) required; must switch TO A DIFFERENT ISSUER than the applicant's current one — this is a mandatory element of eligibility for this specific right, not merely 'allowed' as this entry previously said. New policy takes effect the first of the month at least 30 days after the application signature date.",
+    "citation": "Ind. Code § 27-8-13-9.3, as amended by HEA 1260 (2026)",
+    "confidence": "OFFICIAL-SUMMARY",
     "effectiveDate": "2026-03-15",
-    "note": "Effective date was pushed mid-research from an originally reported 2026-01-01 to 2026-03-15 — recheck before relying on it."
+    "note": "Read directly (2026-08-20) via law.justia.com, but only the PRE-HEA-1260-amendment text (P.L.56-2025, effective 2026-01-01, 60-day window from birthday) — could not get the live iga.in.gov code page to render past its table-of-contents shell, and a guessed direct PDF URL for the enrolled HEA 1260 text 404'd. That pre-amendment text confirmed the underlying mechanism, the age-65+ requirement (a real gap — this entry previously had no age restriction at all), and the different-issuer requirement. The final 31-before/31-after window and Mar 15, 2026 effective date (both already correctly encoded here) are corroborated by multiple independent, consistent secondary sources describing the HEA 1260 amendment, but not verified against the amended primary text directly — hence OFFICIAL-SUMMARY rather than PRIMARY."
    },
    {
     "trigger": "employerRetireeCoverageChange",
@@ -346,8 +348,9 @@
     "insurerScope": "sameOrAffiliatedInsurer",
     "benefitLevel": "equalOrLesser",
     "restrictions": "affiliate insurers added by a 2023 amendment (originally same-issuer only)",
-    "citation": "La. R.S. 22:1112",
-    "confidence": "SECONDARY-CORROBORATED"
+    "citation": "La. R.S. 22:1112(A)",
+    "confidence": "PRIMARY",
+    "note": "Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED — confirmed exactly: 'an annual open enrollment period commencing with the individual's birthday and lasting for a period of sixty-three calendar days, during which the individual may purchase any Medicare supplement policy offered by the same issuer or any affiliate.' Subsection B separately codifies a right for people losing employer coverage without prior Medigap, but its own text ties it to plans 'for which federal law currently provides a guaranteed issue right' — it reads as a state restatement of the federal baseline, not a genuinely broader state-added right, so not encoded as a separate entry here."
    },
    {
     "trigger": "employerRetireeCoverageChange",
@@ -558,9 +561,9 @@
     "windowAnchor": "starts 1st of birthday month",
     "insurerScope": "sameInsurer",
     "benefitLevel": "equalOrLesser",
-    "citation": "Nev. Rev. Stat. § 687B.352 (AB 250)",
-    "confidence": "SECONDARY-CORROBORATED",
-    "note": "Distinct from, and not treated as, the federal/NAC 687B.2056 guaranteed-issue right (a different, narrower set of triggers like losing employer coverage)."
+    "citation": "Nev. Rev. Stat. § 687B.352(1) (AB 250)",
+    "confidence": "PRIMARY",
+    "note": "Distinct from, and not treated as, the federal/NAC 687B.2056 guaranteed-issue right (a different, narrower set of triggers like losing employer coverage). Read directly (2026-08-20), upgraded from SECONDARY-CORROBORATED — confirmed exactly: 'any Medicare supplemental policy made available by the insurer in this State' (confirms sameInsurer, not any-insurer), 'commencing with the first day of the birthday month... at least 60 days thereafter,' and the 30-60 day advance notice requirement."
    },
    {
     "trigger": "employerRetireeCoverageChange",
@@ -690,9 +693,9 @@
     "windowAnchor": "30 days before through 30 days after birthday",
     "insurerScope": "any",
     "benefitLevel": "equalOrLesser",
-    "citation": "OAR 836-052-0143; ORS 743.683",
-    "confidence": "SECONDARY-CORROBORATED",
-    "note": "A loose secondary source claimed a '31-day window starting on birthday' mid-research — the more precise source (Oregon DFR itself) gives the 30-before/30-after shape used here; the loose figure was not used."
+    "citation": "OAR 836-052-0143(2)",
+    "confidence": "PRIMARY",
+    "note": "A loose secondary source claimed a '31-day window starting on birthday' mid-research — the more precise source (Oregon DFR itself) gives the 30-before/30-after shape used here; the loose figure was not used. Read directly (2026-08-20) via the Oregon Secretary of State's own rule text, upgraded from SECONDARY-CORROBORATED — confirmed exactly: 'Beginning 30 days prior to a person's birthday and for 30 days after the person's birthday...' Does not apply to policies issued before January 1, 1990 (a minor carve-out with negligible present-day relevance)."
    },
    {
     "trigger": "employerRetireeCoverageChange",
@@ -907,8 +910,9 @@
     "insurerScope": "any",
     "benefitLevel": "equalOrLesser",
     "citation": "Wyo. Ins. Reg. Ch. 35 (DOI Bulletin 06-2025)",
-    "confidence": "SECONDARY-CORROBORATED",
-    "effectiveDate": "2025-06-04"
+    "confidence": "OFFICIAL-SUMMARY",
+    "effectiveDate": "2025-06-04",
+    "note": "Multiple independent, consistent sources describe this exact shape (63 days from birthday, eff. Jun 4, 2025). Positively ruled out one candidate citation (2026-08-20): 044-35 Wyo. Code R. § 35-12 ('Guaranteed Issue for Eligible Persons'), read directly, is Wyoming's codification of the standard federal-baseline categories (employer coverage loss, Advantage plan termination, trial rights) — structurally identical to Washington's § 48.66.055 and Minnesota's Subd. 1u, nothing about a birthday rule. The actual new section added by the 2025 rulemaking wasn't located (DOI Bulletin 06-2025 itself couldn't be fetched directly) — upgraded to OFFICIAL-SUMMARY on the strength of consistent corroboration, not to PRIMARY."
    }
   ]
  }

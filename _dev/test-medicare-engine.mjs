@@ -142,6 +142,15 @@ check('default coinsurance rate', DEFAULT_COINSURANCE_RATE, 0.20);
   check('MN: GI now has 2 periods (new annual right + employerRetireeCoverageChange)', mn.guaranteedIssueContext.periods.length, 2);
 }
 
+// ── State context: birthday-rule batch (CA/ID/LA/NV/OR/WY primary-verified, IN age restriction found) ──
+{
+  const ca = computeMedigapBreakeven(states.CA, { medigapMonthlyPremium: 200 });
+  check('CA: GI windowDays (60, confirmed 2026-08-20)', ca.guaranteedIssueContext.periods[0].windowDays, 60);
+  const nv = computeMedigapBreakeven(states.NV, { medigapMonthlyPremium: 200 });
+  check('NV: GI insurerScope (sameInsurer, confirmed 2026-08-20)', nv.guaranteedIssueContext.periods[0].insurerScope, 'sameInsurer');
+  check('IN: GI restrictions mentions the age-65+ requirement (found 2026-08-20, was previously missing)', states.IN.guaranteedIssuePeriods[0].restrictions.includes('AGE 65+'), true);
+}
+
 // ── State context: employerRetireeCoverageChange has no fabricated mechanics ──
 {
   const r = computeMedigapBreakeven(states.AK, { medigapMonthlyPremium: 200 });
