@@ -22,6 +22,24 @@ for (const code of Object.keys(states).filter((k) => k !== '_schema')) {
 globalThis.window.RELO = RELO;
 const relocation = await import('../relocation/relocation.js');
 
+// Medicare reads window.MEDICARE_STATES (inlined into its page from medicare/states.json)
+// at import time, same pattern as RELO above — state display names are merged in from
+// roth-conversion/states.json rather than duplicated, matching gen-medicare-data.mjs.
+const medicareStates = JSON.parse(readFileSync(new URL('../medicare/states.json', import.meta.url), 'utf8'));
+const MEDICARE_STATES = {};
+for (const code of Object.keys(medicareStates).filter((k) => k !== '_schema')) {
+  const s = medicareStates[code];
+  MEDICARE_STATES[code] = {
+    name: states[code]?.facts?.name || code,
+    benefitStructure: s.benefitStructure,
+    customPlanNote: s.customPlanNote,
+    rating: s.rating,
+    guaranteedIssuePeriods: s.guaranteedIssuePeriods,
+  };
+}
+globalThis.window.MEDICARE_STATES = MEDICARE_STATES;
+const medicare = await import('../medicare/medicare.js');
+
 let failures = 0;
 const ok = (n, c, x = '') => { console.log(`${c ? 'ok  ' : 'FAIL'}  ${n}${x ? '  (' + x + ')' : ''}`); if (!c) failures++; };
 
@@ -38,6 +56,6 @@ function check(mod) {
   ok('headline result present', !!primary, primary);
 }
 
-[socialSecurity, relocation].forEach(check);
+[socialSecurity, relocation, medicare].forEach(check);
 console.log(failures ? `\n${failures} failed` : '\nAll calculators run on the shared core.');
 process.exit(failures ? 1 : 0);
