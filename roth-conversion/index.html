@@ -1465,8 +1465,13 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
 
   // Golden window: retirement to age 73
   var goldRows=[], tBalRMD=tBal, rBalRMD=rBal;
-  if(retAge<73){
-    var gYears=Math.min(73-retAge,10);
+  // goldStartAge anchors the window on whichever is later, retirement or today —
+  // someone already retired (curAge>retAge) starts counting from curAge, not from
+  // a retirement date already in the past, which used to produce past calendar
+  // years/ages in the table for that case.
+  var goldStartAge=Math.max(retAge,curAge);
+  if(goldStartAge<73){
+    var gYears=Math.min(73-goldStartAge,10);
     var retSSEl=document.getElementById('retSS');
     var retPenEl=document.getElementById('retPen');
     var retOtherEl=document.getElementById('retOther');
@@ -1509,7 +1514,7 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
           if(gcv<500){tBal*=(1+g);rBal*=(1+g);continue;}
           var gtx=gTax*(gcv/gConv);
           tBal=(tBal-gcv)*(1+g); rBal=(rBal+gcv)*(1+g);
-          goldRows.push({year:2026+(retAge-curAge)+j,age:retAge+j,
+          goldRows.push({year:2026+(goldStartAge-curAge)+j,age:goldStartAge+j,
                          convert:Math.round(gcv),tax:Math.round(gtx),
                          tBal:Math.round(tBal),rBal:Math.round(rBal),phase:'golden'});
         }
@@ -1534,7 +1539,8 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn){
   var avgRate=totalConvert>0?totalTax/totalConvert:0;
 
   var yearsToRet=Math.max(0,retAge-curAge);
-  var goldenYears=Math.max(0,73-retAge);
+  var goldStartAge=Math.max(retAge,curAge);
+  var goldenYears=Math.max(0,73-goldStartAge);
 
   var html='<div class="card" style="margin-top:1.25rem">';
   html+='<div class="stitle">📅 Multi-Year Conversion Plan</div>';
@@ -1545,8 +1551,8 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn){
   if(plan.goldRows.length>0)
     ctx+='The <strong>golden window</strong> — retirement to age 73, when income drops and bracket room expands — adds <strong>'+plan.goldRows.length+' more years</strong> of larger conversions.';
   else if(goldenYears>0)
-    ctx+='Enter expected retirement SS and pension in the rate estimator above to also see the golden window (age '+retAge+' to 73).';
-  else if(retAge>=73)
+    ctx+='Enter expected retirement SS and pension in the rate estimator above to also see the golden window (age '+goldStartAge+' to 73).';
+  else if(goldStartAge>=73)
     ctx+='RMDs start at or before retirement — consider converting more aggressively now while income is predictable.';
   html+='<p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.55">'+ctx+' Income assumed flat within each phase; taxes paid from outside savings.</p>';
 
