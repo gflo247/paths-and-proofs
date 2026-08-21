@@ -127,6 +127,32 @@ user's own state when accuracy matters to them.
 - **Social Security:** not taxed by Michigan at any income or birth year. (The
   Social Security claiming tool models federal benefits only and applies no state
   tax, which is correct for Michigan.)
+- **Married Filing Separately uses the single-filer cap.** Confirmed directly:
+  [MI Treasury, 2025 Form 4884 Instructions](https://www.michigan.gov/taxes/-/media/Project/Websites/taxes/Forms/IIT/TY2025/4884-Instr.pdf),
+  p.21: "For purposes of this form, single limits apply to taxpayers who are
+  married filing separately." This is a structural rule of the form (repeated at
+  every dollar tier in the instructions, not tied to one year's figures), so it
+  carries forward to the 2026 fully-phased-in cap.
+  > Added 2026-08-20. `states.json` already had `mfs` set equal to `single`
+  > (set in the original modeling commit 8ef9356 by inference, never
+  > independently sourced) — this closes that gap with a direct citation.
+- **Head of Household is NOT a distinct category on Form 4884** — the
+  instructions (26 pages, TY2025) never mention "head of household" anywhere;
+  only Single, Married Filing Jointly, and Married Filing Separately are ever
+  distinguished. `states.json` sets `hoh` equal to `single`, which is the only
+  defensible reading given the form's structure, but this is an **inference from
+  absence**, not a directly-quoted rule the way the MFS figure above is — flagged
+  as the remaining soft spot if a future Form 4884 revision ever adds an HOH
+  column.
+- **Local city income tax is not modeled.** Michigan Treasury's own city-tax page
+  ([michigan.gov/taxes/citytax](https://www.michigan.gov/taxes/citytax)) lists 24
+  cities that levy their own income tax, including Detroit, administered
+  separately from the state return. The calculator's Michigan note now discloses
+  this (added 2026-08-20) but doesn't model it — same treatment as Indiana's
+  county-tax disclosure. Exact city rates were findable only via secondary
+  aggregators (consistently reporting Detroit at 2.4%/1.2% resident/nonresident),
+  not confirmed against a primary-source rate table in this pass, so the note
+  stays qualitative rather than citing a specific percentage.
 
 #### California — ✅ fully verified June 2026
 

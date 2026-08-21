@@ -2706,7 +2706,7 @@
   "roth": {
    "cr": 0.0425,
    "ex": false,
-   "note": "Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint, regardless of birth year — wages don't count toward this cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly.",
+   "note": "Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint (the same $67,610 single limit applies if you're married filing separately), regardless of birth year — wages don't count toward this cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly. Detroit and 23 other Michigan cities add their own local income tax on top of the state rate — not modeled here; check your city if you live in one.",
    "retDeduction": {
     "single": 67610,
     "mfj": 135220,
