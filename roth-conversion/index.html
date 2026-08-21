@@ -1532,14 +1532,26 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
 function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn){
   if(!plan)return'';
   var allRows=plan.preRows.concat(plan.goldRows);
-  if(allRows.length===0)return'';
+  var goldStartAge=Math.max(retAge,curAge);
+  // Already-retired filers at or past 73 have no working phase (retAge<=curAge)
+  // and no golden window (goldStartAge>=73) left to plan — allRows is empty for
+  // a real reason, not a missing-input one, so say so instead of hiding the
+  // card silently.
+  if(allRows.length===0){
+    if(goldStartAge>=73){
+      return '<div class="card" style="margin-top:1.25rem">'
+        +'<div class="stitle">📅 Multi-Year Conversion Plan</div>'
+        +'<p style="font-size:.88rem;color:var(--muted);line-height:1.55">You\'re already at or past 73, past when Required Minimum Distributions begin — the window for spreading conversions across lower-income retirement years has closed. The single-year comparison above still applies to any conversion you consider from here.</p>'
+        +'</div>';
+    }
+    return '';
+  }
 
   var totalConvert=0,totalTax=0;
   allRows.forEach(function(r){totalConvert+=r.convert;totalTax+=r.tax;});
   var avgRate=totalConvert>0?totalTax/totalConvert:0;
 
   var yearsToRet=Math.max(0,retAge-curAge);
-  var goldStartAge=Math.max(retAge,curAge);
   var goldenYears=Math.max(0,73-goldStartAge);
 
   var html='<div class="card" style="margin-top:1.25rem">';
