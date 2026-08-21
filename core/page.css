@@ -43,6 +43,9 @@ details { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 48
 summary { cursor: pointer; font-weight: 600; font-size: 15px; }
 details p { font-size: 15px; color: var(--muted); }
 footer { margin-top: 40px; font-size: 13px; color: var(--muted); }
+footer a { color: var(--accent); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+.footer-nav { display: block; margin-top: 6px; }
 
 /* Desktop two-column layout — shared across tools that use the #calc pattern.
    Scoped to main:has(#calc) so it can never touch Roth (no #calc there, and
