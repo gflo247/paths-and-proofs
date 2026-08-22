@@ -168,7 +168,7 @@
     .opt-hd-fill{height:100%;border-radius:3px;background:var(--navy);transition:width .5s ease;}
     .optcard.irm .opt-hd-fill{background:#7BAE8B;}
     .optcard.trp .opt-hd-fill{background:var(--amber);}
-    .opt-hd-lbl{font-size:.63rem;color:var(--muted);display:flex;justify-content:space-between;margin-top:2px;}
+    .opt-hd-lbl{font-size:.72rem;color:var(--muted);display:flex;justify-content:space-between;margin-top:2px;}
     @keyframes hvGrow{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1);transform-origin:bottom}}
     @keyframes hvPulse{0%{filter:brightness(1)}55%{filter:brightness(1.28)}100%{filter:brightness(1)}}
     @keyframes hvFade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -1495,7 +1495,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
       '<div class="optcard brkt" onclick="setConvert('+opts.bracketAmt+')">'
       +'<div class="optlbl">'+ICO_BRKT+'Fill your '+pct(opts.curBR,0)+' bracket</div>'
       +'<div class="optamt">'+fmt(opts.bracketAmt)+'</div>'
-      +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.bracketAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>room: '+fmt(opts.bracketAmt)+'</span></div></div>'
+      +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.bracketAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>target: '+fmt(opts.bracketAmt)+'</span></div></div>'
       +'<div class="optnote">Converts up to the top of your current federal bracket — stops right before the next higher rate applies'+
         (ss>0?' (hidden SS tax already accounted for)':'')+
       '</div>'
@@ -1522,7 +1522,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
         '<div class="optcard irm" onclick="setConvert('+opts.irmaaAmt+')">'
         +'<div class="optlbl">'+ICO_IRM+'Medicare income limit</div>'
         +'<div class="optamt">'+fmt(opts.irmaaAmt)+'</div>'
-        +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.irmaaAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe room: '+fmt(opts.irmaaAmt)+'</span></div></div>'
+        +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.irmaaAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe limit: '+fmt(opts.irmaaAmt)+'</span></div></div>'
         +'<div class="optnote">Keeps your 2026 total income just below $'+(opts.irmaaNext/1000).toFixed(0)+'K — avoids the Medicare surcharge that hits your 2028 premiums</div>'
         +'<div class="optbtn">Explore this →</div>'
         +'</div>'
