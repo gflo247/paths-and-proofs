@@ -164,9 +164,11 @@
     .tx-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;display:inline-block;}
     /* ── Optimizer headroom bars ── */
     .opt-hd{margin:9px 0 2px;}
-    .opt-hd-track{height:5px;background:rgba(255,255,255,.25);border-radius:3px;overflow:hidden;}
-    .opt-hd-fill{height:100%;border-radius:3px;background:rgba(255,255,255,.8);transition:width .5s ease;}
-    .opt-hd-lbl{font-size:.63rem;color:rgba(255,255,255,.72);display:flex;justify-content:space-between;margin-top:2px;}
+    .opt-hd-track{height:6px;background:var(--blight);border-radius:3px;overflow:hidden;}
+    .opt-hd-fill{height:100%;border-radius:3px;background:var(--navy);transition:width .5s ease;}
+    .optcard.irm .opt-hd-fill{background:#7BAE8B;}
+    .optcard.trp .opt-hd-fill{background:var(--amber);}
+    .opt-hd-lbl{font-size:.63rem;color:var(--muted);display:flex;justify-content:space-between;margin-top:2px;}
     @keyframes hvGrow{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1);transform-origin:bottom}}
     @keyframes hvPulse{0%{filter:brightness(1)}55%{filter:brightness(1.28)}100%{filter:brightness(1)}}
     @keyframes hvFade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
@@ -323,16 +325,25 @@
     .sfill.m{background:var(--navy);} .sfill.f{background:var(--amber);} .sfill.j{background:var(--success);}
     .optwrap{display:grid;gap:1rem;margin-bottom:1.25rem;}
     @media(max-width:600px){.optwrap{grid-template-columns:1fr!important;}}
-    .optcard{background:var(--card);border:1.5px solid var(--blight);border-radius:var(--r);padding:1.2rem 1.3rem;cursor:pointer;display:flex;flex-direction:column;gap:.45rem;box-shadow:var(--sh-sm);transition:border-color .15s,box-shadow .15s,background .15s;position:relative;overflow:hidden;}
-    .optcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--navy);border-radius:var(--r) var(--r) 0 0;}
+    .optcard{background:var(--card);border:1.5px solid var(--blight);border-radius:var(--r);padding:1.2rem 1.3rem;cursor:pointer;display:flex;flex-direction:column;gap:.45rem;box-shadow:var(--sh-sm);transition:border-color .15s,box-shadow .15s,background .15s,transform .15s;position:relative;overflow:hidden;}
+    .optcard::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--navy);border-radius:var(--r) var(--r) 0 0;}
     .optcard.brkt::before{background:var(--navy);}
     .optcard.irm::before{background:#7BAE8B;}
     .optcard.trp::before{background:var(--amber);}
-    .optcard:not(.optdim):hover{border-color:var(--navy-mid);box-shadow:0 4px 18px rgba(28,58,94,.14);background:var(--navy-pale);}
+    .optcard:not(.optdim):hover{transform:translateY(-3px);}
+    .optcard.brkt:not(.optdim):hover{border-color:var(--navy-mid);box-shadow:0 10px 26px rgba(28,58,94,.20);background:var(--navy-pale);}
+    .optcard.irm:not(.optdim):hover{border-color:#7BAE8B;box-shadow:0 10px 26px rgba(123,174,139,.24);background:var(--sbg);}
+    .optcard.trp:not(.optdim):hover{border-color:var(--amber);box-shadow:0 10px 26px rgba(176,96,0,.22);background:var(--amber-pale);}
     .optcard.optdim{cursor:default;opacity:.65;}
-    .optcard.optdim:hover{border-color:var(--blight);box-shadow:var(--sh-sm);background:var(--card);}
-    .optlbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
-    .optamt{font-family:'DM Sans',system-ui,sans-serif;font-size:2rem;font-weight:700;line-height:1.1;color:var(--navy);}
+    .optcard.optdim:hover{border-color:var(--blight);box-shadow:var(--sh-sm);background:var(--card);transform:none;}
+    .optlbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;align-items:center;gap:6px;}
+    .opt-icon{flex-shrink:0;}
+    .optcard.brkt .opt-icon{color:var(--navy);}
+    .optcard.irm .opt-icon{color:#7BAE8B;}
+    .optcard.trp .opt-icon{color:var(--amber);}
+    .optamt{font-family:'DM Sans',system-ui,sans-serif;font-size:2.15rem;font-weight:700;line-height:1.1;color:var(--navy);}
+    .optcard.irm .optamt{color:var(--success);}
+    .optcard.trp .optamt{color:var(--amber);}
     .optnote{font-size:.84rem;color:var(--muted);line-height:1.5;flex:1;}
     .optbtn{font-size:.82rem;font-weight:700;color:var(--amber);margin-top:.3rem;}
     .optna{font-size:.95rem;color:var(--muted);font-style:italic;}
@@ -1474,12 +1485,15 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
   if(!opts)return'';
 
   var cards=[];
+  var ICO_BRKT='<svg class="opt-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V14M12 20V8M20 20V4"/></svg>';
+  var ICO_IRM='<svg class="opt-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v6M9 11h6"/></svg>';
+  var ICO_TRP='<svg class="opt-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>';
 
   // Card 1: Bracket fill
   if(opts.bracketState==='ok'&&opts.bracketAmt>0){
     cards.push(
       '<div class="optcard brkt" onclick="setConvert('+opts.bracketAmt+')">'
-      +'<div class="optlbl">Fill your '+pct(opts.curBR,0)+' bracket</div>'
+      +'<div class="optlbl">'+ICO_BRKT+'Fill your '+pct(opts.curBR,0)+' bracket</div>'
       +'<div class="optamt">'+fmt(opts.bracketAmt)+'</div>'
       +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.bracketAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>room: '+fmt(opts.bracketAmt)+'</span></div></div>'
       +'<div class="optnote">Converts up to the top of your current federal bracket — stops right before the next higher rate applies'+
@@ -1494,7 +1508,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
       :'Your income already reaches the top of the '+pct(opts.curBR,0)+' bracket';
     cards.push(
       '<div class="optcard brkt optdim">'
-      +'<div class="optlbl">Bracket ceiling</div>'
+      +'<div class="optlbl">'+ICO_BRKT+'Bracket ceiling</div>'
       +'<div class="optna">'+pct(opts.curBR,0)+' already full</div>'
       +'<div class="optnote">'+msg+'</div>'
       +'</div>'
@@ -1506,7 +1520,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
     if(opts.irmaaState==='ok'&&opts.irmaaAmt>0){
       cards.push(
         '<div class="optcard irm" onclick="setConvert('+opts.irmaaAmt+')">'
-        +'<div class="optlbl">Medicare income limit</div>'
+        +'<div class="optlbl">'+ICO_IRM+'Medicare income limit</div>'
         +'<div class="optamt">'+fmt(opts.irmaaAmt)+'</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.irmaaAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe room: '+fmt(opts.irmaaAmt)+'</span></div></div>'
         +'<div class="optnote">Keeps your 2026 total income just below $'+(opts.irmaaNext/1000).toFixed(0)+'K — avoids the Medicare surcharge that hits your 2028 premiums</div>'
@@ -1516,7 +1530,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
     } else if(opts.irmaaState==='zero'){
       cards.push(
         '<div class="optcard irm optdim">'
-        +'<div class="optlbl">Medicare Surcharge Limit</div>'
+        +'<div class="optlbl">'+ICO_IRM+'Medicare Surcharge Limit</div>'
         +'<div class="optna">Already at threshold</div>'
         +'<div class="optnote">Your income already hits a Medicare surcharge tier — even a small conversion crosses the next threshold</div>'
         +'</div>'
@@ -1524,7 +1538,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
     } else if(opts.irmaaState==='maxtier'){
       cards.push(
         '<div class="optcard irm optdim">'
-        +'<div class="optlbl">Medicare Surcharge Limit</div>'
+        +'<div class="optlbl">'+ICO_IRM+'Medicare Surcharge Limit</div>'
         +'<div class="optna">Max tier reached</div>'
         +'<div class="optnote">You are already in Medicare highest income tier — additional income does not increase premiums further</div>'
         +'</div>'
@@ -1538,7 +1552,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
     if(t.alreadyClear){
       cards.push(
         '<div class="optcard trp optdim">'
-        +'<div class="optlbl">SS Hidden Tax Zone</div>'
+        +'<div class="optlbl">'+ICO_TRP+'SS Hidden Tax Zone</div>'
         +'<div class="optna" style="color:var(--success)">Already clear ✓</div>'
         +'<div class="optnote">Your Social Security benefits are already 85% taxable — the maximum. Additional income no longer triggers more SS taxation, just your normal bracket rate</div>'
         +'</div>'
@@ -1546,7 +1560,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
     } else if(t.alreadyFiring){
       cards.push(
         '<div class="optcard trp" onclick="setConvert('+t.clearAmt+')">'
-        +'<div class="optlbl">Clear the SS Hidden Tax Zone</div>'
+        +'<div class="optlbl">'+ICO_TRP+'Clear the SS Hidden Tax Zone</div>'
         +'<div class="optamt">'+fmt(t.clearAmt)+'</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/t.clearAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>to clear: '+fmt(t.clearAmt)+'</span></div></div>'
         +'<div class="optnote">The SS hidden tax zone is already active. Converting this amount pushes fully past it — after which additional income drops back to your normal bracket rate instead of the elevated hidden rate</div>'
@@ -1556,7 +1570,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
     } else {
       cards.push(
         '<div class="optcard trp" onclick="setConvert('+t.avoidAmt+')">'
-        +'<div class="optlbl">Avoid the SS Hidden Tax Zone</div>'
+        +'<div class="optlbl">'+ICO_TRP+'Avoid the SS Hidden Tax Zone</div>'
         +'<div class="optamt">'+fmt(t.avoidAmt)+'</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/t.avoidAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe limit: '+fmt(t.avoidAmt)+'</span></div></div>'
         +'<div class="optnote">Keeps your combined income below $'+(t.loThr/1000).toFixed(0)+'K — the threshold where Social Security starts becoming taxable and your effective rate jumps toward 40%</div>'
@@ -1879,6 +1893,15 @@ function renderMarginalChart(p){
   var sweep = sweepMarginalCurve(p.ctx, maxAmt);
   if(sweep.points.length < 2) return;
 
+  // Earliest point (by conversion amount) where any named cliff kicks in —
+  // used only for a soft background tint marking "elevated-rate territory."
+  // Purely atmospheric: the dashed marker lines/labels drawn later remain the
+  // actual precise signal for each specific cliff, this just sets the mood.
+  var elevatedStartX = null;
+  sweep.crossings.forEach(function(c){
+    if(c.type!=='bracket' && (elevatedStartX===null || c.x<elevatedStartX)) elevatedStartX = c.x;
+  });
+
   var totalW = Math.min(container.offsetWidth || 520, 700);
   // Below this width there's no honest way to fit 2+ named-marker pill labels
   // side by side without them colliding — the collision-avoidance math (see
@@ -1904,6 +1927,30 @@ function renderMarginalChart(p){
   var yMax = Math.max(15, Math.ceil((dataMax+2)/5)*5);
   var xSc = d3.scaleLinear().domain([0, maxAmt]).range([0, W]);
   var ySc = d3.scaleLinear().domain([0, yMax]).range([H, 0]);
+
+  // Gradients: the curve stroke cools-to-warms left to right (the chart's own
+  // point — the rate climbs as you convert more), and the area fill gives the
+  // curve some depth. Static only — no entrance animation, since calc() (and
+  // so this whole function) reruns on every keystroke, and a draw-in that
+  // restarts mid-cycle on every input would read as glitchy, not polished.
+  var defs = svg.append('defs');
+  var lineGrad = defs.append('linearGradient').attr('id','mchart-line-grad')
+    .attr('x1','0%').attr('x2','100%').attr('y1','0%').attr('y2','0%');
+  lineGrad.append('stop').attr('offset','0%').attr('stop-color',tc('#1C3A5E','#7DB2EC'));
+  lineGrad.append('stop').attr('offset','60%').attr('stop-color',tc('#B06000','#E89A38'));
+  lineGrad.append('stop').attr('offset','100%').attr('stop-color',tc('#8B1A1A','#EA7070'));
+  var areaGrad = defs.append('linearGradient').attr('id','mchart-area-grad')
+    .attr('x1','0%').attr('x2','0%').attr('y1','0%').attr('y2','100%');
+  areaGrad.append('stop').attr('offset','0%').attr('stop-color',tc('#1C3A5E','#7DB2EC')).attr('stop-opacity',0.16);
+  areaGrad.append('stop').attr('offset','100%').attr('stop-color',tc('#1C3A5E','#7DB2EC')).attr('stop-opacity',0);
+
+  // Soft background tint from the first named cliff onward — see
+  // elevatedStartX above.
+  if(elevatedStartX!==null){
+    g.append('rect').attr('x',xSc(elevatedStartX)).attr('y',0)
+      .attr('width',Math.max(0,W-xSc(elevatedStartX))).attr('height',H)
+      .attr('fill',tc('#B06000','#E89A38')).attr('opacity',0.05);
+  }
 
   // Gridlines + y axis
   var yTicks = ySc.ticks(4);
@@ -2013,8 +2060,10 @@ function renderMarginalChart(p){
 
   // The curve
   var line = d3.line().x(function(d){ return xSc(d.x); }).y(function(d){ return ySc(Math.min(d.y,yMax)); });
+  var area = d3.area().x(function(d){ return xSc(d.x); }).y0(H).y1(function(d){ return ySc(Math.min(d.y,yMax)); });
+  g.append('path').datum(sweep.points).attr('fill','url(#mchart-area-grad)').attr('d',area);
   g.append('path').datum(sweep.points).attr('fill','none')
-    .attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',2.5)
+    .attr('stroke','url(#mchart-line-grad)').attr('stroke-width',2.75)
     .attr('stroke-linejoin','round').attr('stroke-linecap','round')
     .attr('d',line);
 
@@ -2034,6 +2083,11 @@ function renderMarginalChart(p){
   }
   if(crossPt){
     var ccx=xSc(crossPt.x), ccy=ySc(Math.min(crossPt.y,yMax));
+    // Static soft halo behind the dot — no pulse animation, since this
+    // redraws on every keystroke and a looping animation would visibly
+    // restart mid-cycle each time rather than read as ambient motion.
+    g.append('circle').attr('cx',ccx).attr('cy',ccy).attr('r',10)
+      .attr('fill',tc('#1C3A5E','#7DB2EC')).attr('opacity',0.16);
     g.append('circle').attr('cx',ccx).attr('cy',ccy).attr('r',5)
       .attr('fill',tc('#F5F1EB','#222730')).attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',2);
     var band = function(isBelow){
