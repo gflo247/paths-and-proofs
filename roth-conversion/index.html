@@ -176,7 +176,6 @@
     .how-to-step{display:flex;align-items:flex-start;gap:.6rem;background:var(--card);border:1px solid var(--blight);border-radius:var(--rsm);padding:.75rem 1rem;font-size:.88rem;color:var(--muted);max-width:210px;text-align:left;box-shadow:var(--sh-sm);}
     .sc{width:26px;height:26px;border-radius:50%;background:var(--navy);color:white;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     .page-wrap{max-width:1140px;margin:0 auto;padding:0 1.25rem 4rem;}
-    .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;}
     .card{background:var(--card);border:1px solid var(--blight);border-radius:var(--r);padding:1.5rem 1.6rem;box-shadow:var(--sh-sm);}
     .ch{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;}
     .sb{width:24px;height:24px;border-radius:50%;background:var(--navy);color:white;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -184,7 +183,11 @@
     .divider{height:1px;background:var(--blight);margin:1.15rem 0;}
     .field{margin-bottom:1rem;}
     .field:last-child{margin-bottom:0;}
-    .flr{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+    /* min-height reserves room for a 2-line wrapping label + icon, so a field
+       with a short icon-less label (e.g. "Existing Roth IRA") sitting next to
+       one with a long label and a tooltip button doesn't start its input
+       higher than its neighbor's. */
+    .flr{display:flex;align-items:center;gap:6px;margin-bottom:5px;min-height:36px;}
     .field label{font-size:.80rem;font-weight:700;text-transform:uppercase;letter-spacing:.065em;color:var(--muted);}
     .field input,.field select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--rsm);font-family:'DM Sans',sans-serif;font-size:1rem;color:var(--text);background:var(--cream);outline:none;transition:border-color .18s,box-shadow .18s,background .18s;-webkit-appearance:none;}
     .field input:focus,.field select:focus{border-color:var(--navy-mid);background:var(--card);box-shadow:0 0 0 3px rgba(28,58,94,.13);}
@@ -210,6 +213,30 @@
     .rest summary{padding:8px 12px;cursor:pointer;color:var(--navy);font-weight:600;font-size:.85rem;background:var(--navy-pale);list-style:none;display:flex;align-items:center;justify-content:space-between;}
     .rest summary::-webkit-details-marker{display:none;}
     .restb{padding:10px 12px;background:var(--card);}
+    /* ── Stepped input flow ── */
+    .stepper{max-width:640px;margin:0 auto 1.25rem;}
+    .step-progress{display:flex;gap:.5rem;margin-bottom:1.4rem;}
+    .step-progress .seg{flex:1;}
+    .seg .bar{height:4px;border-radius:2px;background:var(--blight);margin-bottom:6px;transition:background .2s;}
+    .seg.done .bar,.seg.current .bar{background:var(--navy);}
+    .seg .lbl{font-size:.68rem;font-weight:600;color:var(--muted);text-align:center;}
+    .seg.current .lbl{color:var(--navy);}
+    .step-count{text-align:center;color:var(--muted);font-size:.8rem;margin:0 0 1rem;}
+    .step-card{display:none;}
+    .step-card.current{display:block;}
+    .step-nav{display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;}
+    .btn{font-family:'DM Sans',sans-serif;font-weight:700;font-size:.88rem;padding:.7rem 1.5rem;border-radius:40px;cursor:pointer;border:none;}
+    .btn-primary{background:var(--navy);color:white;}
+    .btn-primary:hover{background:var(--navy-mid);}
+    .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);}
+    .btn-ghost:hover{border-color:var(--navy-mid);color:var(--navy);}
+    .skip-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.5rem;font-size:.83rem;color:var(--muted);}
+    .skip-btn{background:none;border:none;padding:0;cursor:pointer;color:var(--navy-mid);font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:600;text-decoration:underline;text-underline-offset:2px;}
+    .skip-btn:hover{color:var(--navy);}
+    .skip-confirmed{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.5rem;background:var(--sbg);border:1px solid var(--success);color:var(--success);padding:.7rem .9rem;border-radius:var(--rsm);font-size:.83rem;}
+    .skip-undo{background:none;border:1px solid var(--success);color:var(--success);border-radius:20px;padding:2px 10px;font-size:.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
+    .edit-inputs-link{display:inline-flex;align-items:center;gap:5px;background:none;border:none;padding:0;margin-bottom:1rem;cursor:pointer;color:var(--navy-mid);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;}
+    .edit-inputs-link:hover{color:var(--navy);}
     .rerow{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--blight);font-size:.83rem;}
     .rerow:last-child{border-bottom:none;}
     .rerow .rbkt{color:var(--muted);} .rerow .rrate{font-weight:700;color:var(--navy);}
@@ -343,7 +370,7 @@
     .clear-btn:hover{background:rgba(220,80,60,.35);color:white;border-color:rgba(255,255,255,.4);}
     /* ── Mobile ── */
     @media(max-width:740px){
-      .input-grid,.rgrid{grid-template-columns:1fr!important;}
+      .rgrid{grid-template-columns:1fr!important;}
       .pcols,.igrid{grid-template-columns:1fr!important;}
       .how-to{flex-direction:column;align-items:center;}
       .how-to-step{max-width:100%;}
@@ -374,7 +401,7 @@
     /* ── Print ── */
     @media print{
       @page{margin:1.5cm 2cm;}
-      .site-header,.hero,.input-grid,#optimizerPanel,
+      .site-header,.hero,.stepper,.edit-inputs-link,#optimizerPanel,
       .print-btn,.clear-btn,.tb,.ttip,details,summary+div,.how-to,
       .optwrap,.disclaimer,.wayfind-bar{display:none!important;}
       body{font-size:13px;}
@@ -579,57 +606,68 @@
   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
   <span>Runs entirely in your browser — input numbers never leave your device.</span>
 </div>
-<div class="input-grid">
-  <!-- LEFT COLUMN -->
-  <div style="display:flex;flex-direction:column;gap:1.25rem;">
-    <div class="card">
-      <div class="ch"><div class="sb"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><h2>About You</h2></div>
-      <div class="frow">
-        <div class="field">
-          <div class="flr"><label>Current Age</label></div>
-          <input type="number" id="currentAge" value="60" min="18" max="90" oninput="calc()">
-        </div>
-        <div class="field">
-          <div class="flr"><label>Retirement Age</label></div>
-          <input type="number" id="retirementAge" value="67" min="50" max="90" oninput="calc()">
-        </div>
+<div class="stepper" id="stepper">
+  <div class="step-progress" id="stepProgress">
+    <div class="seg current" data-step="1"><div class="bar"></div><div class="lbl">How much</div></div>
+    <div class="seg" data-step="2"><div class="bar"></div><div class="lbl">About you</div></div>
+    <div class="seg" data-step="3"><div class="bar"></div><div class="lbl">Income &amp; accounts</div></div>
+    <div class="seg" data-step="4"><div class="bar"></div><div class="lbl">Medicare &amp; assumptions</div></div>
+  </div>
+  <p class="step-count" id="stepCount">Step 1 of 4</p>
+
+  <div class="card step-card current" data-step="1" id="stepCard1">
+    <div class="ch"><div class="sb">1</div><h2>How much are you converting?</h2></div>
+    <div class="field" style="margin-bottom:1.5rem">
+      <div class="flr"><label>Traditional IRA / 401(k) Balance</label><button class="tb" onclick="toggleTip('trad')">ⓘ</button></div>
+      <div class="idollar"><input type="number" id="tradBal" value="280000" min="0" step="1000" oninput="calc()"></div>
+          <div class="ttip" id="tip-trad"><strong>What to enter:</strong> Add up all your pre-tax retirement accounts — traditional IRAs, 401(k)s, 403(b)s, SEP-IRAs. Don’t have a statement handy? A rough estimate is fine for planning purposes. Every dollar here will eventually be taxed when withdrawn.</div>
+    </div>
+    <div class="field">
+      <div class="flr"><label>Amount You'd Like to Convert</label><button class="tb" onclick="toggleTip('convert')">ⓘ</button></div>
+      <div class="idollar"><input type="number" id="convertAmt" value="20000" min="0" step="1000" oninput="calc()"></div>
+        <div class="ttip" id="tip-convert"><strong>How much is right?</strong> Common strategies: convert just enough to fill up your current tax bracket, or stay below a Medicare income threshold. This calculator shows both sweet spots. There's no income limit on conversions — anyone can do it in any year.</div>
+      <div class="skip-row" id="skipRow">
+        <span>Not sure how much to convert yet?</span>
+        <button type="button" class="skip-btn" onclick="skipConvertAmt()">Skip this — I'll pick from suggested amounts later</button>
       </div>
-      <div class="frow">
-        <div class="field">
-          <div class="flr"><label>Filing Status</label><button class="tb" onclick="toggleTip('filing')">ⓘ</button></div>
-          <select id="filingStatus" onchange="calc()">
-            <option value="single">Single</option>
-            <option value="mfj" selected>Married (jointly)</option>
-            <option value="mfs">Married (separately)</option>
-            <option value="hoh">Head of Household</option>
-          </select>
+      <div class="skip-confirmed" id="skipConfirmed" style="display:none">
+        ✓ Skipped. We'll suggest a few smart starting points once we know your bracket and Medicare situation. <button type="button" class="skip-undo" onclick="undoSkipConvertAmt()">Undo</button>
+      </div>
+    </div>
+    <div class="step-nav">
+      <span></span>
+      <button class="btn btn-primary" id="stepNext1" onclick="stepperNext()">Continue →</button>
+    </div>
+  </div>
+
+  <div class="card step-card" data-step="2" id="stepCard2">
+    <div class="ch"><div class="sb">2</div><h2>About you</h2></div>
+    <div class="frow">
+      <div class="field">
+        <div class="flr"><label>Current Age</label></div>
+        <input type="number" id="currentAge" value="60" min="18" max="90" oninput="calc()">
+      </div>
+      <div class="field">
+        <div class="flr"><label>Retirement Age</label></div>
+        <input type="number" id="retirementAge" value="67" min="50" max="90" oninput="calc()">
+      </div>
+    </div>
+    <div class="field">
+      <div class="flr"><label>Filing Status</label><button class="tb" onclick="toggleTip('filing')">ⓘ</button></div>
+      <select id="filingStatus" onchange="calc()">
+        <option value="single">Single</option>
+        <option value="mfj" selected>Married (jointly)</option>
+        <option value="mfs">Married (separately)</option>
+        <option value="hoh">Head of Household</option>
+      </select>
           <div class="ttip" id="tip-filing"><strong>In plain English:</strong> Most married couples file "jointly," which usually means lower taxes. "Separately" is uncommon and often more expensive — especially for Medicare. "Single" is for unmarried filers; "Head of Household" applies to some single parents.</div>
-        </div>
-        <div class="field">
-          <div class="flr"><label>Your Sex</label></div>
-          <select id="sex" onchange="calc()">
-            <option value="male">Male</option>
-            <option value="female" selected>Female</option>
-          </select>
-          <div class="hint">Used only for survival probability estimates</div>
-        </div>
+    </div>
+    <div id="spouseFields" style="display:none">
+      <div class="field">
+        <div class="flr"><label>Spouse's Current Age</label></div>
+        <input type="number" id="spouseAge" value="60" min="18" max="90" oninput="calc()">
       </div>
-      <div id="spouseFields" style="display:none">
-        <div class="frow">
-          <div class="field">
-            <div class="flr"><label>Spouse's Current Age</label></div>
-            <input type="number" id="spouseAge" value="60" min="18" max="90" oninput="calc()">
-          </div>
-          <div class="field">
-            <div class="flr"><label>Spouse's Sex</label></div>
-            <select id="spouseSex" onchange="calc()">
-              <option value="male">Male</option>
-              <option value="female" selected>Female</option>
-            </select>
-            <div class="hint">For joint survival odds in the analysis</div>
-          </div>
-        </div>
-      </div>
+    </div>
       <div class="field">
         <div class="flr"><label>Are You 65 or Older This Year?</label><button class="tb" onclick="toggleTip('senior')">ⓘ</button></div>
         <select id="seniorDeduction" onchange="calc()">
@@ -640,10 +678,10 @@
         <div class="ttip" id="tip-senior"><strong>New for 2026:</strong> A new law gives people 65+ an extra $6,000 tax deduction per qualifying person, on top of the regular standard deduction. This can meaningfully reduce the tax cost of a conversion. Phases out above $75K (single) or $150K (joint). <strong>Not available if married filing separately</strong> — the law requires a joint return, so this selection has no effect if you file separately.</div>
         <div class="hint" id="seniorMfsNote" style="display:none">Not available for Married Filing Separately — this deduction requires a joint return, so it won't change your results even if selected.</div>
       </div>
-      <div class="field">
-        <div class="flr"><label>Your State</label><button class="tb" onclick="toggleTip('state')">ⓘ</button></div>
-        <select id="stateCode" onchange="calc()">
-          <option value="">— Select your state —</option>
+    <div class="field">
+      <div class="flr"><label>Your State</label><button class="tb" onclick="toggleTip('state')">ⓘ</button></div>
+      <select id="stateCode" onchange="calc()">
+        <option value="">— Select your state —</option>
           <option value="AL">Alabama</option>
           <option value="AK">Alaska — no income tax ✓</option>
           <option value="AZ">Arizona</option>
@@ -695,9 +733,10 @@
           <option value="WI">Wisconsin</option>
           <option value="WY">Wyoming — no income tax ✓</option>
           <option value="DC">Washington D.C.</option>
-        </select>
+      </select>
         <div class="ttip" id="tip-state"><strong>Why this matters:</strong> State income taxes can add 3–13% to the cost of a Roth conversion. Some states also exempt IRA withdrawals in retirement — meaning you'd pay state tax on the conversion today but nothing when you withdraw later, which affects the comparison. Selecting your state adds these numbers automatically.</div>
         <div id="stateRetNote" style="margin-top:6px;"></div>
+
         <details class="rest">
           <summary>Planning to move before you convert?</summary>
           <div class="restb">
@@ -759,78 +798,115 @@
             <p style="font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.5">Shows what the same conversion would cost if you wait until you're a resident of this state instead — using your same age, income, and conversion amount. See the full breakdown below for the comparison.</p>
           </div>
         </details>
-      </div>
     </div>
-
-    <div class="card">
-      <div class="ch"><div class="sb"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><h2>Your Accounts &amp; Income</h2></div>
-      <div class="field">
-        <div class="flr"><label>Your 2026 Wages &amp; Other Income (before conversion, excluding SS)</label><button class="tb" onclick="toggleTip('income')">ⓘ</button></div>
-        <div class="idollar"><input type="number" id="income" value="72000" min="0" step="1000" oninput="calc()"></div>
-        <div class="ttip" id="tip-income"><strong>What to include:</strong> Wages, self-employment, rental income, and other regular income you're still earning. If you're already receiving a pension or other retirement-account income, enter that in the field below instead — a few states (Michigan among them) shelter pension/IRA income differently than wages, so keeping them separate lets this tool get your state tax right. <strong>Do NOT include Social Security here</strong> — enter that in the field below so I can accurately model how converting triggers extra tax on your Social Security. Rough estimates are fine.</div>
-      </div>
-      <div class="field">
-        <div class="flr"><label>Pension / Other Retirement-Account Income (optional)</label><button class="tb" onclick="toggleTip('pension')">ⓘ</button></div>
-        <div class="idollar"><input type="number" id="pensionIncome" value="0" min="0" step="1000" oninput="calc()"></div>
-        <div class="ttip" id="tip-pension"><strong>What to include:</strong> A pension, annuity, or IRA/401(k) distributions you're already receiving this year — not the conversion itself. Several states, including Michigan, shelter this specific kind of income from state tax up to a cap, but that cap doesn't apply to wages. Splitting this out from the field above means the state-tax number reflects the real cap, instead of assuming your whole income competes for it. Leave at $0 if you're still working and not yet drawing a pension or other retirement account.</div>
-        <div class="hint">Not sure? Enter $0 — this only matters if you're already receiving pension or retirement-account income separate from this year's conversion</div>
-      </div>
-      <div class="field">
-        <div class="flr"><label>Annual Social Security Benefits</label><button class="tb" onclick="toggleTip('ss')">ⓘ</button></div>
-        <div class="idollar"><input type="number" id="ssIncome" value="24000" min="0" step="500" oninput="calc()"></div>
-        <div class="ttip" id="tip-ss"><strong>Why this field changes everything:</strong> Social Security benefits become partly taxable when your income reaches certain thresholds. A Roth conversion can push more of your SS into taxable territory — a hidden extra cost called the Social Security tax effect. At worst, each $1 converted triggers 85¢ more of SS taxation, pushing your real tax rate to ~40% even in the 22% bracket. Enter $0 if you do not receive SS yet.</div>
-        <div class="hint" id="ssHint">Enter your total annual SS benefit, or $0 if not yet receiving</div>
-      </div>
-      <div class="field">
-        <div class="flr"><label>Other Investment Income (optional)</label><button class="tb" onclick="toggleTip('nii')">ⓘ</button></div>
-        <div class="idollar"><input type="number" id="niiIncome" value="0" min="0" step="500" oninput="calc()"></div>
-        <div class="ttip" id="tip-nii"><strong>What is this field?</strong> Interest, non-qualified dividends, short-term capital gains, and rental income — enter your annual total here. This tool taxes it at your ordinary income rate and includes it in the income that determines your tax bracket, Social Security taxation, and Medicare IRMAA tier, the same as wages or pension income. It also adds the 3.8% federal NIIT surcharge once your total income tops $200,000 (single) or $250,000 (married) — a Roth conversion counts as income and can push you over that threshold. <strong>Have qualified dividends or long-term capital gains?</strong> Those get a lower preferential rate (0/15/20%) — enter them in the field below instead, not here. On a 1099-DIV, box 1a (ordinary dividends) already includes box 1b (qualified dividends) as a subset — put only the non-qualified portion (1a minus 1b) here to avoid double-counting. Enter $0 if this doesn't apply to you.</div>
-        <div class="hint">Not sure? Enter $0 — this means interest, rent, or investments held under a year. (Held longer? Use the field below instead.)</div>
-      </div>
-      <div class="field">
-        <div class="flr"><label>Qualified Dividends &amp; Long-Term Capital Gains (optional)</label><button class="tb" onclick="toggleTip('ltcg')">ⓘ</button></div>
-        <div class="idollar"><input type="number" id="ltcgIncome" value="0" min="0" step="500" oninput="calc()"></div>
-        <div class="ttip" id="tip-ltcg"><strong>What is this field?</strong> Qualified dividends (1099-DIV box 1b) and net long-term capital gains — these get the federal preferential rate (0%, 15%, or 20%) instead of your ordinary bracket rate, and this tool models that correctly, stacking them on top of your other income the way the IRS actually calculates it. A Roth conversion is ordinary income that stacks underneath this, so converting can push some of this income into a higher preferential-rate bracket — this tool accounts for that too. This income still counts toward Medicare IRMAA, Social Security taxation, and the 3.8% NIIT surcharge, just not your ordinary federal bracket. Enter $0 if this doesn't apply to you.</div>
-        <div class="hint">Not sure? Enter $0 — this means investments held over a year. (Shorter-term, or other investment income? Use the field above instead.)</div>
-      </div>
-      <div class="field">
-        <div class="flr"><label>Amount You'd Like to Convert</label><button class="tb" onclick="toggleTip('convert')">ⓘ</button></div>
-        <div class="idollar"><input type="number" id="convertAmt" value="20000" min="0" step="1000" oninput="calc()"></div>
-        <div class="ttip" id="tip-convert"><strong>How much is right?</strong> Common strategies: convert just enough to fill up your current tax bracket, or stay below a Medicare income threshold. This calculator shows both sweet spots. There's no income limit on conversions — anyone can do it in any year.</div>
-      </div>
-      <div class="frow">
+    <details class="rest">
+      <summary>Optional: refine the survival-probability estimate</summary>
+      <div class="restb">
         <div class="field">
-          <div class="flr"><label>Traditional IRA / 401(k) Balance</label><button class="tb" onclick="toggleTip('trad')">ⓘ</button></div>
-          <div class="idollar"><input type="number" id="tradBal" value="280000" min="0" step="1000" oninput="calc()"></div>
-          <div class="ttip" id="tip-trad"><strong>What to enter:</strong> Add up all your pre-tax retirement accounts — traditional IRAs, 401(k)s, 403(b)s, SEP-IRAs. Don’t have a statement handy? A rough estimate is fine for planning purposes. Every dollar here will eventually be taxed when withdrawn.</div>
+          <div class="flr"><label>Your Sex</label></div>
+          <select id="sex" onchange="calc()">
+            <option value="male">Male</option>
+            <option value="female" selected>Female</option>
+          </select>
+          <div class="hint">Used only for survival probability estimates</div>
         </div>
-        <div class="field">
-          <div class="flr"><label>Existing Roth IRA</label></div>
-          <div class="idollar"><input type="number" id="rothBal" value="40000" min="0" step="1000" oninput="calc()"></div>
-          <div class="hint">Enter $0 if you do not have one yet</div>
+        <div class="field" id="spouseSexField" style="display:none">
+          <div class="flr"><label>Spouse's Sex</label></div>
+          <select id="spouseSex" onchange="calc()">
+            <option value="male">Male</option>
+            <option value="female" selected>Female</option>
+          </select>
+          <div class="hint">For joint survival odds in the analysis</div>
         </div>
       </div>
-      <div class="field">
-        <div class="flr"><label>After-Tax Contributions (optional)</label><button class="tb" onclick="toggleTip('basis')">ⓘ</button></div>
-        <div class="idollar"><input type="number" id="iraBasis" value="0" min="0" step="500" oninput="calc()"></div>
-        <div class="ttip" id="tip-basis"><strong>Have you ever contributed already-taxed money to a traditional IRA?</strong> If so, that amount is called your "basis." It matters because the IRS requires every conversion to be a proportional mix of taxed and untaxed money — you can't cherry-pick just the pre-tax portion. The already-taxed share converts tax-free. If this applies to you, the number lives on IRS Form 8606, line 14. Most people enter $0 — the vast majority of IRA money is pre-tax.</div>
-        <div class="hint">Don’t know this? Enter $0 — it only applies if you’ve made after-tax IRA contributions, and most people haven’t</div>
-      </div>
+    </details>
+    <div class="step-nav">
+      <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
+      <button class="btn btn-primary" onclick="stepperNext()">Continue →</button>
     </div>
   </div>
 
-  <!-- RIGHT COLUMN -->
-  <div style="display:flex;flex-direction:column;gap:1.25rem;">
-    <div class="card">
-      <div class="ch"><div class="sb"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><h2>Assumptions &amp; Medicare</h2></div>
+  <div class="card step-card" data-step="3" id="stepCard3">
+    <div class="ch"><div class="sb">3</div><h2>Income &amp; accounts</h2></div>
+    <div class="field">
+      <div class="flr"><label>Your 2026 Wages &amp; Other Income (before conversion, excluding SS)</label><button class="tb" onclick="toggleTip('income')">ⓘ</button></div>
+      <div class="idollar"><input type="number" id="income" value="72000" min="0" step="1000" oninput="calc()"></div>
+        <div class="ttip" id="tip-income"><strong>What to include:</strong> Wages, self-employment, rental income, and other regular income you're still earning. If you're already receiving a pension or other retirement-account income, enter that in the field below instead — a few states (Michigan among them) shelter pension/IRA income differently than wages, so keeping them separate lets this tool get your state tax right. <strong>Do NOT include Social Security here</strong> — enter that in the field below so I can accurately model how converting triggers extra tax on your Social Security. Rough estimates are fine.</div>
+    </div>
+    <div class="field">
+      <div class="flr"><label>Pension / Other Retirement-Account Income (optional)</label><button class="tb" onclick="toggleTip('pension')">ⓘ</button></div>
+      <div class="idollar"><input type="number" id="pensionIncome" value="0" min="0" step="1000" oninput="calc()"></div>
+        <div class="ttip" id="tip-pension"><strong>What to include:</strong> A pension, annuity, or IRA/401(k) distributions you're already receiving this year — not the conversion itself. Several states, including Michigan, shelter this specific kind of income from state tax up to a cap, but that cap doesn't apply to wages. Splitting this out from the field above means the state-tax number reflects the real cap, instead of assuming your whole income competes for it. Leave at $0 if you're still working and not yet drawing a pension or other retirement account.</div>
+        <div class="hint">Not sure? Enter $0 — this only matters if you're already receiving pension or retirement-account income separate from this year's conversion</div>
+    </div>
+    <div class="field">
+      <div class="flr"><label>Annual Social Security Benefits</label><button class="tb" onclick="toggleTip('ss')">ⓘ</button></div>
+      <div class="idollar"><input type="number" id="ssIncome" value="24000" min="0" step="500" oninput="calc()"></div>
+        <div class="ttip" id="tip-ss"><strong>Why this field changes everything:</strong> Social Security benefits become partly taxable when your income reaches certain thresholds. A Roth conversion can push more of your SS into taxable territory — a hidden extra cost called the Social Security tax effect. At worst, each $1 converted triggers 85¢ more of SS taxation, pushing your real tax rate to ~40% even in the 22% bracket. Enter $0 if you do not receive SS yet.</div>
+        <div class="hint" id="ssHint">Enter your total annual SS benefit, or $0 if not yet receiving</div>
+    </div>
+    <div class="field">
+      <div class="flr"><label>Existing Roth IRA</label></div>
+      <div class="idollar"><input type="number" id="rothBal" value="40000" min="0" step="1000" oninput="calc()"></div>
+      <div class="hint">Enter $0 if you do not have one yet</div>
+    </div>
+    <details class="rest">
+      <summary>More income sources (optional)</summary>
+      <div class="restb">
+        <div class="field">
+          <div class="flr"><label>Other Investment Income (optional)</label><button class="tb" onclick="toggleTip('nii')">ⓘ</button></div>
+          <div class="idollar"><input type="number" id="niiIncome" value="0" min="0" step="500" oninput="calc()"></div>
+        <div class="ttip" id="tip-nii"><strong>What is this field?</strong> Interest, non-qualified dividends, short-term capital gains, and rental income — enter your annual total here. This tool taxes it at your ordinary income rate and includes it in the income that determines your tax bracket, Social Security taxation, and Medicare IRMAA tier, the same as wages or pension income. It also adds the 3.8% federal NIIT surcharge once your total income tops $200,000 (single) or $250,000 (married) — a Roth conversion counts as income and can push you over that threshold. <strong>Have qualified dividends or long-term capital gains?</strong> Those get a lower preferential rate (0/15/20%) — enter them in the field below instead, not here. On a 1099-DIV, box 1a (ordinary dividends) already includes box 1b (qualified dividends) as a subset — put only the non-qualified portion (1a minus 1b) here to avoid double-counting. Enter $0 if this doesn't apply to you.</div>
+        <div class="hint">Not sure? Enter $0 — this means interest, rent, or investments held under a year. (Held longer? Use the field below instead.)</div>
+        </div>
+        <div class="field">
+          <div class="flr"><label>Qualified Dividends &amp; Long-Term Capital Gains (optional)</label><button class="tb" onclick="toggleTip('ltcg')">ⓘ</button></div>
+          <div class="idollar"><input type="number" id="ltcgIncome" value="0" min="0" step="500" oninput="calc()"></div>
+        <div class="ttip" id="tip-ltcg"><strong>What is this field?</strong> Qualified dividends (1099-DIV box 1b) and net long-term capital gains — these get the federal preferential rate (0%, 15%, or 20%) instead of your ordinary bracket rate, and this tool models that correctly, stacking them on top of your other income the way the IRS actually calculates it. A Roth conversion is ordinary income that stacks underneath this, so converting can push some of this income into a higher preferential-rate bracket — this tool accounts for that too. This income still counts toward Medicare IRMAA, Social Security taxation, and the 3.8% NIIT surcharge, just not your ordinary federal bracket. Enter $0 if this doesn't apply to you.</div>
+        <div class="hint">Not sure? Enter $0 — this means investments held over a year. (Shorter-term, or other investment income? Use the field above instead.)</div>
+        </div>
+        <div class="field">
+          <div class="flr"><label>After-Tax Contributions (optional)</label><button class="tb" onclick="toggleTip('basis')">ⓘ</button></div>
+          <div class="idollar"><input type="number" id="iraBasis" value="0" min="0" step="500" oninput="calc()"></div>
+        <div class="ttip" id="tip-basis"><strong>Have you ever contributed already-taxed money to a traditional IRA?</strong> If so, that amount is called your "basis." It matters because the IRS requires every conversion to be a proportional mix of taxed and untaxed money — you can't cherry-pick just the pre-tax portion. The already-taxed share converts tax-free. If this applies to you, the number lives on IRS Form 8606, line 14. Most people enter $0 — the vast majority of IRA money is pre-tax.</div>
+        <div class="hint">Don’t know this? Enter $0 — it only applies if you’ve made after-tax IRA contributions, and most people haven’t</div>
+        </div>
+      </div>
+    </details>
+    <div class="step-nav">
+      <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
+      <button class="btn btn-primary" onclick="stepperNext()">Continue →</button>
+    </div>
+  </div>
+
+  <div class="card step-card" data-step="4" id="stepCard4">
+    <div class="ch"><div class="sb">4</div><h2>Medicare &amp; assumptions</h2></div>
+    <div class="frow">
       <div class="field">
-        <div class="flr"><label>Annual Investment Return (after inflation) — <span id="gDisp" style="color:var(--navy);font-weight:700">7%</span></label><button class="tb" onclick="toggleTip('growth')">ⓘ</button></div>
-        <div class="rw"><input type="range" id="growthRate" min="3" max="12" step=".5" value="7" oninput="document.getElementById('gDisp').textContent=this.value+'%';document.getElementById('gValDisp').textContent=this.value+'%';calc()"><div class="rv" id="gValDisp">7%</div></div>
-        <div class="ttip" id="tip-growth"><strong>What to use?</strong> Historically ~7% after inflation for a diversified stock portfolio. A balanced mix of stocks and bonds might average 5–6%. Try sliding it to see how sensitive your results are.</div>
+        <div class="flr"><label>Are You on Medicare?</label><button class="tb" onclick="toggleTip('medicare')">ⓘ</button></div>
+        <select id="medicareStatus" onchange="calc()">
+          <option value="none">Not on Medicare, not expecting it soon</option>
+          <option value="one" selected>Yes — just me (or will be within 3 years)</option>
+          <option value="two">Yes — both of us (married couple)</option>
+        </select>
+        <div class="ttip" id="tip-medicare"><strong>The hidden two-year trap:</strong> Medicare charges higher premiums to people with higher incomes — called IRMAA. It's based on your income from 2 years ago. A large Roth conversion in 2026 can raise your Medicare bill in 2028. This is one of the most commonly missed costs of converting.<br><br><strong>What counts as income for Medicare?</strong> Medicare adds up all your income from all sources — wages, IRA withdrawals, taxable Social Security, dividends, and capital gains. A Roth conversion counts as income dollar-for-dollar, which is why large conversions can push you into a higher premium tier.</div>
       </div>
       <div class="field">
-        <div class="flr"><label>Your Expected <strong>Federal</strong> Rate in Retirement</label><button class="tb" onclick="toggleTip('retrate')">ⓘ</button></div>
-        <div class="ipct"><input type="number" id="retRate" value="22" min="0" max="60" oninput="calc()"></div>
+        <div class="flr"><label>Include Medicare Part D?</label></div>
+        <select id="partD" onchange="calc()">
+          <option value="yes" selected>Yes — include Part D surcharge</option>
+          <option value="no">No — Part B only</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <div class="flr"><label>Annual Investment Return (after inflation) — <span id="gDisp" style="color:var(--navy);font-weight:700">7%</span></label><button class="tb" onclick="toggleTip('growth')">ⓘ</button></div>
+      <div class="rw"><input type="range" id="growthRate" min="3" max="12" step=".5" value="7" oninput="document.getElementById('gDisp').textContent=this.value+'%';document.getElementById('gValDisp').textContent=this.value+'%';calc()"><div class="rv" id="gValDisp">7%</div></div>
+        <div class="ttip" id="tip-growth"><strong>What to use?</strong> Historically ~7% after inflation for a diversified stock portfolio. A balanced mix of stocks and bonds might average 5–6%. Try sliding it to see how sensitive your results are.</div>
+    </div>
+    <div class="field">
+      <div class="flr"><label>Your Expected <strong>Federal</strong> Rate in Retirement</label><button class="tb" onclick="toggleTip('retrate')">ⓘ</button></div>
+      <div class="ipct"><input type="number" id="retRate" value="22" min="0" max="60" oninput="calc()"></div>
         <div class="ttip" id="tip-retrate"><strong>Federal only — I add your state rate automatically.</strong> Enter your expected federal bracket rate on IRA withdrawals. Select your state above and I'll fold the state rate in automatically so the comparison is apples-to-apples. Use the estimator below if you are unsure.</div>
         <details class="rest">
           <summary>Not sure? Calculate your retirement rate here</summary>
@@ -858,45 +934,35 @@
             <div id="retRateResult" style="min-height:1.5rem"></div>
           </div>
         </details>
-      </div>
-      <div class="field">
-        <div class="flr"><label>Pay Conversion Taxes From</label><button class="tb" onclick="toggleTip('taxsrc')">ⓘ</button></div>
-        <select id="taxSource" onchange="calc()">
-          <option value="outside">Pay from outside savings ✓ Recommended for most</option>
-          <option value="inside">Take taxes from the IRA itself (reduces converted amount)</option>
-        </select>
-        <div class="ttip" id="tip-taxsrc"><strong>This matters more than people expect:</strong> Paying from outside savings puts the full converted amount into the Roth tax-free. Paying from inside means less money enters the Roth — you'd be giving up tax-advantaged growth on the tax payment itself.</div>
-      </div>
-      <div class="divider"></div>
-      <div class="field">
-        <div class="flr"><label>Are You on Medicare?</label><button class="tb" onclick="toggleTip('medicare')">ⓘ</button></div>
-        <select id="medicareStatus" onchange="calc()">
-          <option value="none">Not on Medicare, not expecting it soon</option>
-          <option value="one" selected>Yes — just me (or will be within 3 years)</option>
-          <option value="two">Yes — both of us (married couple)</option>
-        </select>
-        <div class="ttip" id="tip-medicare"><strong>The hidden two-year trap:</strong> Medicare charges higher premiums to people with higher incomes — called IRMAA. It's based on your income from 2 years ago. A large Roth conversion in 2026 can raise your Medicare bill in 2028. This is one of the most commonly missed costs of converting.<br><br><strong>What counts as income for Medicare?</strong> Medicare adds up all your income from all sources — wages, IRA withdrawals, taxable Social Security, dividends, and capital gains. A Roth conversion counts as income dollar-for-dollar, which is why large conversions can push you into a higher premium tier.</div>
-      </div>
-      <div class="field">
-        <label>Include Medicare Part D (prescription drug)?</label>
-        <select id="partD" onchange="calc()">
-          <option value="yes" selected>Yes — include Part D surcharge</option>
-          <option value="no">No — Part B only</option>
-        </select>
-      </div>
     </div>
-    <div class="card">
+    <div class="field">
+      <div class="flr"><label>Pay Conversion Taxes From</label><button class="tb" onclick="toggleTip('taxsrc')">ⓘ</button></div>
+      <select id="taxSource" onchange="calc()">
+        <option value="outside">Pay from outside savings ✓ Recommended for most</option>
+        <option value="inside">Take taxes from the IRA itself (reduces converted amount)</option>
+      </select>
+        <div class="ttip" id="tip-taxsrc"><strong>This matters more than people expect:</strong> Paying from outside savings puts the full converted amount into the Roth tax-free. Paying from inside means less money enters the Roth — you'd be giving up tax-advantaged growth on the tax payment itself.</div>
+    </div>
+    <div class="step-nav">
+      <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
+      <button class="btn btn-primary" id="stepNext" onclick="stepperNext()">See My Results →</button>
+    </div>
+  </div>
+</div>
+
+<div id="resultsArea" style="display:none">
+  <button type="button" class="edit-inputs-link" onclick="backToStepper()">✎ Edit your inputs</button>
+  <div class="card" style="margin-bottom:1.25rem">
       <div class="stitle">📊 <span id="taxYearTitle">2026</span> Tax Analysis</div>
       <details class="rest" id="taxDetails">
         <summary>See the full number-by-number breakdown</summary>
         <div class="restb" id="taxPanel"><div style="font-size:.9rem;color:var(--muted)">Enter a conversion amount above to see the full tax breakdown.</div></div>
       </details>
-    </div>
   </div>
-</div>
-<div id="optimizerPanel" style="padding:0 0 0 0"></div>
-<div id="resultsWrap">
-  <div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Set a conversion amount above — not sure where to start? <button class="ph-try" onclick="document.getElementById('convertAmt').value=20000;document.getElementById('convertAmt').dispatchEvent(new Event('input'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>
+  <div id="optimizerPanel" style="padding:0 0 0 0"></div>
+  <div id="resultsWrap">
+    <div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Set a conversion amount above — not sure where to start? <button class="ph-try" onclick="document.getElementById('convertAmt').value=20000;document.getElementById('convertAmt').dispatchEvent(new Event('input'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>
+  </div>
 </div>
 </div>
 <footer>
@@ -1210,6 +1276,75 @@ function setConvert(amt){
   calc();
   var rw=document.getElementById('resultsWrap');
   if(rw)rw.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── STEPPED INPUT FLOW ──
+// Four step-cards, one visible at a time (.step-card.current). The results
+// area (#resultsArea, holding the Tax Analysis card / #optimizerPanel /
+// #resultsWrap) stays display:none — and calc() keeps running live in the
+// background off every field's existing oninput — so results are already
+// correct the instant it's revealed after step 4.
+var _step = 1;
+var _stepTotal = 4;
+function renderStep(){
+  document.querySelectorAll('.step-card').forEach(function(c){
+    c.classList.toggle('current', +c.dataset.step === _step);
+  });
+  document.querySelectorAll('#stepProgress .seg').forEach(function(s){
+    var n = +s.dataset.step;
+    s.classList.toggle('done', n < _step);
+    s.classList.toggle('current', n === _step);
+  });
+  var sc = document.getElementById('stepCount');
+  if(sc) sc.textContent = 'Step ' + _step + ' of ' + _stepTotal;
+}
+function stepperBack(){
+  if(_step <= 1) return;
+  _step--;
+  renderStep();
+  var st = document.getElementById('stepper');
+  if(st) st.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function stepperNext(){
+  if(_step < _stepTotal){
+    _step++;
+    renderStep();
+    var st = document.getElementById('stepper');
+    if(st) st.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  revealResults();
+}
+function revealResults(noScroll){
+  var stepper = document.getElementById('stepper');
+  var results = document.getElementById('resultsArea');
+  if(stepper) stepper.style.display = 'none';
+  if(results) results.style.display = 'block';
+  calc();
+  if(results && !noScroll) results.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function backToStepper(){
+  var stepper = document.getElementById('stepper');
+  var results = document.getElementById('resultsArea');
+  if(results) results.style.display = 'none';
+  if(stepper){ stepper.style.display = 'block'; stepper.scrollIntoView({behavior:'smooth',block:'start'}); }
+}
+var _lastConvertAmt = null;
+function skipConvertAmt(){
+  var el = document.getElementById('convertAmt');
+  if(el){ _lastConvertAmt = el.value; el.value = ''; }
+  var row = document.getElementById('skipRow'), conf = document.getElementById('skipConfirmed');
+  if(row) row.style.display = 'none';
+  if(conf) conf.style.display = 'flex';
+  calc();
+}
+function undoSkipConvertAmt(){
+  var el = document.getElementById('convertAmt');
+  if(el) el.value = (_lastConvertAmt !== null && _lastConvertAmt !== '') ? _lastConvertAmt : 20000;
+  var row = document.getElementById('skipRow'), conf = document.getElementById('skipConfirmed');
+  if(row) row.style.display = 'flex';
+  if(conf) conf.style.display = 'none';
+  calc();
 }
 
 // ── OPTIMIZER: compute three smart targets ──
@@ -2609,6 +2744,7 @@ function loadExample(name){
   _activeExample = f;  // Pass data directly to calc(), bypassing DOM reads
   calc();
   _activeExample = null;
+  revealResults(true);  // examples show their full answer instantly, no wizard
 }
 
 function clearExample(){
@@ -2629,6 +2765,7 @@ function clearExample(){
   var banner=document.getElementById('exBanner');
   if(banner) banner.style.display='none';
   calc();
+  revealResults(true);
 }
 
 
@@ -2653,7 +2790,7 @@ function saveInputs(){
 function loadSavedInputs(){
   try{
     var saved=_canStore?JSON.parse(localStorage.getItem('rg_v1')||'{}'):{};
-    if(!saved) return false;
+    if(!saved || Object.keys(saved).length===0) return false;
     INPUT_FIELDS.forEach(function(id){
       var el=document.getElementById(id);
       if(el && saved[id]!==undefined) el.value=saved[id];
@@ -3015,6 +3152,8 @@ function calc(){
   const isCouple = (status==='mfj'||status==='mfs');
   const spFields = document.getElementById('spouseFields');
   if(spFields) spFields.style.display = isCouple ? 'block' : 'none';
+  const spSexField = document.getElementById('spouseSexField');
+  if(spSexField) spSexField.style.display = isCouple ? 'block' : 'none';
   const seniorSelEl = document.getElementById('seniorDeduction');
   const seniorMfsNoteEl = document.getElementById('seniorMfsNote');
   if(seniorSelEl){ seniorSelEl.disabled = (status==='mfs'); seniorSelEl.style.opacity = (status==='mfs') ? '.55' : ''; }
@@ -3766,7 +3905,12 @@ function updateWayfindBar(){
   var bar = document.getElementById('wayfindBar');
   if(!bar) return;
   var bl = document.querySelector('.bottom-line');
-  var seen = !!bl && bl.getBoundingClientRect().bottom < 60;
+  // offsetParent is null when .bottom-line (or an ancestor, e.g. the hidden
+  // #resultsArea while the step wizard is still active) isn't rendered —
+  // getBoundingClientRect() alone would return an all-zero rect in that case,
+  // which satisfies "bottom < 60" and shows the bar before there's anything
+  // to point back to.
+  var seen = !!bl && bl.offsetParent !== null && bl.getBoundingClientRect().bottom < 60;
   bar.classList.toggle('show', seen);
 }
 window.addEventListener('scroll', function(){
@@ -3774,7 +3918,7 @@ window.addEventListener('scroll', function(){
 }, {passive:true});
 
 document.getElementById('taxYearTitle').textContent=new Date().getFullYear();
-loadSavedInputs();
+var _hadSavedInputs = loadSavedInputs();
 // On desktop, the right-column card holding this panel is otherwise shorter than
 // the left column, leaving a stretched, empty gap below it (CSS grid stretches both
 // columns to match the taller one). Open it by default only above the same 740px
@@ -3783,6 +3927,9 @@ loadSavedInputs();
 var _taxDetailsEl = document.getElementById('taxDetails');
 if(_taxDetailsEl && window.innerWidth > 740) _taxDetailsEl.open = true;
 calc();
+// Returning visitors with saved inputs skip the wizard and see their answer
+// immediately; first-time visitors start at step 1.
+if(_hadSavedInputs) revealResults(true); else renderStep();
 </script>
 </body>
 </html>
