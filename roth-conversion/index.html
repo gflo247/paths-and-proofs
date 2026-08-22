@@ -214,7 +214,7 @@
     .rest summary::-webkit-details-marker{display:none;}
     .restb{padding:10px 12px;background:var(--card);}
     /* ── Stepped input flow ── */
-    .stepper{max-width:640px;margin:0 auto 1.25rem;}
+    .stepper{max-width:760px;margin:0 auto 1.25rem;}
     .step-progress{display:flex;gap:.5rem;margin-bottom:1.4rem;}
     .step-progress .seg{flex:1;}
     .seg .bar{height:4px;border-radius:2px;background:var(--blight);margin-bottom:6px;transition:background .2s;}
@@ -800,7 +800,7 @@
         </details>
     </div>
     <details class="rest">
-      <summary>Optional: refine the survival-probability estimate</summary>
+      <summary>Optional: your sex — used only for the survival-probability estimate</summary>
       <div class="restb">
         <div class="field">
           <div class="flr"><label>Your Sex</label></div>
@@ -886,8 +886,8 @@
         <div class="flr"><label>Are You on Medicare?</label><button class="tb" onclick="toggleTip('medicare')">ⓘ</button></div>
         <select id="medicareStatus" onchange="calc()">
           <option value="none">Not on Medicare, not expecting it soon</option>
-          <option value="one" selected>Yes — just me (or will be within 3 years)</option>
-          <option value="two">Yes — both of us (married couple)</option>
+          <option value="one" selected>Yes — just me, or within 3 years</option>
+          <option value="two">Yes — both of us, married couple</option>
         </select>
         <div class="ttip" id="tip-medicare"><strong>The hidden two-year trap:</strong> Medicare charges higher premiums to people with higher incomes — called IRMAA. It's based on your income from 2 years ago. A large Roth conversion in 2026 can raise your Medicare bill in 2028. This is one of the most commonly missed costs of converting.<br><br><strong>What counts as income for Medicare?</strong> Medicare adds up all your income from all sources — wages, IRA withdrawals, taxable Social Security, dividends, and capital gains. A Roth conversion counts as income dollar-for-dollar, which is why large conversions can push you into a higher premium tier.</div>
       </div>
