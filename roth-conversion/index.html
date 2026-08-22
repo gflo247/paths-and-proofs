@@ -1029,8 +1029,9 @@ const EXAGE={
 // than RETDED's single flat cap (age-tiered caps, stepped tables by AGI, per-spouse
 // phase-outs, offset-stacked deductions) — the same mechanics built for the relocation
 // tool's relo-engine.mjs, generated from the SAME canonical states.json taxRules data by
-// _dev/gen-st-table.mjs. Deliberately excludes Michigan (already covered by RETDED) and
-// West Virginia (its Social-Security-netting question is still an open product decision).
+// _dev/gen-st-table.mjs. Deliberately excludes Michigan (already covered by RETDED).
+// West Virginia's Social-Security-netting question is resolved and included below
+// (see WV's netAgainstSS).
 const RIX={
   GA: {"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":62,"cap":35000},{"minAge":65,"cap":65000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
   LA: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":12000,"capJoint":24000,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
@@ -2803,6 +2804,22 @@ function computeConversionCost(cvtAmt, ctx){
     const exWith   = rixExcluded(rix, status, curAge, spouseAge, pensionIncome+taxableCvt, agiWith, ssWith, ss);
     const stTiBase = Math.max(0, pensionIncome - exBase);
     const stTiWith = Math.max(0, (pensionIncome+taxableCvt) - exWith);
+    cvtTxSt = (stTiWith - stTiBase) * stD.cr;
+  } else if(stateCode==='OH'){
+    // Ohio taxes nonbusiness income above a flat, filing-status-independent
+    // zero-bracket threshold (ORC 5747.02, effective 2026: 0% up to $26,050,
+    // 2.75% above — same threshold for single and MFJ per multiple independent
+    // sources; not a retirement-specific shelter like RETDED/RIX, just Ohio's
+    // own bracket floor, so no age gate). SS already excluded, matching Ohio's
+    // SS exemption. Same before/with delta pattern as RETDED/RIX above, so a
+    // conversion that straddles the threshold is only taxed on the portion
+    // that's actually above it.
+    const OH_ZERO_BRACKET = 26050;
+    // income here is ALREADY wagesInc+pensionIncome (reassigned above) -- don't
+    // add pensionIncome again.
+    const ohBase   = income + nii + ltcg;
+    const stTiBase = Math.max(0, ohBase - OH_ZERO_BRACKET);
+    const stTiWith = Math.max(0, (ohBase+taxableCvt) - OH_ZERO_BRACKET);
     cvtTxSt = (stTiWith - stTiBase) * stD.cr;
   } else {
     cvtTxSt = taxableCvt * stD.cr;

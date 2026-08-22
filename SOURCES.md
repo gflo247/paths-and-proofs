@@ -185,6 +185,11 @@ user's own state when accuracy matters to them.
   > Fixed June 2026: rate 3.99% → 2.75%; note rewritten. The "retirement income
   > credits" the old note cited are real but tiny (≤$200 total) and barely affect
   > a conversion.
+  > Fixed August 2026: the calculator was applying the flat 2.75% to the whole
+  > conversion regardless of income level, ignoring the $26,050 zero-bracket the
+  > note already disclosed in prose. Now taxes only the portion of pension+wages+
+  > conversion income actually above $26,050 (ORC 5747.02; threshold confirmed
+  > filing-status-independent — same for single and MFJ).
 - **Retirement income: taxable (`ex:false` correct).** Ohio taxes IRA/401(k)
   withdrawals; only a small retirement-income credit applies.
 - **Social Security:** fully exempt from Ohio tax — so Ohio is **not** in the
