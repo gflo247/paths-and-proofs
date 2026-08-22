@@ -439,7 +439,7 @@
   <h1>Should you do a Roth conversion, and how much?</h1>
   <p class="hero-lead">Enter your numbers and I'll work out how much to convert and when — including what it costs with federal <em>and</em> state taxes, a hidden tax effect on Social Security benefits, Medicare exposure, and the odds you'll live long enough to benefit.</p>
   <!-- Toggle -->
-  <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. After 73, annual withdrawals become required, adding taxable income each year. A Roth conversion pays that tax now, at a known rate — typically spread over several years — so everything that follows grows completely tax-free, with no forced withdrawals. This tool works out which path costs you less.</p>
+  <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. After 73, annual withdrawals become required, adding taxable income each year. A Roth conversion pays that tax now, at a known rate — typically spread over several years — so everything that follows grows completely tax-free, with no forced withdrawals. This tool estimates which path costs you less, based on the assumptions you enter.</p>
   <details class="faq-expand">
     <summary>Have a 401(k) instead of an IRA? <span style="font-size:.8rem;opacity:.7">click to expand</span></summary>
     <div class="faq-body">
@@ -824,7 +824,7 @@
     <div class="card">
       <div class="ch"><div class="sb"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><h2>Assumptions &amp; Medicare</h2></div>
       <div class="field">
-        <div class="flr"><label>Annual Investment Return — <span id="gDisp" style="color:var(--navy);font-weight:700">7%</span></label><button class="tb" onclick="toggleTip('growth')">ⓘ</button></div>
+        <div class="flr"><label>Annual Investment Return (after inflation) — <span id="gDisp" style="color:var(--navy);font-weight:700">7%</span></label><button class="tb" onclick="toggleTip('growth')">ⓘ</button></div>
         <div class="rw"><input type="range" id="growthRate" min="3" max="12" step=".5" value="7" oninput="document.getElementById('gDisp').textContent=this.value+'%';document.getElementById('gValDisp').textContent=this.value+'%';calc()"><div class="rv" id="gValDisp">7%</div></div>
         <div class="ttip" id="tip-growth"><strong>What to use?</strong> Historically ~7% after inflation for a diversified stock portfolio. A balanced mix of stocks and bonds might average 5–6%. Try sliding it to see how sensitive your results are.</div>
       </div>
