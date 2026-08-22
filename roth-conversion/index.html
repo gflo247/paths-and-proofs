@@ -817,15 +817,15 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:6px">
               <div>
                 <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">SS benefit / yr</label>
-                <div class="idollar"><input type="number" id="retSS" value="24000" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate()" style="font-size:.93rem"></div>
+                <div class="idollar"><input type="number" id="retSS" value="24000" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate();calc()" style="font-size:.93rem"></div>
               </div>
               <div>
                 <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Pension / retirement-account income / yr</label>
-                <div class="idollar"><input type="number" id="retPen" value="0" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate()" style="font-size:.93rem"></div>
+                <div class="idollar"><input type="number" id="retPen" value="0" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate();calc()" style="font-size:.93rem"></div>
               </div>
               <div>
                 <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Wages or other income / yr (optional)</label>
-                <div class="idollar"><input type="number" id="retOther" value="0" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate()" style="font-size:.93rem"></div>
+                <div class="idollar"><input type="number" id="retOther" value="0" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate();calc()" style="font-size:.93rem"></div>
               </div>
             </div>
             <p style="font-size:.76rem;color:var(--muted);margin:-2px 0 8px;line-height:1.4">SS and pension start filled in from what you entered above — change them here only if you expect different amounts by the time you retire. Keep continued work or consulting income in "Wages or other" — a few states, including Michigan, shelter pension income differently than wages.</p>
