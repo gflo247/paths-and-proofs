@@ -656,7 +656,7 @@
     </div>
     <div class="step-nav">
       <span></span>
-      <button class="btn btn-primary" id="stepNext1" onclick="stepperNext()">Continue →</button>
+      <button class="btn btn-primary step-nav-next" id="stepNext1" onclick="stepperNext()">Continue →</button>
     </div>
   </div>
 
@@ -842,7 +842,7 @@
     </details>
     <div class="step-nav">
       <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
-      <button class="btn btn-primary" onclick="stepperNext()">Continue →</button>
+      <button class="btn btn-primary step-nav-next" onclick="stepperNext()">Continue →</button>
     </div>
   </div>
 
@@ -895,7 +895,7 @@
     </details>
     <div class="step-nav">
       <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
-      <button class="btn btn-primary" onclick="stepperNext()">Continue →</button>
+      <button class="btn btn-primary step-nav-next" onclick="stepperNext()">Continue →</button>
     </div>
   </div>
 
@@ -965,7 +965,7 @@
     </div>
     <div class="step-nav">
       <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
-      <button class="btn btn-primary" id="stepNext" onclick="stepperNext()">See My Results →</button>
+      <button class="btn btn-primary step-nav-next" id="stepNext" onclick="stepperNext()">See My Results →</button>
     </div>
   </div>
 </div>
@@ -1327,6 +1327,13 @@ function renderStep(){
   });
   var sc = document.getElementById('stepCount');
   if(sc) sc.textContent = 'Step ' + _step + ' of ' + _stepTotal;
+  // Once the wizard has been completed once, every step's primary button
+  // submits straight back to results instead of forcing the user through
+  // the remaining steps again — they're here to fix one thing, not redo
+  // the whole flow. Before completion, keep the guided per-step wording.
+  document.querySelectorAll('.step-nav-next').forEach(function(b){
+    b.textContent = _wizardCompleted ? 'Update My Results →' : (+b.closest('.step-card').dataset.step === _stepTotal ? 'See My Results →' : 'Continue →');
+  });
 }
 function stepperBack(){
   if(_step <= 1) return;
@@ -1336,6 +1343,10 @@ function stepperBack(){
   if(st) st.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function stepperNext(){
+  if(_wizardCompleted){
+    revealResults();
+    return;
+  }
   if(_step < _stepTotal){
     _step++;
     renderStep();
