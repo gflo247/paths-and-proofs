@@ -243,8 +243,11 @@
     .skip-btn:hover{color:var(--navy);}
     .skip-confirmed{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.5rem;background:var(--sbg);border:1px solid var(--success);color:var(--success);padding:.7rem .9rem;border-radius:var(--rsm);font-size:.83rem;}
     .skip-undo{background:none;border:1px solid var(--success);color:var(--success);border-radius:20px;padding:2px 10px;font-size:.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
-    .edit-inputs-link{display:inline-flex;align-items:center;gap:5px;background:none;border:none;padding:0;margin-bottom:1rem;cursor:pointer;color:var(--navy-mid);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;}
-    .edit-inputs-link:hover{color:var(--navy);}
+    .edit-links-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:1rem;font-size:.85rem;}
+    .edit-links-label{color:var(--muted);font-weight:600;}
+    .edit-links-sep{color:var(--blight);}
+    .edit-link{background:none;border:none;padding:0;cursor:pointer;color:var(--navy-mid);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;text-decoration:underline;text-underline-offset:2px;}
+    .edit-link:hover{color:var(--navy);}
     .rerow{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--blight);font-size:.83rem;}
     .rerow:last-child{border-bottom:none;}
     .rerow .rbkt{color:var(--muted);} .rerow .rrate{font-weight:700;color:var(--navy);}
@@ -418,7 +421,7 @@
     /* ── Print ── */
     @media print{
       @page{margin:1.5cm 2cm;}
-      .site-header,.hero,.stepper,.edit-inputs-link,#optimizerPanel,
+      .site-header,.hero,.stepper,.edit-links-row,#optimizerPanel,
       .print-btn,.clear-btn,.tb,.ttip,details,summary+div,.how-to,
       .optwrap,.disclaimer,.wayfind-bar{display:none!important;}
       body{font-size:13px;}
@@ -968,7 +971,16 @@
 </div>
 
 <div id="resultsArea" style="display:none">
-  <button type="button" class="edit-inputs-link" onclick="backToStepper()">✎ Edit your inputs</button>
+  <div class="edit-links-row">
+    <span class="edit-links-label">✎ Edit:</span>
+    <button type="button" class="edit-link" onclick="jumpToStep(1)">How much</button>
+    <span class="edit-links-sep">·</span>
+    <button type="button" class="edit-link" onclick="jumpToStep(2)">About you</button>
+    <span class="edit-links-sep">·</span>
+    <button type="button" class="edit-link" onclick="jumpToStep(3)">Income &amp; accounts</button>
+    <span class="edit-links-sep">·</span>
+    <button type="button" class="edit-link" onclick="jumpToStep(4)">Medicare &amp; assumptions</button>
+  </div>
   <div class="card" style="margin-bottom:1.25rem">
       <div class="stitle">📊 <span id="taxYearTitle">2026</span> Tax Analysis</div>
       <details class="rest" id="taxDetails">
@@ -1345,12 +1357,6 @@ function revealResults(noScroll){
     var sp = document.getElementById('stepProgress');
     if(sp) sp.classList.add('clickable');
   }
-}
-function backToStepper(){
-  var stepper = document.getElementById('stepper');
-  var results = document.getElementById('resultsArea');
-  if(results) results.style.display = 'none';
-  if(stepper){ stepper.style.display = 'block'; stepper.scrollIntoView({behavior:'smooth',block:'start'}); }
 }
 // Jumping directly to a step only makes sense once the wizard has been
 // completed once (_wizardCompleted, set by revealResults) — before that the
@@ -3514,7 +3520,7 @@ function calc(){
   const torpedoNote  = torpedoInc>0 ? ' and a hidden extra tax on your Social Security benefits' : '';
   const stRetNote    = stRetR>0 ? ' + '+pct(stRetR,1)+' '+stD.n+' state' : '';
   let blTxt =
-    'Converting '+fmt(cvtAmt)+(basis>0&&taxableFrac<0.9999?' ('+fmt(taxableCvt)+' taxable after your '+fmt(basis)+' in after-tax basis)':'')+' this year costs <strong>'+fmt(cvtTxTot)+'</strong> in taxes'
+    'Converting <strong>'+fmt(cvtAmt)+'</strong>'+(basis>0&&taxableFrac<0.9999?' ('+fmt(taxableCvt)+' taxable after your '+fmt(basis)+' in after-tax basis)':'')+' this year costs <strong>'+fmt(cvtTxTot)+'</strong> in taxes'
     +stTodayNote+torpedoNote+' — an all-in rate of <strong>'+pct(effR)+'</strong>.';
   if(!stateCode) blTxt += ' <strong>This is federal-only</strong> — no state selected above, so state tax (0–13% depending on where you live) isn\'t in this number.';
 
@@ -3848,7 +3854,7 @@ function calc(){
   $('resultsWrap').innerHTML =
     '<div class="fade-up">'
     +'<div class="disclaimer">📌 <strong>Planning tool, not financial advice.</strong> This calculator models common tax rules but cannot see your full picture — estate goals, healthcare subsidies, future moves, charitable plans, and income changes all matter. State rates are approximate. Use this to understand the landscape and size the conversation with your CPA or financial advisor, not to make the decision alone.</div>'
-    +'<div class="bottom-line"><div class="bl-eye">YOUR BOTTOM LINE</div><div class="bl-txt" id="blTxt">'+blTxt+'</div><div class="bl-cav">Estimates only — rough numbers are fine for planning. Scroll down for the full breakdown.</div></div>'
+    +'<div class="bottom-line"><div class="bl-eye">YOUR BOTTOM LINE · CONVERTING '+fmt(cvtAmt)+'</div><div class="bl-txt" id="blTxt">'+blTxt+'</div><div class="bl-cav">Estimates only — rough numbers are fine for planning. Scroll down for the full breakdown.</div></div>'
     +whyPanelHTML
     +'<div class="rgrid">'
     +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(!stateCode?'<br>Federal only — no state selected':(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):'')))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + NIIT: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')+'</div></div>'
