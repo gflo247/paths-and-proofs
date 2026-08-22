@@ -221,6 +221,12 @@
     .seg.done .bar,.seg.current .bar{background:var(--navy);}
     .seg .lbl{font-size:.68rem;font-weight:600;color:var(--muted);text-align:center;}
     .seg.current .lbl{color:var(--navy);}
+    /* Jumping between steps only makes sense once the user has been through
+       the whole flow once — before that, the labels stay inert so first-time
+       visitors follow the guided order. .clickable is added the first time
+       results are revealed. */
+    .step-progress.clickable .seg{cursor:pointer;}
+    .step-progress.clickable .seg:hover .lbl{color:var(--navy);text-decoration:underline;text-underline-offset:3px;}
     .step-count{text-align:center;color:var(--muted);font-size:.8rem;margin:0 0 1rem;}
     .step-card{display:none;}
     .step-card.current{display:block;}
@@ -608,10 +614,10 @@
 </div>
 <div class="stepper" id="stepper">
   <div class="step-progress" id="stepProgress">
-    <div class="seg current" data-step="1"><div class="bar"></div><div class="lbl">How much</div></div>
-    <div class="seg" data-step="2"><div class="bar"></div><div class="lbl">About you</div></div>
-    <div class="seg" data-step="3"><div class="bar"></div><div class="lbl">Income &amp; accounts</div></div>
-    <div class="seg" data-step="4"><div class="bar"></div><div class="lbl">Medicare &amp; assumptions</div></div>
+    <div class="seg current" data-step="1" onclick="jumpToStep(1)"><div class="bar"></div><div class="lbl">How much</div></div>
+    <div class="seg" data-step="2" onclick="jumpToStep(2)"><div class="bar"></div><div class="lbl">About you</div></div>
+    <div class="seg" data-step="3" onclick="jumpToStep(3)"><div class="bar"></div><div class="lbl">Income &amp; accounts</div></div>
+    <div class="seg" data-step="4" onclick="jumpToStep(4)"><div class="bar"></div><div class="lbl">Medicare &amp; assumptions</div></div>
   </div>
   <p class="step-count" id="stepCount">Step 1 of 4</p>
 
@@ -1286,6 +1292,7 @@ function setConvert(amt){
 // correct the instant it's revealed after step 4.
 var _step = 1;
 var _stepTotal = 4;
+var _wizardCompleted = false;
 function renderStep(){
   document.querySelectorAll('.step-card').forEach(function(c){
     c.classList.toggle('current', +c.dataset.step === _step);
@@ -1322,12 +1329,30 @@ function revealResults(noScroll){
   if(results) results.style.display = 'block';
   calc();
   if(results && !noScroll) results.scrollIntoView({behavior:'smooth',block:'start'});
+  if(!_wizardCompleted){
+    _wizardCompleted = true;
+    var sp = document.getElementById('stepProgress');
+    if(sp) sp.classList.add('clickable');
+  }
 }
 function backToStepper(){
   var stepper = document.getElementById('stepper');
   var results = document.getElementById('resultsArea');
   if(results) results.style.display = 'none';
   if(stepper){ stepper.style.display = 'block'; stepper.scrollIntoView({behavior:'smooth',block:'start'}); }
+}
+// Jumping directly to a step only makes sense once the wizard has been
+// completed once (_wizardCompleted, set by revealResults) — before that the
+// labels are inert so first-time visitors follow the guided linear order.
+function jumpToStep(n){
+  if(!_wizardCompleted) return;
+  _step = n;
+  var stepper = document.getElementById('stepper');
+  var results = document.getElementById('resultsArea');
+  if(results) results.style.display = 'none';
+  if(stepper) stepper.style.display = 'block';
+  renderStep();
+  if(stepper) stepper.scrollIntoView({behavior:'smooth',block:'start'});
 }
 var _lastConvertAmt = null;
 function skipConvertAmt(){
