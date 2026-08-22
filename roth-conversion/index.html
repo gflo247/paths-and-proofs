@@ -978,7 +978,7 @@
   </div>
   <div id="optimizerPanel" style="padding:0 0 0 0"></div>
   <div id="resultsWrap">
-    <div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Set a conversion amount above — not sure where to start? <button class="ph-try" onclick="document.getElementById('convertAmt').value=20000;document.getElementById('convertAmt').dispatchEvent(new Event('input'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>
+    <div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Pick one of the reference points above — or <button class="ph-try" onclick="document.getElementById('convertAmt').value=20000;document.getElementById('convertAmt').dispatchEvent(new Event('input'))">try $20,000</button> to see a full example</span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>
   </div>
 </div>
 </div>
@@ -3470,7 +3470,7 @@ function calc(){
   })();
 
   if(cvtAmt<=0){
-    $('resultsWrap').innerHTML='<div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Set a conversion amount above — not sure where to start? <button class="ph-try" onclick="document.getElementById(\'convertAmt\').value=20000;document.getElementById(\'convertAmt\').dispatchEvent(new Event(\'input\'))">try $20,000</button></span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>';
+    $('resultsWrap').innerHTML='<div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Pick one of the reference points above — or <button class="ph-try" onclick="document.getElementById(\'convertAmt\').value=20000;document.getElementById(\'convertAmt\').dispatchEvent(new Event(\'input\'))">try $20,000</button> to see a full example</span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>';
     updateWayfindBar();
     return;
   }
@@ -3721,7 +3721,7 @@ function calc(){
       +'<ul style="font-size:.87rem;color:var(--muted);line-height:1.7;padding-left:1.25rem;margin-bottom:.85rem">'
       +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">How long you live.</strong> The longer you live, the more the Roth\'s tax-free compounding helps. The sensitivity chart above shows you what happens under different growth and longevity assumptions.</li>'
       +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">Whether tax rates rise.</strong> Converting now locks in today\'s rates. If federal or state tax rates increase later, today\'s rate becomes a bargain in hindsight.</li>'
-      +'<li><strong style="color:var(--text)">Your heirs.</strong> Roth IRAs pass to heirs income-tax-free. Traditional IRAs pass the tax bill along with the inheritance. If leaving money is part of your plan, this tips toward Roth.</li>'
+      +'<li><strong style="color:var(--text)">Your heirs.</strong> Roth IRAs pass to heirs income-tax-free — but most non-spouse heirs still must empty the account within 10 years of your death, a real deadline even though the withdrawals themselves owe no tax (<a href="https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-beneficiary" target="_blank" rel="noopener" style="color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px">IRS rules for beneficiaries</a>). Traditional IRAs pass the tax bill along with the inheritance. If leaving money is part of your plan, this tips toward Roth.</li>'
       +'</ul>'
       +'<div class="alert anvy" style="font-size:.85rem">'
       +'<div style="margin-top:.85rem"><p style="font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.4rem">Questions to bring to your advisor:</p>'
