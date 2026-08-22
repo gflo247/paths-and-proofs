@@ -1720,6 +1720,14 @@ function renderMarginalChart(p){
   if(sweep.points.length < 2) return;
 
   var totalW = Math.min(container.offsetWidth || 520, 700);
+  // Below this width there's no honest way to fit 2+ named-marker pill labels
+  // side by side without them colliding — the collision-avoidance math (see
+  // _dev/test-marginal-chart-labels.mjs) only guards the crossover and
+  // reference-rate labels against markers, never markers against each other.
+  // Rather than extend that already-tight system, narrow charts drop the
+  // inline pills (keep the colored dashed lines) and list the same crossings
+  // as a small legend below the chart instead, where there's no width limit.
+  var compact = totalW < 420;
   var margin = {top:30, right:20, bottom:44, left:50};
   var W = totalW - margin.left - margin.right;
   var H = Math.round(W * 0.44);
@@ -1916,6 +1924,7 @@ function renderMarginalChart(p){
     var lx=xSc(c.x), color=markerColor[c.type];
     g.append('line').attr('x1',lx).attr('x2',lx).attr('y1',0).attr('y2',H)
       .attr('stroke',color).attr('stroke-width',1.75).attr('stroke-dasharray','5,3');
+    if(compact) return; // line only — label moves to the legend below
     var above = idx%2===0;
     var ly = above ? 12 : H-10;
     var text = shortLabel[c.type](c);
@@ -1930,6 +1939,22 @@ function renderMarginalChart(p){
       .style('font-size','10px').style('font-weight',700).style('font-family','DM Sans, sans-serif')
       .style('fill',color).text(text);
   });
+
+  d3.select(container).select('.mchart-legend').remove();
+  if(compact && named.length>0){
+    var legend = d3.select(container).append('div').attr('class','mchart-legend')
+      .style('display','flex').style('flex-direction','column').style('gap','4px')
+      .style('margin-top','8px').style('padding','8px 10px')
+      .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
+      .style('font-family','DM Sans, sans-serif').style('font-size','.76rem');
+    named.forEach(function(c){
+      var row = legend.append('div').style('display','flex').style('align-items','center').style('gap','7px');
+      row.append('span').style('width','9px').style('height','9px').style('border-radius','50%')
+        .style('flex-shrink','0').style('background',markerColor[c.type]);
+      row.append('span').style('color',tc('#3D4451','#A6ABB5'))
+        .text(shortLabel[c.type](c)+' — crosses at '+fmt(c.x));
+    });
+  }
 
   // Hover crosshair + tooltip
   var tipId='mtip'+(Math.random()*1e6|0);
