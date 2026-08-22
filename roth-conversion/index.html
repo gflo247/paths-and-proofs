@@ -223,6 +223,9 @@
     .trow.tgrand .tv{color:var(--navy);font-size:1.1rem;font-weight:700;}
     .tsep{height:1px;background:var(--blight);margin:5px 0;}
     .tsubhead{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:6px 0 2px;}
+    .src-note{font-size:.72rem;color:var(--muted);margin:-2px 0 6px;}
+    .src-note a{color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px;}
+    .src-note a:hover{color:var(--navy);}
     .btip{background:var(--amber-pale);border:1px solid #E8C97A;border-radius:var(--rsm);padding:9px 12px;font-size:.88rem;color:#5A3500;margin-top:.85rem;line-height:1.55;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
     .fade-up{animation:fadeUp .4s ease forwards;}
@@ -306,12 +309,10 @@
     .footer-badges{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;}
     .footer-badge{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:40px;padding:4px 13px;font-size:.76rem;color:rgba(255,255,255,.85);white-space:nowrap;}
     .footer-divider{width:52px;height:1px;background:rgba(255,255,255,.15);margin:1.15rem auto;}
-    .footer-sources-label{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.42);margin-bottom:.7rem;}
-    .footer-sources-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.6rem 3rem;max-width:min(94vw,1800px);margin:0 auto;text-align:left;font-size:.81rem;line-height:1.55;}
-    .fs-k{color:rgba(255,255,255,.5);}
+    .footer-sources-label{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.42);margin-bottom:.6rem;}
+    .footer-sources-compact{font-size:.8rem;color:rgba(255,255,255,.6);max-width:min(94vw,1800px);margin:0 auto;line-height:1.8;}
     .footer-nav{display:block;margin:1.15rem 0;font-size:.82rem;}
     .footer-legal{display:block;font-size:.76rem;color:rgba(255,255,255,.5);max-width:min(94vw,1800px);margin-left:auto;margin-right:auto;line-height:1.6;}
-    @media(max-width:740px){.footer-sources-grid{grid-template-columns:1fr;text-align:center;}}
     /* ── Example profiles ── */
     .ex-bar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:center;margin-top:1.2rem;}
     .ex-label{font-size:.82rem;color:var(--muted);}
@@ -898,12 +899,14 @@
 
   <div class="footer-divider"></div>
 
-  <div class="footer-sources-label">Data sources</div>
-  <div class="footer-sources-grid">
-    <div><span class="fs-k">Survival odds:</span> <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener"><strong>Social Security life expectancy data</strong></a> — ages 20–100 exact, SSA 2023 Period Life Table</div>
-    <div><span class="fs-k">Tax brackets:</span> <a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf" target="_blank" rel="noopener"><strong>IRS 2026 tax bracket data</strong></a> + <a href="https://www.congress.gov/bill/119th-congress/house-bill/1" target="_blank" rel="noopener"><strong>One Big Beautiful Bill Act</strong></a></div>
-    <div><span class="fs-k">RMD divisors:</span> <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener"><strong>IRS required minimum withdrawal tables (Appendix B)</strong></a></div>
-    <div><span class="fs-k">Medicare surcharges:</span> <a href="https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles" target="_blank" rel="noopener"><strong>Official Medicare 2026 premium rates</strong></a></div>
+  <div class="footer-sources-label">Data sources — cited in context throughout the results above</div>
+  <div class="footer-sources-compact">
+    <a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf" target="_blank" rel="noopener">IRS 2026 tax brackets</a> ·
+    <a href="https://www.congress.gov/bill/119th-congress/house-bill/1" target="_blank" rel="noopener">One Big Beautiful Bill Act</a> ·
+    <a href="https://www.irs.gov/publications/p915" target="_blank" rel="noopener">SS taxability (Pub 915)</a> ·
+    <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener">RMD tables (Pub 590-B)</a> ·
+    <a href="https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles" target="_blank" rel="noopener">CMS Medicare rates</a> ·
+    <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener">SSA life table</a>
   </div>
 
   <div class="footer-divider"></div>
@@ -3082,6 +3085,7 @@ function calc(){
       : '';
     ssSectionHtml =
       '<div class="tsubhead">Social Security Taxation</div>'
+      +'<div class="src-note">Source: <a href="https://www.irs.gov/publications/p915" target="_blank" rel="noopener">IRS Pub 915 taxability worksheet</a></div>'
       +'<div class="trow"><span class="tl">Annual SS benefit</span><span class="tv">'+fmt(ss)+'</span></div>'
       +'<div class="trow"><span class="tl">Combined income (without conversion)</span><span class="tv">'+fmt(piBase)+'</span></div>'
       +'<div class="trow"><span class="tl">Combined income (with conversion)</span><span class="tv">'+fmt(piWith)+'</span></div>'
@@ -3177,6 +3181,7 @@ function calc(){
       ssSectionHtml
       +(basis>0&&cvtAmt>0?'<div class="tsubhead">After-Tax Contribution Breakdown</div>'+'<div class="trow"><span class="tl">After-tax basis in IRA</span><span class="tv">'+fmt(basis)+'</span></div>'+'<div class="trow"><span class="tl">Taxable fraction of conversion</span><span class="tv">'+Math.round(taxableFrac*1000)/10+'%</span></div>'+'<div class="trow"><span class="tl">Taxable conversion amount</span><span class="tv">'+fmt(taxableCvt)+'</span></div>'+'<div class="trow"><span class="tl">Basis returned tax-free</span><span class="tv">'+fmt(basisCvt)+'</span></div>'+'<div class="tsep"></div>':'')
       +'<div class="tsubhead">Federal Income Tax</div>'
+      +'<div class="src-note">Source: <a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf" target="_blank" rel="noopener">IRS Rev. Proc. 2025-32</a>'+(srDW>0?' · senior deduction: <a href="https://www.congress.gov/bill/119th-congress/house-bill/1" target="_blank" rel="noopener">One Big Beautiful Bill Act</a>':'')+'</div>'
       +'<div class="trow"><span class="tl">Wages/other income</span><span class="tv">'+fmt(income)+'</span></div>'
       +(pensionIncome>0?'<div class="trow"><span class="tl">Pension/retirement-account income</span><span class="tv">'+fmt(pensionIncome)+'</span></div>':'')
       + ssRow
@@ -3349,6 +3354,7 @@ function calc(){
     irmaaHTML =
       '<div class="irmaa-card '+(tCrossed?'hit':'safe')+'">'
       +'<div class="stitle">🏥 Medicare Premium Impact</div>'
+      +'<div class="src-note">Source: <a href="https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles" target="_blank" rel="noopener">Official CMS 2026 premium rates</a></div>'
       +'<div class="irmaa-what"><strong>Medicare charges higher premiums to higher earners</strong> — based on your income from <strong>2 years ago</strong>. A Roth conversion in 2026 raises 2026 income → affects 2028 premiums. Crossing a threshold by $1 triggers the full surcharge for that tier.</div>'
       +'<div class="igrid">'
       +'<div class="ibox"><div class="ilbl">Without Conversion</div><div class="ival" style="color:'+(tBefore===0?'var(--success)':'var(--warn)')+'">'+ITIERS[tBefore].lbl+'</div><div class="isub">Total income: '+fmt(magiBase)+'<br>Part B premium: '+fmt(ITIERS[tBefore].B*12)+'/yr per person</div></div>'
@@ -3484,7 +3490,7 @@ function calc(){
         : 'Without converting, at age 73 you\'d be required to withdraw about <strong>'+fmt(firstB)+'</strong> from your traditional account \u2014 taxable income whether you need it or not \u2014 and the required share grows each year as the IRS divisor shrinks.')
       +' Converting doesn\'t make withdrawals free; it moves the tax to today and shrinks the account those forced withdrawals are calculated from.</p>'
       +'<div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Age</th><th>Forced withdrawal, no conversion</th><th>With this conversion</th><th>Yearly gap</th></tr></thead><tbody>'+cfRows+'</tbody></table></div>'
-      +'<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">Projected balances at your '+pct(g,0)+' growth assumption; required amounts per the IRS Uniform Lifetime Table (Publication 590-B). Each dollar withdrawn is taxed at your combined '+pct(simRetR)+' retirement rate \u2014 roughly '+fmt(firstB*simRetR)+' of tax in that first year alone without converting.</p>'
+      +'<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">Projected balances at your '+pct(g,0)+' growth assumption; required amounts per the <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener">IRS Uniform Lifetime Table (Publication 590-B)</a>. Each dollar withdrawn is taxed at your combined '+pct(simRetR)+' retirement rate \u2014 roughly '+fmt(firstB*simRetR)+' of tax in that first year alone without converting.</p>'
       +'</div>';
     }
   }
@@ -3522,7 +3528,7 @@ function calc(){
     +'</p>'
     +'<p style="font-size:.84rem;color:var(--muted);margin-bottom:.85rem">Chances of still being alive at each age, from age '+curAge+': '+survLegend+'</p>'
     + sBars
-    +'<p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;line-height:1.45">'+'These bars show population-level averages from Social Security Administration life expectancy statistics — not personalized medical predictions. Your individual odds depend on your health, genetics, and lifestyle.</p>'+'<div class="alert anvy" style="margin-top:.5rem;font-size:.87rem"><strong>Worth keeping in mind:</strong> A plan built around the average life expectancy leaves half of all people underprepared. Many people live 10–20 years longer than they expect — and the longer you live, the more the Roth compounds.</div>'
+    +'<p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;line-height:1.45">'+'These bars show population-level averages from <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener">Social Security Administration life expectancy statistics</a> — not personalized medical predictions. Your individual odds depend on your health, genetics, and lifestyle.</p>'+'<div class="alert anvy" style="margin-top:.5rem;font-size:.87rem"><strong>Worth keeping in mind:</strong> A plan built around the average life expectancy leaves half of all people underprepared. Many people live 10–20 years longer than they expect — and the longer you live, the more the Roth compounds.</div>'
     +'</div>'
     +multiYearHTML
     +'<div class="card" style="margin-top:1.25rem;border-left:4px solid var(--amber)">'
