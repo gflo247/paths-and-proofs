@@ -302,6 +302,16 @@
     footer strong{color:rgba(255,255,255,.92);}
     footer a{color:rgba(255,255,255,.82);text-decoration:underline;text-underline-offset:2px;transition:color .15s;}
     footer a:hover{color:white;}
+    .footer-story{display:block;margin-bottom:1.05rem;color:rgba(255,255,255,.78);font-size:.84rem;line-height:1.7;max-width:580px;margin-left:auto;margin-right:auto;}
+    .footer-badges{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;}
+    .footer-badge{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:40px;padding:4px 13px;font-size:.76rem;color:rgba(255,255,255,.85);white-space:nowrap;}
+    .footer-divider{width:52px;height:1px;background:rgba(255,255,255,.15);margin:1.15rem auto;}
+    .footer-sources-label{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.42);margin-bottom:.7rem;}
+    .footer-sources-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.6rem 2.5rem;max-width:1100px;margin:0 auto;text-align:left;font-size:.81rem;line-height:1.55;}
+    .fs-k{color:rgba(255,255,255,.5);}
+    .footer-nav{display:block;margin:1.15rem 0;font-size:.82rem;}
+    .footer-legal{display:block;font-size:.76rem;color:rgba(255,255,255,.5);max-width:640px;margin-left:auto;margin-right:auto;line-height:1.6;}
+    @media(max-width:740px){.footer-sources-grid{grid-template-columns:1fr;text-align:center;}}
     /* ── Example profiles ── */
     .ex-bar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:center;margin-top:1.2rem;}
     .ex-label{font-size:.82rem;color:var(--muted);}
@@ -878,12 +888,29 @@
 </div>
 </div>
 <footer>
-  <span style="display:block;margin-bottom:.85rem;color:rgba(255,255,255,.78);font-size:.84rem;line-height:1.7;max-width:580px;margin-left:auto;margin-right:auto">Built by an independent developer after getting frustrated by Roth calculators that ignored state taxes, a hidden Social Security tax effect, and Medicare surcharges — and charged $10–20/month for the privilege. The math uses IRS, SSA, and CMS public data. Just the calculation.</span>
-  <strong>Roth conversion</strong> · Runs entirely in your browser · No data collected or transmitted · No sign-in required<br>
-  Also on Paths and Proofs: <a href="/social-security/">Social Security claiming</a> · <a href="/relocation/">Relocation tax comparison</a> · <a href="/medicare/">Medicare: Medigap vs Medicare Advantage</a><br>
-  Survival odds: <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener"><strong>Social Security life expectancy data</strong></a> — ages 20–100 exact, SSA 2023 Period Life Table<br>
-  Tax brackets: <a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf" target="_blank" rel="noopener"><strong>IRS 2026 tax bracket data</strong></a> + <a href="https://www.congress.gov/bill/119th-congress/house-bill/1" target="_blank" rel="noopener"><strong>One Big Beautiful Bill Act</strong></a> · RMD divisors: <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener"><strong>IRS required minimum withdrawal tables (Appendix B)</strong></a> · Medicare surcharges: <a href="https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles" target="_blank" rel="noopener"><strong>Official Medicare 2026 premium rates</strong></a><br>
-  <span style="display:block;margin-top:6px">Planning tool only — not tax or financial advice. State tax rates are approximate; your actual rate may vary. Verify locally. Always consult a CPA, tax professional, or financial advisor before converting. <a href="https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill" target="_blank" rel="noopener" style="font-size:.78rem">IRS 2026 full tax year summary →</a></span>
+  <span class="footer-story">Built by an independent developer after getting frustrated by Roth calculators that ignored state taxes, a hidden Social Security tax effect, and Medicare surcharges — and charged $10–20/month for the privilege. Just the calculation.</span>
+
+  <div class="footer-badges">
+    <span class="footer-badge">Runs entirely in your browser</span>
+    <span class="footer-badge">No data collected or transmitted</span>
+    <span class="footer-badge">No sign-in required</span>
+  </div>
+
+  <div class="footer-divider"></div>
+
+  <div class="footer-sources-label">Data sources</div>
+  <div class="footer-sources-grid">
+    <div><span class="fs-k">Survival odds:</span> <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener"><strong>Social Security life expectancy data</strong></a> — ages 20–100 exact, SSA 2023 Period Life Table</div>
+    <div><span class="fs-k">Tax brackets:</span> <a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf" target="_blank" rel="noopener"><strong>IRS 2026 tax bracket data</strong></a> + <a href="https://www.congress.gov/bill/119th-congress/house-bill/1" target="_blank" rel="noopener"><strong>One Big Beautiful Bill Act</strong></a></div>
+    <div><span class="fs-k">RMD divisors:</span> <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener"><strong>IRS required minimum withdrawal tables (Appendix B)</strong></a></div>
+    <div><span class="fs-k">Medicare surcharges:</span> <a href="https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles" target="_blank" rel="noopener"><strong>Official Medicare 2026 premium rates</strong></a></div>
+  </div>
+
+  <div class="footer-divider"></div>
+
+  <span class="footer-nav">Also on Paths and Proofs: <a href="/social-security/">Social Security claiming</a> · <a href="/relocation/">Relocation tax comparison</a> · <a href="/medicare/">Medicare: Medigap vs Medicare Advantage</a></span>
+
+  <span class="footer-legal">Planning tool only — not tax or financial advice. State tax rates are approximate; your actual rate may vary. Verify locally. Always consult a CPA, tax professional, or financial advisor before converting. <a href="https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill" target="_blank" rel="noopener">IRS 2026 full tax year summary →</a></span>
 </footer>
 <div class="wayfind-bar" id="wayfindBar" role="note">
   <div class="wayfind-inner">
