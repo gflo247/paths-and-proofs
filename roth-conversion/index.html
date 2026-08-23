@@ -2266,6 +2266,11 @@ function renderMarginalChart(p){
       .style('fill',tc('#1C3A5E','#7DB2EC'))
       .text(lblText);
     labelRects.push({x0:lblCx-lblW/2,x1:lblCx+lblW/2,y0:lblY-11,y1:lblY-11+16});
+    // The dot itself (halo + ring, r=10) is also an obstacle, not just its
+    // text label — found live: "Your pick"'s pill background rendered right
+    // on top of this circle when the two markers landed close together on
+    // the x-axis, since only the label's rect was tracked before.
+    labelRects.push({x0:ccx-10,x1:ccx+10,y0:ccy-10,y1:ccy+10});
   }
 
   named.forEach(function(c){
@@ -2307,14 +2312,30 @@ function renderMarginalChart(p){
   // rect-vs-rect overlap against labelRects (which only guards the pill's
   // actual x-range and missed this — found live: "Your pick" landing
   // directly on top of the dashed reference line despite not overlapping
-  // its label).
-  function placeAt(cx, y0){
+  // its label). Band is centered on refY itself (±2px), not on
+  // refRectY0/refRectY1 (the reference PILL's own offset placement, 5-19px
+  // away from refY depending on which side it drew on) — that pill-shaped
+  // band leaves the line's own few pixels unguarded in the gap between the
+  // pill and the line, which is exactly where a candidate landed live.
+  // ignoreMarkers: named-marker LINES get a real search pass first (below),
+  // but with 4-5 of them densely packed early in the domain (a real
+  // scenario: SS torpedo + several Medicare tiers all under ~$150K), their
+  // combined clearance zones (each pW/2+half wide) can chain together with
+  // no gap left anywhere near the dot for a pill this wide — found live: in
+  // that case every candidate failed and the code fell through to a blind
+  // fallback that didn't itself check for known obstacles, landing right on
+  // the crossover dot. A second pass ignoring marker lines (but still
+  // checking labelRects — real rendered content, including the crossover
+  // dot's own footprint above) is far more likely to find a genuinely clear
+  // spot close to the actual dot than either crossing a marker's thin
+  // dashed line (minor, tolerable) or a blind guess (not tolerable).
+  function placeAt(cx, y0, ignoreMarkers){
     cx = Math.min(W-pW/2, Math.max(pW/2, cx));
     if(y0<0 || y0+pH>H) return null;
     var rect = {x0:cx-pW/2, x1:cx+pW/2, y0:y0, y1:y0+pH};
     var blocked = labelRects.some(function(r){ return rect.x0<r.x1 && rect.x1>r.x0 && rect.y0<r.y1 && rect.y1>r.y0; })
-      || markerObstacles.some(function(o){ return Math.abs(o.x-cx) < pW/2+o.half; })
-      || (refDrawn && rect.y0<refRectY1 && rect.y1>refRectY0);
+      || (!ignoreMarkers && markerObstacles.some(function(o){ return Math.abs(o.x-cx) < pW/2+o.half; }))
+      || (refDrawn && rect.y0<refY+2 && rect.y1>refY-2);
     return blocked ? null : rect;
   }
   var aboveFirst = my > H*0.4;
@@ -2323,10 +2344,12 @@ function renderMarginalChart(p){
   // needed now that a candidate can be rejected by the full-width reference
   // band regardless of x, so a pure horizontal search alone can no longer
   // guarantee an escape when the dot sits close to that band.
-  [14,34,54,74].some(function(gap){
-    return [0,45,-45,90,-90].some(function(dx){
-      return (pBest = placeAt(mx+dx, aboveFirst ? my-gap-pH : my+gap))
-          || (pBest = placeAt(mx+dx, aboveFirst ? my+gap : my-gap-pH));
+  [false,true].some(function(ignoreMarkers){
+    return [14,34,54,74].some(function(gap){
+      return [0,45,-45,90,-90,135,-135].some(function(dx){
+        return (pBest = placeAt(mx+dx, aboveFirst ? my-gap-pH : my+gap, ignoreMarkers))
+            || (pBest = placeAt(mx+dx, aboveFirst ? my+gap : my-gap-pH, ignoreMarkers));
+      });
     });
   });
   if(!pBest){
@@ -2340,6 +2363,10 @@ function renderMarginalChart(p){
     .style('font-size','10.5px').style('font-weight',700).style('font-family','DM Sans, sans-serif')
     .style('fill',pickColor).text(pText);
   labelRects.push(pBest);
+  // This dot's own footprint, same reasoning as the crossover dot above —
+  // nothing renders after this except bracket labels/the list, but keeps
+  // the pattern consistent if that ever changes.
+  labelRects.push({x0:mx-9,x1:mx+9,y0:my-9,y1:my+9});
 
   // Threshold list — the reference rate, every named marker, AND every
   // bracket-rate crossing, always shown now (not just <420px): the two
