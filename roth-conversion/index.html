@@ -1318,7 +1318,12 @@ function animCount(el,to,fmtFn,dur=900){
 }
 
 // ── OPTIMIZER: set conversion amount and rerun ──
-function setConvert(amt){
+// targetId/needsDetails (optional): jump straight to the specific card that
+// explains THIS threshold (same mechanism as the "Why This Answer" panel's
+// jumpToLever) instead of just scrolling to the generic top of results —
+// clicking "Clear the SS Hidden Tax Zone" should land you on the SS
+// taxation breakdown, not on the Bottom Line you were already looking at.
+function setConvert(amt,targetId,needsDetails){
   var el=document.getElementById('convertAmt');
   if(el){el.value=amt;}
   // A real amount is being set here, so clear any leftover "you skipped
@@ -1328,8 +1333,12 @@ function setConvert(amt){
   if(row) row.style.display='flex';
   if(conf) conf.style.display='none';
   calc();
-  var rw=document.getElementById('resultsWrap');
-  if(rw)rw.scrollIntoView({behavior:'smooth',block:'start'});
+  if(targetId){
+    jumpToLever(targetId,needsDetails);
+  } else {
+    var rw=document.getElementById('resultsWrap');
+    if(rw)rw.scrollIntoView({behavior:'smooth',block:'start'});
+  }
 }
 
 // ── STEPPED INPUT FLOW ──
@@ -1555,7 +1564,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
   // Card 1: Bracket fill
   if(opts.bracketState==='ok'&&opts.bracketAmt>0){
     cards.push(
-      '<div class="optcard brkt" onclick="setConvert('+opts.bracketAmt+')">'
+      '<div class="optcard brkt" onclick="setConvert('+opts.bracketAmt+',\'federalTaxSection\',true)">'
       +'<div class="optlbl">'+ICO_BRKT+'Fill your '+pct(opts.curBR,0)+' bracket</div>'
       +'<div class="optamt">'+fmt(opts.bracketAmt)+'</div>'
       +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.bracketAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>target: '+fmt(opts.bracketAmt)+'</span></div></div>'
@@ -1582,7 +1591,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
   if(nMed>0){
     if(opts.irmaaState==='ok'&&opts.irmaaAmt>0){
       cards.push(
-        '<div class="optcard irm" onclick="setConvert('+opts.irmaaAmt+')">'
+        '<div class="optcard irm" onclick="setConvert('+opts.irmaaAmt+',\'irmaaCard\',false)">'
         +'<div class="optlbl">'+ICO_IRM+'Medicare income limit</div>'
         +'<div class="optamt">'+fmt(opts.irmaaAmt)+'</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.irmaaAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe limit: '+fmt(opts.irmaaAmt)+'</span></div></div>'
@@ -1622,17 +1631,17 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
       );
     } else if(t.alreadyFiring){
       cards.push(
-        '<div class="optcard trp" onclick="setConvert('+t.clearAmt+')">'
+        '<div class="optcard trp" onclick="setConvert('+t.clearAmt+',\'ssTaxSection\',true)">'
         +'<div class="optlbl">'+ICO_TRP+'Clear the SS Hidden Tax Zone</div>'
         +'<div class="optamt">'+fmt(t.clearAmt)+'</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/t.clearAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>to clear: '+fmt(t.clearAmt)+'</span></div></div>'
-        +'<div class="optnote">The SS hidden tax zone is already active. Converting this amount pushes fully past it — after which additional income drops back to your normal bracket rate instead of the elevated hidden rate</div>'
+        +'<div class="optnote">You\'re already in this zone: each dollar converted makes more of your Social Security taxable too, pushing your real rate above your normal bracket — that\'s the "hidden" part. Converting up to this amount clears you fully past it, after which extra income returns to your normal bracket rate</div>'
         +'<div class="optbtn">Explore this →</div>'
         +'</div>'
       );
     } else {
       cards.push(
-        '<div class="optcard trp" onclick="setConvert('+t.avoidAmt+')">'
+        '<div class="optcard trp" onclick="setConvert('+t.avoidAmt+',\'ssTaxSection\',true)">'
         +'<div class="optlbl">'+ICO_TRP+'Avoid the SS Hidden Tax Zone</div>'
         +'<div class="optamt">'+fmt(t.avoidAmt)+'</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/t.avoidAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe limit: '+fmt(t.avoidAmt)+'</span></div></div>'
@@ -3425,7 +3434,7 @@ function calc(){
         '<div class="alert ared" style="padding:.7rem .9rem;font-size:.84rem">'
         + '<strong>Hidden tax zone!</strong> The conversion pulls <strong>'+fmt(torpedoInc)+'</strong> more'
         + ' of your Social Security into taxable income'
-        + ' (provisonal income crosses the '+( status==='mfj'?'$44,000':'$34,000')+'+ threshold).'
+        + ' (provisional income crosses the '+( status==='mfj'?'$44,000':'$34,000')+'+ threshold).'
         + ' Extra federal tax from the torpedo: ~<strong>'+fmt(Math.round(torpedoTax))+'</strong>.'
         + ' I\'ve already included that in the federal conversion tax cost below.</div>';
     }
@@ -3601,12 +3610,19 @@ function calc(){
   const rateDiff=totalRetR-effR;
 
   // ── BOTTOM LINE TEXT ──
-  const stTodayNote  = cvtTxSt>0 ? ' (including '+stD.n+' state tax)' : '';
-  const torpedoNote  = torpedoInc>0 ? ' and a hidden extra tax on your Social Security benefits' : '';
+  // Both disclose what's already baked into the headline dollar figure —
+  // "and a hidden extra tax" used to read as something ADDED ON TOP of that
+  // figure rather than already included in it, which is backwards. Combined
+  // into one parenthetical, matching how the state-tax disclosure already
+  // reads, so there's one unambiguous "here's what this number contains."
+  const includesParts = [];
+  if(cvtTxSt>0) includesParts.push(stD.n+' state tax');
+  if(torpedoInc>0) includesParts.push('a hidden tax bump on your Social Security');
+  const includesNote = includesParts.length ? ' (including '+includesParts.join(' and ')+')' : '';
   const stRetNote    = stRetR>0 ? ' + '+pct(stRetR,1)+' '+stD.n+' state' : '';
   let blTxt =
     'Converting <strong>'+fmt(cvtAmt)+'</strong>'+(basis>0&&taxableFrac<0.9999?' ('+fmt(taxableCvt)+' taxable after your '+fmt(basis)+' in after-tax basis)':'')+' this year costs <strong>'+fmt(cvtTxTot)+'</strong> in taxes'
-    +stTodayNote+torpedoNote+' — an all-in rate of <strong>'+pct(effR)+'</strong>.';
+    +includesNote+' — an all-in rate of <strong>'+pct(effR)+'</strong>.';
   if(!stateCode) blTxt += ' <strong>This is federal-only</strong> — no state selected above, so state tax (0–13% depending on where you live) isn\'t in this number.';
 
   const youOrOneOfYou = isCouple ? 'at least one of you' : 'you';
@@ -3628,9 +3644,9 @@ function calc(){
   // Medicare-crossing and state-exemption sentences used to live here too, but
   // both are now covered by the "Why This Answer" panel right below the
   // verdict — repeating them here just duplicated that panel almost verbatim.
-  // Kept: stTodayNote/torpedoNote above, since those disclose what's baked
-  // into the headline dollar figure, which is a different job than explaining
-  // the mechanism.
+  // Kept: includesNote above, since it discloses what's baked into the
+  // headline dollar figure, which is a different job than explaining the
+  // mechanism.
 
   // ── VERDICT ──
   let vCls,vIco,vHd,vBd;
