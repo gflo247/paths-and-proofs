@@ -54,7 +54,7 @@
     [data-theme="dark"] .ex-btn[data-ex="borderline"]{background:var(--blight)!important;color:var(--text)!important;border-color:#6A7080!important;}
     [data-theme="dark"] .ex-btn[data-ex="couple"]{background:var(--sbg)!important;color:var(--ink-green)!important;border-color:var(--success)!important;}
     [data-theme="dark"] .ex-btn[data-ex="michigan"]{background:var(--navy-pale)!important;color:var(--navy-mid)!important;border-color:var(--navy-mid)!important;}
-    [data-theme="dark"] .ex-btn[data-ex="michSingle"]{background:var(--navy-pale)!important;color:var(--navy-mid)!important;border-color:var(--navy-mid)!important;}
+    [data-theme="dark"] .ex-btn[data-ex="michSingle"]{background:var(--amber-pale)!important;color:var(--ink-amber)!important;border-color:var(--amber)!important;}
     [data-theme="dark"] .sb,[data-theme="dark"] .sc,[data-theme="dark"] .ph-num,[data-theme="dark"] .ex-pill,[data-theme="dark"] .tb:hover,[data-theme="dark"] .tb.open{background:#2C4A72;}
     [data-theme="dark"] .be-wait{background:#3A414C;}
     [data-theme="dark"] .vt-neu{color:var(--muted);border-color:#6A7080;}
@@ -611,8 +611,8 @@
       ↑ Michigan couple · Convert to Roth
     </button>
     <button class="ex-btn" data-ex="michSingle" onclick="loadExample('michSingle')"
-      style="border-color:#1C3A5E;color:#1C3A5E;background:#EAF0F7">
-      ↑ Michigan single · Convert to Roth
+      style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
+      ↓ Michigan single · Keep traditional
     </button>
   </div>
 </div>
@@ -2817,7 +2817,7 @@ var PROFILES = {
       seniorDeduction:1, stateCode:'MI',
       income:0, pensionIncome:40000, ssIncome:24000, niiIncome:0, ltcgIncome:0,
       convertAmt:30000, tradBal:265000, rothBal:35000, iraBasis:0,
-      growthRate:7, retRate:22,
+      growthRate:7, retRate:12,
       taxSource:'outside', medicareStatus:'one', partD:'yes'
     }
   }
@@ -2849,7 +2849,7 @@ function loadExample(name){
     b.classList.toggle('active', b.dataset.ex===name);
   });
   // Sync hero visual toggle (without triggering loadExample again)
-  var visMap={couple:'roth',borderline:'borderline',single:'traditional',michigan:'roth',michSingle:'roth'};
+  var visMap={couple:'roth',borderline:'borderline',single:'traditional',michigan:'roth',michSingle:'traditional'};
   var visName=visMap[name];
   if(visName){
     var s=VIS_STATES[visName];
