@@ -2295,23 +2295,38 @@ function renderMarginalChart(p){
     .attr('fill',pickColor).attr('stroke',tc('#F5F1EB','#222730')).attr('stroke-width',2);
   var pText = 'Your pick — '+fmt(cvtX);
   var pW = pText.length*5.7+12, pH = 16;
-  function placeAt(cx, above){
+  // Reference line is full-width (x1=0, x2=W at y=refY, drawn above) — a
+  // candidate can sit at a different x than the reference PILL and still
+  // visually cross that line, so it's excluded by y-band alone, the same
+  // way the crossover label's own overlapsRef check above does it, not by
+  // rect-vs-rect overlap against labelRects (which only guards the pill's
+  // actual x-range and missed this — found live: "Your pick" landing
+  // directly on top of the dashed reference line despite not overlapping
+  // its label).
+  function placeAt(cx, y0){
     cx = Math.min(W-pW/2, Math.max(pW/2, cx));
-    var y0 = above ? my-14-pH : my+14;
     if(y0<0 || y0+pH>H) return null;
     var rect = {x0:cx-pW/2, x1:cx+pW/2, y0:y0, y1:y0+pH};
     var blocked = labelRects.some(function(r){ return rect.x0<r.x1 && rect.x1>r.x0 && rect.y0<r.y1 && rect.y1>r.y0; })
-      || markerObstacles.some(function(o){ return Math.abs(o.x-cx) < pW/2+o.half; });
+      || markerObstacles.some(function(o){ return Math.abs(o.x-cx) < pW/2+o.half; })
+      || (refDrawn && rect.y0<refRectY1 && rect.y1>refRectY0);
     return blocked ? null : rect;
   }
   var aboveFirst = my > H*0.4;
   var pBest = null;
-  [0,45,-45,90,-90,135,-135].some(function(dx){
-    return (pBest = placeAt(mx+dx, aboveFirst)) || (pBest = placeAt(mx+dx, !aboveFirst));
+  // Growing vertical gaps from the dot, tried before growing horizontally —
+  // needed now that a candidate can be rejected by the full-width reference
+  // band regardless of x, so a pure horizontal search alone can no longer
+  // guarantee an escape when the dot sits close to that band.
+  [14,34,54,74].some(function(gap){
+    return [0,45,-45,90,-90].some(function(dx){
+      return (pBest = placeAt(mx+dx, aboveFirst ? my-gap-pH : my+gap))
+          || (pBest = placeAt(mx+dx, aboveFirst ? my+gap : my-gap-pH));
+    });
   });
   if(!pBest){
     var fbCx = Math.min(W-pW/2, Math.max(pW/2, mx));
-    var fbY0 = aboveFirst ? Math.max(0,my-14-pH) : Math.min(H-pH,my+14);
+    var fbY0 = aboveFirst ? Math.max(0,my-74-pH) : Math.min(H-pH,my+74);
     pBest = {x0:fbCx-pW/2, x1:fbCx+pW/2, y0:fbY0, y1:fbY0+pH};
   }
   g.append('rect').attr('x',pBest.x0).attr('y',pBest.y0).attr('width',pW).attr('height',pH).attr('rx',3)
@@ -2321,18 +2336,21 @@ function renderMarginalChart(p){
     .style('fill',pickColor).text(pText);
   labelRects.push(pBest);
 
-  // Threshold list — every named marker AND every bracket-rate crossing,
-  // always shown now (not just <420px): these no longer get an inline pill
-  // at any width (see named.forEach above and the removed bracket-label
-  // pass), so the colored/gray line on the chart is only half the story —
-  // this list beside/below the chart (#marginalChartList, a flex sibling of
-  // the chart itself — see .mchart-row) is where the actual numbers live.
+  // Threshold list — the reference rate, every named marker, AND every
+  // bracket-rate crossing, always shown now (not just <420px): the two
+  // marker types no longer get an inline pill at any width (see
+  // named.forEach above and the removed bracket-label pass), and the
+  // reference rate's own inline pill degrades to a bare percentage on
+  // narrow charts once its full text stops fitting — so the colored/gray
+  // line on the chart is only half the story for all three. This list
+  // beside/below the chart (#marginalChartList, a flex sibling of the chart
+  // itself — see .mchart-row) is where the actual numbers reliably live.
   // Rebuilt on every calc(), same as the chart.
   var listEl = document.getElementById('marginalChartList');
   if(listEl){
     d3.select(listEl).selectAll('*').remove();
     var bracketRows = sweep.crossings.filter(function(c){ return c.type==='bracket' && c.rate!==undefined; });
-    if(named.length>0 || bracketRows.length>0){
+    if(refDrawn || named.length>0 || bracketRows.length>0){
       var list = d3.select(listEl).append('div')
         .style('display','flex').style('flex-direction','column').style('gap','4px')
         .style('padding','8px 10px')
@@ -2346,6 +2364,14 @@ function renderMarginalChart(p){
         r.append('span').style('color',tc('#3D4451','#A6ABB5')).text(text);
         if(target) r.append('span').style('color',tc('#1C3A5E','#7DB2EC')).style('font-weight','600')
           .style('margin-left','auto').style('white-space','nowrap').text('details →');
+      }
+      // Reference rate first, as the fixed context every crossing below is
+      // measured against — and the one guaranteed way to read it at all on
+      // a narrow chart, where the inline pill falls back to a bare "16.3%"
+      // with no words once "Your expected retirement rate · 16.3%" no
+      // longer fits (found live: read as "unlabeled" on a real phone).
+      if(refDrawn){
+        listRow(tc('#1C3A5E','#7DB2EC'), 'Your expected retirement rate — '+retPct.toFixed(1)+'%', null);
       }
       named.forEach(function(c){
         listRow(markerColor[c.type], shortLabel[c.type](c)+' — crosses at '+fmt(c.x), markerTarget[c.type]);
