@@ -2016,6 +2016,13 @@ function renderMarginalChart(p){
   // inline pills (keep the colored dashed lines) and list the same crossings
   // as a small legend below the chart instead, where there's no width limit.
   var compact = totalW < 420;
+  // Real bounding rects (x0/x1/y0/y1) of every label placed on this chart,
+  // in draw order — the reference line, the crossover, each named marker.
+  // The bracket-rate labels (added last, see below) check against this
+  // instead of duplicating each of those labels' own placement math, so
+  // they're guaranteed accurate against what's ACTUALLY on screen rather
+  // than an approximation that could drift out of sync.
+  var labelRects = [];
   var margin = {top:30, right:20, bottom:44, left:50};
   var W = totalW - margin.left - margin.right;
   var H = Math.round(W * 0.44);
@@ -2078,30 +2085,16 @@ function renderMarginalChart(p){
     .attr('stroke',tc('#CEC6BA','#3A414C')).attr('stroke-width',1);
 
   // Unlabeled ticks for ordinary-bracket crossings — the expected mechanism,
-  // kept subtle so the labeled markers (surprising cliffs) stand out. Each
-  // now carries a tiny "→22%" so the chart itself answers which rate you're
-  // climbing into, using the same BRAX-derived numbers as the bracket table
-  // below. Doesn't participate in the full crossover/reference/named-marker
-  // collision-avoidance system — just a cheap proximity check against named
-  // markers' x-positions, skipping the text (keeping the tick line) when a
-  // pill label would sit right on top of it. Found live: without this, a
-  // bracket label landing under a Medicare pill left a stray "→" with its
-  // number hidden behind the pill's background rect — worse than just
-  // showing the tick alone. Dropped entirely in compact mode, same as the
-  // named-marker pills.
-  var nonBracketX = sweep.crossings.filter(function(c){ return c.type!=='bracket'; }).map(function(c){ return xSc(c.x); });
+  // kept subtle so the labeled markers (surprising cliffs) stand out. Just
+  // the line here; the rate label for each (e.g. "→22%") is rendered in a
+  // deferred pass at the very end of this function, once every other
+  // label's REAL final position is known — see the comment down there for
+  // why.
   sweep.crossings.filter(function(c){ return c.type==='bracket'; }).forEach(function(c){
     var bx = xSc(c.x);
     g.append('line').attr('x1',bx).attr('x2',bx).attr('y1',0).attr('y2',H)
       .attr('stroke',tc('#3D4451','#A6ABB5')).attr('stroke-width',1.25)
       .attr('stroke-dasharray','2,3').attr('opacity',0.4);
-    var nearNamed = nonBracketX.some(function(nx){ return Math.abs(nx-bx) < 45; });
-    if(!compact && c.rate!==undefined && !nearNamed){
-      g.append('text').attr('x',bx+4).attr('y',H-6).attr('text-anchor','start')
-        .style('font-size','9px').style('font-family','DM Sans, sans-serif')
-        .style('fill',tc('#3D4451','#A6ABB5')).attr('opacity',0.65)
-        .text('→'+Math.round(c.rate*100)+'%');
-    }
   });
 
   // Named markers' x-positions computed first so every other label (reference
@@ -2180,6 +2173,7 @@ function renderMarginalChart(p){
       .style('font-size','10.5px').style('font-weight','600').style('font-family','DM Sans, sans-serif')
       .style('fill',tc('#3D4451','#A6ABB5'))
       .text(refText);
+    labelRects.push({x0:refCx-refW/2,x1:refCx+refW/2,y0:refRectY0,y1:refRectY0+14});
   }
 
   // The curve
@@ -2256,6 +2250,7 @@ function renderMarginalChart(p){
       .style('font-size','10.5px').style('font-weight',700).style('font-family','DM Sans, sans-serif')
       .style('fill',tc('#1C3A5E','#7DB2EC'))
       .text(lblText);
+    labelRects.push({x0:lblCx-lblW/2,x1:lblCx+lblW/2,y0:lblY-11,y1:lblY-11+16});
   }
 
   named.forEach(function(c,idx){
@@ -2276,7 +2271,40 @@ function renderMarginalChart(p){
     g.append('text').attr('x',lcx).attr('y',ly).attr('text-anchor','middle')
       .style('font-size','10px').style('font-weight',700).style('font-family','DM Sans, sans-serif')
       .style('fill',color).text(text);
+    labelRects.push({x0:lcx-lw/2,x1:lcx+lw/2,y0:ly-10,y1:ly-10+14});
   });
+
+  // Bracket-rate labels ("→22%") — rendered last, deliberately, now that
+  // labelRects holds the REAL final position of every other label on this
+  // chart (reference line, crossover, each named marker). Checking against
+  // actual rendered rects instead of re-deriving/approximating their
+  // placement logic is what makes this safe against all of them at once,
+  // including each other (self-collision, added to labelRects as each gets
+  // placed) — not just the "close to a named marker" heuristic the first
+  // version of this used, which still let a bracket label collide with the
+  // crossover or reference label. A background pill is new too: the old
+  // bare text had nothing protecting it from the curve or area-fill drawn
+  // on top of it later in the paint order. Silently dropped (tick line
+  // stays) when no clear spot exists, same "don't garble" fallback as every
+  // other label here. Off in compact mode, same as the named-marker pills.
+  if(!compact){
+    sweep.crossings.filter(function(c){ return c.type==='bracket' && c.rate!==undefined; }).forEach(function(c){
+      var bx = xSc(c.x);
+      var text = '→'+Math.round(c.rate*100)+'%';
+      var w = text.length*5.3+8, h = 13;
+      var cx = Math.min(W-w/2, Math.max(w/2, bx));
+      var rect = {x0:cx-w/2, x1:cx+w/2, y0:H-6-h, y1:H-6};
+      var blocked = labelRects.some(function(r){ return rect.x0<r.x1 && rect.x1>r.x0 && rect.y0<r.y1 && rect.y1>r.y0; });
+      if(blocked) return;
+      g.append('rect').attr('x',rect.x0).attr('y',rect.y0).attr('width',w).attr('height',h).attr('rx',3)
+        .attr('fill',tc('rgba(245,241,235,0.75)','rgba(34,39,48,0.8)'));
+      g.append('text').attr('x',cx).attr('y',H-6-3).attr('text-anchor','middle')
+        .style('font-size','9px').style('font-family','DM Sans, sans-serif')
+        .style('fill',tc('#3D4451','#A6ABB5'))
+        .text(text);
+      labelRects.push(rect);
+    });
+  }
 
   d3.select(container).select('.mchart-legend').remove();
   if(compact && named.length>0){
