@@ -268,6 +268,12 @@
     .trow.tgrand .tv{color:var(--navy);font-size:1.1rem;font-weight:700;}
     .tsep{height:1px;background:var(--blight);margin:5px 0;}
     .tsubhead{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:6px 0 2px;}
+    /* The sticky site-header (56px, 52px on the mobile breakpoint) sits on
+       top of the page at all scroll positions — without this, jumpToLever's
+       scrollIntoView aligns a target's top edge with the viewport's top
+       edge, which is exactly where the header covers it, so the section
+       title lands hidden behind the header instead of visible below it. */
+    #federalTaxSection,#stateTaxSection,#ssTaxSection,#irmaaCard,#survivalCard,#rmdCfCard{scroll-margin-top:76px;}
     .src-note{font-size:.72rem;color:var(--muted);margin:-2px 0 6px;}
     .src-note a{color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px;}
     .src-note a:hover{color:var(--navy);}
@@ -1305,10 +1311,25 @@ function jumpToLever(id,needsDetails){
   if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function buildRateTable(st){
-  const rows=st==='mfj'?[['Under $100,800 combined','→ about 12%'],['$100,800–$211,400','→ about 22%'],['$211,400–$403,550','→ about 24%'],['Over $403,550','→ about 32%+']]:
-    [['Under $50,400','→ about 12%'],['$50,400–$105,700','→ about 22%'],['$105,700–$201,775','→ about 24%'],['Over $201,775','→ about 32%+']];
-  return rows.map(([r,rt])=>`<div class="rerow"><span class="rbkt">${r}</span><span class="rrate">${rt}</span></div>`).join('');
+// Builds a compact 2026 federal bracket table straight from BRAX — the same
+// source the real tax math uses — instead of a separately hand-typed table.
+// The hand-typed version this replaced used single-filer thresholds for
+// Head of Household too (real HOH 12% bracket runs to $67,450, not
+// $50,400), which is exactly the kind of drift a single source of truth
+// prevents. Shows the first four brackets individually, then folds the top
+// three into one "32%+" row — full precision on the brackets that actually
+// matter for a typical conversion, without a 7-row table.
+function buildBracketTable(status){
+  const brax = BRAX[status] || BRAX.single;
+  let rows = '', lo = 0;
+  for(let i=0;i<4;i++){
+    const hi = brax[i].m;
+    const label = i===0 ? 'Under '+fmt(hi) : fmt(lo)+'–'+fmt(hi);
+    rows += '<div class="rerow"><span class="rbkt">'+label+'</span><span class="rrate">'+Math.round(brax[i].r*100)+'%</span></div>';
+    lo = hi;
+  }
+  rows += '<div class="rerow"><span class="rbkt">Over '+fmt(lo)+'</span><span class="rrate">'+Math.round(brax[4].r*100)+'%+</span></div>';
+  return rows;
 }
 
 function animCount(el,to,fmtFn,dur=900){
@@ -3335,8 +3356,6 @@ function calc(){
   const spouseAge= isCouple ? (_ae?+_ae.spouseAge:(parseInt(_rv('spouseAge'))||60)) : null;
   const spouseSex= isCouple ? (_ae ? _ae.spouseSex : $('spouseSex').value) : null;
 
-  // Update helper displays
-  const rateEl=$('rateEstTbl'); if(rateEl) rateEl.innerHTML=buildRateTable(status);
   // ── SS hint: clarify combined total for married couples ──
   const ssHintEl=$('ssHint');
   if(ssHintEl){
@@ -3552,6 +3571,8 @@ function calc(){
       +'<div class="trow"><span class="tl">Federal tax without conversion</span><span class="tv">'+fmt(txOut)+'</span></div>'
       +'<div class="trow"><span class="tl">Federal tax with conversion</span><span class="tv">'+fmt(txIn)+'</span></div>'
       +'<div class="trow ttotal"><span class="tl">Federal conversion tax cost</span><span class="tv">'+fmt(cvtTxFed)+'</span></div>'
+      +'<div class="tsubhead" style="margin-top:.9rem">2026 Federal Brackets — '+(status==='mfj'?'Married Filing Jointly':status==='mfs'?'Married Filing Separately':status==='hoh'?'Head of Household':'Single')+'</div>'
+      +buildBracketTable(status)
       + stateSectionHtml
       + reloCompareHtml
       + taxSrcRow
