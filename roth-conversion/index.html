@@ -2259,6 +2259,19 @@ function renderMarginalChart(p){
       var cxShort = clearCx(ccx+lblW/2+10, lblW, crossObstacles);
       lblCx = cxShort!==null ? cxShort : Math.min(W-lblW/2, Math.max(lblW/2, ccx+lblW/2+10));
     }
+    // If clearCx had to push this label far from its own dot to find room
+    // (found live: near $663 — basically at $0 — this label can land past
+    // $150K once the SS-torpedo line and "Your pick" crowd the space right
+    // next to the dot), draw a thin connector to the label's near edge so
+    // it still reads as labeling THIS point, not wherever it visually
+    // landed. Drawn before the pill so the pill's own background covers the
+    // connector's end rather than the line drawing over the pill's edge.
+    if(Math.abs(lblCx-ccx) > 40){
+      var leaderX = lblCx > ccx ? lblCx-lblW/2 : lblCx+lblW/2;
+      g.append('line').attr('x1',ccx).attr('x2',leaderX).attr('y1',ccy).attr('y2',lblY-3)
+        .attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',1)
+        .attr('stroke-dasharray','2,2').attr('opacity',0.45);
+    }
     g.append('rect').attr('x',lblCx-lblW/2).attr('y',lblY-11).attr('width',lblW).attr('height',16).attr('rx',3)
       .attr('fill',tc('rgba(245,241,235,0.85)','rgba(34,39,48,0.9)'));
     g.append('text').attr('x',lblCx).attr('y',lblY).attr('text-anchor','middle')
