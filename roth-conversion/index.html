@@ -233,7 +233,10 @@
     .step-count{text-align:center;color:var(--muted);font-size:.8rem;margin:0 0 1rem;}
     .step-card{display:none;}
     .step-card.current{display:block;}
-    .step-nav{display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;}
+    .step-nav{display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;flex-wrap:wrap;gap:.75rem;}
+    .step-nav-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+    .quick-submit-link{background:none;border:none;padding:0;cursor:pointer;color:var(--navy-mid);font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:600;text-decoration:underline;text-underline-offset:2px;}
+    .quick-submit-link:hover{color:var(--navy);}
     .btn{font-family:'DM Sans',sans-serif;font-weight:700;font-size:.88rem;padding:.7rem 1.5rem;border-radius:40px;cursor:pointer;border:none;}
     .btn-primary{background:var(--navy);color:white;}
     .btn-primary:hover{background:var(--navy-mid);}
@@ -316,6 +319,11 @@
     .alert.aamb{background:var(--amber-pale);border:1px solid #E8C97A;color:#5A3500;}
     .alert.anvy{background:var(--navy-pale);border:1px solid var(--tip-bdr);color:var(--ink-pale);}
     .stitle{font-family:'Fraunces','Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:7px;margin-bottom:.85rem;}
+    /* Sits outside the collapsed breakdown <details> on purpose — the
+       conversion amount driving every number in this card should be
+       visible without having to expand anything first. */
+    .tax-amount-line{font-size:1rem;color:var(--ink-pale);background:var(--navy-pale);border-radius:var(--rsm);padding:.6rem .9rem;margin-bottom:.9rem;}
+    .tax-amount-line strong{color:var(--navy);font-size:1.1rem;}
     .cwrap{position:relative;height:280px;}
     .ptbl{width:100%;border-collapse:collapse;font-size:.88rem;}
     .ptbl th{text-align:left;padding:7px 10px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);border-bottom:2px solid var(--blight);}
@@ -660,7 +668,10 @@
     </div>
     <div class="step-nav">
       <span></span>
-      <button class="btn btn-primary step-nav-next" id="stepNext1" onclick="stepperNext()">Continue →</button>
+      <div class="step-nav-right">
+        <button type="button" class="quick-submit-link" style="display:none" onclick="revealResults()">Update results now →</button>
+        <button class="btn btn-primary" id="stepNext1" onclick="stepperNext()">Continue →</button>
+      </div>
     </div>
   </div>
 
@@ -846,7 +857,10 @@
     </details>
     <div class="step-nav">
       <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
-      <button class="btn btn-primary step-nav-next" onclick="stepperNext()">Continue →</button>
+      <div class="step-nav-right">
+        <button type="button" class="quick-submit-link" style="display:none" onclick="revealResults()">Update results now →</button>
+        <button class="btn btn-primary" onclick="stepperNext()">Continue →</button>
+      </div>
     </div>
   </div>
 
@@ -899,7 +913,10 @@
     </details>
     <div class="step-nav">
       <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
-      <button class="btn btn-primary step-nav-next" onclick="stepperNext()">Continue →</button>
+      <div class="step-nav-right">
+        <button type="button" class="quick-submit-link" style="display:none" onclick="revealResults()">Update results now →</button>
+        <button class="btn btn-primary" onclick="stepperNext()">Continue →</button>
+      </div>
     </div>
   </div>
 
@@ -969,7 +986,7 @@
     </div>
     <div class="step-nav">
       <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
-      <button class="btn btn-primary step-nav-next" id="stepNext" onclick="stepperNext()">See My Results →</button>
+      <button class="btn btn-primary" id="stepNext" onclick="stepperNext()">See My Results →</button>
     </div>
   </div>
 </div>
@@ -984,6 +1001,7 @@
   </div>
   <div class="card" style="margin-bottom:1.25rem">
       <div class="stitle">📊 <span id="taxYearTitle">2026</span> Tax Analysis</div>
+      <div class="tax-amount-line" id="taxAmountLine" style="display:none">Converting <strong id="taxAmountVal">$0</strong> this year</div>
       <details class="rest" id="taxDetails">
         <summary>See the full number-by-number breakdown</summary>
         <div class="restb" id="taxPanel"><div style="font-size:.9rem;color:var(--muted)">Enter a conversion amount above to see the full tax breakdown.</div></div>
@@ -1334,12 +1352,13 @@ function renderStep(){
   });
   var sc = document.getElementById('stepCount');
   if(sc) sc.textContent = 'Step ' + _step + ' of ' + _stepTotal;
-  // Once the wizard has been completed once, every step's primary button
-  // submits straight back to results instead of forcing the user through
-  // the remaining steps again — they're here to fix one thing, not redo
-  // the whole flow. Before completion, keep the guided per-step wording.
-  document.querySelectorAll('.step-nav-next').forEach(function(b){
-    b.textContent = _wizardCompleted ? 'Update My Results →' : (+b.closest('.step-card').dataset.step === _stepTotal ? 'See My Results →' : 'Continue →');
+  // Continue always just advances one step, first-time visitor or not —
+  // replacing it with an auto-submit made it impossible to browse forward
+  // through steps once editing after completion. The quick-submit link is
+  // a separate, secondary escape hatch, only shown once there's actually
+  // a finished result to jump back to.
+  document.querySelectorAll('.quick-submit-link').forEach(function(b){
+    b.style.display = _wizardCompleted ? 'inline-flex' : 'none';
   });
 }
 function stepperBack(){
@@ -1350,10 +1369,6 @@ function stepperBack(){
   if(st) st.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function stepperNext(){
-  if(_wizardCompleted){
-    revealResults();
-    return;
-  }
   if(_step < _stepTotal){
     _step++;
     renderStep();
@@ -3510,7 +3525,11 @@ function calc(){
     ? '<div class="trow"><span class="tl">Senior deduction (age 65+)</span><span class="tv">−'+fmt(srDW)+'</span></div>'
     : '';
 
+  var taxAmtLineEl = document.getElementById('taxAmountLine');
+  var taxAmtValEl = document.getElementById('taxAmountVal');
   if(cvtAmt > 0){
+    if(taxAmtLineEl) taxAmtLineEl.style.display = 'block';
+    if(taxAmtValEl) taxAmtValEl.textContent = fmt(cvtAmt);
     $('taxPanel').innerHTML =
       ssSectionHtml
       +(basis>0&&cvtAmt>0?'<div class="tsubhead">After-Tax Contribution Breakdown</div>'+'<div class="trow"><span class="tl">After-tax basis in IRA</span><span class="tv">'+fmt(basis)+'</span></div>'+'<div class="trow"><span class="tl">Taxable fraction of conversion</span><span class="tv">'+Math.round(taxableFrac*1000)/10+'%</span></div>'+'<div class="trow"><span class="tl">Taxable conversion amount</span><span class="tv">'+fmt(taxableCvt)+'</span></div>'+'<div class="trow"><span class="tl">Basis returned tax-free</span><span class="tv">'+fmt(basisCvt)+'</span></div>'+'<div class="tsep"></div>':'')
@@ -3530,7 +3549,8 @@ function calc(){
       + brTip
       + exemptTip;
   } else {
-    $('taxPanel').innerHTML = '<div style="font-size:.9rem;color:var(--muted)">Enter a conversion amount above to see the full breakdown.</div>';
+    if(taxAmtLineEl) taxAmtLineEl.style.display = 'none';
+    $('taxPanel').innerHTML = '<div style="font-size:.9rem;color:var(--muted)">Pick a reference point above to see the full breakdown.</div>';
   }
 
   // ── OPTIMIZER PANEL (needs all SS/IRMAA vars) ──
