@@ -2288,7 +2288,12 @@ function renderMarginalChart(p){
   var cvtCc = computeConversionCost(cvtX, p.ctx);
   var cvtY = Math.min(cvtCc.effR*100, yMax);
   var mx = xSc(cvtX), my = ySc(cvtY);
-  var pickColor = tc('#B06000','#E89A38');
+  // Green (the app's own --success token), not a shade of the curve's own
+  // amber-to-red gradient — "Your pick" previously reused the gradient's
+  // 60% amber stop almost exactly, which made it hard to tell apart from
+  // both the curve itself and the SS-torpedo marker (also amber). Nothing
+  // else on this chart is green, so it now reads as unambiguous.
+  var pickColor = tc('#1B6B3A','#54C285');
   g.append('line').attr('x1',mx).attr('x2',mx).attr('y1',0).attr('y2',H)
     .attr('stroke',pickColor).attr('stroke-width',1.75).attr('opacity',0.5);
   g.append('circle').attr('cx',mx).attr('cy',my).attr('r',5.5)
@@ -2369,9 +2374,12 @@ function renderMarginalChart(p){
       // measured against — and the one guaranteed way to read it at all on
       // a narrow chart, where the inline pill falls back to a bare "16.3%"
       // with no words once "Your expected retirement rate · 16.3%" no
-      // longer fits (found live: read as "unlabeled" on a real phone).
+      // longer fits (found live: read as "unlabeled" on a real phone). Dot
+      // color matches the actual dashed line's gray stroke, not the pill
+      // text's blue — the pill text is styled to match the crossover pill
+      // next to it, but the dot here needs to match what's ON the chart.
       if(refDrawn){
-        listRow(tc('#1C3A5E','#7DB2EC'), 'Your expected retirement rate — '+retPct.toFixed(1)+'%', null);
+        listRow(tc('#3D4451','#A6ABB5'), 'Your expected retirement rate — '+retPct.toFixed(1)+'%', null);
       }
       named.forEach(function(c){
         listRow(markerColor[c.type], shortLabel[c.type](c)+' — crosses at '+fmt(c.x), markerTarget[c.type]);
