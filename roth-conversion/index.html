@@ -229,6 +229,7 @@
        results are revealed. */
     .step-progress.clickable .seg{cursor:pointer;}
     .step-progress.clickable .seg:hover .lbl{color:var(--navy);text-decoration:underline;text-underline-offset:3px;}
+    .step-progress.clickable .seg:focus-visible{outline:2px solid var(--navy-mid);outline-offset:3px;border-radius:4px;}
     .step-count{text-align:center;color:var(--muted);font-size:.8rem;margin:0 0 1rem;}
     .step-card{display:none;}
     .step-card.current{display:block;}
@@ -243,11 +244,14 @@
     .skip-btn:hover{color:var(--navy);}
     .skip-confirmed{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.5rem;background:var(--sbg);border:1px solid var(--success);color:var(--success);padding:.7rem .9rem;border-radius:var(--rsm);font-size:.83rem;}
     .skip-undo{background:none;border:1px solid var(--success);color:var(--success);border-radius:20px;padding:2px 10px;font-size:.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
-    .edit-links-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:1rem;font-size:.85rem;}
+    .edit-links-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:1rem;font-size:.85rem;}
     .edit-links-label{color:var(--muted);font-weight:600;}
-    .edit-links-sep{color:var(--blight);}
     .edit-link{background:none;border:none;padding:0;cursor:pointer;color:var(--navy-mid);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;text-decoration:underline;text-underline-offset:2px;}
     .edit-link:hover{color:var(--navy);}
+    /* A separate <span> separator between links can get stranded at the end
+       of a wrapped line on narrow screens. Attaching it to the link that
+       follows via ::before keeps it moving with that link instead. */
+    .edit-link + .edit-link::before{content:'·';margin-right:8px;color:var(--blight);text-decoration:none;display:inline-block;}
     .rerow{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--blight);font-size:.83rem;}
     .rerow:last-child{border-bottom:none;}
     .rerow .rbkt{color:var(--muted);} .rerow .rrate{font-weight:700;color:var(--navy);}
@@ -475,7 +479,7 @@
   <!-- PNP-BRAND-END -->
   <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
     <button class="clear-btn" onclick="clearAllInputs()" title="Clear all inputs and saved data">Clear</button>
-    <button class="print-btn" onclick="window.print()" title="Opens your browser's print dialog — choose &quot;Save as PDF&quot; as the destination">Print / PDF</button>
+    <button class="print-btn" onclick="printResults()" title="Opens your browser's print dialog — choose &quot;Save as PDF&quot; as the destination">Print / PDF</button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Switch to dark mode" aria-label="Switch to dark mode">
       <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
       <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -974,11 +978,8 @@
   <div class="edit-links-row">
     <span class="edit-links-label">✎ Edit:</span>
     <button type="button" class="edit-link" onclick="jumpToStep(1)">How much</button>
-    <span class="edit-links-sep">·</span>
     <button type="button" class="edit-link" onclick="jumpToStep(2)">About you</button>
-    <span class="edit-links-sep">·</span>
     <button type="button" class="edit-link" onclick="jumpToStep(3)">Income &amp; accounts</button>
-    <span class="edit-links-sep">·</span>
     <button type="button" class="edit-link" onclick="jumpToStep(4)">Medicare &amp; assumptions</button>
   </div>
   <div class="card" style="margin-bottom:1.25rem">
@@ -1302,6 +1303,12 @@ function animCount(el,to,fmtFn,dur=900){
 function setConvert(amt){
   var el=document.getElementById('convertAmt');
   if(el){el.value=amt;}
+  // A real amount is being set here, so clear any leftover "you skipped
+  // this" state from step 1 — otherwise going back to edit it shows a
+  // filled-in field next to a banner claiming it was skipped.
+  var row=document.getElementById('skipRow'), conf=document.getElementById('skipConfirmed');
+  if(row) row.style.display='flex';
+  if(conf) conf.style.display='none';
   calc();
   var rw=document.getElementById('resultsWrap');
   if(rw)rw.scrollIntoView({behavior:'smooth',block:'start'});
@@ -1361,13 +1368,28 @@ function revealResults(noScroll){
   var results = document.getElementById('resultsArea');
   if(stepper) stepper.style.display = 'none';
   if(results) results.style.display = 'block';
-  calc();
-  if(results && !noScroll) results.scrollIntoView({behavior:'smooth',block:'start'});
+  // Flip this BEFORE calc() runs, not after — calc() is what calls
+  // saveInputs(), and saveInputs() only persists once _wizardCompleted is
+  // true. Flipping it first means the very first results view after
+  // finishing the wizard is actually saved, instead of only the next edit.
   if(!_wizardCompleted){
     _wizardCompleted = true;
     var sp = document.getElementById('stepProgress');
-    if(sp) sp.classList.add('clickable');
+    if(sp){
+      sp.classList.add('clickable');
+      sp.querySelectorAll('.seg').forEach(function(seg){
+        seg.setAttribute('tabindex','0');
+        seg.setAttribute('role','button');
+        var lbl=seg.querySelector('.lbl');
+        seg.setAttribute('aria-label','Edit: '+(lbl?lbl.textContent:''));
+        seg.addEventListener('keydown', function(e){
+          if(e.key==='Enter'||e.key===' '){ e.preventDefault(); jumpToStep(+seg.dataset.step); }
+        });
+      });
+    }
   }
+  calc();
+  if(results && !noScroll) results.scrollIntoView({behavior:'smooth',block:'start'});
 }
 // Jumping directly to a step only makes sense once the wizard has been
 // completed once (_wizardCompleted, set by revealResults) — before that the
@@ -1381,6 +1403,15 @@ function jumpToStep(n){
   if(stepper) stepper.style.display = 'block';
   renderStep();
   if(stepper) stepper.scrollIntoView({behavior:'smooth',block:'start'});
+}
+// Printing while #resultsArea is still display:none (wizard not finished
+// yet) would print an almost-blank page — the print stylesheet hides the
+// stepper too, so there'd be nothing left to show. Reveal results first
+// (using whatever's currently filled in, defaults included) so there's
+// always something real on the page before the print dialog opens.
+function printResults(){
+  if(!_wizardCompleted) revealResults(true);
+  window.print();
 }
 var _lastConvertAmt = null;
 function skipConvertAmt(){
@@ -2695,6 +2726,23 @@ function clearAllInputs(){
   if(banner) banner.style.display='none';
   // Reset visual toggle to default (roth wins state)
   setVisState('roth');
+  // Reset wizard state too — otherwise "Clear" leaves the user staring at
+  // an emptied-out results view instead of actually starting over. Flip
+  // _wizardCompleted BEFORE calc() so the now-default values don't get
+  // immediately re-saved to the localStorage entry that removeItem just
+  // cleared above.
+  _step = 1;
+  _wizardCompleted = false;
+  var stepperEl = document.getElementById('stepper');
+  var resultsEl = document.getElementById('resultsArea');
+  if(resultsEl) resultsEl.style.display = 'none';
+  if(stepperEl) stepperEl.style.display = 'block';
+  var spEl = document.getElementById('stepProgress');
+  if(spEl) spEl.classList.remove('clickable');
+  var skipRowEl = document.getElementById('skipRow'), skipConfEl = document.getElementById('skipConfirmed');
+  if(skipRowEl) skipRowEl.style.display = 'flex';
+  if(skipConfEl) skipConfEl.style.display = 'none';
+  renderStep();
   // Recalculate
   calc();
   // Scroll to top
@@ -2873,6 +2921,12 @@ var INPUT_FIELDS = ['currentAge','retirementAge','filingStatus','sex',
   'taxSource','medicareStatus','partD'];
 
 function saveInputs(){
+  // calc() runs unconditionally on every page load (including the very
+  // first, before the user has touched anything), so saving on every call
+  // would persist untouched defaults immediately — making every later
+  // reload look like a "returning visitor" and skip the wizard for good.
+  // Only persist once the wizard has actually been completed once.
+  if(!_wizardCompleted) return;
   try{
     var saved={};
     INPUT_FIELDS.forEach(function(id){
