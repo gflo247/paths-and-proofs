@@ -280,7 +280,7 @@
        scrollIntoView aligns a target's top edge with the viewport's top
        edge, which is exactly where the header covers it, so the section
        title lands hidden behind the header instead of visible below it. */
-    #federalTaxSection,#stateTaxSection,#ssTaxSection,#irmaaCard,#survivalCard,#rmdCfCard{scroll-margin-top:76px;}
+    #federalTaxSection,#stateTaxSection,#ssTaxSection,#irmaaCard,#survivalCard,#rmdCfCard,#rateClimbCard{scroll-margin-top:76px;}
     .src-note{font-size:.72rem;color:var(--muted);margin:-2px 0 6px;}
     .src-note a{color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px;}
     .src-note a:hover{color:var(--navy);}
@@ -2102,6 +2102,13 @@ function renderMarginalChart(p){
   // those can't be dodged vertically.
   var markerColor = {irmaa:tc('#8B1A1A','#EA7070'), ltcg:tc('#5B4A9E','#A08FE8'), torpedo:tc('#8B3A00','#E89A50')};
   var shortLabel = {irmaa:function(c){ return 'Medicare '+c.label.split('Tier ')[1]; }, ltcg:function(){ return 'Qual. div./LTCG bumped'; }, torpedo:function(){ return 'SS fully taxable'; }};
+  // Where each marker type's full explanation lives below — same targets the
+  // "Why This Answer" panel already jumps to for these exact facts, reused
+  // here via jumpToLever() so a marker on the curve and its detail card are
+  // never explained twice with two different navigation systems. ltcg has no
+  // dedicated card (same reason the LTCG-bumped why-item has no target),
+  // stays non-clickable.
+  var markerTarget = {irmaa:{id:'irmaaCard'}, torpedo:{id:'ssTaxSection', details:true}};
   var named = sweep.crossings.filter(function(c){ return c.type!=='bracket'; });
   var namedX = named.map(function(c){ return xSc(c.x); });
 
@@ -2266,11 +2273,16 @@ function renderMarginalChart(p){
     // unlike a fixed "near the edge" threshold, which let long labels like
     // "Qual. div./LTCG bumped" overflow when the marker sat mid-chart.
     var lcx = Math.min(W-lw/2, Math.max(lw/2, lx));
-    g.append('rect').attr('x',lcx-lw/2).attr('y',ly-10).attr('width',lw).attr('height',14).attr('rx',3)
+    var target = markerTarget[c.type];
+    var pill = g.append('rect').attr('x',lcx-lw/2).attr('y',ly-10).attr('width',lw).attr('height',14).attr('rx',3)
       .attr('fill',tc('rgba(245,241,235,0.8)','rgba(34,39,48,0.85)'));
-    g.append('text').attr('x',lcx).attr('y',ly).attr('text-anchor','middle')
+    var lbl = g.append('text').attr('x',lcx).attr('y',ly).attr('text-anchor','middle')
       .style('font-size','10px').style('font-weight',700).style('font-family','DM Sans, sans-serif')
       .style('fill',color).text(text);
+    if(target){
+      pill.style('cursor','pointer').on('click',function(){ jumpToLever(target.id,target.details); });
+      lbl.style('cursor','pointer').on('click',function(){ jumpToLever(target.id,target.details); });
+    }
     labelRects.push({x0:lcx-lw/2,x1:lcx+lw/2,y0:ly-10,y1:ly-10+14});
   });
 
@@ -2296,11 +2308,13 @@ function renderMarginalChart(p){
       var rect = {x0:cx-w/2, x1:cx+w/2, y0:H-6-h, y1:H-6};
       var blocked = labelRects.some(function(r){ return rect.x0<r.x1 && rect.x1>r.x0 && rect.y0<r.y1 && rect.y1>r.y0; });
       if(blocked) return;
-      g.append('rect').attr('x',rect.x0).attr('y',rect.y0).attr('width',w).attr('height',h).attr('rx',3)
-        .attr('fill',tc('rgba(245,241,235,0.75)','rgba(34,39,48,0.8)'));
+      var bpill = g.append('rect').attr('x',rect.x0).attr('y',rect.y0).attr('width',w).attr('height',h).attr('rx',3)
+        .attr('fill',tc('rgba(245,241,235,0.75)','rgba(34,39,48,0.8)')).style('cursor','pointer')
+        .on('click',function(){ jumpToLever('federalTaxSection',true); });
       g.append('text').attr('x',cx).attr('y',H-6-3).attr('text-anchor','middle')
         .style('font-size','9px').style('font-family','DM Sans, sans-serif')
-        .style('fill',tc('#3D4451','#A6ABB5'))
+        .style('fill',tc('#3D4451','#A6ABB5')).style('cursor','pointer')
+        .on('click',function(){ jumpToLever('federalTaxSection',true); })
         .text(text);
       labelRects.push(rect);
     });
@@ -2314,11 +2328,15 @@ function renderMarginalChart(p){
       .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
       .style('font-family','DM Sans, sans-serif').style('font-size','.76rem');
     named.forEach(function(c){
+      var target = markerTarget[c.type];
       var row = legend.append('div').style('display','flex').style('align-items','center').style('gap','7px');
+      if(target) row.style('cursor','pointer').on('click',function(){ jumpToLever(target.id,target.details); });
       row.append('span').style('width','9px').style('height','9px').style('border-radius','50%')
         .style('flex-shrink','0').style('background',markerColor[c.type]);
       row.append('span').style('color',tc('#3D4451','#A6ABB5'))
         .text(shortLabel[c.type](c)+' — crosses at '+fmt(c.x));
+      if(target) row.append('span').style('color',tc('#1C3A5E','#7DB2EC')).style('font-weight','600')
+        .style('margin-left','auto').style('white-space','nowrap').text('details →');
     });
   }
 
@@ -3632,6 +3650,7 @@ function calc(){
       +'<div class="trow ttotal"><span class="tl">Federal conversion tax cost</span><span class="tv">'+fmt(cvtTxFed)+'</span></div>'
       +'<div class="bracket-box"><div class="tsubhead" style="margin-top:0">2026 Federal Brackets — '+(status==='mfj'?'Married Filing Jointly':status==='mfs'?'Married Filing Separately':status==='hoh'?'Head of Household':'Single')+'</div>'
       +buildBracketTable(status,margR(tiBase,status))
+      +(tradBal>0?'<button type="button" class="edit-link" style="margin-top:.35rem" onclick="jumpToLever(\'rateClimbCard\',false)">See this as a curve — how the rate climbs as you convert more ↓</button>':'')
       +'</div>'
       + stateSectionHtml
       + reloCompareHtml
