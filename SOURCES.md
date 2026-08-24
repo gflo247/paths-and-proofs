@@ -254,6 +254,16 @@ user's own state when accuracy matters to them.
   > per-spouse SS split is available in either engine, so a joint return nets
   > the full household SS benefit against the full $16,000 household cap — a
   > household-level approximation, not a true per-spouse netting.
+  > **Fixed 2026-08-24 (commit 088ca20): the $16,000 joint figure was ALSO**
+  > **gated only on the primary filer's own age**, so a mixed-age joint return
+  > got the wrong shelter — the full $16,000 if only the primary was 65+ (should
+  > be $8,000), or $0 if only the spouse was 65+ (should be $8,000, order-
+  > dependent). Reshaped to the existing `ageTieredCap` mechanism (per-person
+  > summing, already used by GA/WI/CO/LA/etc.) — a pure reclassification since
+  > WV's pensionIncome is pooled, except `ageTieredCap` had no `netAgainstSS`
+  > support yet (only the flat-cap branch did), so that was added to both
+  > engines' `ageTieredCap` branches too. Found while auditing the identical
+  > gap in NY and AL (same commit).
 - **Social Security: now fully exempt (note corrected).** The prior note said
   "some Social Security exemption" — that described the phase-in. HB 4880's
   phase-out **completed in 2026**: SS is 100% exempt for all WV taxpayers
@@ -291,6 +301,18 @@ user's own state when accuracy matters to them.
   > see `roth-ny-ma-state-tax-fixes.md` project memory for why a fully per-spouse
   > model was considered and reverted (would have silently broken the Relocation
   > tool's NY calculation via a gap in `relo-engine.mjs`'s non-pooled branch).
+  > **Fixed 2026-08-24 (commit 088ca20): the flat-cap version above turned out to**
+  > **have its OWN live bug** — gated only on the primary filer's own age, so a
+  > joint return where just the SPOUSE was 59.5+ (not the primary) got ZERO
+  > shelter, and where just the primary qualified, wrongly got the FULL $20,000
+  > that should have been per-person anyway once BOTH spouses qualify (should be
+  > $40,000). Confirmed genuinely per-individual via NY DOR: "capped at $20,000
+  > per person, whether filing jointly or separately... one spouse can't claim
+  > the other spouse's unused exclusion." Fixed properly this time by building
+  > `ageTieredCap` support into `relo-engine.mjs`'s non-pooled branch (the exact
+  > gap the June 2026 pass reverted around) and giving Roth a dedicated
+  > `stateCode==='NY'` branch (shared with AL, same shape: pension separately
+  > exempt) applying the per-person-summed cap to the conversion alone.
 - **Retirement income: taxable above the exclusion (`ex:false` correct).** IRA/
   conversion income is taxed; government pensions are fully exempt.
 - **Social Security:** fully exempt — so NY is **not** in the eight-state SS
@@ -535,6 +557,14 @@ on the conversion). Audited against primary sources. **Two were actively wrong**
   > RETDED/RIX state — so it got a dedicated `stateCode==='AL'` branch applying the
   > cap to the conversion alone. Found while auditing the same per-person-not-flat
   > bug shape in AR/DE/KY/OK (see those entries) and LA (`roth-co-ri-la-audit.md`).
+  > **Fixed further 2026-08-24 (commit 088ca20): that dedicated branch's flat**
+  > **`capSingle`/`capJoint` was STILL gated only on the primary filer's own age**
+  > — a mixed-age joint return got $12,000 if the primary alone qualified (should
+  > be $6,000) or $0 if only the spouse qualified (should be $6,000, order-
+  > dependent). Reshaped to `ageTieredCap`/`perPersonTiers` and merged into a
+  > single shared `stateCode==='AL'||'NY'` branch (identical shape: pension
+  > separately exempt, per-person-summed cap applies to the conversion alone).
+  > Found while fixing the identical gap in NY and WV (same commit).
 
 ### Social Security state-tax disclosure — ✅ added & verified June 2026
 
