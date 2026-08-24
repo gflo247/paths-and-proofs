@@ -16,13 +16,22 @@ import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.url), 'utf8');
 const startMarker = '} else if(rd){';
-const endMarker = '} else if(rix){';
+// Was '} else if(rix){' — went stale when the CT and AL/NY dedicated branches were
+// inserted between the rd branch and the rix branch this session, so the extraction
+// window silently grew to swallow their bodies too, producing invalid JS. The rd
+// branch's real end is whatever the very next branch is; keep this in sync if that
+// changes again (this file isn't wired into npm run verify, so nothing else catches it).
+const endMarker = '} else if(stateCode===\'CT\'){';
 const startIdx = html.indexOf(startMarker);
 const endIdx = html.indexOf(endMarker, startIdx);
 if (startIdx === -1 || endIdx === -1) throw new Error('RETDED branch markers not found in index.html');
 const body = html.slice(startIdx + startMarker.length, endIdx).replace(/stD\.cr/g, 'cr');
 
-const computeRetdedDelta = new Function('rd', 'status', 'pensionIncome', 'taxableCvt', 'cr', `
+// curAge added 2026-08-24 alongside the conversionAgeGate fix (the rd branch now
+// reads it to gate a Roth conversion's eligibility separately from ordinary
+// pensionIncome) — the extracted body references it, so it must be a parameter here
+// too, or the extraction throws ReferenceError instead of testing anything.
+const computeRetdedDelta = new Function('rd', 'status', 'pensionIncome', 'taxableCvt', 'cr', 'curAge', `
   let cvtTxSt;
   ${body}
   return cvtTxSt;
@@ -42,26 +51,35 @@ function check(label, actual, expected, tolerance = 0.01) {
 const statuses = ['single', 'mfj', 'mfs', 'hoh'];
 const pensionAmts = [0, 30000, 67610, 67611, 100000, 135220, 135221, 200000];
 const cvtAmts = [0, 5000, 20000, 50000, 100000];
+const ages = [30, 45, 59, 59.5, 60, 70];
+const gate = MI.retDeduction.conversionAgeGate;
 
 let checked = 0;
 for (const status of statuses) {
   const cap = MI.retDeduction[status] ?? MI.retDeduction.single;
   for (const pensionIncome of pensionAmts) {
     for (const taxableCvt of cvtAmts) {
-      checked++;
-      const got = computeRetdedDelta(MI.retDeduction, status, pensionIncome, taxableCvt, MI.cr);
+      for (const curAge of ages) {
+        checked++;
+        const got = computeRetdedDelta(MI.retDeduction, status, pensionIncome, taxableCvt, MI.cr, curAge);
 
-      // Independent algebraic derivation: taxable-above-cap before/with the
-      // conversion, delta taxed at the flat rate.
-      const taxableBase = Math.max(0, pensionIncome - cap);
-      const taxableWith = Math.max(0, pensionIncome + taxableCvt - cap);
-      const expected = (taxableWith - taxableBase) * MI.cr;
+        // Independent algebraic derivation: the conversion only competes for the cap
+        // if curAge clears conversionAgeGate (2026-08-24 MI fix) — below the gate it's
+        // fully taxable regardless of the cap, while pensionIncome always competes for
+        // (and can still fully use) the cap regardless of age.
+        const cvtQualifies = gate == null || curAge >= gate;
+        const cvtEligible = cvtQualifies ? taxableCvt : 0;
+        const taxableBase = Math.max(0, pensionIncome - cap);
+        const taxableWithEligible = Math.max(0, pensionIncome + cvtEligible - cap);
+        const expected = (taxableWithEligible - taxableBase) + (taxableCvt - cvtEligible);
+        const expectedTax = expected * MI.cr;
 
-      check(`MI ${status} cap=${cap} pension=${pensionIncome} cvt=${taxableCvt}`, got, expected);
+        check(`MI ${status} age=${curAge} cap=${cap} pension=${pensionIncome} cvt=${taxableCvt}`, got, expectedTax);
+      }
     }
   }
 }
 
-console.log(`Checked ${checked.toLocaleString()} MI RETDED combinations across ${statuses.length} filing statuses.`);
+console.log(`Checked ${checked.toLocaleString()} MI RETDED combinations across ${statuses.length} filing statuses and ${ages.length} ages (incl. the conversionAgeGate).`);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
