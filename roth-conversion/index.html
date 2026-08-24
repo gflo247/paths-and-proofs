@@ -380,6 +380,7 @@
     .optcard.irm .optamt{color:var(--success);}
     .optcard.trp .optamt{color:var(--amber);}
     .optnote{font-size:.84rem;color:var(--muted);line-height:1.5;flex:1;}
+    .optover{font-size:.82rem;color:var(--amber);font-weight:600;margin:-2px 0 6px;}
     .optbtn{font-size:.82rem;font-weight:700;color:var(--amber);margin-top:.3rem;}
     .optna{font-size:.95rem;color:var(--muted);font-style:italic;}
     .strack.jt{height:13px;border-radius:5px;overflow:hidden;background:var(--blight);}
@@ -1596,6 +1597,18 @@ function computeOptTargets(income,ltcg,ss,status,std,nSr,nMed,taxableFrac){
 function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
   if(!opts)return'';
 
+  // Shared by every "ceiling" card (bracket-fill, Medicare-safe, SS-avoid —
+  // NOT the SS-clear card, where exceeding the target is the intended
+  // outcome, not a problem). The progress bar alone clamps visually at
+  // 100% once curCvt passes target, with nothing to signal you've actually
+  // gone past it — found live: an $18,000 conversion against an $11,500
+  // bracket-fill target looked "full," not "$6,500 over," and read as
+  // confusing rather than as a warning.
+  function overshootNote(target, label){
+    var over = (curCvt||0) - target;
+    return over>0 ? '<div class="optover">⚠ '+fmt(over)+' over — '+label+'</div>' : '';
+  }
+
   var cards=[];
   var ICO_BRKT='<svg class="opt-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V14M12 20V8M20 20V4"/></svg>';
   var ICO_IRM='<svg class="opt-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v6M9 11h6"/></svg>';
@@ -1607,8 +1620,9 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
       '<div class="optcard brkt" onclick="setConvert('+opts.bracketAmt+',\'federalTaxSection\',true)">'
       +'<div class="optlbl">'+ICO_BRKT+'Fill your '+pct(opts.curBR,0)+' bracket</div>'
       +'<div class="optamt">'+fmt(opts.bracketAmt)+'</div>'
-      +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.bracketAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>target: '+fmt(opts.bracketAmt)+'</span></div></div>'
-      +'<div class="optnote">Converts up to the top of your current federal bracket — stops right before the next higher rate applies'+
+      +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.bracketAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>up to: '+fmt(opts.bracketAmt)+'</span></div></div>'
+      +overshootNote(opts.bracketAmt,'that portion is taxed at your next bracket\'s higher rate, not '+pct(opts.curBR,0))
+      +'<div class="optnote">The total conversion amount that exactly fills the rest of your '+pct(opts.curBR,0)+' bracket — converting up to this stays at '+pct(opts.curBR,0)+'; converting past it pushes the extra into the next bracket'+
         (ss>0?' (hidden SS tax already accounted for)':'')+
       '</div>'
       +'<div class="optbtn">Explore this →</div>'
@@ -1635,6 +1649,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
         +'<div class="optlbl">'+ICO_IRM+'Medicare income limit</div>'
         +'<div class="optamt">'+fmt(opts.irmaaAmt)+'</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.irmaaAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe limit: '+fmt(opts.irmaaAmt)+'</span></div></div>'
+        +overshootNote(opts.irmaaAmt,'you\'ve likely crossed into the next Medicare premium tier')
         +'<div class="optnote">Keeps your 2026 total income just below $'+(opts.irmaaNext/1000).toFixed(0)+'K — avoids the Medicare surcharge that hits your 2028 premiums</div>'
         +'<div class="optbtn">Explore this →</div>'
         +'</div>'
@@ -1685,6 +1700,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
         +'<div class="optlbl">'+ICO_TRP+'Avoid the SS Hidden Tax Zone</div>'
         +'<div class="optamt">'+fmt(t.avoidAmt)+'</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/t.avoidAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe limit: '+fmt(t.avoidAmt)+'</span></div></div>'
+        +overshootNote(t.avoidAmt,'you\'re already in the hidden-tax zone this was meant to avoid')
         +'<div class="optnote">Keeps your combined income below $'+(t.loThr/1000).toFixed(0)+'K — the threshold where Social Security starts becoming taxable and your effective rate jumps toward 40%</div>'
         +'<div class="optbtn">Explore this →</div>'
         +'</div>'
@@ -1698,9 +1714,11 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
   return'<div class="card" style="margin-bottom:1.25rem">'
     +'<div class="stitle">📊 Common Planning Thresholds</div>'
     +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.55">'
-    +'These are three commonly used reference points in Roth conversion planning — each based on a specific constraint in your inputs. '
-    +'They are useful starting points for a conversation with your advisor, not definitive recommendations. '
-    +'Optimal amounts depend on factors this calculator cannot see: future income changes, estate goals, healthcare subsidies, and more.'
+    +'Each card below targets a different priority, not a ranked list — pick whichever matches what matters most to you this year: '
+    +'staying in your current tax bracket, avoiding a Medicare premium jump, or clearing the Social Security hidden-tax zone. '
+    +'They\'re independent constraints computed from your own inputs, and the amount that satisfies one won\'t necessarily satisfy another. '
+    +'Useful as a starting point for a conversation with your advisor, not a definitive recommendation — '
+    +'optimal amounts also depend on factors this calculator cannot see: future income changes, estate goals, healthcare subsidies, and more.'
     +'</p>'
     +'<div class="optwrap" style="grid-template-columns:repeat('+ncols+',1fr)">'
     +cards.join('')
@@ -3751,6 +3769,7 @@ function calc(){
       + ssRow
       +'<div class="trow"><span class="tl">Standard deduction (2026)</span><span class="tv">−'+fmt(std)+'</span></div>'
       + srRow
+      +'<div class="trow"><span class="tl"><strong>Taxable income (before conversion)</strong></span><span class="tv"><strong>'+fmt(tiBase)+'</strong></span></div>'
       +'<div class="trow"><span class="tl">Federal tax without conversion</span><span class="tv">'+fmt(txOut)+'</span></div>'
       +'<div class="trow"><span class="tl">Federal tax with conversion</span><span class="tv">'+fmt(txIn)+'</span></div>'
       +'<div class="trow ttotal"><span class="tl">Federal conversion tax cost</span><span class="tv">'+fmt(cvtTxFed)+'</span></div>'
