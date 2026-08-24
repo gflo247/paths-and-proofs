@@ -3767,9 +3767,20 @@ function calc(){
       +'<div class="trow"><span class="tl">Wages/other income</span><span class="tv">'+fmt(income)+'</span></div>'
       +(pensionIncome>0?'<div class="trow"><span class="tl">Pension/retirement-account income</span><span class="tv">'+fmt(pensionIncome)+'</span></div>':'')
       + ssRow
-      +'<div class="trow"><span class="tl">Standard deduction (2026)</span><span class="tv">−'+fmt(std)+'</span></div>'
-      + srRow
-      +'<div class="trow"><span class="tl"><strong>Taxable income (before conversion)</strong></span><span class="tv"><strong>'+fmt(tiBase)+'</strong></span></div>'
+      // Folded into the taxable-income row's own label when the standard
+      // deduction is the only subtraction happening (no senior deduction) —
+      // safe because pension/SS above are additions, not subtractions, so
+      // they don't change what this row's label claims. Once the senior
+      // deduction also applies, folding it in too would mean dynamically
+      // itemizing every deduction inside one label — at that point the
+      // separate rows are clearer, so this only folds the single-deduction
+      // case, not tries to generalize to all of them.
+      +(srDW>0
+        ? '<div class="trow"><span class="tl">Standard deduction (2026)</span><span class="tv">−'+fmt(std)+'</span></div>'
+          + srRow
+          +'<div class="trow"><span class="tl"><strong>Taxable income (before conversion)</strong></span><span class="tv"><strong>'+fmt(tiBase)+'</strong></span></div>'
+        : '<div class="trow"><span class="tl"><strong>Taxable income (before conversion)</strong> − 2026 Standard Deduction ('+fmt(std)+')</span><span class="tv"><strong>'+fmt(tiBase)+'</strong></span></div>'
+      )
       +'<div class="trow"><span class="tl">Federal tax without conversion</span><span class="tv">'+fmt(txOut)+'</span></div>'
       +'<div class="trow"><span class="tl">Federal tax with conversion</span><span class="tv">'+fmt(txIn)+'</span></div>'
       +'<div class="trow ttotal"><span class="tl">Federal conversion tax cost</span><span class="tv">'+fmt(cvtTxFed)+'</span></div>'
