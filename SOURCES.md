@@ -172,6 +172,24 @@ user's own state when accuracy matters to them.
   > imply 13.3% is a near-top bracket rate. Clarified that the bracket tops at
   > 12.3% and 13.3% is the >$1M surcharge, and that the tool uses the 9.3%
   > middle bracket.
+- **Relocation tool bug fixed 2026-08-24 (`taxRules.bracketsByStatus.hoh`,
+  not the Roth `cr` above — Roth's flat 9.3% approximation was unaffected).**
+  Single, MFJ, and MFS all blend the +1% surcharge into a distinct top bracket
+  row (a `{rate:0.133, upTo:null}` row after a split at the flat $1,000,000
+  surcharge floor); HOH's table was missing that row entirely, topping out at
+  12.3% with `upTo: null` — so an HOH filer's tax was silently computed with
+  NO surcharge at all above $1,010,417. Confirmed live: at $2,000,000 taxable
+  income the engine returned $219,192 instead of the correct $229,192, a real
+  $10,000 (4.4%) understatement. Verified all four filing statuses' bracket
+  thresholds against the primary source — [CA FTB 2025 Form 540 tax rate
+  schedules](https://www.ftb.ca.gov/forms/2025/2025-540-tax-rate-schedules.pdf)
+  (Schedule X/Y/Z) — before and after the fix, using `relo-engine.mjs`
+  directly, not a reimplementation. Same "stale HOH" pattern this file has
+  hit before (see the Stale MFS/HoH rule in CLAUDE.md); the `check-states-json.mjs`
+  G1–G4 guard didn't catch it because it checks structural validity and
+  MFJ-vs-single, not HOH bracket-count parity — worth a G5 guard someday, not
+  added here to keep the fix minimal. See `roth-ca-hoh-surcharge-fix.md`
+  project memory.
 
 #### Ohio — ✅ fully verified June 2026
 
