@@ -384,25 +384,57 @@ user's own state when accuracy matters to them.
   was unmodeled; now that the real stepped tiers are implemented, the tool
   computes the actual figure instead of defaulting to worst-case.
 
-#### Pennsylvania — ✅ fully verified June 2026
+#### Pennsylvania — ✅ fixed 2026-08-24 (the June 2026 "verification" below missed the actual rule)
 
 - **Rate: 3.07% flat — confirmed correct.** Stable since 2004; lowest flat rate in
   the country.
-- **`ex:true` — CONFIRMED correct (the opposite of NJ).** PA genuinely exempts
-  IRA/401(k)/pension distributions once you reach retirement age (59½ for IRAs),
-  with **no income cliff**. Per the PA DOR, an IRA distribution is exempt "so long
-  as the taxpayer is not required to pay a penalty for early withdrawal" — i.e.,
-  at 59½+. So a Roth conversion at 59½+ is genuinely PA-tax-free. This is why
-  `ex:true` is right here but was wrong for NJ: PA has a real, cliff-free
-  exemption. Source: [PA DOR — Gross Compensation](https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide/gross-compensation).
-- **Note sharpened** to add the 59½ condition: a conversion *before* 59½ could be
-  taxed as an early distribution. (Also noted PA's up-front taxation of
-  contributions — basis recovery means no double tax at withdrawal.)
+- **`ex:true` correct, but `exMinAge:59.5` was WRONG — fixed 2026-08-24, no age
+  gate at all.** The June 2026 pass (below, kept for the record) cited the right
+  source but read only the general "eligible plan, age condition of the plan"
+  rule that governs ORDINARY withdrawals-to-spend — and missed a separate,
+  specific exception that applies to a CONVERSION. The same [PA DOR — Gross
+  Compensation guide](https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide/gross-compensation)
+  states: "A premature withdrawal from a regular IRA or Roth IRA is taxable
+  compensation... **unless timely rolled over into an eligible Pennsylvania
+  retirement plan**" — and the same guide separately confirms Roth IRAs ARE
+  "eligible Pennsylvania retirement plans." A full trustee-to-trustee (or timely
+  60-day) Roth conversion IS a rollover into an eligible PA retirement plan, so
+  it falls under that exception and is untaxed **at any age** — the 59½ rule
+  governs a genuine withdrawal you spend, not a conversion that stays inside the
+  retirement-account system. Cross-checked against independent secondary sources
+  (TurboTax community threads with practitioner replies, Bogleheads forum,
+  advisor blogs) — all converge on the same reading. Caveat carried into the
+  note: if any part of the distribution is withheld (e.g. for federal taxes)
+  rather than fully converted, THAT portion is taxable under cost-recovery —
+  this calculator assumes a full conversion with no withholding leakage.
+  > Found live 2026-08-24: a $50,000 conversion at age 45 was charged the full
+  > 3.07% (\$1,535) as an "early distribution," when it should have been \$0.
+  > Only `roth.exMinAge` changed — `taxRules.retirementIncome.ageGate:59.5`
+  > (used by the Relocation tool, which models genuine withdrawals-to-spend,
+  > a real and still-correctly-59.5-gated scenario) was deliberately left
+  > untouched. See `roth-pa-conversion-fix.md` project memory.
 - **The `ex:true` advice copy is correct for PA:** the engine warns that converting
   in a state that won't tax the eventual withdrawal means paying state tax now for
   no benefit — exactly the right insight for PA.
 - **Social Security: fully exempt** — so PA is **not** in the eight-state
   disclosure and the SS tool is correct for PA.
+
+<details>
+<summary>Superseded June 2026 note (kept for the record — the source cited was
+right, the reading of it was incomplete)</summary>
+
+> **`ex:true` — CONFIRMED correct (the opposite of NJ).** PA genuinely exempts
+> IRA/401(k)/pension distributions once you reach retirement age (59½ for IRAs),
+> with **no income cliff**. Per the PA DOR, an IRA distribution is exempt "so long
+> as the taxpayer is not required to pay a penalty for early withdrawal" — i.e.,
+> at 59½+. So a Roth conversion at 59½+ is genuinely PA-tax-free. This is why
+> `ex:true` is right here but was wrong for NJ: PA has a real, cliff-free
+> exemption.
+> Note sharpened to add the 59½ condition: a conversion *before* 59½ could be
+> taxed as an early distribution. (Also noted PA's up-front taxation of
+> contributions — basis recovery means no double tax at withdrawal.)
+
+</details>
 
 #### Florida — ✅ fully verified June 2026 (no change needed)
 
