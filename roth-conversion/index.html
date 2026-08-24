@@ -1227,19 +1227,11 @@ const RIX={
 };
 
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
-// IRS SS taxation thresholds — NOT inflation-adjusted since 1984/1993
-// otherIncome = wages/pensions/etc, EXCLUDING Social Security
-// ss = gross annual SS benefit received
-function calcTaxableSS(ss,otherIncome,status){
-  if(!ss||ss<=0)return 0;
-  if(status==='mfs')return ss*.85; // MFS: 85% always taxable immediately
-  const[lo,hi]=status==='mfj'?[32000,44000]:[25000,34000]; // HOH same as single
-  const pi=otherIncome+ss*.5; // provisional income = AGI + 0.5*SS
-  if(pi<=lo)return 0;
-  if(pi<=hi)return Math.min(ss*.5,(pi-lo)*.5);
-  const zone1=Math.min(ss*.5,(hi-lo)*.5);
-  return Math.min(ss*.85,zone1+(pi-hi)*.85);
-}
+// calcTaxableSS moved to core/retirement-rules.js (as federalTaxableSS) 2026-08-24 —
+// it was already a confirmed byte-identical duplicate of relo-engine.mjs's own
+// federalTaxableSS. Bridged back into this file's classic-script scope as
+// window.calcTaxableSS by the <script type="module"> block near the end of this file
+// (same literal name, so every call site below needs zero edits).
 
 // ═══ SSA 2023 PERIOD LIFE TABLE (as used in the 2026 Trustees Report) ═══
 // Ages 20-100: exact figures, pulled directly from ssa.gov/oact/STATS/table4c6.html.
@@ -4501,19 +4493,41 @@ window.addEventListener('scroll', function(){
   if(!_wayfindTicking){ requestAnimationFrame(updateWayfindBar); _wayfindTicking = true; }
 }, {passive:true});
 
-document.getElementById('taxYearTitle').textContent=new Date().getFullYear();
-var _hadSavedInputs = loadSavedInputs();
-// On desktop, the right-column card holding this panel is otherwise shorter than
-// the left column, leaving a stretched, empty gap below it (CSS grid stretches both
-// columns to match the taller one). Open it by default only above the same 740px
-// breakpoint the layout itself collapses at — mobile keeps it collapsed, since
-// there it precedes the verdict in reading order and staying compact still matters.
-var _taxDetailsEl = document.getElementById('taxDetails');
-if(_taxDetailsEl && window.innerWidth > 740) _taxDetailsEl.open = true;
-calc();
-// Returning visitors with saved inputs skip the wizard and see their answer
-// immediately; first-time visitors start at step 1.
-if(_hadSavedInputs) revealResults(true); else renderStep();
+// Wrapped in DOMContentLoaded (2026-08-24, part of the shared retirement-rules
+// refactor): this is the ONLY place in this file that calls calc()/computeConversionCost
+// eagerly at parse time rather than from a user-interaction handler (every other
+// calc() call site already only fires post-interaction, well after DOMContentLoaded).
+// A trailing <script type="module"> (added right after this block, before </body>)
+// always executes with defer timing per the HTML spec, regardless of where it's
+// placed — so without this wrap, window.resolveRetirementIncome/window.calcTaxableSS
+// would still be undefined at the moment this eager calc() runs, breaking the very
+// first render for EVERY state, not just RIX states (calcTaxableSS is used broadly).
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('taxYearTitle').textContent=new Date().getFullYear();
+  var _hadSavedInputs = loadSavedInputs();
+  // On desktop, the right-column card holding this panel is otherwise shorter than
+  // the left column, leaving a stretched, empty gap below it (CSS grid stretches both
+  // columns to match the taller one). Open it by default only above the same 740px
+  // breakpoint the layout itself collapses at — mobile keeps it collapsed, since
+  // there it precedes the verdict in reading order and staying compact still matters.
+  var _taxDetailsEl = document.getElementById('taxDetails');
+  if(_taxDetailsEl && window.innerWidth > 740) _taxDetailsEl.open = true;
+  calc();
+  // Returning visitors with saved inputs skip the wizard and see their answer
+  // immediately; first-time visitors start at step 1.
+  if(_hadSavedInputs) revealResults(true); else renderStep();
+});
+</script>
+<script type="module">
+  // Bridges the shared retirement-exclusion module into this file's classic-script
+  // scope. Aliased to the SAME literal names the deleted local functions used
+  // (calcTaxableSS) so every existing call site needs zero edits — an unresolved
+  // classic-script reference falls through the scope chain to the same-named window
+  // property, set by the time any real call site fires (all confirmed to run only
+  // post-interaction or from the DOMContentLoaded-wrapped block above).
+  import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
+  window.resolveRetirementIncome = resolveRetirementIncome;
+  window.calcTaxableSS = federalTaxableSS;
 </script>
 </body>
 </html>
