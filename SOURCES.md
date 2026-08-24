@@ -718,6 +718,21 @@ impact remaining `ex:false` fixes.
   > Added 2026-07-28: `states.json`'s prior entry had `capJoint` set flat to
   > $12,000 (same as single) instead of the confirmed per-person $24,000 — a
   > real, live bug in the relocation tool, fixed the same pass.
+  > **Fixed 2026-08-24 (commit d6d40d2): the "doubled for a joint return where
+  > both spouses qualify" language above was correct PROSE, but the actual
+  > CODE still used a flat `capJoint:24000` gated only on the PRIMARY FILER's
+  > own age (`cliffType:"hard"`) — the same bug class as the original NY
+  > finding that opened this session's audit. Confirmed via La. Admin. Code
+  > tit. 61, section I-1311's own worked examples (Example 1: a 65+ spouse who
+  > receives no retirement income of their own contributes $0 — the
+  > exemption doesn't transfer between spouses) that the cap is genuinely
+  > per-INDIVIDUAL. A joint filer where only the primary filer was 65+ was
+  > wrongly getting the full $24,000; reshaped to the existing `ageTieredCap`
+  > mechanism (already used by GA/WI/CO) so each spouse's own age correctly
+  > gates their own $12,000, no new engine code needed. Quantified live: a
+  > 70/60 joint couple with $30,000 pension income went from $6,000 taxable
+  > (wrong) to $18,000 taxable (correct — only the 70-year-old's $12,000
+  > shelters).
 - **Social Security and most LA government/military pensions are fully
   exempt.**
 
