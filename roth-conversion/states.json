@@ -2618,7 +2618,7 @@
   "roth": {
    "cr": 0.05,
    "ex": false,
-   "note": "Flat 5% on most income including IRA and conversion income, with NO retirement exclusion (Massachusetts taxes IRA/401(k) withdrawals in full). Watch the 4% surtax on income above $1M: a very large conversion could push that year past the threshold and add 4% on the excess. Social Security is exempt."
+   "note": "Flat 5% on most income including IRA and conversion income, with NO retirement exclusion (Massachusetts taxes IRA/401(k) withdrawals in full). This calculator applies the 4% surtax on income above $1M — a very large conversion that pushes that year past the threshold is taxed at 9% on the excess, 5% below it. The $1M threshold is the constitutional amendment's original figure; the real 2026 figure is CPI-indexed and somewhat higher (unconfirmed against a primary DOR source, so the calculator uses the lower, unadjusted number rather than an unverified estimate). Social Security is exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -4078,7 +4078,7 @@
   "roth": {
    "cr": 0.06,
    "ex": false,
-   "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income (per person; still $20,000 for 2026 — proposed increases were not enacted). Government pensions and Social Security are fully exempt. NYC residents also pay city tax up to ~3.876%."
+   "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income (per person under NY law; still $20,000 for 2026 — proposed increases were not enacted). This calculator applies a $20,000 cap to your conversion once you're 59.5+ — it doesn't model per-spouse IRA ownership, so a joint return gets the same $20,000, not $40,000, and how much shelters also depends on how much of the cap your other retirement income already uses. Government pensions and Social Security are fully exempt and don't use up the cap. NYC residents also pay city tax up to ~3.876%."
   },
   "taxRules": {
    "bracketsByStatus": {

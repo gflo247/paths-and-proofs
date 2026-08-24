@@ -50,7 +50,7 @@ function check(label, actual, expected, tolerance = 1) {
 // combinations, comparing rixExcluded's returned excluded-amount against what relo-engine
 // implies (competingAmt - penTaxable, feeding the SAME amount in as `pension` alone so
 // there's nothing to pool).
-const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV'];
+const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV', 'NY'];
 const statuses = ['single', 'mfj'];
 const ages = [45, 55, 62, 63, 65, 67, 70, 80];
 const competingAmts = [0, 5000, 20000, 50000, 90000, 150000];
@@ -69,10 +69,19 @@ for (const code of RIX_STATES) {
             const agiProxy = wages + competingAmt; // ss=0, no nii/ltcg equivalent in relo-engine either
             const got = rixExcluded(rix, status, age, spouseAge, competingAmt, agiProxy, 0);
 
+            // iraWithdrawal, not pension: for pooled states (pensionIncome.sameAs ===
+            // "retirementIncome") relo-engine combines iraWithdrawal+pension before
+            // applying the exclusion, so feeding the whole competingAmt through either
+            // field alone gives the same combined total and the same result. For NOT-
+            // pooled states — NY, whose pensionIncome is its own separate always-exempt
+            // government-pension category — "pension" input skips retirementIncome's
+            // exclusion logic entirely (comparing against the wrong statutory bucket);
+            // iraWithdrawal is the field that always routes through retirementIncome,
+            // pooled or not, so it's the one that actually tests the shape under test.
             const relo = computeStateIncomeTax(rules, status, {
-              pension: competingAmt, wages, age, spouseAge,
+              iraWithdrawal: competingAmt, wages, age, spouseAge,
             });
-            const expected = competingAmt - relo.breakdown.penTaxable;
+            const expected = competingAmt - relo.breakdown.iraTaxable;
 
             check(`${code} ${status} age=${age} spouseAge=${spouseAge} amt=${competingAmt} wages=${wages}`, got, expected);
           }

@@ -115,7 +115,19 @@ function buildExAgeBlock(json) {
 // was resolved 2026-07-31 — netAgainstSS:true on its taxRules.retirementIncome.exclusion
 // nets the SS benefit against the cap before it reaches this table, so it's included below
 // alongside the other RIX-shape states rather than falling back to the flat-cr approximation.
-const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV'];
+// NY added 2026-08-24: states.json already had NY's taxRules.retirementIncome (flat
+// $20,000 cap once 59.5+, "hard" cliffType, per NY Tax Law and tax.ny.gov) but it was
+// never added to this allowlist, so NY silently fell back to the flat-cr approximation
+// despite the site's own displayed note telling users about the exclusion — found live
+// (a 62-year-old converting $15,000, entirely within the disclosed cap, was still charged
+// NY tax on the full amount). Considered re-shaping to ageTieredCap/perPersonTiers (like
+// WI) so a joint return sums each spouse's own $20k instead of sharing one flat $20k, but
+// reverted: NY's pensionIncome is NOT pooled with retirementIncome in relo-engine.mjs
+// (unlike every other ageTieredCap state), and relo-engine's non-pooled branch has no
+// ageTieredCap support — that combination would have silently broken the Relocation
+// tool's NY calculation. Kept the flat cap (same known per-spouse-approximation as
+// LA/WV) rather than fix a shared-core gap as a side effect of a Roth-only fix.
+const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV', 'NY'];
 const RIX_OPEN = 'const RIX={';
 const RIX_CLOSE = '};';
 

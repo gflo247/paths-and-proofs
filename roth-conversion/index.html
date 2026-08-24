@@ -1151,7 +1151,7 @@ const ST={
   LA: {n:'Louisiana',cr:.03,ex:false,note:'Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a retirement-income exclusion at 65+ — $12,000 single, $24,000 joint (CPI-adjusted; exact TY2026 figures pending LDR\'s 2026 IT-540i) — that this calculator applies before taxing the rest at 3%. This exclusion is for pension/retirement-account income specifically, not wages — already receiving a pension? Enter it in the Pension / Retirement-Account field below. Social Security and most LA government/military pensions are fully exempt.'},
   ME: {n:'Maine',cr:.0715,ex:false,note:'Graduated 5.8% to 7.15%; the 7.15% top starts near $65k single / $130k joint, so a conversion that brings total income near $100k lands at the 7.15% used here (smaller totals pay 6.75% or less). Important: Maine\'s pension income deduction does NOT apply to Roth conversions — they are specifically excluded — so the conversion is fully taxable with no shelter. Social Security is exempt.'},
   MD: {n:'Maryland',cr:.0575,ex:false,note:'State 2% to 5.75% (plus new 6.25% and 6.5% brackets above ~$250k), AND a mandatory county tax of about 2.25% to 3.2% on top — so the real rate is higher than the state figure shown. Important: Maryland\'s pension exclusion (about $36k at 65+) covers 401(k)/403(b)/pension income but EXCLUDES all IRAs, so a Roth conversion gets no shelter and is fully taxable. Social Security is exempt.'},
-  MA: {n:'Massachusetts',cr:.05,ex:false,note:'Flat 5% on most income including IRA and conversion income, with NO retirement exclusion (Massachusetts taxes IRA/401(k) withdrawals in full). Watch the 4% surtax on income above $1M: a very large conversion could push that year past the threshold and add 4% on the excess. Social Security is exempt.'},
+  MA: {n:'Massachusetts',cr:.05,ex:false,note:'Flat 5% on most income including IRA and conversion income, with NO retirement exclusion (Massachusetts taxes IRA/401(k) withdrawals in full). This calculator applies the 4% surtax on income above $1M — a very large conversion that pushes that year past the threshold is taxed at 9% on the excess, 5% below it. The $1M threshold is the constitutional amendment\'s original figure; the real 2026 figure is CPI-indexed and somewhat higher (unconfirmed against a primary DOR source, so the calculator uses the lower, unadjusted number rather than an unverified estimate). Social Security is exempt.'},
   MI: {n:'Michigan',cr:.0425,ex:false,note:'Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint (the same $67,610 single limit applies if you\'re married filing separately), regardless of birth year — wages don\'t count toward this cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly. Detroit and 23 other Michigan cities add their own local income tax on top of the state rate — not modeled here; check your city if you live in one.'},
   MN: {n:'Minnesota',cr:.068,ex:false,note:'Graduated 5.35% to 9.85%; the 6.8% band runs to about $109k single, so a conversion that brings total income near $100k lands at the 6.8% used here (7.85% applies from ~$109k to ~$203k, 9.85% above). IRA and Roth-conversion income is fully taxable (no broad retirement exclusion). Watch a second effect: a conversion raises your income and can shrink Minnesota\'s Social Security subtraction, pulling more of your benefits into MN tax that year.'},
   MS: {n:'Mississippi',cr:.044,ex:true,note:'Mississippi exempts qualified retirement income — IRA, 401(k), and pension — once you have met the plan\'s retirement requirements (generally age 59.5). A conversion at 59.5+ is therefore MS-tax-free; an EARLY distribution before then does not qualify and is taxed at the flat rate (4.4% for 2026, stepping down toward 3.75%). Social Security is fully exempt.'},
@@ -1162,7 +1162,7 @@ const ST={
   NH: {n:'New Hampshire',cr:0,ex:true,note:'No income tax (interest/dividend tax ended 2025).'},
   NJ: {n:'New Jersey',cr:.0637,ex:false,note:'New Jersey excludes up to $75,000 single / $100,000 joint of retirement income, including a conversion, for those 62+ — below a $100,000 Total Income threshold (NJ\'s own income line, which excludes Social Security entirely). Between $100,000 and $150,000 the exclusion steps down to a smaller percentage of your actual income rather than disappearing outright; above $150,000 it\'s $0. This calculator applies the real stepped tiers, taxing whatever isn\'t sheltered at rates up to 10.75% (6.37% is typical for a mid-size conversion). Social Security is fully exempt from NJ tax.'},
   NM: {n:'New Mexico',cr:.049,ex:false,note:'Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands near the 4.9% band used here. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AGI — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico\'s separate Social Security exemption, not this deduction. This calculator applies the real stepped table.'},
-  NY: {n:'New York',cr:.06,ex:false,note:'Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income (per person; still $20,000 for 2026 — proposed increases were not enacted). Government pensions and Social Security are fully exempt. NYC residents also pay city tax up to ~3.876%.'},
+  NY: {n:'New York',cr:.06,ex:false,note:'Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income (per person under NY law; still $20,000 for 2026 — proposed increases were not enacted). This calculator applies a $20,000 cap to your conversion once you\'re 59.5+ — it doesn\'t model per-spouse IRA ownership, so a joint return gets the same $20,000, not $40,000, and how much shelters also depends on how much of the cap your other retirement income already uses. Government pensions and Social Security are fully exempt and don\'t use up the cap. NYC residents also pay city tax up to ~3.876%.'},
   NC: {n:'North Carolina',cr:.0399,ex:false,note:'Flat 3.99% for 2026 (final step of a phasedown; scheduled to keep falling toward 2.99% by 2028), applied to IRA and conversion income. Social Security is exempt. Being flat, the conversion is taxed at the same rate regardless of size.'},
   ND: {n:'North Dakota',cr:.0195,ex:false,note:'Very low rates topping out at 2.5%, applied to IRA and conversion income — among the lowest state taxes on a conversion anywhere. The 2.5% top starts near $245k, so a conversion that brings total income near $100k lands at the 1.95% used here. Social Security is exempt. North Dakota has a 0% bottom bracket, so part of a small conversion may not be taxed at all.'},
   OH: {n:'Ohio',cr:.0275,ex:false,note:'For 2026 Ohio uses a flat 2.75% on income above $26,050 (0% below). IRA and Roth-conversion income is taxable at that rate; a small retirement-income credit (up to $200 total) barely offsets a conversion. Social Security is fully exempt from Ohio tax.'},
@@ -1218,6 +1218,7 @@ const RIX={
   CT: {"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":{"single":75000,"joint":100000},"zeroByAGI":{"single":100000,"joint":150000},"excludesIRA":false,"steps":{"single":[{"upTo":74999,"pct":1},{"upTo":77499,"pct":0.85},{"upTo":79999,"pct":0.7},{"upTo":82499,"pct":0.55},{"upTo":84999,"pct":0.4},{"upTo":87499,"pct":0.25},{"upTo":89999,"pct":0.1},{"upTo":94999,"pct":0.05},{"upTo":99999,"pct":0.025},{"upTo":null,"pct":0}],"joint":[{"upTo":99999,"pct":1},{"upTo":104999,"pct":0.85},{"upTo":109999,"pct":0.7},{"upTo":114999,"pct":0.55},{"upTo":119999,"pct":0.4},{"upTo":124999,"pct":0.25},{"upTo":129999,"pct":0.1},{"upTo":139999,"pct":0.05},{"upTo":149999,"pct":0.025},{"upTo":null,"pct":0}]}}},
   NJ: {"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":75000,"capJoint":100000,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"thresholdExcludesSS":true,"steps":{"single":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.375},{"upTo":150000,"pct":0.1875},{"upTo":null,"pct":0}],"joint":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.5},{"upTo":150000,"pct":0.25},{"upTo":null,"pct":0}]}}},
   WV: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":8000,"capJoint":16000,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"netAgainstSS":true}},
+  NY: {"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":20000,"capJoint":20000,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
 };
 
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
@@ -3419,6 +3420,13 @@ function computeConversionCost(cvtAmt, ctx){
   const rd  = RETDED[stateCode];
   const rix = RIX[stateCode];
   let cvtTxSt;
+  // Overrides the "~X% marginal" label below when a state's TRUE marginal
+  // rate on this specific conversion differs from its flat stD.cr — found
+  // live: MA's surtax branch could tax part of a conversion at 9% while the
+  // label kept saying "~5.0%", the exact sentence-vs-number mismatch class
+  // this whole audit pass exists to catch. Defaults to stD.cr; only MA's
+  // branch below overrides it, and only when the surtax actually applied.
+  let stMarginalDisp = stD.cr;
   if(exQualifies){
     cvtTxSt = 0;
   } else if(rd){
@@ -3454,6 +3462,34 @@ function computeConversionCost(cvtAmt, ctx){
     const stTiBase = Math.max(0, ohBase - OH_ZERO_BRACKET);
     const stTiWith = Math.max(0, (ohBase+taxableCvt) - OH_ZERO_BRACKET);
     cvtTxSt = (stTiWith - stTiBase) * stD.cr;
+  } else if(stateCode==='MA'){
+    // Massachusetts' 4% surtax on income above the constitutional amendment's
+    // original $1,000,000 threshold — found live: previously not modeled at
+    // all (a conversion pushing well past $1M got charged the flat 5% only,
+    // despite the site's own note explicitly warning about this surtax).
+    // Two things about this figure are NOT primary-source-confirmed and
+    // should be verified against mass.gov or a DOR technical information
+    // release before treating this as precise: (1) the real 2026 threshold
+    // is CPI-indexed and higher than $1,000,000 (secondary sources converge
+    // on ~$1,107,750, but none cite the DOR figure directly, so the ROUND
+    // origin number is used here deliberately — understating who's affected
+    // rather than guessing a specific unverified number); (2) whether the
+    // threshold is the same $1M for every filing status or doubles for a
+    // joint return — applied here as the SAME threshold regardless of
+    // status, matching the general understanding that this surtax does not
+    // double for MFJ, but that too wants a citation. Applies ON TOP of the
+    // flat 5% (taxableCvt*stD.cr below), not instead of it.
+    const MA_SURTAX_THRESHOLD = 1000000;
+    const MA_SURTAX_RATE = 0.04;
+    // income here is ALREADY wagesInc+pensionIncome (reassigned above); SS
+    // excluded from the base, matching MA's own SS exemption (same pattern
+    // as Ohio above).
+    const maBase   = income + nii + ltcg;
+    const stTiBase = Math.max(0, maBase - MA_SURTAX_THRESHOLD);
+    const stTiWith = Math.max(0, (maBase+taxableCvt) - MA_SURTAX_THRESHOLD);
+    const surtax   = (stTiWith - stTiBase) * MA_SURTAX_RATE;
+    cvtTxSt = taxableCvt * stD.cr + surtax;
+    if(surtax>0) stMarginalDisp = stD.cr + MA_SURTAX_RATE;
   } else {
     cvtTxSt = taxableCvt * stD.cr;
   }
@@ -3481,7 +3517,7 @@ function computeConversionCost(cvtAmt, ctx){
     agiBase, agiWith, ordAgiBase, ordAgiWith, std, srD, srDW, tiBase, tiWith,
     txOut, txIn, cvtTxFed, tiWithNoTorpedo, txInNoTorpedo, torpedoTax,
     totalTiBase, totalTiWith, ltcgAmtBase, ltcgAmtWith, ltcgTaxBase, ltcgTaxWith, cvtTxLtcg,
-    exAge, exQualAge, exQualifies, rd, cvtTxSt,
+    exAge, exQualAge, exQualifies, rd, cvtTxSt, stMarginalDisp,
     niitThr, niiPool, niitBase, niitWith, niitCost,
     cvtTxTot, effR,
     iSt, tierBase, tierWith,
@@ -3608,7 +3644,7 @@ function calc(){
          agiBase, agiWith, ordAgiBase, ordAgiWith, std, srD, srDW, tiBase, tiWith,
          txOut, txIn, cvtTxFed, tiWithNoTorpedo, txInNoTorpedo, torpedoTax,
          totalTiBase, totalTiWith, ltcgAmtBase, ltcgAmtWith, ltcgTaxBase, ltcgTaxWith, cvtTxLtcg,
-         exAge, exQualAge, exQualifies, rd, cvtTxSt,
+         exAge, exQualAge, exQualifies, rd, cvtTxSt, stMarginalDisp,
          niitThr, niiPool, niitBase, niitWith, niitCost,
          cvtTxTot, effR} = cc;
 
@@ -3746,7 +3782,7 @@ function calc(){
       '<div class="tsep"></div>'
       +'<div class="tsubhead" id="stateTaxSection">State Tax ('+stD.n+')</div>'
       + capUsageHtml
-      +'<div class="trow"><span class="tl">State tax on conversion (~'+pct(stD.cr,1)+' marginal)</span><span class="tv">'+fmt(cvtTxSt)+'</span></div>'
+      +'<div class="trow"><span class="tl">State tax on conversion (~'+pct(stMarginalDisp,1)+' marginal)</span><span class="tv">'+fmt(cvtTxSt)+'</span></div>'
       + stateNote
       +'<div class="tsep"></div>'
       +(cvtTxLtcg>0?'<div class="trow"><span class="tl">Qualified div./LTCG bumped to a higher bracket</span><span class="tv">'+fmt(cvtTxLtcg)+'</span></div>':'')
