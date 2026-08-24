@@ -4960,7 +4960,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "On the SS-taxing list: SS exempt below ~$107k single / ~$133.75k joint federal AGI (2026), taxed above. Rhode Island has a retirement-income modification (up to $50,000 per person at Full Retirement Age for 2026, up from $20k) — but it covers ONLY 401(k)/403(b)/annuity/pension income and EXPLICITLY EXCLUDES all IRAs (traditional, Roth, SEP, SIMPLE). A Roth conversion is IRA income, so it gets NO shelter and is fully taxable. IRA-exclusion-trap family (cf. ME, MD) — RI is the most explicit, naming Roth. Hard all-or-nothing income cliff: $1 over the limit forfeits the entire exclusion. Military pensions fully exempt.",
+   "ssTreatment": "On the SS-taxing list: SS exempt below $107,000 single / $133,500 joint federal AGI (latest published, Tax Year 2025 — inflation-adjusted annually, RI DOT's Retirement Income Guide, Pub 2026-01), taxed above. BOTH the SS exemption and the retirement-income modification also require the taxpayer to have reached Social Security full retirement age (66-67 depending on birth year) — an AGE gate on top of the AGI threshold that this tool's Relocation engine does not yet check (flagged for a future fix; see roth.note). Rhode Island's retirement-income modification (up to $50,000 per person, up from $20,000 starting Tax Year 2025) covers ONLY 401(k)/403(b)/annuity/pension income and EXPLICITLY EXCLUDES all IRAs (traditional, Roth, SEP, SIMPLE). A Roth conversion is IRA income, so it gets NO shelter and is fully taxable. IRA-exclusion-trap family (cf. ME, MD) — RI is the most explicit, naming Roth. Hard all-or-nothing income cliff: $1 over the limit forfeits the entire exclusion. Military pensions fully exempt (no income or age requirement).",
    "bracketsNote": "Same thresholds all filing statuses (no MFJ doubling); inflation-indexed. 5.99% top over $186,450. roth.cr 4.75% representative (typical conversion lands in middle band). Source: RI Division of Taxation 2026.",
    "incomeTax": true,
    "source": "https://tax.ri.gov/"
@@ -4968,7 +4968,7 @@
   "roth": {
    "cr": 0.0475,
    "ex": false,
-   "note": "Three brackets (3.75% / 4.75% / 5.99%); 5.99% only starts near $176k, so a typical conversion lands in the 4.75% band used here. Important: Rhode Island's up-to-$50,000 retirement-income modification covers 401(k)/403(b)/pension/annuity income but specifically EXCLUDES all IRAs — so a Roth conversion gets no shelter and is fully taxable. Rhode Island also taxes Social Security above ~$107k single / ~$133.75k joint, a threshold a conversion can cross."
+   "note": "Three brackets (3.75% / 4.75% / 5.99%); 5.99% only starts near $176k, so a typical conversion lands in the 4.75% band used here. Important: Rhode Island's up-to-$50,000 retirement-income modification covers 401(k)/403(b)/pension/annuity income but specifically EXCLUDES all IRAs — so a Roth conversion gets no shelter and is fully taxable. Rhode Island also taxes Social Security above $107,000 single / $133,500 joint federal AGI, a threshold a conversion can cross (both this and the pension modification above also require reaching Social Security full retirement age, not just staying under the AGI limit)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5033,7 +5033,7 @@
     "taxed": true,
     "exemptBelowAGI": {
      "single": 107000,
-     "joint": 133750
+     "joint": 133500
     },
     "phaseInAboveAGI": null,
     "maxTaxableFraction": 0.85
