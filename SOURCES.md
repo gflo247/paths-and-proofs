@@ -874,22 +874,26 @@ Income Tax Rates report and state sources.
   > MODELED.** A conversion that pushed total income well past $1M was still
   > taxed at a flat 5%, no surtax added — found live (income $900k + $300k
   > conversion, i.e. $1.2M total, computed as flat 5% with $0 surtax). Now
-  > applies the extra 4% to the portion of income above $1,000,000 (9% total on
-  > the excess, 5% below it), same before/with-delta pattern as the Ohio
-  > zero-bracket special case. **⚠️ Threshold precision caveat, not fully
-  > resolved:** used $1,000,000 — the constitutional amendment's original,
-  > un-indexed figure (also already present in this state's `facts.brackets`)
-  > — rather than the real 2026 CPI-indexed figure, because mass.gov blocked
-  > every fetch attempt (403 on the surtax info page, DOR forms, and the TIR
-  > page) and no secondary source cited an actual DOR release for the exact
-  > number (they converged on ~$1,107,750 but without a traceable citation —
-  > exactly the aggregator-was-wrong pattern this file exists to avoid).
-  > Deliberately used the lower, defensibly-sourced figure over a precise-but-
-  > uncited one. **Also unconfirmed:** whether the threshold is the same $1M
-  > for every filing status or doubles for MFJ — implemented as the same
-  > threshold regardless of status. Both should be confirmed against mass.gov
-  > or a DOR technical information release directly before treating this as
-  > fully verified — see `roth-ny-ma-state-tax-fixes.md` project memory.
+  > applies the extra 4% to the portion of income above the threshold (9% total
+  > on the excess, 5% below it), same before/with-delta pattern as the Ohio
+  > zero-bracket special case.
+  > **Threshold precision — resolved 2026-08-24.** Initially shipped with
+  > $1,000,000 (the constitutional amendment's original, un-indexed figure)
+  > because mass.gov blocked every direct fetch (403 on the surtax info page,
+  > DOR forms, and the TIR page) and secondary sources disagreed with each
+  > other ($1,107,750 vs. $1,107,950) with no traceable DOR citation. Resolved
+  > by reading mass.gov's own "4% Surtax on Taxable Income" page through an
+  > archive.org snapshot (dated 2026-07-27, since archive.org itself isn't
+  > blocked): DOR states plainly "The surtax threshold for: Tax year 2026 is
+  > **$1,107,750**" (2025: $1,083,150; 2024: $1,053,750; 2023: $1,000,000).
+  > Now the primary-sourced figure. **Still unconfirmed:** whether the
+  > threshold is the same for every filing status or doubles for MFJ —
+  > implemented as the same threshold regardless of status. mass.gov does
+  > confirm MFJ couples subject to the surtax must file jointly in
+  > Massachusetts with no exception (consistent with a single combined
+  > threshold, not doubled), but doesn't explicitly rule out doubling — see
+  > `roth-ny-ma-state-tax-fixes.md` and `roth-ma-surtax-threshold-fix.md`
+  > project memory.
 - **North Dakota** — **2.5% top confirmed** (0% bottom bracket; among the lowest
   conversion taxes anywhere). SS exempt.
 - **Arizona** — **2.5% flat confirmed** (lowest flat rate nationally). SS exempt.

@@ -2618,7 +2618,7 @@
   "roth": {
    "cr": 0.05,
    "ex": false,
-   "note": "Flat 5% on most income including IRA and conversion income, with NO retirement exclusion (Massachusetts taxes IRA/401(k) withdrawals in full). This calculator applies the 4% surtax on income above $1M — a very large conversion that pushes that year past the threshold is taxed at 9% on the excess, 5% below it. The $1M threshold is the constitutional amendment's original figure; the real 2026 figure is CPI-indexed and somewhat higher (unconfirmed against a primary DOR source, so the calculator uses the lower, unadjusted number rather than an unverified estimate). Social Security is exempt."
+   "note": "Flat 5% on most income including IRA and conversion income, with NO retirement exclusion (Massachusetts taxes IRA/401(k) withdrawals in full). This calculator applies the 4% surtax on income above $1,107,750 (the DOR's published, CPI-indexed 2026 threshold) — a very large conversion that pushes that year past the threshold is taxed at 9% on the excess, 5% below it. Social Security is exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
