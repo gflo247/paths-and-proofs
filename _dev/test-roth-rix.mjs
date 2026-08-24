@@ -64,7 +64,10 @@ const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'NJ', 'WV', 'NY'];
 // caught that bug. HOH files alone like single (see `status === 'mfj' ? ages : [age]`
 // below — only mfj triggers the spouse-age loop), so adding it here is a pure
 // regression-coverage improvement, not a new dimension needing its own loop structure.
-const statuses = ['single', 'mfj', 'hoh'];
+// Added 'mfs' the same day for the same reason — closing the last untested filing
+// status in this sweep. Same "files alone" shape as single/hoh, so no loop changes
+// needed here either.
+const statuses = ['single', 'mfj', 'hoh', 'mfs'];
 const ages = [45, 55, 62, 63, 65, 67, 70, 80];
 const competingAmts = [0, 5000, 20000, 50000, 90000, 150000];
 const otherWages = [0, 30000, 80000, 140000];
