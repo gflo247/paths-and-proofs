@@ -3846,7 +3846,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security exempt for AGI under $100k single / $150k joint (2023 reform); ABOVE those thresholds SS is taxed at full rates. IRA/conversion income taxable; those 65+ may deduct up to $8,000 of retirement income but only under income limits. A conversion raises AGI and can blow past BOTH the $8k-deduction limit AND the $100k/$150k SS-exemption threshold — a double cliff. Military retirement fully exempt. No traditional sales tax (Gross Receipts Tax instead).",
+   "ssTreatment": "Social Security exempt for AGI under $100k single / $150k joint AND HEAD OF HOUSEHOLD (NM TRD's own table groups HOH with joint, not single — confirmed 2026-08-24) (2023 reform); ABOVE those thresholds SS is taxed at full rates. IRA/conversion income taxable; those 65+ may deduct up to $8,000 of retirement income but only under income limits (same HOH-groups-with-joint pattern applies to this deduction's table too). A conversion raises AGI and can blow past BOTH the $8k-deduction limit AND the SS-exemption threshold — a double cliff. Military retirement fully exempt. No traditional sales tax (Gross Receipts Tax instead).",
    "bracketsNote": "Single-filer, 6-bracket HB252 structure (added the 4.3% bracket, restructured thresholds). 5.9% top only over $210k single / $315k joint. roth.cr 4.9% representative. Source: NM Taxation & Revenue Dept.",
    "incomeTax": true,
    "source": "https://www.tax.newmexico.gov/"
@@ -3854,7 +3854,7 @@
   "roth": {
    "cr": 0.049,
    "ex": false,
-   "note": "Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands near the 4.9% band used here. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AGI — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico's separate Social Security exemption, not this deduction. This calculator applies the real stepped table."
+   "note": "Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands near the 4.9% band used here. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AND HEAD OF HOUSEHOLD AGI (NM's own table groups HOH with joint, using the wider thresholds, not single's) — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico's separate Social Security exemption, not this deduction. This calculator applies the real stepped table for single, joint, and HOH; married-filing-separately has its own third, narrower table ($15,000-$25,500) that isn't separately modeled — MFS filers here get the single-bucket figures instead, consistent with how this tool handles MFS elsewhere."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -3970,7 +3970,8 @@
      "joint": 150000
     },
     "phaseInAboveAGI": null,
-    "maxTaxableFraction": 0.85
+    "maxTaxableFraction": 0.85,
+    "hohMapsToJoint": true
    },
    "retirementIncome": {
     "treatment": "exclusion",
@@ -3985,6 +3986,7 @@
      "fullBelowAGI": null,
      "zeroByAGI": null,
      "excludesIRA": false,
+     "hohMapsToJoint": true,
      "steps": {
       "single": [
        {"upTo": 18000, "amt": 8000},

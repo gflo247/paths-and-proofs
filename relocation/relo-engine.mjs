@@ -122,7 +122,13 @@ export function computeStateIncomeTax(rules, status, income) {
   const agiProxy = ss + iraWithdrawal + pension + capGains + wages;
 
   // --- Social Security ---
-  const tSS = taxableSS(rules.socialSecurity, ss, agiProxy, tStatus);
+  // NM groups Head of Household with Married Filing Jointly for its SS exemption
+  // threshold ($150k, not single's $100k) — confirmed via NM TRD's own published
+  // filing-status table. hohMapsToJoint lets a state override the usual
+  // single/mfs/hoh -> "single" mapping for this one lookup without changing tStatus
+  // globally (unverified for this state's OTHER thresholds).
+  const ssStatus = (status === "hoh" && rules.socialSecurity.hohMapsToJoint) ? "joint" : tStatus;
+  const tSS = taxableSS(rules.socialSecurity, ss, agiProxy, ssStatus);
   breakdown.taxableSS = tSS;
 
   // --- IRA / 401k / conversion withdrawal, and Pension ---
@@ -161,7 +167,12 @@ export function computeStateIncomeTax(rules, status, income) {
     // spouses). The AGI bracket is resolved ONCE from combined household AGI; only the
     // resulting per-person dollar figure is then multiplied by how many spouses qualify.
     const excl = ri.exclusion;
-    const tiers = excl.steps[tStatus];
+    // NM groups Head of Household with Married Filing Jointly for THIS TABLE specifically
+    // (confirmed via NM TRD's own Table 1 — HOH shares the wider joint thresholds, not
+    // single's) — but an HOH filer still files alone, so the qualifyingCount check just
+    // below stays keyed to the real tStatus (joint-return-ness), not this table lookup.
+    const stepsStatus = (status === "hoh" && excl.hohMapsToJoint) ? "joint" : tStatus;
+    const tiers = excl.steps[stepsStatus];
     const tier = tiers.find((t) => t.upTo == null || agiProxy <= t.upTo) || tiers[tiers.length - 1];
     const qualifies = (a) => excl.ageGate == null || a >= excl.ageGate;
     const qualifyingCount = excl.perQualifyingSpouse

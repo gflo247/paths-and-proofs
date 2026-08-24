@@ -58,7 +58,13 @@ function check(label, actual, expected, tolerance = 1) {
 // generic fallback, but only for hypothetical future non-CT steppedPercent states with
 // no iraWeightPct — CT itself takes relo-engine's dedicated weighted branch).
 const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'NJ', 'WV', 'NY'];
-const statuses = ['single', 'mfj'];
+// Added 'hoh' 2026-08-24 after finding NM's steppedAmount table groups HOH with 'joint'
+// (wider thresholds) instead of the usual single/mfs/hoh -> "single" mapping — the
+// generic sweep never exercised HOH for ANY state before this, so it couldn't have
+// caught that bug. HOH files alone like single (see `status === 'mfj' ? ages : [age]`
+// below — only mfj triggers the spouse-age loop), so adding it here is a pure
+// regression-coverage improvement, not a new dimension needing its own loop structure.
+const statuses = ['single', 'mfj', 'hoh'];
 const ages = [45, 55, 62, 63, 65, 67, 70, 80];
 const competingAmts = [0, 5000, 20000, 50000, 90000, 150000];
 const otherWages = [0, 30000, 80000, 140000];
