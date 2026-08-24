@@ -497,7 +497,7 @@
     }
    ],
    "ssTreatment": "Social Security exempt. All other retirement income — IRA, 401(k), pension, and Roth conversions — taxed as ordinary income (no preferential rate, no retirement exclusion). Top 13.3% includes the 1% Behavioral Health surcharge over $1M; thresholds inflation-indexed annually by FTB.",
-   "bracketsNote": "Single-filer thresholds, current FTB schedule; inflation-indexed yearly. MFJ thresholds ~2x except the $1M surcharge (not doubled).",
+   "bracketsNote": "Single-filer thresholds, current FTB schedule (2025, latest published; 2026 not yet released); inflation-indexed yearly. MFJ and HOH thresholds scale up except the flat $1M surcharge, which does NOT double/scale by filing status — each status's taxRules.bracketsByStatus table blends the +1% into a distinct top row (e.g. HOH: true 11.3%->12.3% transition is $1,010,417, but since that's above the flat $1M surcharge floor, the table splits at $1,000,000 first). Found live 2026-08-24: HOH's table was missing this blended top row entirely (topped out at 12.3% with no cap) — fixed; single/MFJ/MFS already had it.",
    "incomeTax": true,
    "source": "https://www.ftb.ca.gov/"
   },
@@ -665,10 +665,14 @@
      },
      {
       "rate": 0.113,
-      "upTo": 1010417
+      "upTo": 1000000
      },
      {
       "rate": 0.123,
+      "upTo": 1010417
+     },
+     {
+      "rate": 0.133,
       "upTo": null
      }
     ]
