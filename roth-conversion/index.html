@@ -3588,9 +3588,19 @@ function calc(){
   const stRetR    = stD.ex ? 0 : stD.cr;
   const totalRetR = retRate + stRetR;
 
-  const margA   = margR(tiWith, status);
-  const {room:brRoom, cur:curBR} = roomTo(tiBase, status);
+  const {cur:curBR} = roomTo(tiBase, status);
   const nxtBR   = BRAX[status].find(b=>b.r>curBR)?.r ?? .37;
+  // Same target the "Fill your X% bracket" optimizer card computes (a
+  // binary search that re-derives SS taxability/senior deduction as the
+  // conversion grows, floored to the nearest $500) — used below instead of
+  // roomTo's naive ceiling-minus-base gap so this note and that card never
+  // show two different numbers for the same fact. Found live: they'd
+  // disagreed ($11,800 from the naive gap vs $11,500 from the card) since
+  // the naive gap doesn't account for the conversion itself pushing more
+  // Social Security into taxability as it grows — roomTo still supplies
+  // curBR (the CURRENT bracket, unaffected by this) above.
+  const brOpt = computeOptTargets(income+pensionIncome+nii, ltcg, ss, status, STDD[status], nSr, nMed, taxableFrac);
+  const brRoomShown = brOpt.bracketState==='ok' ? brOpt.bracketAmt : 0;
   const rothIn  = taxSrc==='inside' ? Math.max(0, cvtAmt-cvtTxFed) : cvtAmt;
 
   // ── IRMAA (MAGI = AGI including taxable SS) ──
@@ -3711,8 +3721,8 @@ function calc(){
     ? '<div class="trow"><span class="tl">Amount actually entering Roth</span><span class="tv">'+fmt(rothIn)+'</span></div>'
     : '';
 
-  const brTip = (brRoom>0 && brRoom<120000)
-    ? '<div class="btip">💡 <strong>Bracket room:</strong> You can convert <strong>'+fmt(brRoom)+'</strong> more before crossing into the '+pct(nxtBR,0)+' bracket — still at your current '+pct(margA,0)+' federal rate.</div>'
+  const brTip = (brRoomShown>0 && brRoomShown<120000)
+    ? '<div class="btip">💡 <strong>Bracket room:</strong> You can convert <strong>'+fmt(brRoomShown)+'</strong> more before crossing into the '+pct(nxtBR,0)+' bracket — still at your current '+pct(curBR,0)+' federal rate.</div>'
     : '';
 
   const exemptTip = (stD.cr>0 && stRetR===0 && !exQualifies)
@@ -3835,7 +3845,7 @@ function calc(){
     if(beAge && beAge>curAge) blTxt += ' On the numbers alone, the Roth starts winning around age '+beAge+(survBE?' — '+pct(survBE,0)+' chance '+youOrOneOfYou+' is there.':'.');
   } else {
     blTxt += ' Your combined retirement rate ('+pct(totalRetR)+stRetNote+') is lower than today\'s conversion cost ('+pct(effR)+'). <strong>Keeping the money in traditional and paying the lower rate later looks like the better move.</strong>';
-    if(brRoom>2000) blTxt += ' If you still want to convert something, you have room for <strong>'+fmt(brRoom)+'</strong> within your current federal bracket.';
+    if(brRoomShown>2000) blTxt += ' If you still want to convert something, you have room for <strong>'+fmt(brRoomShown)+'</strong> within your current federal bracket.';
   }
   // Medicare-crossing and state-exemption sentences used to live here too, but
   // both are now covered by the "Why This Answer" panel right below the
