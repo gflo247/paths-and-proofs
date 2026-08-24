@@ -1208,22 +1208,22 @@ const EXAGE={
 // West Virginia's Social-Security-netting question is resolved and included below
 // (see WV's netAgainstSS).
 const RIX={
-  GA: {"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":62,"cap":35000},{"minAge":65,"cap":65000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
-  LA: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":12000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
-  SC: {"treatment":"offsetStack","ageGate":null,"exclusion":null,"offsetStack":{"tier1AgeGate":65,"tier1CapBelow":3000,"tier1CapAtOrAbove":10000,"tier2AgeGate":65,"tier2Ceiling":15000}},
-  VA: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"perSpousePhaseout","ageGate":65,"perPersonCap":12000,"thresholdAGI":{"single":50000,"joint":75000},"thresholdExcludesSS":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
-  WI: {"treatment":"exclusion","ageGate":67,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":67,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
-  NM: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedAmount","ageGate":65,"perQualifyingSpouse":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"hohMapsToJoint":true,"steps":{"single":[{"upTo":18000,"amt":8000},{"upTo":19500,"amt":7000},{"upTo":21000,"amt":6000},{"upTo":22500,"amt":5000},{"upTo":24000,"amt":4000},{"upTo":25500,"amt":3000},{"upTo":27000,"amt":2000},{"upTo":28500,"amt":1000},{"upTo":null,"amt":0}],"joint":[{"upTo":30000,"amt":8000},{"upTo":33000,"amt":7000},{"upTo":36000,"amt":6000},{"upTo":39000,"amt":5000},{"upTo":42000,"amt":4000},{"upTo":45000,"amt":3000},{"upTo":48000,"amt":2000},{"upTo":51000,"amt":1000},{"upTo":null,"amt":0}]}}},
-  CT: {"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":{"single":75000,"joint":100000},"zeroByAGI":{"single":100000,"joint":150000},"excludesIRA":false,"iraWeightPct":0.75,"steps":{"single":[{"upTo":74999,"pct":1},{"upTo":77499,"pct":0.85},{"upTo":79999,"pct":0.7},{"upTo":82499,"pct":0.55},{"upTo":84999,"pct":0.4},{"upTo":87499,"pct":0.25},{"upTo":89999,"pct":0.1},{"upTo":94999,"pct":0.05},{"upTo":99999,"pct":0.025},{"upTo":null,"pct":0}],"joint":[{"upTo":99999,"pct":1},{"upTo":104999,"pct":0.85},{"upTo":109999,"pct":0.7},{"upTo":114999,"pct":0.55},{"upTo":119999,"pct":0.4},{"upTo":124999,"pct":0.25},{"upTo":129999,"pct":0.1},{"upTo":139999,"pct":0.05},{"upTo":149999,"pct":0.025},{"upTo":null,"pct":0}]}}},
-  NJ: {"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":75000,"capJoint":100000,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"thresholdExcludesSS":true,"steps":{"single":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.375},{"upTo":150000,"pct":0.1875},{"upTo":null,"pct":0}],"joint":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.5},{"upTo":150000,"pct":0.25},{"upTo":null,"pct":0}]}}},
-  WV: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":8000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"netAgainstSS":true}},
-  NY: {"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":59.5,"cap":20000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
-  CO: {"treatment":"exclusion","ageGate":55,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":55,"cap":20000},{"minAge":65,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"sharesCapWithSS":true}},
-  AR: {"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":59.5,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
-  DE: {"treatment":"exclusion","ageGate":60,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":60,"cap":12500}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
-  KY: {"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":0,"cap":31110}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
-  OK: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":10000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
-  AL: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
+  GA: {"retirementIncome":{"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":62,"cap":35000},{"minAge":65,"cap":65000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
+  LA: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":12000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
+  SC: {"retirementIncome":{"treatment":"offsetStack","ageGate":null,"exclusion":null,"offsetStack":{"tier1AgeGate":65,"tier1CapBelow":3000,"tier1CapAtOrAbove":10000,"tier2AgeGate":65,"tier2Ceiling":15000}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
+  VA: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"perSpousePhaseout","ageGate":65,"perPersonCap":12000,"thresholdAGI":{"single":50000,"joint":75000},"thresholdExcludesSS":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
+  WI: {"retirementIncome":{"treatment":"exclusion","ageGate":67,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":67,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
+  NM: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedAmount","ageGate":65,"perQualifyingSpouse":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"hohMapsToJoint":true,"steps":{"single":[{"upTo":18000,"amt":8000},{"upTo":19500,"amt":7000},{"upTo":21000,"amt":6000},{"upTo":22500,"amt":5000},{"upTo":24000,"amt":4000},{"upTo":25500,"amt":3000},{"upTo":27000,"amt":2000},{"upTo":28500,"amt":1000},{"upTo":null,"amt":0}],"joint":[{"upTo":30000,"amt":8000},{"upTo":33000,"amt":7000},{"upTo":36000,"amt":6000},{"upTo":39000,"amt":5000},{"upTo":42000,"amt":4000},{"upTo":45000,"amt":3000},{"upTo":48000,"amt":2000},{"upTo":51000,"amt":1000},{"upTo":null,"amt":0}]}}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":100000,"joint":150000},"phaseInAboveAGI":null,"maxTaxableFraction":0.85,"hohMapsToJoint":true}},
+  CT: {"retirementIncome":{"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":{"single":75000,"joint":100000},"zeroByAGI":{"single":100000,"joint":150000},"excludesIRA":false,"iraWeightPct":0.75,"steps":{"single":[{"upTo":74999,"pct":1},{"upTo":77499,"pct":0.85},{"upTo":79999,"pct":0.7},{"upTo":82499,"pct":0.55},{"upTo":84999,"pct":0.4},{"upTo":87499,"pct":0.25},{"upTo":89999,"pct":0.1},{"upTo":94999,"pct":0.05},{"upTo":99999,"pct":0.025},{"upTo":null,"pct":0}],"joint":[{"upTo":99999,"pct":1},{"upTo":104999,"pct":0.85},{"upTo":109999,"pct":0.7},{"upTo":114999,"pct":0.55},{"upTo":119999,"pct":0.4},{"upTo":124999,"pct":0.25},{"upTo":129999,"pct":0.1},{"upTo":139999,"pct":0.05},{"upTo":149999,"pct":0.025},{"upTo":null,"pct":0}]}}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":75000,"joint":100000},"phaseInAboveAGI":null,"maxTaxableFraction":0.25}},
+  NJ: {"retirementIncome":{"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":75000,"capJoint":100000,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"thresholdExcludesSS":true,"steps":{"single":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.375},{"upTo":150000,"pct":0.1875},{"upTo":null,"pct":0}],"joint":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.5},{"upTo":150000,"pct":0.25},{"upTo":null,"pct":0}]}}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
+  WV: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":8000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"netAgainstSS":true}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
+  NY: {"retirementIncome":{"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":59.5,"cap":20000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"socialSecurity":{"taxed":false}},
+  CO: {"retirementIncome":{"treatment":"exclusion","ageGate":55,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":55,"cap":20000},{"minAge":65,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"sharesCapWithSS":true}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":true,"sharesRetirementCap":true,"fullExemptBelowAGI":{"single":75000,"joint":95000}}},
+  AR: {"retirementIncome":{"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":59.5,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":100000,"joint":100000},"phaseInAboveAGI":null,"maxTaxableFraction":0.85}},
+  DE: {"retirementIncome":{"treatment":"exclusion","ageGate":60,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":60,"cap":12500}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
+  KY: {"retirementIncome":{"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":0,"cap":31110}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
+  OK: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":10000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
+  AL: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"socialSecurity":{"taxed":false}},
 };
 
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
@@ -3234,106 +3234,11 @@ function loadSavedInputs(){
 // hand-copied version of the state-tax math that quietly fell out of sync
 // with this exact logic once (the Michigan-deduction bug), which is the
 // failure mode having one shared function exists to prevent.
-// Resolve the excluded dollar amount for a RIX-table state's retirement-income
-// deduction, given the household's competing amount (mirrors how RETDED already
-// treats "income" as the pension-equivalent that competes with a conversion for a
-// shared cap) and the AGI/SS figures the deduction's own threshold tests against.
-// Ports the same shapes verified for the relocation tool (relo-engine.mjs,
-// computeStateIncomeTax) — kept faithful to that behavior by the parity test in
-// _dev/test-roth-rix.mjs, not by copy-paste discipline alone. Two differences from
-// the relocation port, both intentional: (1) no IRA/pension pooling step, since this
-// tool already has a single "competing amount" the same way RETDED does; (2)
-// agiProxy/ssAmt come from THIS tool's own AGI calc (calcTaxableSS-derived, i.e. the
-// real taxable portion of Social Security), not relo-engine's cruder full-benefit sum.
-// ssGross is the raw annual SS benefit (unlike ssAmt, NOT the taxable portion) — needed
-// separately for WV's netAgainstSS, which nets against the benefit itself since WV
-// exempts SS from state tax regardless of federal taxability.
-function rixExcluded(rix, status, age, spouseAge, competingAmt, agiProxy, ssAmt, ssGross){
-  const tStatus = status==='mfj' ? 'joint' : 'single';
-  const isJoint = status==='mfj';
-  const ex = rix.exclusion;
-
-  if(rix.treatment==='exclusion' && ex.cliffType==='ageTieredCap'){
-    // GA (two real age tiers) / WI (one tier, but still needs summing so a joint
-    // return with only one qualifying spouse doesn't get the full doubled cap).
-    const tierFor=(a)=>{ let c=0; for(const t of ex.perPersonTiers) if(a>=t.minAge) c=Math.max(c,t.cap); return c; };
-    let cap = tierFor(age) + (isJoint ? tierFor(spouseAge ?? age) : 0);
-    // WV: nets the gross SS benefit against the per-person-summed cap — same
-    // mechanic as the generic "hard" branch's netAgainstSS below, now also needed
-    // here since WV's cap is genuinely per-spouse, not flat.
-    if(ex.netAgainstSS) cap = Math.max(0, cap - (ssGross || 0));
-    return Math.min(cap, competingAmt);
-  }
-
-  if(rix.treatment==='exclusion' && ex.cliffType==='steppedAmount'){
-    // NM: dollar amount (not %) tiered by AGI, applied x1 or x2 by qualifying-spouse count.
-    // NM's own Table 1 groups Head of Household with Married Filing Jointly (the WIDER
-    // thresholds), not with Single — found live: the usual single/mfs/hoh -> "single"
-    // mapping was backwards for NM specifically, showing $0 deduction at $35k AGI for an
-    // HOH filer who actually still qualifies for $6,000 under the real joint/HOH table.
-    const stepsStatus = (status==='hoh' && ex.hohMapsToJoint) ? 'joint' : tStatus;
-    const tiers = ex.steps[stepsStatus];
-    const tier = tiers.find(t=>t.upTo==null || agiProxy<=t.upTo) || tiers[tiers.length-1];
-    const qualifies=(a)=> ex.ageGate==null || a>=ex.ageGate;
-    const count = ex.perQualifyingSpouse
-      ? (qualifies(age)?1:0) + (isJoint && qualifies(spouseAge ?? age) ? 1:0)
-      : (qualifies(age)?1:0);
-    return Math.min(tier.amt*count, competingAmt);
-  }
-
-  if(rix.treatment==='exclusion' && ex.cliffType==='perSpousePhaseout'){
-    // VA: per-person cap summed by qualifying-spouse count, then phased out linearly
-    // above a threshold fixed by filing status (not by qualifying-spouse count).
-    const count = (age>=ex.ageGate?1:0) + (isJoint && (spouseAge??age)>=ex.ageGate ? 1:0);
-    const cap = ex.perPersonCap * count;
-    if(cap<=0) return 0;
-    const threshold = ex.thresholdAGI[tStatus];
-    const thresholdProxy = ex.thresholdExcludesSS ? agiProxy-ssAmt : agiProxy;
-    const zero = threshold+cap;
-    let frac;
-    if(thresholdProxy<=threshold) frac=1;
-    else if(thresholdProxy>=zero) frac=0;
-    else frac = 1-(thresholdProxy-threshold)/(zero-threshold);
-    return Math.min(cap*frac, competingAmt);
-  }
-
-  if(rix.treatment==='offsetStack'){
-    // SC: two deductions sharing one $15,000/person ceiling (not additive to $25k).
-    const os = rix.offsetStack;
-    const personShelter=(personAge)=>{
-      const tier1Cap = personAge>=os.tier1AgeGate ? os.tier1CapAtOrAbove : os.tier1CapBelow;
-      const tier1 = Math.min(tier1Cap, competingAmt);
-      const tier2 = personAge>=os.tier2AgeGate ? Math.max(0, os.tier2Ceiling-tier1) : 0;
-      return Math.min(tier1+tier2, competingAmt);
-    };
-    return isJoint
-      ? Math.min(personShelter(age)+personShelter(spouseAge ?? age), competingAmt)
-      : personShelter(age);
-  }
-
-  // Generic fallback (LA's flat age-gated cap; CT/NJ's stepped-percent-of-actual-income;
-  // WV's flat cap shared with Social Security) — gated on the OUTER ageGate using the
-  // primary filer's age only, matching relo-engine's own longstanding behavior for these
-  // states (a pre-existing simplification — the tool doesn't model per-spouse IRA
-  // ownership — not something introduced by this port).
-  const gateOk = rix.ageGate==null || age>=rix.ageGate;
-  if(!gateOk) return 0;
-  let cap = tStatus==='joint' ? ex.capJoint : ex.capSingle;
-  // WV: nets the gross SS benefit against the cap before it's applied — mirrors
-  // relo-engine's computeStateIncomeTax exactly (see that file for the household-level
-  // approximation this uses when no per-spouse SS split is available).
-  if(ex.netAgainstSS) cap = Math.max(0, (cap ?? 0) - (ssGross || 0));
-
-  if(ex.cliffType==='steppedPercent'){
-    const thresholdProxy = ex.thresholdExcludesSS ? agiProxy-ssAmt : agiProxy;
-    const tiers = ex.steps[tStatus];
-    const tier = tiers.find(t=>t.upTo==null || thresholdProxy<=t.upTo) || tiers[tiers.length-1];
-    const excluded = competingAmt*tier.pct;
-    return tier.capped ? Math.min(cap, excluded) : excluded;
-  }
-
-  return Math.min(cap ?? 0, competingAmt); // "hard" (LA)
-}
+// The per-cliffType exclusion math that used to live here (a rixExcluded() function
+// paralleling relo-engine.mjs's own dispatch) moved to core/retirement-rules.js
+// (resolveRetirementIncome, bridged in above as window.resolveRetirementIncome) on
+// 2026-08-24 — see the STATE TAX section of computeConversionCost below for the call
+// site, and that module's own header comment for why.
 
 // ctx: {income, pensionIncome, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac}
 function computeConversionCost(cvtAmt, ctx){
@@ -3454,62 +3359,36 @@ function computeConversionCost(cvtAmt, ctx){
     const stTiBase = Math.max(0, pensionIncome - Math.min(cap, pensionIncome));
     const stTiWithEligible = Math.max(0, (pensionIncome+cvtEligible) - Math.min(cap, pensionIncome+cvtEligible));
     cvtTxSt = ((stTiWithEligible - stTiBase) + (taxableCvt - cvtEligible)) * stD.cr;
-  } else if(stateCode==='CT'){
-    // Connecticut's pension/annuity exclusion treats IRA distributions
-    // differently from genuine pension/annuity income — found live via the
-    // official CT-1040 "Pension and Annuity Worksheet" (Line 2): only 75% of
-    // an IRA distribution (other than Roth) enters the eligible base before
-    // the AGI-tiered phase-out percentage applies; pension/annuity income
-    // enters at 100%. A Roth conversion IS an IRA distribution, so this
-    // calculator was overstating CT's shelter at every AGI tier — even the
-    // "fully exempt" tier below $75k single/$100k joint AGI only shelters
-    // 75% of an IRA distribution, never 100%. Applied ONLY to taxableCvt
-    // (unambiguously IRA-sourced); pensionIncome stays at 100% since this
-    // tool can't tell whether a user's entered pension income is genuinely
-    // pension-sourced or IRA money they're already drawing — treating it as
-    // pension (the field's existing behavior) avoids guessing. Same
-    // before/with-delta pattern as the generic RIX branch below, using the
-    // real AGI-tier lookup from this state's own steps table rather than
-    // duplicating it.
-    const CT_IRA_FACTOR = 0.75;
-    const ctStatus = status==='mfj' ? 'joint' : 'single';
-    const ctSteps  = rix.exclusion.steps[ctStatus];
-    const ctTierPct = (agi) => (ctSteps.find(t=>t.upTo==null || agi<=t.upTo) || ctSteps[ctSteps.length-1]).pct;
-    const exBase   = pensionIncome * ctTierPct(agiBase);
-    const exWith   = (pensionIncome + taxableCvt*CT_IRA_FACTOR) * ctTierPct(agiWith);
-    const stTiBase = Math.max(0, pensionIncome - exBase);
-    const stTiWith = Math.max(0, (pensionIncome+taxableCvt) - exWith);
-    cvtTxSt = (stTiWith - stTiBase) * stD.cr;
-  } else if(stateCode==='AL' || stateCode==='NY'){
-    // AL and NY share the same shape: pension/annuity income is a SEPARATE,
-    // unconditionally exempt category (pensionIncome.treatment:"exempt", never
-    // reaches this branch) — a Roth conversion is IRA-sourced, so it competes
-    // ONLY against a per-person-summed exclusion of its own, never pooled with
-    // pensionIncome (unlike every RETDED/RIX state). AL: AL DOR's Schedule RS
-    // computes the exclusion independently for "Primary Taxpayer" (Part II) and
-    // "Spouse" (Part III), summed in Part IV — a joint return with two 65+
-    // spouses gets $12,000, not a flat $6,000. NY: confirmed per-individual —
-    // "capped at $20,000 per person, whether filing jointly or separately... one
-    // spouse can't claim the other spouse's unused exclusion" — $40,000 for two
-    // 59.5+ spouses, not a flat $20,000. Both found live 2026-08-24: the tool
-    // previously gated only on the PRIMARY filer's own age, so a joint return
-    // where just the spouse qualified got ZERO shelter, and where just the
-    // primary qualified, wrongly got the FULL two-person amount.
-    const tierFor = (a) => { let c=0; for(const t of rix.exclusion.perPersonTiers) if(a>=t.minAge) c=Math.max(c,t.cap); return c; };
-    const cap = tierFor(curAge) + (status==='mfj' ? tierFor(spouseAge ?? curAge) : 0);
-    cvtTxSt = Math.max(0, taxableCvt - cap) * stD.cr;
   } else if(rix){
-    // Same before/with delta pattern as RETDED above, using this tool's own more
-    // precise AGI/taxable-SS figures (already computed above) rather than a cruder
-    // proxy. agiBase/agiWith (federal AGI, includes wages) still drive the AGI-
-    // THRESHOLD tests inside rixExcluded (which tier/phase-out band applies) —
-    // those thresholds are real total-income tests per each state's own law. Only
-    // the SHELTERED AMOUNT itself (competingAmt, 5th arg) is pension-specific.
-    const exBase   = rixExcluded(rix, status, curAge, spouseAge, pensionIncome, agiBase, ssBase, ss);
-    const exWith   = rixExcluded(rix, status, curAge, spouseAge, pensionIncome+taxableCvt, agiWith, ssWith, ss);
-    const stTiBase = Math.max(0, pensionIncome - exBase);
-    const stTiWith = Math.max(0, (pensionIncome+taxableCvt) - exWith);
-    cvtTxSt = (stTiWith - stTiBase) * stD.cr;
+    // window.resolveRetirementIncome (core/retirement-rules.js, bridged in near the
+    // end of this file) is fully rule-driven — it reads iraWeightPct, non-pooled
+    // pensionIncome.treatment, and (for CO) socialSecurity's sharesCapWithSS-adjacent
+    // fields straight from the RIX table's fuller shape, so this ONE call path now
+    // correctly handles CT's IRA-weighting and AL/NY's pension-separately-exempt
+    // shape too — previously dedicated stateCode branches, deleted here 2026-08-24.
+    // That consolidation is also what surfaced a real, previously-untested bug: the
+    // old dedicated-branch/rixExcluded() setup never read CO's sharesCapWithSS at
+    // all, so a CO filer with nonzero Social Security got the wrong shelter for a
+    // conversion (see core/retirement-rules.js's own header comment).
+    // ss (gross benefit) vs ssBase/ssWith (this tool's own precise taxable-SS figure,
+    // already computed above): resolveRetirementIncome's `ss` param needs the TRUE
+    // gross benefit (WV's netAgainstSS statute cares about the real benefit
+    // "regardless of federal taxability," and CO independently derives its own
+    // taxable-SS figure from it) — but `ssForThreshold`, used only by NJ/VA to back
+    // SS OUT of the agiProxy for a threshold test, must match what's actually baked
+    // INTO agiBase/agiWith, which is this tool's precise ssBase/ssWith, not the gross
+    // benefit. Passing the wrong one here would silently blunt this tool's own
+    // (better) precision back down to Relocation's cruder level for those 2 states.
+    // otherIncomeForSS (CO only): the shared function's default derivation
+    // (agiProxy-ss) is exact for Relocation but WRONG here, because this tool's
+    // agiBase/agiWith are built from ssBase/ssWith (a pre-computed taxable figure),
+    // not the raw benefit — found live while verifying this migration: at $20,000 of
+    // true other income, the default derivation silently zeroed CO's SS subtraction
+    // instead of the correct $2,500, a 100% error. income+nii is this tool's own true
+    // non-SS income figure (already used to derive ssBase/ssWith in the first place).
+    const base    = window.resolveRetirementIncome(rix, status, {age: curAge, spouseAge, ira: 0, pension: pensionIncome, agiProxy: agiBase, ss, ssForThreshold: ssBase, otherIncomeForSS: income+nii});
+    const withCvt = window.resolveRetirementIncome(rix, status, {age: curAge, spouseAge, ira: taxableCvt, pension: pensionIncome, agiProxy: agiWith, ss, ssForThreshold: ssWith, otherIncomeForSS: income+nii+taxableCvt});
+    cvtTxSt = ((withCvt.iraTaxable + withCvt.penTaxable) - (base.iraTaxable + base.penTaxable)) * stD.cr;
   } else if(stateCode==='OH'){
     // Ohio taxes nonbusiness income above a flat, filing-status-independent
     // zero-bracket threshold (ORC 5747.02, effective 2026: 0% up to $26,050,

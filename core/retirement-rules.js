@@ -117,12 +117,33 @@ function allowedExclusion(excl, isIRA, agiProxy, status, cap, actualAmount) {
 //   genuinely distinct MFS figure).
 // ira/pension: the actual dollar amounts competing for whatever exclusion applies.
 // agiProxy/ss: ALWAYS caller-supplied — see the file header. `ss` is the gross annual
-//   SS benefit (needed for netAgainstSS and CO's sharesCapWithSS).
+//   SS benefit (needed for netAgainstSS, which WV's own statute defines against the
+//   real benefit "regardless of federal taxability," and for CO's sharesCapWithSS,
+//   which independently derives the real federally-taxable portion internally).
+// ssForThreshold: the SS figure to back OUT of agiProxy for thresholdExcludesSS states
+//   (NJ, VA) — MUST match whatever SS figure is already baked INTO the caller's own
+//   agiProxy, or the threshold test silently uses the wrong precision. Defaults to
+//   `ss` (correct for Relocation, whose agiProxy sums the gross benefit) — Roth passes
+//   its own precise taxable-SS figure here instead, since Roth's agiProxy is built from
+//   that, not the gross benefit. Currently no state combines thresholdExcludesSS with
+//   netAgainstSS/sharesCapWithSS (which both need the true gross `ss`), so this only
+//   ever matters for one purpose per state today — kept as a separate parameter anyway
+//   so a future state combining both wouldn't be silently wrong.
+// otherIncomeForSS: income EXCLUDING Social Security entirely, for CO's own internal
+//   federalTaxableSS recomputation (sharesCapWithSS). Defaults to `agiProxy - ss`,
+//   which is exact for Relocation (its agiProxy is built by adding the raw ss benefit,
+//   so subtracting it back out is lossless) — but WRONG for Roth, whose agiProxy is
+//   built from a PRE-COMPUTED taxable-SS figure (ssBase/ssWith), not the raw benefit,
+//   so `agiProxy - ss` doesn't recover the true non-SS income and can silently zero out
+//   CO's SS subtraction in the federal formula's 50% phase-in zone (confirmed: at
+//   $20,000 of true other income, the default derivation gives $0 instead of the
+//   correct $2,500 — a 100% error). Roth passes its own precise `income+nii+ltcg`
+//   here instead.
 // Returns { iraTaxable, penTaxable, ssTaxableOverride }. ssTaxableOverride is null for
 // every state except when rules.retirementIncome.exclusion.sharesCapWithSS is true (CO
 // today, the only state with this flag) — callers MUST check for a non-null override
 // and substitute it for their own independently-computed SS taxability.
-export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ira = 0, pension = 0, agiProxy, ss = 0 }) {
+export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ira = 0, pension = 0, agiProxy, ss = 0, ssForThreshold = ss, otherIncomeForSS = agiProxy - ss }) {
   const tStatus = status === "mfj" ? "joint" : "single";
   const ri = rules.retirementIncome;
   const pooled = rules.pensionIncome.sameAs === "retirementIncome";
@@ -159,7 +180,7 @@ export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ir
     // CO's subtraction applies to SS "included in federal taxable income" (line 6b), i.e.
     // the real federally-taxable portion — not the gross benefit — so this uses the actual
     // federal worksheet rather than a caller's own AGI-proxy approximation.
-    const ssIncludedFed = federalTaxableSS(ss, agiProxy - ss, status);
+    const ssIncludedFed = federalTaxableSS(ss, otherIncomeForSS, status);
     let ssSub, pensionRoom;
     if (householdFullyExempt) {
       ssSub = ssIncludedFed;
@@ -227,7 +248,7 @@ export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ir
     const threshold = excl.thresholdAGI[tStatus];
     // VA's own threshold ("AFAGI") backs Social Security out entirely — same reasoning
     // as NJ's thresholdExcludesSS below.
-    const thresholdProxy = excl.thresholdExcludesSS ? agiProxy - ss : agiProxy;
+    const thresholdProxy = excl.thresholdExcludesSS ? agiProxy - ssForThreshold : agiProxy;
     let totalEx = 0;
     if (cap > 0) {
       const zero = threshold + cap; // the phase-out band is exactly as wide as the cap (1:1 ramp)
@@ -274,7 +295,7 @@ export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ir
     // steppedPercent but has no iraWeightPct (its own rule doesn't distinguish IRA from
     // pension/annuity), so it correctly falls through to the generic branch below.
     const excl = ri.exclusion;
-    const thresholdProxy = excl.thresholdExcludesSS ? agiProxy - ss : agiProxy;
+    const thresholdProxy = excl.thresholdExcludesSS ? agiProxy - ssForThreshold : agiProxy;
     const tiers = excl.steps[tStatus];
     const tier = tiers.find((t) => t.upTo == null || thresholdProxy <= t.upTo) || tiers[tiers.length - 1];
     const weighted = ira * excl.iraWeightPct + pension;
@@ -294,7 +315,7 @@ export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ir
     if (ri.exclusion.netAgainstSS) cap = Math.max(0, cap - ss);
     // NJ's threshold is its own "Total Income" line, which excludes Social Security
     // entirely — unlike every other state here, which thresholds off AGI (SS included).
-    const thresholdProxy = ri.exclusion.thresholdExcludesSS ? agiProxy - ss : agiProxy;
+    const thresholdProxy = ri.exclusion.thresholdExcludesSS ? agiProxy - ssForThreshold : agiProxy;
     if (gateOk && ri.exclusion.excludesIRA) {
       // MD-style trap even inside a nominally "shared" state: IRA gets nothing, so
       // there's nothing to pool — pension draws the full pool against its own amount.

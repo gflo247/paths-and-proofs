@@ -181,13 +181,22 @@ export const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV',
 const RIX_OPEN = 'const RIX={';
 const RIX_CLOSE = '};';
 
+// Shape changed 2026-08-24: each entry used to be JUST the retirementIncome object
+// (all rixExcluded() ever needed). Now emits the fuller {retirementIncome,
+// pensionIncome, socialSecurity} triple, because core/retirement-rules.js's shared
+// resolveRetirementIncome() — which computeConversionCost() now calls directly,
+// replacing rixExcluded() and the dedicated CT/AL/NY branches — needs
+// pensionIncome.sameAs to resolve pooling and (for CO only) socialSecurity's
+// sharesCapWithSS-adjacent fields. Relocation already has this full shape via its own
+// taxRules; Roth's RIX table didn't, since rixExcluded() never needed it.
 function buildRixBlock(json) {
   const lines = [];
   lines.push(RIX_OPEN);
   for (const code of RIX_STATES) {
-    const ri = json[code]?.taxRules?.retirementIncome;
-    if (!ri) throw new Error(`states.json: ${code} has no taxRules.retirementIncome for RIX`);
-    lines.push(`  ${code}: ${JSON.stringify(ri)},`);
+    const tr = json[code]?.taxRules;
+    if (!tr?.retirementIncome) throw new Error(`states.json: ${code} has no taxRules.retirementIncome for RIX`);
+    const entry = { retirementIncome: tr.retirementIncome, pensionIncome: tr.pensionIncome, socialSecurity: tr.socialSecurity };
+    lines.push(`  ${code}: ${JSON.stringify(entry)},`);
   }
   lines.push(RIX_CLOSE);
   return lines.join('\n');

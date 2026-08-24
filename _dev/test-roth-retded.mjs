@@ -16,12 +16,14 @@ import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.url), 'utf8');
 const startMarker = '} else if(rd){';
-// Was '} else if(rix){' — went stale when the CT and AL/NY dedicated branches were
-// inserted between the rd branch and the rix branch this session, so the extraction
-// window silently grew to swallow their bodies too, producing invalid JS. The rd
-// branch's real end is whatever the very next branch is; keep this in sync if that
-// changes again (this file isn't wired into npm run verify, so nothing else catches it).
-const endMarker = '} else if(stateCode===\'CT\'){';
+// Was briefly '} else if(stateCode===\'CT\'){' after that marker went stale once already
+// this session (see git history) — now stale AGAIN because the CT and AL/NY dedicated
+// branches were deleted entirely 2026-08-24 (folded into the shared core/retirement-
+// rules.js dispatch), so `rix` is now the very next branch after `rd`. The rd branch's
+// real end is whatever the very next branch is; keep this in sync if that changes again
+// (this file IS wired into npm run verify now, so a future drift fails the build loudly
+// instead of silently, unlike the first time this broke).
+const endMarker = '} else if(rix){';
 const startIdx = html.indexOf(startMarker);
 const endIdx = html.indexOf(endMarker, startIdx);
 if (startIdx === -1 || endIdx === -1) throw new Error('RETDED branch markers not found in index.html');

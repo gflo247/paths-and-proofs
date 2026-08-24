@@ -1,41 +1,71 @@
 #!/usr/bin/env node
-// Parity test: roth-conversion/index.html's rixExcluded() vs. the already-verified
-// relocation/relo-engine.mjs's computeStateIncomeTax(). rixExcluded is a PORT of the
-// same 5 shapes (ageTieredCap, steppedAmount, perSpousePhaseout, offsetStack, plus the
-// generic hard/steppedPercent fallback) adapted to the Roth tool's before/with delta
-// pattern — this test extracts the REAL function from the actual shipped HTML (not a
-// third hand-transcription of the logic) and checks it against the REAL relo-engine
-// function for equivalent inputs, across a systematic sweep per state. Divergence here
-// means the port drifted from the reference, not that either implementation is "more
-// right" — relo-engine is the trusted baseline since it already has its own 41-check
-// suite verified against primary-source figures.
+// Integration test for roth-conversion/index.html's computeConversionCost(): does it
+// correctly wire the shared core/retirement-rules.js module in (right AGI/SS figures,
+// right before/with delta pattern, right multiplication by stD.cr)?
 //
-// Deliberately uses ss=0 in every case: relo-engine's AGI proxy is a crude
-// ss+ira+pension+capGains+wages sum, while roth-conversion's agiBase uses the REAL
-// taxable-SS-worksheet result (calcTaxableSS) — an intentional precision improvement,
-// not a porting bug, but it means the two tools' AGI figures only coincide when SS is
-// zero. Setting ss=0 isolates the actual thing under test: does the exclusion SHAPE
-// logic (tiers, phase-outs, offset-stacking) produce the same dollar figure.
+// Before 2026-08-24 this file compared Roth's OWN independent rixExcluded()
+// implementation against relocation/relo-engine.mjs, since the two tools each
+// re-implemented the same per-cliffType exclusion math by hand. That duplication is
+// gone — rixExcluded() and the dedicated CT/AL/NY branches were deleted, and
+// computeConversionCost() now calls the SAME resolveRetirementIncome() (core/
+// retirement-rules.js) that relo-engine.mjs calls. So there is no longer a second
+// independent implementation to compare against; resolveRetirementIncome's own
+// correctness is already proven exhaustively elsewhere (a standalone 1.1M-combination
+// proof against the pre-refactor relo-engine.mjs, run before either production file was
+// touched, plus relo-engine's own primary-source-verified _dev/test-relo-exclusions.mjs
+// suite, which still exercises the exact same shared function via computeStateIncomeTax).
+//
+// What THIS file checks now: does computeConversionCost() actually call
+// resolveRetirementIncome() with the RIGHT inputs? Specifically — the right agiBase/
+// agiWith (this tool's own precise taxable-SS-derived AGI, not a crude sum), the right
+// otherIncomeForSS/ssForThreshold split (found live during the 2026-08-24 migration:
+// naively reusing relo-engine's ss-only convention here would have silently broken CO's
+// shared-cap math for this tool specifically — see core/retirement-rules.js's own header
+// comment), and the right before/with delta pattern. Does this by reconstructing the
+// expected AGI/SS figures independently (via the SAME federalTaxableSS primitive, not by
+// re-calling whatever computeConversionCost already computed) and calling
+// resolveRetirementIncome the same way computeConversionCost should, then comparing
+// against computeConversionCost's REAL output — extracted and evaluated from the actual
+// shipped HTML via jsdom, not a hand-transcription.
 
-import { computeStateIncomeTax } from '../relocation/relo-engine.mjs';
-import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
+import { JSDOM, VirtualConsole } from 'jsdom';
+import { readFileSync } from 'node:fs';
+import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
+import { RIX_STATES } from './gen-st-table.mjs';
 
-// Extract the real rixExcluded() function verbatim from the shipped HTML.
+// --- Extract the real computeConversionCost() (and RIX/RETDED/EXAGE tables it reads)
+// verbatim from the shipped HTML, evaluated in a minimal jsdom sandbox. A VirtualConsole
+// suppresses jsdom's own internal error reporting — the file's eager, DOMContentLoaded-
+// wrapped initial render will throw harmlessly against our empty stub body (we only need
+// the function/table DEFINITIONS, not that eager render, and we never dispatch
+// DOMContentLoaded ourselves).
+const vc = new VirtualConsole();
+const dom = new JSDOM('<!doctype html><body></body>', { virtualConsole: vc });
+globalThis.window = dom.window;
+globalThis.document = dom.window.document;
+globalThis.getComputedStyle = dom.window.getComputedStyle;
+globalThis.matchMedia = () => ({ matches: true });
+// Bridges the shared module in exactly like the real <script type="module"> block does
+// (window.resolveRetirementIncome/window.calcTaxableSS) — PLUS binds the same names on
+// Node's own globalThis, a harness-only quirk: in a real browser `window` IS the global
+// object, so an unresolved bare identifier falls through to window.X automatically; in
+// this jsdom+Function-constructor sandbox, Node's globalThis and jsdom's window are two
+// separate objects, so that fallback doesn't happen unless both are bound. (Already
+// confirmed working via the real bridging mechanism in an actual browser separately —
+// this is purely about making the extracted code resolve in THIS synthetic harness.)
+globalThis.window.resolveRetirementIncome = resolveRetirementIncome;
+globalThis.window.calcTaxableSS = federalTaxableSS;
+globalThis.resolveRetirementIncome = resolveRetirementIncome;
+globalThis.calcTaxableSS = federalTaxableSS;
+
 const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.url), 'utf8');
-const startMarker = 'function rixExcluded(';
-const startIdx = html.indexOf(startMarker);
-if (startIdx === -1) throw new Error('rixExcluded not found in index.html');
-const fnStart = html.lastIndexOf('function', startIdx);
-let depth = 0, i = html.indexOf('{', startIdx), bodyStart = i;
-for (; i < html.length; i++) {
-  if (html[i] === '{') depth++;
-  else if (html[i] === '}') { depth--; if (depth === 0) break; }
-}
-const src = html.slice(fnStart, i + 1);
-const tmpPath = new URL('../_dev/.rixExcluded.generated.mjs', import.meta.url);
-writeFileSync(tmpPath, src + '\nexport { rixExcluded };\n');
-const { rixExcluded } = await import(tmpPath.href + '?t=' + Date.now());
-unlinkSync(tmpPath); // scratch extraction artifact, not meant to be committed
+const marker = 'function computeConversionCost';
+const markerIdx = html.indexOf(marker);
+if (markerIdx === -1) throw new Error('computeConversionCost not found in index.html');
+const scriptStart = html.lastIndexOf('<script>', markerIdx) + '<script>'.length;
+const scriptEnd = html.indexOf('</script>', markerIdx);
+const scriptSrc = html.slice(scriptStart, scriptEnd);
+const { computeConversionCost, RIX } = new Function(scriptSrc + '\nreturn {computeConversionCost, RIX};')();
 
 const states = JSON.parse(readFileSync(new URL('../roth-conversion/states.json', import.meta.url), 'utf8'));
 
@@ -43,76 +73,61 @@ let pass = 0, fail = 0;
 function check(label, actual, expected, tolerance = 1) {
   const ok = Math.abs(actual - expected) <= tolerance;
   if (ok) pass++;
-  else { fail++; console.log(`FAIL  ${label}  (rixExcluded=${actual}, relo-engine=${expected})`); }
+  else { fail++; console.log(`FAIL  ${label}  (got=${actual}, expected=${expected})`); }
 }
 
-// Sweep: for each RIX state, a range of (status, age, spouseAge, income, agi-driving-wages)
-// combinations, comparing rixExcluded's returned excluded-amount against what relo-engine
-// implies (competingAmt - penTaxable, feeding the SAME amount in as `pension` alone so
-// there's nothing to pool).
-// CT is deliberately EXCLUDED from this sweep: since the 2026-08-24 CT IRA-haircut fix,
-// computeConversionCost() no longer routes CT through the generic rixExcluded() path at
-// all — it has its own stateCode==='CT' branch (see below for a dedicated parity check
-// against that branch's mirrored logic instead). rixExcluded()'s CT handling is now dead
-// code for the Roth tool specifically (still reachable from relo-engine.mjs's own
-// generic fallback, but only for hypothetical future non-CT steppedPercent states with
-// no iraWeightPct — CT itself takes relo-engine's dedicated weighted branch).
-// CO added 2026-08-24: with ss=0 (this sweep's fixed convention), CO's sharesCapWithSS
-// branch in relo-engine.mjs degenerates to the exact same ageTieredCap-only behavior as
-// GA/WI (ssIncludedFed=0 whenever the SS benefit itself is 0, so nothing competes for the
-// shared cap) — a useful cross-check that the new branch doesn't change plain pension-only
-// behavior at all, only behavior when ss>0 (covered by the dedicated CO section below).
-// AR/DE/KY/OK added 2026-08-24: same shape as LA (single-tier ageTieredCap, pooled
-// pensionIncome), found while auditing LA's fix for the same per-person-not-flat bug
-// class. AL and NY deliberately EXCLUDED from this generic sweep — their shared
-// stateCode==='AL'||'NY' branch doesn't route through rixExcluded() at all (pension
-// doesn't compete for the cap in either state), so they get a dedicated check below
-// instead, mirroring the CT pattern. NY was reshaped to ageTieredCap the same day it
-// was added here (see the AL/NY dedicated check below) after its OWN flat-cap version
-// turned out to have the identical primary-filer-only gating bug AL had.
-const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'NJ', 'WV', 'CO', 'AR', 'DE', 'KY', 'OK'];
-// Added 'hoh' 2026-08-24 after finding NM's steppedAmount table groups HOH with 'joint'
-// (wider thresholds) instead of the usual single/mfs/hoh -> "single" mapping — the
-// generic sweep never exercised HOH for ANY state before this, so it couldn't have
-// caught that bug. HOH files alone like single (see `status === 'mfj' ? ages : [age]`
-// below — only mfj triggers the spouse-age loop), so adding it here is a pure
-// regression-coverage improvement, not a new dimension needing its own loop structure.
-// Added 'mfs' the same day for the same reason — closing the last untested filing
-// status in this sweep. Same "files alone" shape as single/hoh, so no loop changes
-// needed here either.
 const statuses = ['single', 'mfj', 'hoh', 'mfs'];
 const ages = [45, 55, 62, 63, 65, 67, 70, 80];
 const competingAmts = [0, 5000, 20000, 50000, 90000, 150000];
 const otherWages = [0, 30000, 80000, 140000];
+const ssAmts = [0, 8000, 25000, 40000]; // CO/WV-sensitive; other states mostly ignore ss.
 
 let checked = 0;
 for (const code of RIX_STATES) {
-  const rix = states[code].taxRules.retirementIncome;
-  const rules = states[code].taxRules;
+  const rules = states[code].taxRules; // full taxRules, for computing expected values
+  const rix = RIX[code]; // the Roth tool's own generated table entry
   for (const status of statuses) {
     for (const age of ages) {
       for (const spouseAge of status === 'mfj' ? ages : [age]) {
-        for (const competingAmt of competingAmts) {
-          for (const wages of otherWages) {
-            checked++;
-            const agiProxy = wages + competingAmt; // ss=0, no nii/ltcg equivalent in relo-engine either
-            const got = rixExcluded(rix, status, age, spouseAge, competingAmt, agiProxy, 0);
+        for (const pensionIncome of [0, 10000]) {
+          for (const taxableCvt of competingAmts) {
+            for (const wages of otherWages) {
+              for (const ss of ssAmts) {
+                checked++;
+                const income = wages + pensionIncome;
 
-            // iraWithdrawal, not pension: for pooled states (pensionIncome.sameAs ===
-            // "retirementIncome") relo-engine combines iraWithdrawal+pension before
-            // applying the exclusion, so feeding the whole competingAmt through either
-            // field alone gives the same combined total and the same result. For NOT-
-            // pooled states — NY, whose pensionIncome is its own separate always-exempt
-            // government-pension category — "pension" input skips retirementIncome's
-            // exclusion logic entirely (comparing against the wrong statutory bucket);
-            // iraWithdrawal is the field that always routes through retirementIncome,
-            // pooled or not, so it's the one that actually tests the shape under test.
-            const relo = computeStateIncomeTax(rules, status, {
-              iraWithdrawal: competingAmt, wages, age, spouseAge,
-            });
-            const expected = competingAmt - relo.breakdown.iraTaxable;
+                // Independently reconstruct this tool's own AGI/SS figures (the same
+                // primitive federalTaxableSS both engines share, not a re-call of
+                // whatever computeConversionCost already computed).
+                const ssBase = federalTaxableSS(ss, income, status);
+                const ssWith = federalTaxableSS(ss, income + taxableCvt, status);
+                const agiBase = income + ssBase;
+                const agiWith = income + taxableCvt + ssWith;
 
-            check(`${code} ${status} age=${age} spouseAge=${spouseAge} amt=${competingAmt} wages=${wages}`, got, expected);
+                const base = resolveRetirementIncome(rules, status, {
+                  age, spouseAge, ira: 0, pension: pensionIncome, agiProxy: agiBase,
+                  ss, ssForThreshold: ssBase, otherIncomeForSS: income,
+                });
+                const withCvt = resolveRetirementIncome(rules, status, {
+                  age, spouseAge, ira: taxableCvt, pension: pensionIncome, agiProxy: agiWith,
+                  ss, ssForThreshold: ssWith, otherIncomeForSS: income + taxableCvt,
+                });
+                const expectedDelta = (withCvt.iraTaxable + withCvt.penTaxable) - (base.iraTaxable + base.penTaxable);
+
+                // ctx.income is WAGES ONLY — computeConversionCost internally does
+                // `income = wagesInc + pensionIncome` itself, so passing our own
+                // combined `income` here would double-count pensionIncome.
+                const ctx = {
+                  income: wages, pensionIncome, nii: 0, ltcg: 0, ss, status, nSr: 0,
+                  stD: { cr: states[code].roth.cr, ex: false }, stateCode: code,
+                  curAge: age, spouseAge, isCouple: status === 'mfj', taxableFrac: 1,
+                };
+                const got = computeConversionCost(taxableCvt, ctx).cvtTxSt;
+                const expected = expectedDelta * states[code].roth.cr;
+
+                check(`${code} ${status} age=${age} sp=${spouseAge} pen=${pensionIncome} cvt=${taxableCvt} wages=${wages} ss=${ss}`, got, expected, Math.max(1, Math.abs(expected) * 0.001));
+              }
+            }
           }
         }
       }
@@ -120,162 +135,6 @@ for (const code of RIX_STATES) {
   }
 }
 
-console.log(`Checked ${checked.toLocaleString()} combinations across ${RIX_STATES.length} states.`);
-
-// WV-only supplemental sweep: netAgainstSS nets the SS BENEFIT against the cap, so
-// (unlike every other RIX state) its result actually depends on a nonzero ss — the
-// ss=0 sweep above only exercises the no-netting-effect base case. Feeding the same
-// `ss` value as both rixExcluded's ssGross and relo-engine's income.ss is an
-// equivalence-testing simplification (real callers use taxable-SS for the tool's own
-// ssAmt param, a different, generally smaller figure) — fine here since this test
-// checks the netAgainstSS SHAPE matches, not AGI precision (see file header).
-{
-  const rix = states.WV.taxRules.retirementIncome;
-  const rules = states.WV.taxRules;
-  const ssAmounts = [0, 3000, 8000, 16000, 24000];
-  let wvChecked = 0;
-  for (const status of statuses) {
-    for (const age of ages) {
-      for (const spouseAge of status === 'mfj' ? ages : [age]) {
-        for (const competingAmt of competingAmts) {
-          for (const ss of ssAmounts) {
-            wvChecked++;
-            const agiProxy = competingAmt + ss;
-            const got = rixExcluded(rix, status, age, spouseAge, competingAmt, agiProxy, 0, ss);
-            const relo = computeStateIncomeTax(rules, status, { pension: competingAmt, ss, age, spouseAge });
-            const expected = competingAmt - relo.breakdown.penTaxable;
-            check(`WV ${status} age=${age} spouseAge=${spouseAge} amt=${competingAmt} ss=${ss}`, got, expected);
-          }
-        }
-      }
-    }
-  }
-  console.log(`Checked ${wvChecked.toLocaleString()} additional WV ss-netting combinations.`);
-}
-
-// CT-specific check: computeConversionCost()'s dedicated stateCode==='CT' branch
-// (2026-08-24 IRA-haircut fix) vs. relo-engine.mjs's matching weighted branch. Unlike
-// the generic sweep above, this doesn't extract computeConversionCost() verbatim — it's
-// a huge function with federal-tax-calc dependencies, not a small pure function like
-// rixExcluded(). Instead this MIRRORS the shipped CT branch's formula by hand (same
-// tradeoff the file header already accepts for rixExcluded's port from relo-engine) —
-// if the shipped CT branch's logic changes, this mirror needs updating too.
-{
-  const rix = states.CT.taxRules.retirementIncome;
-  const rules = states.CT.taxRules;
-  const CT_IRA_FACTOR = 0.75;
-  let ctChecked = 0, ctPass = 0, ctFail = 0;
-  for (const status of statuses) {
-    const ctStatus = status === 'mfj' ? 'joint' : 'single';
-    const ctSteps = rix.exclusion.steps[ctStatus];
-    const ctTierPct = (agi) => (ctSteps.find((t) => t.upTo == null || agi <= t.upTo) || ctSteps[ctSteps.length - 1]).pct;
-    for (const pensionIncome of [0, 10000, 30000]) {
-      for (const taxableCvt of competingAmts) {
-        for (const wages of otherWages) {
-          ctChecked++;
-          const agiBase = wages + pensionIncome;
-          const agiWith = agiBase + taxableCvt;
-          // Mirrors computeConversionCost's CT branch exactly.
-          const exBase = pensionIncome * ctTierPct(agiBase);
-          const exWith = (pensionIncome + taxableCvt * CT_IRA_FACTOR) * ctTierPct(agiWith);
-          const stTiBase = Math.max(0, pensionIncome - exBase);
-          const stTiWith = Math.max(0, (pensionIncome + taxableCvt) - exWith);
-          const gotConvTaxable = stTiWith - stTiBase;
-
-          // relo-engine reports pension/IRA taxable separately rather than a before/with
-          // delta, so compare the taxable amount each side attributes to ADDING the
-          // conversion: feed pensionIncome alone for "base", pensionIncome+conversion
-          // (via iraWithdrawal, since a conversion is IRA-sourced) for "with".
-          const reloBase = computeStateIncomeTax(rules, status, { pension: pensionIncome, wages, age: 67, spouseAge: 67 });
-          const reloWith = computeStateIncomeTax(rules, status, { pension: pensionIncome, iraWithdrawal: taxableCvt, wages, age: 67, spouseAge: 67 });
-          const reloConvTaxable = (reloWith.breakdown.iraTaxable + reloWith.breakdown.penTaxable)
-            - (reloBase.breakdown.iraTaxable + reloBase.breakdown.penTaxable);
-
-          const ok = Math.abs(gotConvTaxable - reloConvTaxable) <= 1;
-          if (ok) ctPass++;
-          else { ctFail++; console.log(`FAIL  CT ${status} pension=${pensionIncome} conv=${taxableCvt} wages=${wages}  (computeConversionCost-mirror=${gotConvTaxable}, relo-engine=${reloConvTaxable})`); }
-        }
-      }
-    }
-  }
-  pass += ctPass; fail += ctFail;
-  console.log(`Checked ${ctChecked.toLocaleString()} additional CT IRA-haircut combinations.`);
-}
-
-// AL/NY-specific check: computeConversionCost()'s shared stateCode==='AL'||'NY' branch
-// (reshaped to ageTieredCap 2026-08-24) vs. relo-engine.mjs's non-pooled ageTieredCap
-// branch. Both states' pensionIncome is NOT pooled with retirementIncome (a separate,
-// unconditionally exempt category) — the per-person-summed cap applies only to IRA/
-// conversion income, mirrored here by hand since computeConversionCost isn't a small
-// pure function to extract verbatim (same tradeoff already accepted for the CT check
-// above). CRITICALLY varies spouseAge independently of age (the original version of
-// this check didn't, and so couldn't have caught the real mixed-age bug this reshape
-// fixed — a joint return where only ONE spouse qualifies previously got $0 shelter or
-// the full two-person amount depending on which age field the qualifying spouse was
-// entered in, instead of just their own share).
-for (const [code, perPersonCap] of [['AL', 6000], ['NY', 20000]]) {
-  const rules = states[code].taxRules;
-  const ageGate = code === 'AL' ? 65 : 59.5;
-  let checked = 0, statePass = 0, stateFail = 0;
-  for (const status of statuses) {
-    for (const age of ages) {
-      for (const spouseAge of status === 'mfj' ? ages : [age]) {
-        for (const taxableCvt of competingAmts) {
-          checked++;
-          const tierFor = (a) => a >= ageGate ? perPersonCap : 0;
-          const cap = tierFor(age) + (status === 'mfj' ? tierFor(spouseAge) : 0);
-          const gotConvTaxable = Math.max(0, taxableCvt - cap);
-
-          const relo = computeStateIncomeTax(rules, status, { iraWithdrawal: taxableCvt, age, spouseAge });
-          const reloConvTaxable = relo.breakdown.iraTaxable;
-
-          const ok = Math.abs(gotConvTaxable - reloConvTaxable) <= 1;
-          if (ok) statePass++;
-          else { stateFail++; console.log(`FAIL  ${code} ${status} age=${age} spouseAge=${spouseAge} conv=${taxableCvt}  (computeConversionCost-mirror=${gotConvTaxable}, relo-engine=${reloConvTaxable})`); }
-        }
-      }
-    }
-  }
-  pass += statePass; fail += stateFail;
-  console.log(`Checked ${checked.toLocaleString()} additional ${code} per-individual-cap combinations (incl. mixed-age).`);
-}
-
-// MI-specific check: computeConversionCost()'s RETDED branch, extended 2026-08-24 with a
-// conversionAgeGate. MI's deduction applies to ordinary pension/IRA income at ANY age, but
-// a Roth CONVERSION specifically only qualifies at 59.5+ (confirmed via MI Treasury's own
-// FAQ) — pensionIncome still competes for and can still fully use the cap regardless of
-// the filer's age; only the conversion's own eligibility is gated. Mirrored here by hand
-// since computeConversionCost isn't a small pure function to extract verbatim (same
-// tradeoff already accepted for the CT/AL/NY checks above).
-{
-  const rd = states.MI.roth.retDeduction;
-  const stCr = states.MI.roth.cr;
-  const mirror = (status, pensionIncome, taxableCvt, age) => {
-    const cap = rd[status] ?? rd.single;
-    const cvtQualifies = rd.conversionAgeGate == null || age >= rd.conversionAgeGate;
-    const cvtEligible = cvtQualifies ? taxableCvt : 0;
-    const stTiBase = Math.max(0, pensionIncome - Math.min(cap, pensionIncome));
-    const stTiWithEligible = Math.max(0, (pensionIncome + cvtEligible) - Math.min(cap, pensionIncome + cvtEligible));
-    return ((stTiWithEligible - stTiBase) + (taxableCvt - cvtEligible)) * stCr;
-  };
-
-  check('MI conversionAgeGate is set to 59.5', rd.conversionAgeGate, 59.5, 0);
-
-  // 45yo, no pension, $50k conversion: fully taxable, zero shelter (well under the cap,
-  // but under 59.5 so the conversion doesn't qualify at all).
-  check('MI 45yo, $50k conversion, no other pension: fully taxable', mirror('single', 0, 50000, 45), 50000 * stCr);
-
-  // 65yo, no pension, $50k conversion: fully sheltered (65+ qualifies, under the cap).
-  check('MI 65yo, $50k conversion, no other pension: fully sheltered', mirror('single', 0, 50000, 65), 0);
-
-  // 45yo, $30k existing pension, $50k conversion: pension itself stays fully sheltered
-  // (age-independent), but the conversion gets zero shelter and is fully taxed on top.
-  check('MI 45yo, $30k pension + $50k conversion: pension unaffected, conversion fully taxed', mirror('single', 30000, 50000, 45), 50000 * stCr);
-
-  // 65yo, $60k existing pension (near the $67,610 cap) + $20k conversion: combined
-  // $80,000 exceeds the cap by $12,390, which is what should be taxable.
-  check('MI 65yo, $60k pension + $20k conversion: only the amount over the cap is taxed', mirror('single', 60000, 20000, 65), 12390 * stCr);
-}
-
+console.log(`Checked ${checked.toLocaleString()} combinations across ${RIX_STATES.length} states (incl. CO with ss>0, previously untested).`);
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
