@@ -62,7 +62,12 @@ function check(label, actual, expected, tolerance = 1) {
 // GA/WI (ssIncludedFed=0 whenever the SS benefit itself is 0, so nothing competes for the
 // shared cap) — a useful cross-check that the new branch doesn't change plain pension-only
 // behavior at all, only behavior when ss>0 (covered by the dedicated CO section below).
-const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'NJ', 'WV', 'NY', 'CO'];
+// AR/DE/KY/OK added 2026-08-24: same shape as LA (single-tier ageTieredCap, pooled
+// pensionIncome), found while auditing LA's fix for the same per-person-not-flat bug
+// class. AL deliberately EXCLUDED from this generic sweep — its dedicated stateCode==='AL'
+// branch doesn't route through rixExcluded() at all (pension doesn't compete for the cap),
+// so it gets its own dedicated check below instead, mirroring the CT pattern.
+const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'NJ', 'WV', 'NY', 'CO', 'AR', 'DE', 'KY', 'OK'];
 // Added 'hoh' 2026-08-24 after finding NM's steppedAmount table groups HOH with 'joint'
 // (wider thresholds) instead of the usual single/mfs/hoh -> "single" mapping — the
 // generic sweep never exercised HOH for ANY state before this, so it couldn't have
@@ -192,6 +197,36 @@ console.log(`Checked ${checked.toLocaleString()} combinations across ${RIX_STATE
   }
   pass += ctPass; fail += ctFail;
   console.log(`Checked ${ctChecked.toLocaleString()} additional CT IRA-haircut combinations.`);
+}
+
+// AL-specific check: computeConversionCost()'s dedicated stateCode==='AL' branch
+// (2026-08-24 fix) vs. relo-engine.mjs's non-pooled branch. AL's pensionIncome is NOT
+// pooled with retirementIncome (defined-benefit pensions are separately, unconditionally
+// exempt) — the $6,000/$12,000 cap applies only to IRA/conversion income, mirrored here
+// by hand since computeConversionCost isn't a small pure function to extract verbatim
+// (same tradeoff already accepted for the CT check above).
+{
+  const rules = states.AL.taxRules;
+  let alChecked = 0, alPass = 0, alFail = 0;
+  for (const status of statuses) {
+    for (const age of ages) {
+      for (const taxableCvt of competingAmts) {
+        alChecked++;
+        const gateOk = age >= 65;
+        const cap = gateOk ? (status === 'mfj' ? 12000 : 6000) : 0;
+        const gotConvTaxable = Math.max(0, taxableCvt - cap);
+
+        const relo = computeStateIncomeTax(rules, status, { iraWithdrawal: taxableCvt, age });
+        const reloConvTaxable = relo.breakdown.iraTaxable;
+
+        const ok = Math.abs(gotConvTaxable - reloConvTaxable) <= 1;
+        if (ok) alPass++;
+        else { alFail++; console.log(`FAIL  AL ${status} age=${age} conv=${taxableCvt}  (computeConversionCost-mirror=${gotConvTaxable}, relo-engine=${reloConvTaxable})`); }
+      }
+    }
+  }
+  pass += alPass; fail += alFail;
+  console.log(`Checked ${alChecked.toLocaleString()} additional AL per-individual-cap combinations.`);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

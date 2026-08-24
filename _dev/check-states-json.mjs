@@ -16,6 +16,7 @@
 
 import { readFileSync } from 'node:fs';
 import { parseStatesFromHtml } from './parse-states.mjs';
+import { RIX_STATES } from './gen-st-table.mjs';
 
 const htmlPath = new URL('../roth-conversion/index.html', import.meta.url);
 const jsonPath = new URL('../roth-conversion/states.json', import.meta.url);
@@ -178,6 +179,30 @@ for (const code of htmlCodes) {
         diffs.push(`${code}: bracketsByStatus.mfj[${i}] upTo ${m} < single ${s} (mfj should not be narrower)`);
       }
     }
+  }
+}
+
+// --- 6. RIX/RETDED coverage guard (G5) ---
+// Found live 2026-08-24, twice: a state can have fully correct, verified
+// taxRules.retirementIncome data in states.json and still be SILENTLY unshelterd in the
+// Roth calculator, because RIX_STATES (gen-st-table.mjs) or roth.retDeduction (RETDED)
+// is a hand-maintained allowlist that's easy to forget updating (NY, CO, AR, DE, KY, OK
+// all had this exact gap this session — some missing entirely, some with a wrong capJoint
+// value too). This guard makes that omission a build failure instead of a silent runtime
+// bug: any state whose retirementIncome data implies a REAL, appliable exclusion (a
+// genuine "exclusion" or "offsetStack" treatment, not already self-excluded via
+// excludesIRA:true, whose flat-cr/no-exclusion fallback would be WRONG rather than a
+// coincidentally-correct simplification) must be covered by RETDED, RIX_STATES, or a
+// documented Roth-side dedicated stateCode branch.
+for (const code of htmlCodes) {
+  const ri = json[code]?.taxRules?.retirementIncome;
+  if (!ri) continue; // taxRules not yet merged for this state — skip, same as G1-G4
+  const needsCoverage = ri.treatment === 'offsetStack'
+    || (ri.treatment === 'exclusion' && ri.exclusion && !ri.exclusion.excludesIRA);
+  if (!needsCoverage) continue;
+  const covered = RIX_STATES.includes(code) || !!json[code]?.roth?.retDeduction;
+  if (!covered) {
+    diffs.push(`${code}: taxRules.retirementIncome implies a real exclusion the Roth calculator would silently apply as $0 (not in RETDED, not in RIX_STATES) — add to one, or add a documented dedicated stateCode branch and extend this guard's exception list`);
   }
 }
 

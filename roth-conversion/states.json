@@ -32,14 +32,14 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security and defined-benefit pensions exempt, but traditional IRA/401(k) distributions FULLY TAXABLE (a conversion is IRA income); $6,000 exclusion at 65+. Federal income tax is deductible from AL taxable income, lowering effective rate.",
+   "ssTreatment": "Social Security and defined-benefit pensions exempt (unconditionally, no cap), but traditional IRA/401(k) distributions FULLY TAXABLE (a conversion is IRA income); a SEPARATE $6,000-per-person exclusion at 65+ applies only to this IRA/401(k) category (AL DOR's own Schedule RS computes it independently for the primary taxpayer and spouse, summed) -- a joint return with both spouses 65+ shelters $12,000, not a flat $6,000. Federal income tax is deductible from AL taxable income, lowering effective rate.",
    "incomeTax": true,
    "source": "https://www.revenue.alabama.gov/faqs/what-is-alabamas-individual-income-tax-rate/"
   },
   "roth": {
    "cr": 0.05,
    "ex": false,
-   "note": "Alabama exempts defined-benefit PENSIONS (government, military, many private) and Social Security — but traditional IRA and 401(k) distributions are FULLY TAXABLE at up to 5%. A Roth conversion is IRA income, so Alabama taxes it; those 65+ can exclude only the first $6,000. The tool treats the conversion as taxable, which is correct here."
+   "note": "Alabama exempts defined-benefit PENSIONS (government, military, many private) and Social Security, unconditionally — but traditional IRA and 401(k) distributions are FULLY TAXABLE at up to 5%. A Roth conversion is IRA income, so Alabama taxes it; those 65+ can exclude the first $6,000 per person ($12,000 for a joint return with both spouses 65+) -- this calculator now applies that exclusion (previously applied none of it)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -108,7 +108,7 @@
     "ageGate": 65,
     "exclusion": {
      "capSingle": 6000,
-     "capJoint": 6000,
+     "capJoint": 12000,
      "cliffType": "hard",
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -306,14 +306,14 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security exempt below $100k federal AGI (taxable above, modified federal method). $6,000 retirement exemption covers traditional IRA but only at 59.5+; early distributions excluded. Net-income two-table system: filers over ~$94,700 use a compressed schedule.",
+   "ssTreatment": "Social Security exempt below $100k federal AGI (taxable above, modified federal method). $6,000-per-person retirement exemption covers traditional IRA but only at 59.5+; early distributions excluded. Genuinely per-individual (AR DOR confirms it does not transfer between spouses) -- a joint return with both spouses 59.5+ gets $12,000, not a flat $6,000. Net-income two-table system: filers over ~$94,700 use a compressed schedule.",
    "incomeTax": true,
    "source": "https://tax.thomsonreuters.com/news/arkansas-cuts-individual-and-corporate-income-tax-rates/"
   },
   "roth": {
    "cr": 0.037,
    "ex": false,
-   "note": "Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000 retirement exemption covers traditional IRA income but only at 59.5+ (early distributions do not qualify), and it is a small cap a conversion exceeds. Social Security is exempt below $100k AGI; a large conversion could push past that."
+   "note": "Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000-per-person retirement exemption covers traditional IRA income at 59.5+ (early distributions do not qualify) -- genuinely per-spouse, not a flat joint cap, so a joint return with both spouses 59.5+ shelters $12,000, not $6,000 (this calculator previously applied none of this exclusion at all). Social Security is exempt below $100k AGI; a large conversion could push past that."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -419,9 +419,12 @@
     "treatment": "exclusion",
     "ageGate": 59.5,
     "exclusion": {
-     "capSingle": 6000,
-     "capJoint": 6000,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 59.5, "cap": 6000}
+     ],
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
@@ -1067,7 +1070,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security exempt; no sales tax. At 60+, a $12,500 exclusion covers combined pension + eligible retirement income (includes IRA), but it is a small cap a meaningful conversion exceeds, and early (pre-59.5) distributions do not qualify. The 6.6% top applies above $60k; a typical conversion lands in the 5.55% band.",
+   "ssTreatment": "Social Security exempt; no sales tax. At 60+, a $12,500-per-person exclusion covers combined pension + eligible retirement income (includes IRA), genuinely per-spouse (DE DOR confirms each qualifying spouse gets their own $12,500, up to $25,000 combined for a joint return) rather than a flat joint cap, and early (pre-59.5) distributions do not qualify. The 6.6% top applies above $60k; a typical conversion lands in the 5.55% band.",
    "bracketsNote": "Confirmed against DE Division of Revenue official rate table (software-developer page). Same thresholds for all filing statuses. NOTE: HB13 proposed new brackets above $125k (6.75%+) but is NOT enacted for 2026 — the DE DOR table still shows 6.6% top; several secondary sources wrongly reported the proposal as law. Revisit if HB13 passes.",
    "incomeTax": true,
    "source": "https://revenue.delaware.gov/software-developer/tax-rate-changes/"
@@ -1075,7 +1078,7 @@
   "roth": {
    "cr": 0.066,
    "ex": false,
-   "note": "Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k lands at the 6.6% used here (totals under $60k pay 5.55% or less). At 60+, a $12,500 exclusion covers combined pension + IRA income, but it is a small cap a meaningful conversion exceeds — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax."
+   "note": "Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k lands at the 6.6% used here (totals under $60k pay 5.55% or less). At 60+, a $12,500-per-person exclusion covers combined pension + IRA income -- genuinely per-spouse, so a joint return with both spouses 60+ shelters $25,000, not a flat $12,500 (this calculator previously applied none of this exclusion at all) — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -1207,9 +1210,12 @@
     "treatment": "exclusion",
     "ageGate": 60,
     "exclusion": {
-     "capSingle": 12500,
-     "capJoint": 12500,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 60, "cap": 12500}
+     ],
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
@@ -2079,14 +2085,14 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security exempt. Flat 3.5% (cut from 4% Jan 1 2026 via revenue trigger); modest retirement exclusion.",
+   "ssTreatment": "Social Security exempt. Flat 3.5% (cut from 4% Jan 1 2026 via revenue trigger); a $31,110-per-person retirement exclusion (no age requirement) covers pension/IRA/conversion income, genuinely per-spouse (KY DOR's own Schedule P computes it separately for each spouse and sums) -- a joint return with both spouses receiving qualifying income shelters $62,220, not a flat $31,110.",
    "incomeTax": true,
    "source": "https://revenue.ky.gov/"
   },
   "roth": {
    "cr": 0.035,
    "ex": false,
-   "note": "Flat 3.5% (cut from 4% on Jan 1 2026 via a revenue trigger), applied to IRA and conversion income. Kentucky exempts Social Security and gives a modest retirement exclusion, but a meaningful conversion is taxable beyond it."
+   "note": "Flat 3.5% (cut from 4% on Jan 1 2026 via a revenue trigger), applied to IRA and conversion income. Kentucky exempts Social Security and gives a $31,110-per-person retirement exclusion (no age requirement) that this calculator now applies -- genuinely per-spouse, so a joint return with both spouses receiving qualifying income shelters $62,220 (this calculator previously applied none of this exclusion at all). A meaningful conversion can still exceed the cap."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -2122,9 +2128,12 @@
     "treatment": "exclusion",
     "ageGate": null,
     "exclusion": {
-     "capSingle": 31110,
-     "capJoint": 31110,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 0, "cap": 31110}
+     ],
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
@@ -4595,7 +4604,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security fully exempt. Private IRA/401(k)/conversion income taxable; a $10,000 retirement-income exclusion (65+) DOES include IRA income but is a small cap a meaningful conversion exceeds. Military retirees may exclude the greater of $10k or 75%.",
+   "ssTreatment": "Social Security fully exempt. Private IRA/401(k)/conversion income taxable; a $10,000-per-person retirement-income exclusion (65+) DOES include IRA income, genuinely per-spouse -- a joint return with both spouses 65+ shelters $20,000, not a flat $10,000. Military retirees may exclude the greater of $10k or 75%.",
    "bracketsNote": "HB2764 (signed May 2025) collapsed six brackets into a 0% bottom plus three taxable rates (2.5%/3.5%/4.5%) for 2026, top cut 4.75%->4.5%. Single-filer thresholds; not inflation-indexed. Revenue-trigger may cut further. roth.cr 4.5% confirmed current. Source: OK Tax Commission 2026 withholding tables.",
    "incomeTax": true,
    "source": "https://oklahoma.gov/tax.html"
@@ -4603,7 +4612,7 @@
   "roth": {
    "cr": 0.0475,
    "ex": false,
-   "note": "Oklahoma taxes traditional IRA and 401(k) conversion income; the top rate for tax year 2025 (the latest year with a complete published bracket table) is 4.75%, reached at low income, so a conversion is effectively taxed at 4.75%. A 2025 law, House Bill 2764, cuts the top rate to 4.5% and moves to three brackets beginning tax year 2026, but the full 2026 bracket amounts are not yet published, so this tool uses the confirmed 2025 schedule. The $10,000 retirement-income exclusion (age 65+) does include IRA income, but it is a small cap a meaningful conversion exceeds, leaving the rest taxable. Social Security is fully exempt."
+   "note": "Oklahoma taxes traditional IRA and 401(k) conversion income; the top rate for tax year 2025 (the latest year with a complete published bracket table) is 4.75%, reached at low income, so a conversion is effectively taxed at 4.75%. A 2025 law, House Bill 2764, cuts the top rate to 4.5% and moves to three brackets beginning tax year 2026, but the full 2026 bracket amounts are not yet published, so this tool uses the confirmed 2025 schedule. The $10,000-per-person retirement-income exclusion (age 65+) does include IRA income -- genuinely per-spouse, so a joint return with both spouses 65+ shelters $20,000, not a flat $10,000 (this calculator previously applied none of this exclusion at all) -- leaving the rest taxable. Social Security is fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -4719,9 +4728,12 @@
     "treatment": "exclusion",
     "ageGate": 65,
     "exclusion": {
-     "capSingle": 10000,
-     "capJoint": 10000,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 65, "cap": 10000}
+     ],
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,

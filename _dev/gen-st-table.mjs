@@ -136,7 +136,27 @@ function buildExAgeBlock(json) {
 // entirely, so the Roth calculator applied ZERO shelter from this deduction despite the
 // site's own note describing it in detail — worse than NY's bug, which at least applied
 // the wrong (flat) cap; CO applied no cap at all.
-const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV', 'NY', 'CO'];
+// AR/DE/KY/OK added 2026-08-24, found while auditing LA's same-day fix for the same bug
+// shape: each state's retirement-income exclusion is genuinely PER-PERSON (confirmed via
+// each state's own DOR guidance — AR/DE/OK/KY all explicitly compute the cap separately
+// per spouse and sum for a joint return), but none were in RETDED or this allowlist at
+// all, so the Roth calculator applied ZERO shelter for any of them. Reshaped to
+// ageTieredCap/perPersonTiers (same mechanism as GA/WI/CO/LA), confirmed each state's
+// pensionIncome IS pooled with retirementIncome so the reshape is safe. Their capJoint
+// values in states.json were ALSO wrong before this fix (flat, same as capSingle, instead
+// of the real per-person-summed figure) — a live bug in the Relocation tool too, not just
+// a Roth coverage gap.
+// AL added 2026-08-24 as a SPECIAL CASE: same per-person $6,000 exclusion shape (AL DOR's
+// own Schedule RS computes it separately in Part II/Part III for primary/spouse), but
+// AL's pensionIncome is NOT pooled with retirementIncome — defined-benefit pensions are
+// separately, unconditionally exempt (pensionIncome.treatment:"exempt"), and don't compete
+// for the $6,000 IRA-only cap at all. Kept cliffType:"hard" (not reshaped to ageTieredCap,
+// which the non-pooled Relocation branch doesn't support — same gap flagged in the NY
+// comment above) and given a dedicated stateCode==='AL' branch in computeConversionCost
+// that reads capSingle/capJoint from this table but applies them to the conversion alone,
+// never pooling with pensionIncome. AL's capJoint was ALSO wrong (flat $6,000 instead of
+// the real $12,000 for two 65+ spouses) — fixed in states.json for both tools.
+export const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV', 'NY', 'CO', 'AR', 'DE', 'KY', 'OK', 'AL'];
 const RIX_OPEN = 'const RIX={';
 const RIX_CLOSE = '};';
 
@@ -161,6 +181,11 @@ function splice(html, block, open, close) {
   const end = closeIdx + 1 + close.length; // include the close line
   return html.slice(0, start) + block + html.slice(end);
 }
+
+// Guarded so this file can also be `import`ed for RIX_STATES (e.g. by
+// check-states-json.mjs's RIX-coverage guard) without triggering a regenerate/--check
+// run as an unwanted side effect of the import.
+if (import.meta.url === `file://${process.argv[1]}`) {
 
 const json = JSON.parse(readFileSync(JSON_PATH, 'utf8'));
 const html = readFileSync(HTML, 'utf8');
@@ -190,3 +215,5 @@ if (isCheck) {
     console.log(`Regenerated ST table from states.json (${n} jurisdictions + blank placeholder).`);
   }
 }
+
+} // end entry-point guard
