@@ -4760,8 +4760,8 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security fully exempt. Nearly all other retirement income — IRA, 401(k), pension, and Roth conversions — taxed as ordinary income at full rates; the retirement-income credit is limited to low household income and rarely helps a conversion. Oregon allows a federal-tax-paid subtraction (up to ~$7,050 single) that modestly lowers the effective rate. No sales tax. Portland-metro residents owe additional local income taxes (SHS/Metro/PFA).",
-   "bracketsNote": "Single-filer, OR DOR 2026 schedule: 8.75% band runs $10,200-$125,000 (where most conversion income lands), 9.9% above $125k. Oregon does not fully index top brackets. MFJ thresholds differ. roth.cr 8.75% representative.",
+   "ssTreatment": "Social Security fully exempt. Nearly all other retirement income — IRA, 401(k), pension, and Roth conversions — taxed as ordinary income at full rates; the retirement-income credit is limited to low household income and rarely helps a conversion. Oregon allows a federal-tax-paid subtraction (up to $8,500 single/MFJ/HOH, $4,250 MFS, phasing out $125k-$145k single/MFS or $250k-$290k joint/HOH — confirmed via the 2026-effective OR-40 instructions) that modestly lowers the effective rate. No sales tax. Portland-metro residents owe additional local income taxes (SHS/Metro/PFA).",
+   "bracketsNote": "Single-filer, confirmed against the official Oregon Withholding Tax Formulas effective Jan 1 2026 (150-206-436): 8.75% band runs $11,400-$125,000 (where most conversion income lands), 9.9% above $125k. HOH shares MFJ's wider thresholds ($9,100/$22,800/$250,000) per OR-40's own Chart J — not a HOH-specific schedule. roth.cr 8.75% representative.",
    "incomeTax": true,
    "source": "https://www.oregon.gov/dor/"
   },
