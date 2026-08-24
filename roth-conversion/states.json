@@ -5410,7 +5410,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "On the SS-taxing list (taxes SS with a phased credit for lower incomes). Flat 4.5% (recently cut); small income-phased retirement credit.",
+   "ssTreatment": "On the SS-taxing list. Utah's mechanism is technically a nonrefundable CREDIT (taxable SS x 4.5%, reduced $0.025 per dollar AGI exceeds the threshold), not a plain exclusion — but since UT's flat rate is also 4.5%, the credit exactly offsets the state tax on taxable SS below the threshold, making an exclusion model mathematically equivalent. Thresholds raised by 2025 SB0071: $54,000 single/HOH, $90,000 joint (up from $45,000/$75,000; MFS separately raised to $45,000, not modeled — single/joint two-bucket simplification).",
    "incomeTax": true,
    "source": "https://incometax.utah.gov/"
   },
@@ -5449,12 +5449,12 @@
    "socialSecurity": {
     "taxed": true,
     "exemptBelowAGI": {
-     "single": 45000,
-     "joint": 75000
+     "single": 54000,
+     "joint": 90000
     },
     "phaseInAboveAGI": {
-     "single": 45000,
-     "joint": 75000
+     "single": 54000,
+     "joint": 90000
     },
     "maxTaxableFraction": 0.85
    },
