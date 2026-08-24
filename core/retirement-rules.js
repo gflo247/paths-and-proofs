@@ -137,8 +137,10 @@ function allowedExclusion(excl, isIRA, agiProxy, status, cap, actualAmount) {
 //   so `agiProxy - ss` doesn't recover the true non-SS income and can silently zero out
 //   CO's SS subtraction in the federal formula's 50% phase-in zone (confirmed: at
 //   $20,000 of true other income, the default derivation gives $0 instead of the
-//   correct $2,500 — a 100% error). Roth passes its own precise `income+nii+ltcg`
-//   here instead.
+//   correct $2,500 — a 100% error). Roth passes its own precise `income+nii` here
+//   instead — the same non-SS-income figure this tool already uses to derive
+//   ssBase/ssWith for the federal SS torpedo calc (ltcg is excluded from both,
+//   consistent with this tool's existing provisional-income convention).
 // Returns { iraTaxable, penTaxable, ssTaxableOverride }. ssTaxableOverride is null for
 // every state except when rules.retirementIncome.exclusion.sharesCapWithSS is true (CO
 // today, the only state with this flag) — callers MUST check for a non-null override

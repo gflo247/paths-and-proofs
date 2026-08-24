@@ -3386,6 +3386,11 @@ function computeConversionCost(cvtAmt, ctx){
     // true other income, the default derivation silently zeroed CO's SS subtraction
     // instead of the correct $2,500, a 100% error. income+nii is this tool's own true
     // non-SS income figure (already used to derive ssBase/ssWith in the first place).
+    // Both calls also return ssTaxableOverride (populated for CO), intentionally
+    // unused here: this tool has never modeled state-level SS taxability, only the
+    // federal SS torpedo (ssBase/ssWith above) -- so CO's state tax on the SS itself
+    // still isn't captured, same as before this refactor. Only iraTaxable/penTaxable
+    // (the conversion's own state-tax effect) are read.
     const base    = window.resolveRetirementIncome(rix, status, {age: curAge, spouseAge, ira: 0, pension: pensionIncome, agiProxy: agiBase, ss, ssForThreshold: ssBase, otherIncomeForSS: income+nii});
     const withCvt = window.resolveRetirementIncome(rix, status, {age: curAge, spouseAge, ira: taxableCvt, pension: pensionIncome, agiProxy: agiWith, ss, ssForThreshold: ssWith, otherIncomeForSS: income+nii+taxableCvt});
     cvtTxSt = ((withCvt.iraTaxable + withCvt.penTaxable) - (base.iraTaxable + base.penTaxable)) * stD.cr;
