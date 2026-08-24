@@ -127,7 +127,16 @@ function buildExAgeBlock(json) {
 // ageTieredCap support — that combination would have silently broken the Relocation
 // tool's NY calculation. Kept the flat cap (same known per-spouse-approximation as
 // LA/WV) rather than fix a shared-core gap as a side effect of a Roth-only fix.
-const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV', 'NY'];
+// CO added 2026-08-24: the SAME bug class as NY, but worse — CO's retirementIncome had
+// a "hard" cliffType with a flat $24,000 cap, when the real rule (per CO DOR's own
+// Income Tax Topics guide) is genuinely age-tiered ($20,000 at 55-64, $24,000 at 65+).
+// Reshaped to ageTieredCap/perPersonTiers (like GA/WI) rather than kept flat, because
+// CO's pensionIncome IS pooled with retirementIncome (confirmed — unlike NY, this
+// reshape doesn't hit the gap described above). CO was also missing from this allowlist
+// entirely, so the Roth calculator applied ZERO shelter from this deduction despite the
+// site's own note describing it in detail — worse than NY's bug, which at least applied
+// the wrong (flat) cap; CO applied no cap at all.
+const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV', 'NY', 'CO'];
 const RIX_OPEN = 'const RIX={';
 const RIX_CLOSE = '};';
 

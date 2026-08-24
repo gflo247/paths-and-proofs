@@ -713,14 +713,14 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Fully exempts SS at 65+; on the SS-taxing list below that age. Flat 4.4% (TABOR may reduce). Pension/annuity subtraction covers IRA but excludes pre-59.5 distributions.",
+   "ssTreatment": "Fully exempts SS at 65+. For ages 55-64 (2025+), SS is ALSO fully exempt if AGI is at or below $75k single / $95k joint — above that, SS shares ONE $20,000 cap with the pension/annuity subtraction rather than being separately exempt. Under 55, SS gets no CO exemption at all (confirmed via CO DOR's Income Tax Topics: Social Security, Pensions and Annuities guide, Jan 2025). NOT modeled here — this tool's socialSecurity field is Relocation-only and doesn't yet capture the age/AGI-conditional shared cap; flagged for a future fix. Flat 4.4% (TABOR may reduce). Pension/annuity subtraction is genuinely age-tiered — $20,000 at 55-64, $24,000 at 65+ — and covers IRA/conversion income but excludes premature (pre-59.5) distributions.",
    "incomeTax": true,
    "source": "https://tax.colorado.gov/income-tax-topics-social-security-pensions-and-annuities"
   },
   "roth": {
    "cr": 0.044,
    "ex": false,
-   "note": "Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income — up to $20k at 55-64 and $24k at 65+ — but it specifically EXCLUDES early (pre-59.5) distributions, and a meaningful conversion exceeds the cap. Colorado fully exempts Social Security at 65+."
+   "note": "Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR's own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ (this calculator previously modeled a flat $24,000 at any qualifying age, or applied no cap at all — now fixed to the real age-tiered amounts) — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+; below that it depends on age and income in ways this calculator doesn't model (state-level Social Security taxability is out of scope here — only the federal torpedo zone is modeled, same as every other state)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -756,9 +756,13 @@
     "treatment": "exclusion",
     "ageGate": 55,
     "exclusion": {
-     "capSingle": 24000,
-     "capJoint": 24000,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 55, "cap": 20000},
+      {"minAge": 65, "cap": 24000}
+     ],
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
