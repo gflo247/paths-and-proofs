@@ -240,5 +240,42 @@ for (const [code, perPersonCap] of [['AL', 6000], ['NY', 20000]]) {
   console.log(`Checked ${checked.toLocaleString()} additional ${code} per-individual-cap combinations (incl. mixed-age).`);
 }
 
+// MI-specific check: computeConversionCost()'s RETDED branch, extended 2026-08-24 with a
+// conversionAgeGate. MI's deduction applies to ordinary pension/IRA income at ANY age, but
+// a Roth CONVERSION specifically only qualifies at 59.5+ (confirmed via MI Treasury's own
+// FAQ) — pensionIncome still competes for and can still fully use the cap regardless of
+// the filer's age; only the conversion's own eligibility is gated. Mirrored here by hand
+// since computeConversionCost isn't a small pure function to extract verbatim (same
+// tradeoff already accepted for the CT/AL/NY checks above).
+{
+  const rd = states.MI.roth.retDeduction;
+  const stCr = states.MI.roth.cr;
+  const mirror = (status, pensionIncome, taxableCvt, age) => {
+    const cap = rd[status] ?? rd.single;
+    const cvtQualifies = rd.conversionAgeGate == null || age >= rd.conversionAgeGate;
+    const cvtEligible = cvtQualifies ? taxableCvt : 0;
+    const stTiBase = Math.max(0, pensionIncome - Math.min(cap, pensionIncome));
+    const stTiWithEligible = Math.max(0, (pensionIncome + cvtEligible) - Math.min(cap, pensionIncome + cvtEligible));
+    return ((stTiWithEligible - stTiBase) + (taxableCvt - cvtEligible)) * stCr;
+  };
+
+  check('MI conversionAgeGate is set to 59.5', rd.conversionAgeGate, 59.5, 0);
+
+  // 45yo, no pension, $50k conversion: fully taxable, zero shelter (well under the cap,
+  // but under 59.5 so the conversion doesn't qualify at all).
+  check('MI 45yo, $50k conversion, no other pension: fully taxable', mirror('single', 0, 50000, 45), 50000 * stCr);
+
+  // 65yo, no pension, $50k conversion: fully sheltered (65+ qualifies, under the cap).
+  check('MI 65yo, $50k conversion, no other pension: fully sheltered', mirror('single', 0, 50000, 65), 0);
+
+  // 45yo, $30k existing pension, $50k conversion: pension itself stays fully sheltered
+  // (age-independent), but the conversion gets zero shelter and is fully taxed on top.
+  check('MI 45yo, $30k pension + $50k conversion: pension unaffected, conversion fully taxed', mirror('single', 30000, 50000, 45), 50000 * stCr);
+
+  // 65yo, $60k existing pension (near the $67,610 cap) + $20k conversion: combined
+  // $80,000 exceeds the cap by $12,390, which is what should be taxable.
+  check('MI 65yo, $60k pension + $20k conversion: only the amount over the cap is taxed', mirror('single', 60000, 20000, 65), 12390 * stCr);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

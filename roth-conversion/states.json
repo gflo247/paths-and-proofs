@@ -2729,19 +2729,20 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security exempt. Flat 4.25%; PA4 retirement deduction phase-in complete 2026 (deduct ~$67,610 single / $135,220 joint of retirement income).",
+   "ssTreatment": "Social Security exempt. Flat 4.25%; PA4 retirement deduction phase-in complete 2026 (deduct ~$67,610 single / $135,220 joint of retirement income), age-independent for ordinary pension/IRA income already being received. A Roth CONVERSION specifically is an exception: it only qualifies for this deduction at 59.5+ at the time of the rollover (confirmed via MI Treasury's own FAQ) — below that age, a conversion gets zero shelter, fully taxable.",
    "incomeTax": true,
    "source": "https://www.michigan.gov/taxes"
   },
   "roth": {
    "cr": 0.0425,
    "ex": false,
-   "note": "Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint (the same $67,610 single limit applies if you're married filing separately), regardless of birth year — wages don't count toward this cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly. Detroit and 23 other Michigan cities add their own local income tax on top of the state rate — not modeled here; check your city if you live in one.",
+   "note": "Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint (the same $67,610 single limit applies if you're married filing separately), regardless of birth year — wages don't count toward this cap. IMPORTANT: a Roth CONVERSION specifically only qualifies for this deduction if you're 59.5 or older when it happens (Michigan Treasury's own guidance: the rollover distribution qualifies for the subtraction only at that age) — this is a separate, stricter rule than the age-independent one that applies to pension or IRA income you're already receiving. Below 59.5, this calculator taxes your conversion in full, with no shelter, even if you have other pension income using the cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly. Detroit and 23 other Michigan cities add their own local income tax on top of the state rate — not modeled here; check your city if you live in one.",
    "retDeduction": {
     "single": 67610,
     "mfj": 135220,
     "mfs": 67610,
-    "hoh": 67610
+    "hoh": 67610,
+    "conversionAgeGate": 59.5
    }
   },
   "taxRules": {

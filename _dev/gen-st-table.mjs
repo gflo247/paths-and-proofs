@@ -74,8 +74,15 @@ function buildRetDedBlock(json) {
   for (const code of codes) {
     const rd = json[code].roth?.retDeduction;
     if (!rd) continue;
+    // conversionAgeGate: optional, only present for a state whose deduction applies
+    // to ordinary pension/IRA income at any age but gates a Roth CONVERSION
+    // specifically behind an age floor (MI: confirmed via MI Treasury's own FAQ —
+    // "the rollover distribution... qualifies for the pension subtraction... if the
+    // individual is at least 59 1/2 years of age when the rollover occurs"). Absence
+    // means the deduction applies to a conversion unconditionally, same as before.
+    const gate = rd.conversionAgeGate != null ? `,conversionAgeGate:${num(rd.conversionAgeGate)}` : '';
     lines.push(
-      `  ${code}: {single:${num(rd.single)},mfj:${num(rd.mfj)},mfs:${num(rd.mfs)},hoh:${num(rd.hoh)}},`
+      `  ${code}: {single:${num(rd.single)},mfj:${num(rd.mfj)},mfs:${num(rd.mfs)},hoh:${num(rd.hoh)}${gate}},`
     );
   }
   lines.push(RD_CLOSE);

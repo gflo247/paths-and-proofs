@@ -1152,7 +1152,7 @@ const ST={
   ME: {n:'Maine',cr:.0715,ex:false,note:'Graduated 5.8% to 7.15%; the 7.15% top starts near $65k single / $130k joint, so a conversion that brings total income near $100k lands at the 7.15% used here (smaller totals pay 6.75% or less). Important: Maine\'s pension income deduction does NOT apply to Roth conversions — they are specifically excluded — so the conversion is fully taxable with no shelter. Social Security is exempt.'},
   MD: {n:'Maryland',cr:.0475,ex:false,note:'State 2% to 6.5% (2026 H.B. 352/FY26 budget added new 6.25%/6.5% top brackets over $500k/$1M single); a conversion near $100k lands at the 4.75% state rate used here. Maryland\'s county income tax is MANDATORY for every resident (unlike Michigan\'s opt-in city tax) and applies on top — this calculator adds 3.20%, the median AND modal rate across all 24 Maryland jurisdictions (23 counties + Baltimore City) per the Comptroller\'s 2026 local withholding table, since 12 of the 24 sit at the 3.20% ceiling. Actual county rates range 2.25% (Worcester) to 3.30% (Dorchester, Kent) — check your own county if it\'s not near 3.20%. Important: Maryland\'s pension exclusion (about $36k at 65+) covers 401(k)/403(b)/pension income but EXCLUDES all IRAs, so a Roth conversion gets no shelter and is fully taxable. Social Security is exempt.'},
   MA: {n:'Massachusetts',cr:.05,ex:false,note:'Flat 5% on most income including IRA and conversion income, with NO retirement exclusion (Massachusetts taxes IRA/401(k) withdrawals in full). This calculator applies the 4% surtax on income above $1,107,750 (the DOR\'s published, CPI-indexed 2026 threshold) — a very large conversion that pushes that year past the threshold is taxed at 9% on the excess, 5% below it. Social Security is exempt.'},
-  MI: {n:'Michigan',cr:.0425,ex:false,note:'Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint (the same $67,610 single limit applies if you\'re married filing separately), regardless of birth year — wages don\'t count toward this cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly. Detroit and 23 other Michigan cities add their own local income tax on top of the state rate — not modeled here; check your city if you live in one.'},
+  MI: {n:'Michigan',cr:.0425,ex:false,note:'Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint (the same $67,610 single limit applies if you\'re married filing separately), regardless of birth year — wages don\'t count toward this cap. IMPORTANT: a Roth CONVERSION specifically only qualifies for this deduction if you\'re 59.5 or older when it happens (Michigan Treasury\'s own guidance: the rollover distribution qualifies for the subtraction only at that age) — this is a separate, stricter rule than the age-independent one that applies to pension or IRA income you\'re already receiving. Below 59.5, this calculator taxes your conversion in full, with no shelter, even if you have other pension income using the cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly. Detroit and 23 other Michigan cities add their own local income tax on top of the state rate — not modeled here; check your city if you live in one.'},
   MN: {n:'Minnesota',cr:.068,ex:false,note:'Graduated 5.35% to 9.85%; the 6.8% band runs to about $109k single, so a conversion that brings total income near $100k lands at the 6.8% used here (7.85% applies from ~$109k to ~$203k, 9.85% above). IRA and Roth-conversion income is fully taxable (no broad retirement exclusion). Watch a second effect: a conversion raises your income and can shrink Minnesota\'s Social Security subtraction, pulling more of your benefits into MN tax that year.'},
   MS: {n:'Mississippi',cr:.044,ex:true,note:'Mississippi exempts qualified retirement income — IRA, 401(k), and pension — once you have met the plan\'s retirement requirements (generally age 59.5). A conversion at 59.5+ is therefore MS-tax-free; an EARLY distribution before then does not qualify and is taxed at the flat rate (4.4% for 2026, stepping down toward 3.75%). Social Security is fully exempt.'},
   MO: {n:'Missouri',cr:.047,ex:false,note:'Graduated 2% to 4.7%, but the 4.7% top rate starts at just ~$9,200 of taxable income, so a conversion is effectively taxed at 4.7% as shown here. Missouri\'s $6,000 private-pension exclusion (RSMo 143.124) no longer has an income ceiling for tax years 2024+ — the old $25k single/$32k joint AGI phase-out was repealed by statute. But whether it actually applies to a Roth conversion is an unresolved statutory question (the exclusion covers IRA distributions but the statute excludes \'Roth IRAs,\' and it\'s unclear if that carve-out reaches a conversion), so it is NOT applied here pending confirmation from MO DOR — this calculator conservatively shows the full conversion as taxable. Social Security is fully exempt (62+).'},
@@ -1188,7 +1188,7 @@ const ST={
 // states.json roth.retDeduction (see its _schema doc) by _dev/gen-st-table.mjs —
 // only states with a verified flat, non-phased-out cap get an entry.
 const RETDED={
-  MI: {single:67610,mfj:135220,mfs:67610,hoh:67610},
+  MI: {single:67610,mfj:135220,mfs:67610,hoh:67610,conversionAgeGate:59.5},
 };
 
 // EXAGE: sparse minimum-age gate for ex:true states whose exemption is
@@ -3444,10 +3444,24 @@ function computeConversionCost(cvtAmt, ctx){
   if(exQualifies){
     cvtTxSt = 0;
   } else if(rd){
-    const cap      = rd[status] ?? rd.single;
+    const cap = rd[status] ?? rd.single;
+    // MI: the deduction applies to ordinary pension/IRA income at ANY age (the 2026
+    // Lowering MI Costs phase-in restored the pre-2012, birth-year-independent rule),
+    // but a Roth CONVERSION specifically only qualifies if the taxpayer is 59.5+ at
+    // the time of the rollover — confirmed via MI Treasury's own FAQ: "the rollover
+    // distribution from a regular IRA qualifies for the pension subtraction... if the
+    // individual is at least 59 1/2 years of age when the rollover occurs." Below the
+    // gate, the conversion gets ZERO shelter and is fully taxable, even though
+    // pensionIncome (already-receiving income) still competes for the cap normally.
+    // Roth-calculator-only: Relocation's iraWithdrawal field has no conversion-
+    // specific semantics (it can represent a genuine pre-59.5 withdrawal-to-spend,
+    // which DOES still qualify under the age-independent rule), so this gate isn't
+    // applied there.
+    const cvtQualifies = rd.conversionAgeGate == null || curAge >= rd.conversionAgeGate;
+    const cvtEligible = cvtQualifies ? taxableCvt : 0;
     const stTiBase = Math.max(0, pensionIncome - Math.min(cap, pensionIncome));
-    const stTiWith = Math.max(0, (pensionIncome+taxableCvt) - Math.min(cap, pensionIncome+taxableCvt));
-    cvtTxSt = (stTiWith - stTiBase) * stD.cr;
+    const stTiWithEligible = Math.max(0, (pensionIncome+cvtEligible) - Math.min(cap, pensionIncome+cvtEligible));
+    cvtTxSt = ((stTiWithEligible - stTiBase) + (taxableCvt - cvtEligible)) * stD.cr;
   } else if(stateCode==='CT'){
     // Connecticut's pension/annuity exclusion treats IRA distributions
     // differently from genuine pension/annuity income — found live via the
