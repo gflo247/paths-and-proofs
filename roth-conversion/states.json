@@ -4881,15 +4881,14 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security exempt. Flat 3.07%, but retirement income is exempt once at retirement age (59.5 for IRAs), so a conversion at 59.5+ is PA-tax-free (roth.ex=true); an early distribution could be taxed.",
+   "ssTreatment": "Social Security exempt. Flat 3.07%. A genuine IRA/401(k)/pension WITHDRAWAL that you spend is exempt only once you reach retirement age (59.5 for IRAs) under PA's cost-recovery method. A ROTH CONVERSION is different: PA's Personal Income Tax Guide treats a full conversion as a transfer into another 'eligible Pennsylvania retirement plan' (Roth IRAs qualify), not a taxable distribution — so a conversion is untaxed at ANY age (roth.ex=true, no age gate), unlike an ordinary withdrawal. Confirmed via PA DOR's Gross Compensation guide chapter (the '...unless timely rolled over into an eligible Pennsylvania retirement plan' exception).",
    "incomeTax": true,
    "source": "https://www.revenue.pa.gov/"
   },
   "roth": {
    "cr": 0.0307,
    "ex": true,
-   "exMinAge": 59.5,
-   "note": "Pennsylvania exempts retirement income — IRA, 401(k), and pension distributions — from its flat 3.07% tax once you reach retirement age (59.5 for IRAs). A Roth conversion at 59.5+ is therefore PA-tax-free; a conversion before 59.5 could be taxed as an early distribution. Social Security is fully exempt. (PA also taxes 401(k)/IRA contributions up front, so there is no further state tax at withdrawal.)"
+   "note": "Pennsylvania does not tax a Roth conversion at ANY age. A full trustee-to-trustee (or timely 60-day) conversion is a transfer into another 'eligible Pennsylvania retirement plan' — Roth IRAs qualify — not a taxable distribution, per the PA DOR's own Personal Income Tax Guide. This is different from an ORDINARY IRA withdrawal you spend, which PA taxes before age 59.5 under its cost-recovery method — the age-59.5 rule commonly associated with PA retirement income applies to that case, not to a conversion. Caveat: if part of the distribution is withheld (e.g. for federal taxes) rather than fully converted, that withheld portion IS taxable — this calculator assumes a full conversion with no withholding leakage, which is the standard case. Social Security is fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
