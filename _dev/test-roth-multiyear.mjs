@@ -48,7 +48,7 @@ const scriptEnd = html.indexOf('</script>', markerIdx);
 const scriptSrc = html.slice(scriptStart, scriptEnd);
 // computeMultiYear (defined earlier in the same classic <script> block as
 // computeConversionCost) comes along for free with this same extraction window.
-const { computeMultiYear, ST } = new Function(scriptSrc + '\nreturn {computeMultiYear, ST};')();
+const { computeMultiYear, computeConversionCost, ST } = new Function(scriptSrc + '\nreturn {computeMultiYear, computeConversionCost, ST};')();
 
 function setRet(ss, pen, other, nii, ltcg) {
   document.getElementById('retSS').value = String(ss);
@@ -138,6 +138,31 @@ function check(label, cond) {
   check('nSr: row 0 (age===curAge===64) respects the RAW wizard value -- the two runs diverge', age64_raw0 !== age64_raw1);
   check('nSr: row 0 with raw nSr=1 shows the deduction applied even though 64<65', age64_raw1 < age64_raw0);
   check('nSr: later row (age=65) derives fresh from age regardless of the raw starting value -- both runs converge', age65_raw0 === age65_raw1);
+}
+
+// --- 6. Already-retired filer (curAge >= retAge, so goldStartAge===curAge): the
+// golden window's own row 0 has age===curAge in this one case -- the trickiest
+// boundary in this fix (flagged explicitly by an adversarial review as the case
+// the rest of this suite didn't directly cover: does that row correctly reuse the
+// RAW wizard nSr, the same rule as the pre-retirement phase's row 0, or does it
+// wrongly fall through to the derived value since it's technically a golden-window
+// row?). curAge=68, retAge=65 (already retired) -> nWork=0, goldStartAge=curAge=68.
+// Isolated via a direct computeConversionCost cross-check rather than a second
+// computeMultiYear run with a different raw nSr, since nSr also feeds gConv's own
+// SIZING (computeOptTargets) -- comparing two full runs would conflate "row 0 used
+// the wrong nSr" with "gConv itself came out a different size," muddying the signal.
+{
+  setRet(0, 20000, 0, 0, 0);
+  const plan = computeMultiYear(0, 0, 0, 0, 'single', 500000, 0, 0, 0.05, 0, ST[''], '', 0, 68, 65, 1, 40000, undefined, false, 0);
+  check('already-retired: no pre-retirement rows at all (nWork=0)', plan.preRows.length === 0);
+  const row0 = plan.goldRows.find(r => r.age === 68);
+  check('already-retired: golden window has a row at age 68 (===curAge)', !!row0);
+  const baseCtx = { income: 0, pensionIncome: 20000, nii: 0, ltcg: 0, ss: 0, status: 'single', stD: ST[''], stateCode: '', curAge: 68, spouseAge: undefined, isCouple: false, taxableFrac: 1 };
+  const withRawNSr = computeConversionCost(row0.convert, { ...baseCtx, nSr: 0 }).cvtTxTot;
+  const withDerivedNSr = computeConversionCost(row0.convert, { ...baseCtx, nSr: 1 }).cvtTxTot;
+  check('already-retired: raw nSr=0 vs. derived nSr=1 actually differ for this amount (test is meaningful)', withRawNSr !== withDerivedNSr);
+  check('already-retired: golden row 0 (age===curAge) matches the RAW nSr=0 computation, not the derived nSr=1 one', Math.round(withRawNSr) === row0.tax);
+  setRet(0, 0, 0, 0, 0);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
