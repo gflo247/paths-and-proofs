@@ -127,14 +127,27 @@ user's own state when accuracy matters to them.
   > $67,610 if single or married filing separately, or $135,220 if married
   > and filing a joint return" — a stronger, more direct source than RAB
   > 2026-1 alone for these exact dollar figures.
-  > **Two related items surfaced but NOT modeled** (flagged, not fixed): (1)
-  > Form 446 confirms recipients born **before 1946** ("Tier 1") get an
-  > **unlimited** public-pension deduction, not capped at $67,610 — same
-  > accepted-simplification pattern as VA's pre-1939 grandfather clause
-  > (small, shrinking population). (2) "Premature distributions" are excluded
-  > from the general subtraction based on a **plan's own** retirement
-  > eligibility rules, not a fixed age — a different, harder-to-model
-  > mechanism than the 59.5 conversion gate, pre-existing and out of scope.
+  > **Two related items re-examined 2026-08-24 by reading Form 446's full text**
+  > **(not just the adversarial review's summary) — both confirmed IRRELEVANT**
+  > **to the Roth conversion calculation specifically**, so neither needs
+  > fixing: (1) Recipients born before 1946 get an unlimited deduction only
+  > for **PUBLIC-source** pensions ("not taxed on any qualifying pension and
+  > retirement benefits received from public sources") — their PRIVATE
+  > pension/IRA income (what a Roth conversion always is) stays capped at the
+  > same $67,610/$135,220 as everyone else, quote: "may subtract qualifying
+  > private pension and retirement benefits up to the remaining balance of
+  > $67,610... or $135,220." Doesn't touch conversions at all. (2) "Premature
+  > distributions" are defined narrowly as amounts "paid on separation,
+  > withdrawal, or discontinuance of A PLAN paid before the recipient could
+  > have retired under the provisions of THE PLAN" — this is about early
+  > separation from an EMPLOYER-SPONSORED plan (401(k)/403(b)/pension) with
+  > its own vesting/retirement provisions, not IRA distributions or Roth
+  > conversions, which have no "plan" to retire under in this sense. Could
+  > only matter if a user's entered `pensionIncome` came from exactly this
+  > kind of early separation payout — the same "the tool trusts entered
+  > income is legitimately qualifying" simplification already accepted
+  > elsewhere (e.g. CT's note on not being able to tell IRA money from
+  > genuine pension income), not a new gap.
 - **The deduction is for 1099-R retirement/pension distributions specifically —
   it does NOT apply to wages, salary, or self-employment income.** Confirmed
   against MI Treasury's own "Retirement and Pension Benefits" guidance: "wages,
