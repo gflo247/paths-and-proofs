@@ -261,6 +261,18 @@ user's own state when accuracy matters to them.
   > Verified June 2026: resisted a tempting "fix" to $30,000 — it would have been
   > wrong, based on an unenacted bill. Source: tax.ny.gov + JustAnswer (Mar 2026):
   > "current enacted law stands at $20,000."
+  > **Fixed 2026-08-24: the correctly-sourced $20,000 figure was never actually
+  > APPLIED by the calculator.** `states.json` had the exclusion data all along,
+  > but NY was missing from `_dev/gen-st-table.mjs`'s `RIX_STATES` allowlist, so
+  > the tool silently fell back to taxing the full conversion at the flat 6% —
+  > found live (a 62-year-old converting $15,000, entirely within the disclosed
+  > cap, was still charged NY tax on the full amount). A data-vs-code gap, not a
+  > sourcing error — the number above was always right, the code just wasn't
+  > using it. Also confirmed: the calculator applies a flat $20,000 regardless of
+  > filing status (not $40,000 for a joint return with two qualifying spouses) —
+  > see `roth-ny-ma-state-tax-fixes.md` project memory for why a fully per-spouse
+  > model was considered and reverted (would have silently broken the Relocation
+  > tool's NY calculation via a gap in `relo-engine.mjs`'s non-pooled branch).
 - **Retirement income: taxable above the exclusion (`ex:false` correct).** IRA/
   conversion income is taxed; government pensions are fully exempt.
 - **Social Security:** fully exempt — so NY is **not** in the eight-state SS
@@ -841,8 +853,27 @@ Income Tax Rates report and state sources.
   consistent). TABOR can reduce the effective rate. Source:
   [CO DOR pension/annuity topics](https://tax.colorado.gov/income-tax-topics-social-security-pensions-and-annuities).
 - **Massachusetts** — **5% confirmed**, no retirement exclusion (IRA/401(k) fully
-  taxed). Note adds the **4% surtax above $1M** — a very large conversion could
-  trip it. SS exempt.
+  taxed). SS exempt.
+  > **Fixed 2026-08-24: the 4% surtax was disclosed in the note but never
+  > MODELED.** A conversion that pushed total income well past $1M was still
+  > taxed at a flat 5%, no surtax added — found live (income $900k + $300k
+  > conversion, i.e. $1.2M total, computed as flat 5% with $0 surtax). Now
+  > applies the extra 4% to the portion of income above $1,000,000 (9% total on
+  > the excess, 5% below it), same before/with-delta pattern as the Ohio
+  > zero-bracket special case. **⚠️ Threshold precision caveat, not fully
+  > resolved:** used $1,000,000 — the constitutional amendment's original,
+  > un-indexed figure (also already present in this state's `facts.brackets`)
+  > — rather than the real 2026 CPI-indexed figure, because mass.gov blocked
+  > every fetch attempt (403 on the surtax info page, DOR forms, and the TIR
+  > page) and no secondary source cited an actual DOR release for the exact
+  > number (they converged on ~$1,107,750 but without a traceable citation —
+  > exactly the aggregator-was-wrong pattern this file exists to avoid).
+  > Deliberately used the lower, defensibly-sourced figure over a precise-but-
+  > uncited one. **Also unconfirmed:** whether the threshold is the same $1M
+  > for every filing status or doubles for MFJ — implemented as the same
+  > threshold regardless of status. Both should be confirmed against mass.gov
+  > or a DOR technical information release directly before treating this as
+  > fully verified — see `roth-ny-ma-state-tax-fixes.md` project memory.
 - **North Dakota** — **2.5% top confirmed** (0% bottom bracket; among the lowest
   conversion taxes anywhere). SS exempt.
 - **Arizona** — **2.5% flat confirmed** (lowest flat rate nationally). SS exempt.
