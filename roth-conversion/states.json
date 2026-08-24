@@ -1305,7 +1305,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security fully exempt. Flat 4.99% (HB 463, signed May 2026, down from 5.39%). Retirement income exclusion is a CAP — $65,000/person at 65+ ($35,000 at 62-64) — covering pension/IRA/401k; a conversion exceeding the cap is taxable on the excess.",
+   "ssTreatment": "Social Security fully exempt. Flat 4.99% (HB 463, signed May 2026, down from 5.19%). Retirement income exclusion is a CAP — $65,000/person at 65+ ($35,000 at 62-64) — covering pension/IRA/401k; a conversion exceeding the cap is taxable on the excess.",
    "bracketsNote": "Flat tax (no brackets) since 2024 HB 1437 transition; HB 463 accelerated to 4.99% for 2026. Verified vs GA DOR.",
    "incomeTax": true,
    "source": "https://dor.georgia.gov/"
@@ -1313,7 +1313,7 @@
   "roth": {
    "cr": 0.0499,
    "ex": false,
-   "note": "Georgia excludes retirement income up to an age-tiered cap — $35,000 per person at 62-64, $65,000 at 65+ — then taxes the rest at its flat 4.99% rate (cut from 5.39% under HB 463, signed May 2026; the 65+ tier itself rises to $70,000 starting TY2027). This calculator applies that cap to your conversion: each spouse's own age sets their own tier, summed for a joint return, so how much shelters depends on your age and how much of the cap your other retirement income already uses. Social Security is fully exempt and doesn't use up the cap."
+   "note": "Georgia excludes retirement income up to an age-tiered cap — $35,000 per person at 62-64, $65,000 at 65+ — then taxes the rest at its flat 4.99% rate (cut from 5.19% under HB 463, signed May 2026; the 65+ tier itself rises to $70,000 starting TY2027). This calculator applies that cap to your conversion: each spouse's own age sets their own tier, summed for a joint return, so how much shelters depends on your age and how much of the cap your other retirement income already uses. Social Security is fully exempt and doesn't use up the cap."
   },
   "taxRules": {
    "bracketsByStatus": {
