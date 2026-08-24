@@ -3053,7 +3053,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security fully exempt (62+). Private IRA/401(k)/conversion income taxable; only break is a $6,000 private-pension exclusion that phases out under $25k single / $32k joint MAGI, so a meaningful conversion rarely qualifies. Public pensions get a larger exclusion (up to ~$48,967) but that does not cover private IRA income. Capital gains now fully exempt (2025+).",
+   "ssTreatment": "Social Security fully exempt (62+). Private IRA/401(k)/conversion income taxable. Missouri's $6,000 private-pension exclusion (RSMo 143.124) applies at ANY income level for tax years 2024+ — the old $25k single/$32k joint AGI phase-out was repealed by statute (confirmed 2026-08-24 against the Missouri Revisor of Statutes; the site's prior note describing that phase-out was stale). NOT modeled here: whether a Roth conversion's taxable IRA distribution actually qualifies for this exclusion is an open statutory question — the exclusion covers IRA distributions but the statute excludes 'Roth IRAs,' and it's unclear whether that reaches a conversion INTO a Roth (vs. a distribution FROM one) — so this calculator conservatively shows the conversion as fully taxable pending confirmation from MO DOR. Public pensions get a larger exclusion (up to ~$48,967) but that does not cover private IRA income. Capital gains now fully exempt (2025+).",
    "bracketsNote": "Single-filer (same thresholds all statuses); top 4.7% starts ~$9,191. Top rate cut 4.8%->4.7% Jan 2025 (SB 3 revenue trigger). Inflation-indexed. Source: Mo. Rev. Stat. 143.011 via MO DOR.",
    "incomeTax": true,
    "source": "https://dor.mo.gov/taxation/individual/tax-types/income/"
@@ -3061,7 +3061,7 @@
   "roth": {
    "cr": 0.047,
    "ex": false,
-   "note": "Graduated 2% to 4.7%, but the 4.7% top rate starts at just ~$9,200 of taxable income, so a conversion is effectively taxed at 4.7%. IRA and conversion income is taxable; the only applicable break is a $6,000 private-pension exclusion that phases out under $25k single / $32k joint, so a meaningful conversion rarely qualifies. Social Security is fully exempt (62+)."
+   "note": "Graduated 2% to 4.7%, but the 4.7% top rate starts at just ~$9,200 of taxable income, so a conversion is effectively taxed at 4.7% as shown here. Missouri's $6,000 private-pension exclusion (RSMo 143.124) no longer has an income ceiling for tax years 2024+ — the old $25k single/$32k joint AGI phase-out was repealed by statute. But whether it actually applies to a Roth conversion is an unresolved statutory question (the exclusion covers IRA distributions but the statute excludes 'Roth IRAs,' and it's unclear if that carve-out reaches a conversion), so it is NOT applied here pending confirmation from MO DOR — this calculator conservatively shows the full conversion as taxable. Social Security is fully exempt (62+)."
   },
   "taxRules": {
    "bracketsByStatus": {
