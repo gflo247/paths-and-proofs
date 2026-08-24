@@ -798,6 +798,14 @@ IRA-specific deduction traps (RI, like ME).
   > age-gate check on the SS-threshold path), similar in kind to the CT/NM/MT
   > additions earlier in this audit — flagged for a future fix, not built without a
   > check-in first.
+  > **Built 2026-08-24 (commit 4582c17), after a user check-in and an adversarial
+  > review pass**: added `ssAgeGate: 67` to `taxableSS()` in `relo-engine.mjs` — below
+  > the gate, SS stays fully taxable regardless of AGI. A joint return requires the
+  > YOUNGER spouse to also clear the gate (a conservative simplification BY ANALOGY
+  > to the pension modification's stated per-spouse-partial rule — the adversarial
+  > review confirmed RI's guide states the per-spouse-partial clause explicitly for
+  > the PENSION modification but doesn't repeat it for SS specifically, so this is
+  > inferred, not directly sourced).
 
 #### Kansas — ✅ rate fixed + SS note updated June 2026
 
@@ -933,6 +941,18 @@ Income Tax Rates report and state sources.
   distributions** (CO DOR, primary source). Fully exempts SS at 65+ (on SS list;
   consistent). TABOR can reduce the effective rate. Source:
   [CO DOR pension/annuity topics](https://tax.colorado.gov/income-tax-topics-social-security-pensions-and-annuities).
+  > **Built 2026-08-24 (commit 4582c17), after a user check-in and an adversarial
+  > review pass**: modeled the age/AGI-conditional shared SS/pension cap flagged
+  > below as `sharesRetirementCap` in `relo-engine.mjs` — SS and pension/IRA now
+  > share ONE combined age-tiered cap ($20k/$24k), confirmed word-for-word against
+  > CO DOR's guide: "Any subtraction claimed for Social Security benefits will
+  > reduce the subtraction an individual can claim for any other pension and
+  > annuity income." At 65+, SS is subtracted in full (uncapped), reducing room
+  > left for pension/IRA; at 55-64 the same applies only under the AGI threshold,
+  > otherwise SS+pension/IRA together are capped at $20,000 combined; under 55,
+  > neither gets any subtraction. A joint return conservatively requires BOTH
+  > spouses to individually qualify for the uncapped tier (no per-spouse SS split
+  > modeled) before falling through to the shared-cap branch.
   > **Fixed 2026-08-24: the age-tiered shape described above was documented in
   > this file's prose but never actually MODELED.** `states.json` had a flat
   > `$24,000` cap for all qualifying ages (`cliffType:"hard"`), and — worse —
