@@ -783,6 +783,21 @@ IRA-specific deduction traps (RI, like ME).
   shelter and is fully taxable; the old "some exemptions apply" note implied
   otherwise. RI also taxes SS above ~$107k/$133.75k (on SS list). Source:
   [RI Div. of Taxation Retirement Income Guide](https://tax.ri.gov/sites/g/files/xkgbur541/files/2026-02/PUB_2026-01_Retirement_Income_Guide.pdf).
+  > **Fixed 2026-08-24: the joint threshold above was $250 off** — re-read the same
+  > source's own worked example ("Justin, 63, and Mark, 65... $133,500 limit which
+  > applies for a married couple filing a joint income tax return") and corrected
+  > `states.json` from `133750` to `133500`. Also found, re-reading the same guide's
+  > Section 1b/Section 3 in full: BOTH the SS exemption and the pension modification
+  > require the taxpayer to have reached Social Security **full retirement age**
+  > (66-67, by birth year) — a separate gate from the AGI threshold, per the guide's
+  > own Example #2 (a 63/65 couple under the AGI limit, denied the exemption solely
+  > because neither had reached FRA). This age gate is **not modeled** in
+  > `relo-engine.mjs`'s generic `exemptBelowAGI` SS path (confirmed live: a
+  > 63-year-old and a 67-year-old get identical, both-exempt results for the same
+  > income). Disclosed in the note; would need new shared-engine mechanism (an
+  > age-gate check on the SS-threshold path), similar in kind to the CT/NM/MT
+  > additions earlier in this audit — flagged for a future fix, not built without a
+  > check-in first.
 
 #### Kansas — ✅ rate fixed + SS note updated June 2026
 
