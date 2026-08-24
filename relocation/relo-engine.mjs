@@ -7,6 +7,16 @@
 //   (all $ ; age/spouseAge for gates — spouseAge is OPTIONAL and only consulted for
 //   joint returns on states with a genuinely per-spouse mechanic; omitting it is safe
 //   and backward compatible — see the per-person cliffTypes below.)
+//
+// Retirement-income-exclusion math (tierCapFor/allowedExclusion/splitPooledExclusion
+// and the whole ri/pooled dispatch below) moved to core/retirement-rules.js
+// (resolveRetirementIncome) on 2026-08-24 — that logic used to be independently
+// duplicated in roth-conversion/index.html's rixExcluded()/computeConversionCost(),
+// which is exactly the kind of drift that produced a real, live, previously-untested
+// bug (Roth's calculator silently ignored Colorado's sharesCapWithSS entirely — see
+// the shared module's own header comment). federalTaxableSS moved there too (it was
+// already a confirmed byte-identical port of Roth's calcTaxableSS before this).
+import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
 
 function bracketTax(amount, brackets) {
   if (amount <= 0) return 0;
@@ -21,28 +31,6 @@ function bracketTax(amount, brackets) {
     if (amount <= hi) break;
   }
   return tax;
-}
-
-// The real federal Social Security taxability formula (IRS Pub 915's "quick method"
-// worksheet — combined income vs. the $25k/$34k single or $32k/$44k joint two-tier
-// base/additional thresholds, MFS taxed at a flat 85% immediately). Ported verbatim
-// from roth-conversion/index.html's calcTaxableSS() — same federal figures, same
-// shape, just renamed for this file's naming convention. Used for states (Montana is
-// the only one confirmed so far — its own DOR literally says "follows the federal
-// formula," and the source Utah Legislature policy brief that cross-referenced all
-// nine SS-taxing states explicitly lists Montana as "N/A" for state-specific
-// thresholds) that have NO separate state threshold of their own, unlike MN/UT/VT/NM/CT,
-// which each have genuinely distinct state-specific formulas already modeled with
-// their own real figures via the exemptBelowAGI/phaseInAboveAGI shape below.
-function federalTaxableSS(ssBenefit, otherIncome, rawStatus) {
-  if (!ssBenefit || ssBenefit <= 0) return 0;
-  if (rawStatus === "mfs") return ssBenefit * 0.85;
-  const [lo, hi] = rawStatus === "mfj" ? [32000, 44000] : [25000, 34000]; // hoh uses single's thresholds, same as federal
-  const pi = otherIncome + ssBenefit * 0.5;
-  if (pi <= lo) return 0;
-  if (pi <= hi) return Math.min(ssBenefit * 0.5, (pi - lo) * 0.5);
-  const zone1 = Math.min(ssBenefit * 0.5, (hi - lo) * 0.5);
-  return Math.min(ssBenefit * 0.85, zone1 + (pi - hi) * 0.85);
 }
 
 // Taxable Social Security under a state's threshold/phase-in rule.
@@ -69,73 +57,6 @@ function taxableSS(ssRule, ssBenefit, agiProxy, status, otherIncome, rawStatus, 
   const band = Math.max(1, exempt * 0.2); // representative phase-in width
   const frac = Math.min(1, Math.max(0, (agiProxy - start) / band));
   return maxTaxable * frac;
-}
-
-// Highest age-gated tier a person's own age clears, or 0 if none. Used to build a
-// household cap by summing each spouse's INDEPENDENTLY-verified entitlement (GA, WI) —
-// not by assuming a flat doubling, since a state's real joint figure isn't always 2x
-// (and for WI specifically, doubling unconditionally would be wrong: the $48k joint tier
-// only unlocks when BOTH spouses clear it, confirmed by WI DOR's own FAQ, not from any
-// single spouse's own qualification).
-function tierCapFor(tiers, personAge) {
-  let cap = 0;
-  for (const t of tiers) if (personAge >= t.minAge) cap = Math.max(cap, t.cap);
-  return cap;
-}
-
-// Split a resolved household exclusion amount between IRA and pension proportionally —
-// same reasoning as the pooling fix in computeStateIncomeTax: the final bracket tax only
-// depends on the sum, so the split only affects the breakdown display.
-function splitPooledExclusion(totalEx, iraWithdrawal, pension) {
-  const combined = iraWithdrawal + pension;
-  const iraShare = combined > 0 ? iraWithdrawal / combined : 0;
-  return {
-    iraTaxable: Math.max(0, iraWithdrawal - totalEx * iraShare),
-    penTaxable: Math.max(0, pension - totalEx * (1 - iraShare)),
-  };
-}
-
-// Allowed exclusion $ for retirement/pension income after cliff/phaseout/step + IRA-trap.
-// `actualAmount` is the real dollar amount being tested against this exclusion (which may
-// be combined pension+IRA income for pooled states — see computeStateIncomeTax) — needed
-// because some states (CT, NJ) exclude a PERCENTAGE OF ACTUAL INCOME in their upper tiers,
-// not a percentage of a fixed dollar cap, so the result can't be derived from `cap` alone.
-// Covers the cliffTypes with a single resolved `cap`; the per-spouse-aware types
-// (ageTieredCap, steppedAmount, perSpousePhaseout) need both spouses' ages to resolve
-// their cap in the first place, so computeStateIncomeTax handles those directly.
-function allowedExclusion(excl, isIRA, agiProxy, status, cap, actualAmount) {
-  if (!excl) return 0;
-  if (isIRA && excl.excludesIRA) return 0;           // MD trap: IRA gets nothing
-  if (excl.cliffType === "hard") {
-    if (excl.cliffAGI && agiProxy > excl.cliffAGI[status]) return 0; // NJ: whole thing vanishes
-    return Math.min(cap, actualAmount);
-  }
-  if (excl.cliffType === "phaseout") {
-    // Not currently used by any state (CT migrated to steppedPercent, VA to
-    // perSpousePhaseout) — kept correct rather than removed, in case a future state
-    // fits this simpler shape. Cap the PHASED amount by actual income, not the other
-    // way around: min(cap,actual)*frac and min(cap*frac,actual) diverge whenever
-    // cap > actual and frac < 1 (found via the perSpousePhaseout parity test — the
-    // same order mistake, caught before it could reach a live state's data).
-    const full = excl.fullBelowAGI[status], zero = excl.zeroByAGI[status];
-    let frac;
-    if (agiProxy <= full) frac = 1;
-    else if (agiProxy >= zero) frac = 0;
-    else frac = 1 - (agiProxy - full) / (zero - full);
-    return Math.min(cap * frac, actualAmount);
-  }
-  if (excl.cliffType === "steppedPercent") {
-    // Tiered by AGI; each tier excludes a % of ACTUAL income, found by the tier whose
-    // `upTo` is the first value actualAGI doesn't exceed (tiers list their INCLUSIVE upper
-    // bound — e.g. CT's 100%-tier is {upTo:74999}, since $75,000 itself drops to the next
-    // tier). Most states with this shape have no dollar cap at all (CT); NJ's lowest tier
-    // is `capped:true`, meaning that tier alone still respects the flat dollar cap.
-    const tiers = excl.steps[status];
-    const tier = tiers.find((t) => t.upTo == null || agiProxy <= t.upTo) || tiers[tiers.length - 1];
-    const excluded = actualAmount * tier.pct;
-    return tier.capped ? Math.min(cap, excluded) : excluded;
-  }
-  return Math.min(cap, actualAmount);
 }
 
 export function computeStateIncomeTax(rules, status, income) {
@@ -172,252 +93,26 @@ export function computeStateIncomeTax(rules, status, income) {
   // understate the exemption for a couple where only the older spouse's own SS should
   // qualify, but hasn't been directly sourced as RI's real per-spouse SS rule.
   const ssQualAge = tStatus === "joint" ? Math.min(age, spouseAge ?? age) : age;
-  // CO: SS and the pension/annuity subtraction share ONE combined age-tiered cap, computed
-  // together below (alongside iraTaxable/penTaxable) rather than here — see the
-  // sharesRetirementCap branch further down. `let` since that branch overwrites this.
+  // CO: SS and the pension/annuity subtraction share ONE combined age-tiered cap, resolved
+  // together (alongside iraTaxable/penTaxable) by resolveRetirementIncome below, via its
+  // ssTaxableOverride return value, rather than here. `let` since that override overwrites
+  // this.
   let tSS = rules.socialSecurity.sharesRetirementCap
     ? 0
     : taxableSS(rules.socialSecurity, ss, agiProxy, ssStatus, agiProxy - ss, status, ssQualAge);
 
   // --- IRA / 401k / conversion withdrawal, and Pension ---
-  // Most states share ONE exclusion pool across both income types (pensionIncome.sameAs
-  // === "retirementIncome"): calling allowedExclusion separately for each with the SAME
-  // full cap double-grants it when both are present (a $65,987 Michigan cap would shelter
-  // up to $131,974 — a real, live bug, confirmed reachable via the relocation tool's own
-  // default inputs, which set both iraWithdrawal and pension). Fix: compute the exclusion
-  // ONCE against their combined actual income and split the result proportionally — the
-  // final bracket tax only depends on iraTaxable+penTaxable's SUM, so the split only
-  // affects the breakdown display, never the tax owed. States with genuinely separate
-  // pension and IRA rules (e.g. Maryland: pension excludable, IRA is not) are unaffected —
-  // those two rule objects are already distinct, so there's nothing to pool.
-  const ri = rules.retirementIncome;
-  const pooled = rules.pensionIncome.sameAs === "retirementIncome";
-  const pr = pooled ? ri : rules.pensionIncome;
-
-  let iraTaxable = iraWithdrawal;
-  let penTaxable = pension;
-
-  if (pooled && ri.treatment === "exclusion" && ri.exclusion.cliffType === "ageTieredCap" && ri.exclusion.sharesCapWithSS) {
-    // CO: Social Security and the pension/annuity subtraction are NOT two separate pools —
-    // they share ONE age-tiered cap. Confirmed via CO DOR's own "Income Tax Topics: Social
-    // Security, Pensions and Annuities" guide: "Any subtraction claimed for Social Security
-    // benefits will reduce the subtraction an individual can claim for any other pension
-    // and annuity income." At 65+, the ENTIRE federally-taxable SS amount is subtracted,
-    // uncapped, and that reduces the room left in the cap for pension/IRA (floor $0). At
-    // 55-64, the same uncapped treatment applies if household AGI is under a threshold;
-    // above it, SS and pension/IRA together are limited to the single $20,000 cap (the
-    // same cap that would otherwise apply to pension/IRA alone). Under 55, neither SS nor
-    // pension/IRA gets any subtraction (the death-benefit carve-out for under-55 filers is
-    // not modeled, consistent with this file's existing simplifications elsewhere).
-    // No per-spouse SS/income split is available, so a joint return conservatively
-    // requires BOTH spouses to individually clear the "full/uncapped" bar (same convention
-    // as RI's full-retirement-age gate above) before granting it to the household —
-    // otherwise the household falls to the shared-$20k-cap branch.
-    const ssr = rules.socialSecurity;
-    const fullExemptThreshold = ssr.fullExemptBelowAGI[tStatus];
-    const personFullyExempt = (personAge) => personAge >= 65 || (personAge >= 55 && agiProxy <= fullExemptThreshold);
-    const householdFullyExempt = tStatus === "joint"
-      ? personFullyExempt(age) && personFullyExempt(spouseAge ?? age)
-      : personFullyExempt(age);
-    const cap = tierCapFor(ri.exclusion.perPersonTiers, age)
-      + (tStatus === "joint" ? tierCapFor(ri.exclusion.perPersonTiers, spouseAge ?? age) : 0);
-    // CO's subtraction applies to SS "included in federal taxable income" (line 6b), i.e.
-    // the real federally-taxable portion — not the gross benefit — so this uses the actual
-    // federal worksheet rather than this file's usual crude ss-as-AGI-proxy approximation.
-    const ssIncludedFed = federalTaxableSS(ss, agiProxy - ss, status);
-    let ssSub, pensionRoom;
-    if (householdFullyExempt) {
-      ssSub = ssIncludedFed;
-      pensionRoom = Math.max(0, cap - ssSub);
-    } else {
-      const combined = ssIncludedFed + iraWithdrawal + pension;
-      const totalSub = Math.min(cap, combined);
-      // No stated priority order between SS and pension/IRA when both compete for a
-      // capped pool — split proportionally by each income type's own share, same
-      // no-ordering-assumed convention as splitPooledExclusion below.
-      const ssShare = combined > 0 ? ssIncludedFed / combined : 0;
-      ssSub = totalSub * ssShare;
-      pensionRoom = totalSub - ssSub;
-    }
-    tSS = Math.max(0, ssIncludedFed - ssSub);
-    const pensionAndIraSub = Math.min(pensionRoom, iraWithdrawal + pension);
-    ({ iraTaxable, penTaxable } = splitPooledExclusion(pensionAndIraSub, iraWithdrawal, pension));
-  } else if (pooled && ri.treatment === "exclusion" && ri.exclusion.cliffType === "ageTieredCap") {
-    // GA (two real age tiers) / WI (one tier, but still needs this — see tierCapFor):
-    // each spouse's own cap is resolved from THEIR OWN age and summed for a joint
-    // return. A converting spouse can only shelter against their own entitlement — a
-    // non-converting spouse's unused tier doesn't transfer (confirmed: GA DOR practice) —
-    // but since the engine has no per-spouse income split, summing independently-
-    // verified per-person amounts against the household's combined actual income is the
-    // best available figure without assuming a flat (and sometimes wrong — see WI) 2x.
-    let cap = tierCapFor(ri.exclusion.perPersonTiers, age)
-      + (tStatus === "joint" ? tierCapFor(ri.exclusion.perPersonTiers, spouseAge ?? age) : 0);
-    // WV: the $8k/$16k modification shares ONE statutory pool with Social Security —
-    // net the SS BENEFIT itself against the per-person-summed cap (same netAgainstSS
-    // mechanic as the flat-cap branch below, now also needed here since WV's cap is
-    // genuinely per-spouse, not flat — see the WV reshape note in gen-st-table.mjs).
-    if (ri.exclusion.netAgainstSS) cap = Math.max(0, cap - ss);
-    const totalEx = Math.min(cap, iraWithdrawal + pension);
-    ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, iraWithdrawal, pension));
-  } else if (pooled && ri.treatment === "exclusion" && ri.exclusion.cliffType === "steppedAmount") {
-    // NM: a dollar amount (not %), tiered by AGI, applied ×1 or ×2 by qualifying-spouse
-    // count — confirmed via NM TRD's own worked examples ("$8,000 x 2" for two qualifying
-    // spouses). The AGI bracket is resolved ONCE from combined household AGI; only the
-    // resulting per-person dollar figure is then multiplied by how many spouses qualify.
-    const excl = ri.exclusion;
-    // NM groups Head of Household with Married Filing Jointly for THIS TABLE specifically
-    // (confirmed via NM TRD's own Table 1 — HOH shares the wider joint thresholds, not
-    // single's) — but an HOH filer still files alone, so the qualifyingCount check just
-    // below stays keyed to the real tStatus (joint-return-ness), not this table lookup.
-    const stepsStatus = (status === "hoh" && excl.hohMapsToJoint) ? "joint" : tStatus;
-    const tiers = excl.steps[stepsStatus];
-    const tier = tiers.find((t) => t.upTo == null || agiProxy <= t.upTo) || tiers[tiers.length - 1];
-    const qualifies = (a) => excl.ageGate == null || a >= excl.ageGate;
-    const qualifyingCount = excl.perQualifyingSpouse
-      ? (qualifies(age) ? 1 : 0) + (tStatus === "joint" && qualifies(spouseAge ?? age) ? 1 : 0)
-      : (qualifies(age) ? 1 : 0);
-    const cap = tier.amt * qualifyingCount;
-    const totalEx = Math.min(cap, iraWithdrawal + pension);
-    ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, iraWithdrawal, pension));
-  } else if (pooled && ri.treatment === "exclusion" && ri.exclusion.cliffType === "perSpousePhaseout") {
-    // VA: a per-person $12,000 age-65+ deduction (summed like ageTieredCap above), that
-    // THEN phases out dollar-for-dollar above a threshold fixed by filing status (not by
-    // qualifying-spouse count — confirmed: VA's own Form 760 worksheet uses one shared
-    // $75,000 joint / $50,000 single test regardless of whether 1 or 2 spouses qualify).
-    // Grandfather clause (unconditional for those born on/before 1/1/1939, ~87+ in 2026)
-    // deliberately not modeled — that population is small and shrinking (VA's own
-    // characterization), and modeling it per-spouse would add real complexity for a
-    // vanishing edge case.
-    const excl = ri.exclusion;
-    const qualifyingCount = (age >= excl.ageGate ? 1 : 0)
-      + (tStatus === "joint" && (spouseAge ?? age) >= excl.ageGate ? 1 : 0);
-    const cap = excl.perPersonCap * qualifyingCount;
-    const threshold = excl.thresholdAGI[tStatus];
-    // VA's own threshold ("AFAGI") backs Social Security out entirely — same reasoning
-    // as NJ's thresholdExcludesSS above.
-    const thresholdProxy = excl.thresholdExcludesSS ? agiProxy - ss : agiProxy;
-    let totalEx = 0;
-    if (cap > 0) {
-      const zero = threshold + cap; // the phase-out band is exactly as wide as the cap (1:1 ramp)
-      let frac;
-      if (thresholdProxy <= threshold) frac = 1;
-      else if (thresholdProxy >= zero) frac = 0;
-      else frac = 1 - (thresholdProxy - threshold) / (zero - threshold);
-      totalEx = cap * frac;
-    }
-    ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, iraWithdrawal, pension));
-  } else if (pooled && ri.treatment === "offsetStack") {
-    // SC: two deductions sharing ONE combined per-person ceiling — an age-tiered
-    // retirement-income deduction ($3k under 65 / $10k at 65+), plus a separate age-65+
-    // deduction against ANY income, but that second piece is REDUCED by whatever the
-    // first already used (confirmed via SC DOR's own worked examples: NOT additive to
-    // $25k, capped at $15k total per qualifying person). Computed per spouse (each has
-    // their own age and their own $15k pool) and summed for a joint return, same
-    // per-person-summing rationale as ageTieredCap.
-    const os = ri.offsetStack;
-    const personShelter = (personAge, personShare) => {
-      const tier1Cap = personAge >= os.tier1AgeGate ? os.tier1CapAtOrAbove : os.tier1CapBelow;
-      const tier1 = Math.min(tier1Cap, personShare);
-      const tier2 = personAge >= os.tier2AgeGate ? Math.max(0, os.tier2Ceiling - tier1) : 0;
-      return Math.min(tier1 + tier2, personShare);
-    };
-    // No per-spouse income split is available, so — consistent with GA/WI above —
-    // apply each spouse's own shelter formula to the FULL combined amount and sum,
-    // rather than guessing a split; capped so a joint return never exceeds what two
-    // people's $15,000 pools could shelter.
-    const combined = iraWithdrawal + pension;
-    const totalEx = tStatus === "joint"
-      ? Math.min(personShelter(age, combined) + personShelter(spouseAge ?? age, combined), combined)
-      : personShelter(age, combined);
-    ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, iraWithdrawal, pension));
-  } else if (pooled && ri.treatment === "exclusion" && ri.exclusion.cliffType === "steppedPercent" && ri.exclusion.iraWeightPct != null) {
-    // CT: IRA distributions enter the eligible base at a REDUCED weight relative to
-    // pension/annuity income — confirmed via the official CT-1040 "Pension and Annuity
-    // Worksheet": pension/annuity income counts at 100%, IRA distributions (other than
-    // Roth — a Roth CONVERSION is an IRA distribution) count at only 75%, before the
-    // AGI-tiered phase-out percentage even applies. This is true at EVERY tier, including
-    // the "fully exempt" 100% tier below the AGI threshold — an IRA distribution never
-    // gets more than 75% sheltered in CT, no matter how low AGI is. The AGI threshold
-    // TEST itself still uses real, unweighted combined income (thresholdProxy below);
-    // only the amount fed into the final phase-out multiplication is weighted. NJ also
-    // uses steppedPercent but has no iraWeightPct (its own rule doesn't distinguish IRA
-    // from pension/annuity), so it correctly falls through to the generic branch below.
-    const excl = ri.exclusion;
-    const thresholdProxy = excl.thresholdExcludesSS ? agiProxy - ss : agiProxy;
-    const tiers = excl.steps[tStatus];
-    const tier = tiers.find((t) => t.upTo == null || thresholdProxy <= t.upTo) || tiers[tiers.length - 1];
-    const weighted = iraWithdrawal * excl.iraWeightPct + pension;
-    const totalEx = weighted * tier.pct;
-    ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, iraWithdrawal, pension));
-  } else if (pooled && ri.treatment === "exclusion") {
-    const gateOk = ri.ageGate == null || age >= ri.ageGate;
-    let cap = tStatus === "joint" ? ri.exclusion.capJoint : ri.exclusion.capSingle;
-    // WV: the $8k/$16k modification shares ONE statutory pool with Social Security
-    // (and other pension exclusions) — net the SS BENEFIT itself against the cap,
-    // not its taxable portion, since WV exempts SS from state tax regardless of
-    // federal taxability (confirmed: W. Va. Code 11-21-12(c)(9)). No per-spouse SS
-    // split is available (only combined household `ss`), so a joint return nets the
-    // full household SS against the full household capJoint — a household-level
-    // approximation, same spirit as how GA/WI/SC apply a per-person formula against
-    // combined household income elsewhere in this file when a true split isn't known.
-    if (ri.exclusion.netAgainstSS) cap = Math.max(0, cap - ss);
-    // NJ's threshold is its own "Total Income" line, which excludes Social Security
-    // entirely — unlike every other state here, which thresholds off AGI (SS included).
-    const thresholdProxy = ri.exclusion.thresholdExcludesSS ? agiProxy - ss : agiProxy;
-    if (gateOk && ri.exclusion.excludesIRA) {
-      // MD-style trap even inside a nominally "shared" state: IRA gets nothing, so
-      // there's nothing to pool — pension draws the full pool against its own amount.
-      const penEx = allowedExclusion(ri.exclusion, false, thresholdProxy, tStatus, cap, pension);
-      penTaxable = Math.max(0, pension - penEx);
-    } else if (gateOk) {
-      const combined = iraWithdrawal + pension;
-      const totalEx = allowedExclusion(ri.exclusion, false, thresholdProxy, tStatus, cap, combined);
-      const iraShare = combined > 0 ? iraWithdrawal / combined : 0;
-      iraTaxable = Math.max(0, iraWithdrawal - totalEx * iraShare);
-      penTaxable = Math.max(0, pension - totalEx * (1 - iraShare));
-    }
-    // else: age gate not met, both stay fully taxable (already the default above).
-  } else {
-    // Not pooled (or no exclusion at all) — IRA and pension have independent rules,
-    // nothing to double-count, so compute each on its own as before.
-    if (ri.treatment === "exempt") iraTaxable = 0;
-    else if (ri.treatment === "ageExempt") iraTaxable = (age >= (ri.ageGate ?? 0)) ? 0 : iraWithdrawal;
-    else if (ri.treatment === "exclusion" && ri.exclusion.cliffType === "ageTieredCap") {
-      // NY: found live 2026-08-24 — the flat-cap branch below gates ONLY on the
-      // primary filer's own age, so a joint return where just the SPOUSE qualifies
-      // got ZERO shelter (should get their own cap), and where just the PRIMARY
-      // qualifies, wrongly got the FULL two-person cap (should be half). NY's real
-      // $20,000 exclusion is per-individual (confirmed: "capped at $20,000 per
-      // person, whether filing jointly or separately... one spouse can't claim the
-      // other spouse's unused exclusion") — same per-person-summing fix already
-      // used by the pooled ageTieredCap branch above, now added here too for any
-      // non-pooled state with this shape.
-      const cap = tierCapFor(ri.exclusion.perPersonTiers, age)
-        + (tStatus === "joint" ? tierCapFor(ri.exclusion.perPersonTiers, spouseAge ?? age) : 0);
-      iraTaxable = Math.max(0, iraWithdrawal - Math.min(cap, iraWithdrawal));
-    } else if (ri.treatment === "exclusion") {
-      const gateOk = ri.ageGate == null || age >= ri.ageGate;
-      const cap = tStatus === "joint" ? ri.exclusion.capJoint : ri.exclusion.capSingle;
-      const exAllowed = gateOk ? allowedExclusion(ri.exclusion, true, agiProxy, tStatus, cap, iraWithdrawal) : 0;
-      iraTaxable = Math.max(0, iraWithdrawal - exAllowed);
-    } // "taxed" => unchanged
-
-    if (pr.treatment === "exempt") penTaxable = 0;
-    else if (pr.treatment === "ageExempt") penTaxable = (age >= (pr.ageGate ?? 0)) ? 0 : pension;
-    else if (pr.treatment === "exclusion" && pr.exclusion.cliffType === "ageTieredCap") {
-      const cap = tierCapFor(pr.exclusion.perPersonTiers, age)
-        + (tStatus === "joint" ? tierCapFor(pr.exclusion.perPersonTiers, spouseAge ?? age) : 0);
-      penTaxable = Math.max(0, pension - Math.min(cap, pension));
-    } else if (pr.treatment === "exclusion") {
-      const gateOk = pr.ageGate == null || age >= pr.ageGate;
-      const cap = tStatus === "joint" ? pr.exclusion.capJoint : pr.exclusion.capSingle;
-      const exAllowed = gateOk ? allowedExclusion(pr.exclusion, false, agiProxy, tStatus, cap, pension) : 0;
-      penTaxable = Math.max(0, pension - exAllowed);
-    }
-  }
+  // The whole retirement-income-exclusion dispatch (pooling, per-cliffType math, the
+  // CO SS-sharing entanglement) lives in core/retirement-rules.js now — see that
+  // module's own header comment. ssTaxableOverride is non-null only for CO; every
+  // other state leaves tSS exactly as computed above.
+  const { iraTaxable, penTaxable, ssTaxableOverride } = resolveRetirementIncome(rules, status, {
+    age, spouseAge, ira: iraWithdrawal, pension, agiProxy, ss,
+  });
+  if (ssTaxableOverride != null) tSS = ssTaxableOverride;
   breakdown.iraTaxable = iraTaxable;
   breakdown.penTaxable = penTaxable;
-  breakdown.taxableSS = tSS; // set once here since CO's sharesRetirementCap branch above overwrites tSS
+  breakdown.taxableSS = tSS; // set once here since resolveRetirementIncome's ssTaxableOverride (CO) may overwrite tSS above
 
   // --- Capital gains ---
   const cg = rules.capitalGains;
