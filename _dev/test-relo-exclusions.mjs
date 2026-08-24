@@ -325,5 +325,80 @@ function check(label, actual, expected, tolerance = 1) {
   check('MT joint, deep in the 85% federal tier: taxableSS = $25,500 (the 85%-of-benefit cap)', deepTier.breakdown.taxableSS, 25500);
 }
 
+// --- 13. RI: SS exemption requires full retirement age, a separate gate from the AGI
+// threshold (2026-08-24 fix). RI DOT's own Retirement Income Guide (Pub 2026-01, TY2025)
+// Example #2 denies the exemption to a 63/65-year-old joint-filing couple despite their
+// AGI being under the joint threshold, solely because neither had reached FRA.
+{
+  const ri = states.RI.taxRules;
+  check('RI socialSecurity.ssAgeGate is set to 67', ri.socialSecurity.ssAgeGate, 67);
+
+  // 63yo, single, AGI well under the $107k threshold: still fully taxable (85%) — not
+  // yet at FRA. Previously this returned $0 (the age gate wasn't checked at all).
+  const notFRA = computeStateIncomeTax(ri, 'single', { ss: 30000, wages: 20000, age: 63 });
+  check('RI single, age 63 (not FRA), AGI under threshold: still fully taxable', notFRA.breakdown.taxableSS, 30000 * 0.85);
+
+  // 67yo (FRA), same income: fully exempt.
+  const atFRA = computeStateIncomeTax(ri, 'single', { ss: 30000, wages: 20000, age: 67 });
+  check('RI single, age 67 (FRA), AGI under threshold: fully exempt', atFRA.breakdown.taxableSS, 0);
+
+  // Joint, one spouse at FRA and one not: the younger spouse's age controls (no
+  // per-spouse SS split available) — still fully taxable.
+  const jointYoungerNotFRA = computeStateIncomeTax(ri, 'mfj', { ss: 30000, wages: 20000, age: 68, spouseAge: 63 });
+  check('RI joint, younger spouse not FRA: still fully taxable', jointYoungerNotFRA.breakdown.taxableSS, 30000 * 0.85);
+
+  // Joint, both at FRA, AGI under the joint threshold: fully exempt.
+  const jointBothFRA = computeStateIncomeTax(ri, 'mfj', { ss: 30000, wages: 20000, age: 68, spouseAge: 67 });
+  check('RI joint, both spouses at FRA, AGI under threshold: fully exempt', jointBothFRA.breakdown.taxableSS, 0);
+}
+
+// --- 14. CO: Social Security and the pension/annuity subtraction share ONE combined
+// age-tiered cap (2026-08-24 fix). CO DOR's own guide: "Any subtraction claimed for
+// Social Security benefits will reduce the subtraction an individual can claim for any
+// other pension and annuity income." Figures below are hand-derived from the real federal
+// SS-taxability worksheet (federalTaxableSS) feeding into CO's shared-cap mechanic.
+{
+  const co = states.CO.taxRules;
+  check('CO socialSecurity.sharesRetirementCap is set', co.socialSecurity.sharesRetirementCap, true);
+
+  // Under 55: no CO subtraction at all for SS or pension. The SS benefit's federally-
+  // taxable portion still applies (CO subtracts against line 6b, not the gross benefit) —
+  // combined income 20,000(other)+10,000(half of 20k SS)=30,000, in the 50% federal tier:
+  // taxable = min(10,000, (30,000-25,000)*0.5) = 2,500.
+  const under55 = computeStateIncomeTax(co, 'single', { ss: 20000, pension: 10000, wages: 10000, age: 50 });
+  check('CO under 55: pension fully taxable, no CO subtraction', under55.breakdown.penTaxable, 10000);
+  check('CO under 55: SS taxed at its federally-taxable amount only', under55.breakdown.taxableSS, 2500);
+
+  // 55-64, AGI at/under the $75k single full-exemption threshold: SS is fully subtracted
+  // (federally-taxable portion is $0 here anyway — combined income well under the federal
+  // base threshold), leaving the full $20,000 cap for pension.
+  const lowAGI = computeStateIncomeTax(co, 'single', { ss: 15000, pension: 10000, wages: 5000, age: 60 });
+  check('CO 60yo, AGI under $75k: SS fully exempt', lowAGI.breakdown.taxableSS, 0);
+  check('CO 60yo, AGI under $75k: pension fully sheltered by the $20k cap', lowAGI.breakdown.penTaxable, 0);
+
+  // 55-64, AGI over the $75k threshold: SS and pension share the single $20,000 cap,
+  // split proportionally. ssIncludedFed=12,750 (85%-tier federal calc); combined with the
+  // $10,000 pension = 22,750, capped at 20,000; split 12,750/22,750 to SS.
+  const overAGI = computeStateIncomeTax(co, 'single', { ss: 15000, pension: 10000, wages: 80000, age: 60 });
+  check('CO 60yo, AGI over $75k: shared $20k cap taxes the excess', overAGI.breakdown.taxableSS + overAGI.breakdown.penTaxable, 22750 - 20000);
+
+  // 65+: SS fully subtracted (uncapped), regardless of AGI — even a large SS benefit with
+  // no other income stays federally untaxed (provisional income never crosses the base
+  // threshold), so nothing competes for the $24,000 pension cap.
+  const over65 = computeStateIncomeTax(co, 'single', { ss: 40000, pension: 10000, wages: 0, age: 70 });
+  check('CO 70yo: SS fully exempt regardless of AGI', over65.breakdown.taxableSS, 0);
+  check('CO 70yo: pension fully sheltered', over65.breakdown.penTaxable, 0);
+
+  // Joint, both 65+: household fully exempt, same as single 65+.
+  const jointBoth65 = computeStateIncomeTax(co, 'mfj', { ss: 20000, pension: 10000, wages: 0, age: 66, spouseAge: 67 });
+  check('CO joint, both 65+: fully exempt', jointBoth65.breakdown.taxableSS + jointBoth65.breakdown.penTaxable, 0);
+
+  // Joint, only one spouse fully-exempt-eligible (68 vs. 60 over the joint AGI threshold):
+  // conservatively falls to the shared-cap branch, but the two per-person caps summed
+  // ($24k + $20k = $44k) comfortably covers this household's modest combined SS+pension.
+  const jointMixed = computeStateIncomeTax(co, 'mfj', { ss: 20000, pension: 10000, wages: 90000, age: 68, spouseAge: 60 });
+  check('CO joint, mixed ages, summed cap still covers a modest combined amount', jointMixed.breakdown.taxableSS + jointMixed.breakdown.penTaxable, 0);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

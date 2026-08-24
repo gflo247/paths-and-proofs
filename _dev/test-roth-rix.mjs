@@ -57,7 +57,12 @@ function check(label, actual, expected, tolerance = 1) {
 // code for the Roth tool specifically (still reachable from relo-engine.mjs's own
 // generic fallback, but only for hypothetical future non-CT steppedPercent states with
 // no iraWeightPct — CT itself takes relo-engine's dedicated weighted branch).
-const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'NJ', 'WV', 'NY'];
+// CO added 2026-08-24: with ss=0 (this sweep's fixed convention), CO's sharesCapWithSS
+// branch in relo-engine.mjs degenerates to the exact same ageTieredCap-only behavior as
+// GA/WI (ssIncludedFed=0 whenever the SS benefit itself is 0, so nothing competes for the
+// shared cap) — a useful cross-check that the new branch doesn't change plain pension-only
+// behavior at all, only behavior when ss>0 (covered by the dedicated CO section below).
+const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'NJ', 'WV', 'NY', 'CO'];
 // Added 'hoh' 2026-08-24 after finding NM's steppedAmount table groups HOH with 'joint'
 // (wider thresholds) instead of the usual single/mfs/hoh -> "single" mapping — the
 // generic sweep never exercised HOH for ANY state before this, so it couldn't have

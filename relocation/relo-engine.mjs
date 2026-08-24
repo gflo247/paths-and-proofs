@@ -46,12 +46,23 @@ function federalTaxableSS(ssBenefit, otherIncome, rawStatus) {
 }
 
 // Taxable Social Security under a state's threshold/phase-in rule.
-function taxableSS(ssRule, ssBenefit, agiProxy, status, otherIncome, rawStatus) {
+// qualAge: the age used to test a state's OWN age-gate on its SS exemption (RI is the
+// first state confirmed to need one — see ssAgeGate below). Separate from `age`/
+// `spouseAge` used elsewhere in this file for per-spouse-summed cliffs (ageTieredCap
+// etc.) — this is a single all-or-nothing eligibility test, not a per-person amount to
+// sum, so the caller passes in whichever single age value is appropriate (see call site).
+function taxableSS(ssRule, ssBenefit, agiProxy, status, otherIncome, rawStatus, qualAge) {
   if (!ssRule.taxed || ssBenefit <= 0) return 0;
   if (ssRule.followsFederalFormula) return federalTaxableSS(ssBenefit, otherIncome, rawStatus);
+  const maxTaxable = ssBenefit * (ssRule.maxTaxableFraction ?? 0.85);
+  // RI: the SS exemption requires reaching Social Security full retirement age, a
+  // SEPARATE gate from the AGI threshold below (confirmed via RI DOT's own Retirement
+  // Income Guide, Section 3, Example #2: a 63/65-year-old joint-filing couple under the
+  // AGI threshold was still denied the exemption because neither had reached FRA).
+  // Below the gate, SS is fully taxable (up to maxTaxableFraction) regardless of AGI.
+  if (ssRule.ssAgeGate != null && qualAge < ssRule.ssAgeGate) return maxTaxable;
   const exempt = ssRule.exemptBelowAGI[status];
   if (agiProxy <= exempt) return 0;
-  const maxTaxable = ssBenefit * (ssRule.maxTaxableFraction ?? 0.85);
   if (!ssRule.phaseInAboveAGI) return maxTaxable; // hard threshold (CT-style: above => taxable)
   // Linear phase-in across a band (approximation of the state's worksheet).
   const start = ssRule.phaseInAboveAGI[status];
@@ -151,8 +162,22 @@ export function computeStateIncomeTax(rules, status, income) {
   // single/mfs/hoh -> "single" mapping for this one lookup without changing tStatus
   // globally (unverified for this state's OTHER thresholds).
   const ssStatus = (status === "hoh" && rules.socialSecurity.hohMapsToJoint) ? "joint" : tStatus;
-  const tSS = taxableSS(rules.socialSecurity, ss, agiProxy, ssStatus, agiProxy - ss, status);
-  breakdown.taxableSS = tSS;
+  // RI's guide states plainly, for the PENSION modification, that a joint return with
+  // only one spouse at full retirement age gets a PARTIAL modification (that spouse's own
+  // income only) — Section 3 (Social Security) doesn't repeat this per-spouse-partial
+  // clause explicitly, only that its requirements are "similar to" the pension
+  // modification's. Since no per-spouse SS-benefit split is modeled here, requiring the
+  // YOUNGER spouse to also clear the gate is a conservative simplification BY ANALOGY
+  // (same convention as EXAGE's ex:true-state age gate elsewhere in this project) — it may
+  // understate the exemption for a couple where only the older spouse's own SS should
+  // qualify, but hasn't been directly sourced as RI's real per-spouse SS rule.
+  const ssQualAge = tStatus === "joint" ? Math.min(age, spouseAge ?? age) : age;
+  // CO: SS and the pension/annuity subtraction share ONE combined age-tiered cap, computed
+  // together below (alongside iraTaxable/penTaxable) rather than here — see the
+  // sharesRetirementCap branch further down. `let` since that branch overwrites this.
+  let tSS = rules.socialSecurity.sharesRetirementCap
+    ? 0
+    : taxableSS(rules.socialSecurity, ss, agiProxy, ssStatus, agiProxy - ss, status, ssQualAge);
 
   // --- IRA / 401k / conversion withdrawal, and Pension ---
   // Most states share ONE exclusion pool across both income types (pensionIncome.sameAs
@@ -172,7 +197,52 @@ export function computeStateIncomeTax(rules, status, income) {
   let iraTaxable = iraWithdrawal;
   let penTaxable = pension;
 
-  if (pooled && ri.treatment === "exclusion" && ri.exclusion.cliffType === "ageTieredCap") {
+  if (pooled && ri.treatment === "exclusion" && ri.exclusion.cliffType === "ageTieredCap" && ri.exclusion.sharesCapWithSS) {
+    // CO: Social Security and the pension/annuity subtraction are NOT two separate pools —
+    // they share ONE age-tiered cap. Confirmed via CO DOR's own "Income Tax Topics: Social
+    // Security, Pensions and Annuities" guide: "Any subtraction claimed for Social Security
+    // benefits will reduce the subtraction an individual can claim for any other pension
+    // and annuity income." At 65+, the ENTIRE federally-taxable SS amount is subtracted,
+    // uncapped, and that reduces the room left in the cap for pension/IRA (floor $0). At
+    // 55-64, the same uncapped treatment applies if household AGI is under a threshold;
+    // above it, SS and pension/IRA together are limited to the single $20,000 cap (the
+    // same cap that would otherwise apply to pension/IRA alone). Under 55, neither SS nor
+    // pension/IRA gets any subtraction (the death-benefit carve-out for under-55 filers is
+    // not modeled, consistent with this file's existing simplifications elsewhere).
+    // No per-spouse SS/income split is available, so a joint return conservatively
+    // requires BOTH spouses to individually clear the "full/uncapped" bar (same convention
+    // as RI's full-retirement-age gate above) before granting it to the household —
+    // otherwise the household falls to the shared-$20k-cap branch.
+    const ssr = rules.socialSecurity;
+    const fullExemptThreshold = ssr.fullExemptBelowAGI[tStatus];
+    const personFullyExempt = (personAge) => personAge >= 65 || (personAge >= 55 && agiProxy <= fullExemptThreshold);
+    const householdFullyExempt = tStatus === "joint"
+      ? personFullyExempt(age) && personFullyExempt(spouseAge ?? age)
+      : personFullyExempt(age);
+    const cap = tierCapFor(ri.exclusion.perPersonTiers, age)
+      + (tStatus === "joint" ? tierCapFor(ri.exclusion.perPersonTiers, spouseAge ?? age) : 0);
+    // CO's subtraction applies to SS "included in federal taxable income" (line 6b), i.e.
+    // the real federally-taxable portion — not the gross benefit — so this uses the actual
+    // federal worksheet rather than this file's usual crude ss-as-AGI-proxy approximation.
+    const ssIncludedFed = federalTaxableSS(ss, agiProxy - ss, status);
+    let ssSub, pensionRoom;
+    if (householdFullyExempt) {
+      ssSub = ssIncludedFed;
+      pensionRoom = Math.max(0, cap - ssSub);
+    } else {
+      const combined = ssIncludedFed + iraWithdrawal + pension;
+      const totalSub = Math.min(cap, combined);
+      // No stated priority order between SS and pension/IRA when both compete for a
+      // capped pool — split proportionally by each income type's own share, same
+      // no-ordering-assumed convention as splitPooledExclusion below.
+      const ssShare = combined > 0 ? ssIncludedFed / combined : 0;
+      ssSub = totalSub * ssShare;
+      pensionRoom = totalSub - ssSub;
+    }
+    tSS = Math.max(0, ssIncludedFed - ssSub);
+    const pensionAndIraSub = Math.min(pensionRoom, iraWithdrawal + pension);
+    ({ iraTaxable, penTaxable } = splitPooledExclusion(pensionAndIraSub, iraWithdrawal, pension));
+  } else if (pooled && ri.treatment === "exclusion" && ri.exclusion.cliffType === "ageTieredCap") {
     // GA (two real age tiers) / WI (one tier, but still needs this — see tierCapFor):
     // each spouse's own cap is resolved from THEIR OWN age and summed for a joint
     // return. A converting spouse can only shelter against their own entitlement — a
@@ -325,6 +395,7 @@ export function computeStateIncomeTax(rules, status, income) {
   }
   breakdown.iraTaxable = iraTaxable;
   breakdown.penTaxable = penTaxable;
+  breakdown.taxableSS = tSS; // set once here since CO's sharesRetirementCap branch above overwrites tSS
 
   // --- Capital gains ---
   const cg = rules.capitalGains;

@@ -713,14 +713,14 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Fully exempts SS at 65+. For ages 55-64 (2025+), SS is ALSO fully exempt if AGI is at or below $75k single / $95k joint — above that, SS shares ONE $20,000 cap with the pension/annuity subtraction rather than being separately exempt. Under 55, SS gets no CO exemption at all (confirmed via CO DOR's Income Tax Topics: Social Security, Pensions and Annuities guide, Jan 2025). NOT modeled here — this tool's socialSecurity field is Relocation-only and doesn't yet capture the age/AGI-conditional shared cap; flagged for a future fix. Flat 4.4% (TABOR may reduce). Pension/annuity subtraction is genuinely age-tiered — $20,000 at 55-64, $24,000 at 65+ — and covers IRA/conversion income but excludes premature (pre-59.5) distributions.",
+   "ssTreatment": "Social Security and the pension/annuity subtraction share ONE combined age-tiered cap ($20,000 at 55-64, $24,000 at 65+) — confirmed via CO DOR's own guide: 'Any subtraction claimed for Social Security benefits will reduce the subtraction an individual can claim for any other pension and annuity income.' At 65+, the ENTIRE federally-taxable SS amount is subtracted (uncapped), which reduces the room left in the cap for pension/IRA income. At 55-64, the same uncapped treatment applies if household AGI is at or below $75,000 single / $95,000 joint; above that, SS and pension/IRA together are limited to the single $20,000 cap. Under 55, neither gets any subtraction at all (the death-benefit carve-out for under-55 filers is not modeled). Modeled in the Relocation tool via a dedicated sharesRetirementCap mechanism (2026-08-24); a joint return conservatively requires BOTH spouses to individually clear the age/AGI bar before the household gets the uncapped treatment, since no per-spouse SS/income split is available. Flat 4.4% (TABOR may reduce).",
    "incomeTax": true,
    "source": "https://tax.colorado.gov/income-tax-topics-social-security-pensions-and-annuities"
   },
   "roth": {
    "cr": 0.044,
    "ex": false,
-   "note": "Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR's own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ (this calculator previously modeled a flat $24,000 at any qualifying age, or applied no cap at all — now fixed to the real age-tiered amounts) — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+; below that it depends on age and income in ways this calculator doesn't model (state-level Social Security taxability is out of scope here — only the federal torpedo zone is modeled, same as every other state)."
+   "note": "Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR's own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ (this calculator previously modeled a flat $24,000 at any qualifying age, or applied no cap at all — now fixed to the real age-tiered amounts) — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+, and shares that same $20k/$24k cap with pension/annuity income below that age — but state-level Social Security taxability is out of scope for this calculator specifically (only the federal torpedo zone is modeled here, same as every other state; see the Relocation tool for CO's full state-level SS treatment)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -750,7 +750,12 @@
     ]
    },
    "socialSecurity": {
-    "taxed": false
+    "taxed": true,
+    "sharesRetirementCap": true,
+    "fullExemptBelowAGI": {
+     "single": 75000,
+     "joint": 95000
+    }
    },
    "retirementIncome": {
     "treatment": "exclusion",
@@ -766,7 +771,8 @@
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
-     "excludesIRA": false
+     "excludesIRA": false,
+     "sharesCapWithSS": true
     }
    },
    "pensionIncome": {
@@ -4960,7 +4966,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "On the SS-taxing list: SS exempt below $107,000 single / $133,500 joint federal AGI (latest published, Tax Year 2025 — inflation-adjusted annually, RI DOT's Retirement Income Guide, Pub 2026-01), taxed above. BOTH the SS exemption and the retirement-income modification also require the taxpayer to have reached Social Security full retirement age (66-67 depending on birth year) — an AGE gate on top of the AGI threshold that this tool's Relocation engine does not yet check (flagged for a future fix; see roth.note). Rhode Island's retirement-income modification (up to $50,000 per person, up from $20,000 starting Tax Year 2025) covers ONLY 401(k)/403(b)/annuity/pension income and EXPLICITLY EXCLUDES all IRAs (traditional, Roth, SEP, SIMPLE). A Roth conversion is IRA income, so it gets NO shelter and is fully taxable. IRA-exclusion-trap family (cf. ME, MD) — RI is the most explicit, naming Roth. Hard all-or-nothing income cliff: $1 over the limit forfeits the entire exclusion. Military pensions fully exempt (no income or age requirement).",
+   "ssTreatment": "On the SS-taxing list: SS exempt below $107,000 single / $133,500 joint federal AGI (latest published, Tax Year 2025 — inflation-adjusted annually, RI DOT's Retirement Income Guide, Pub 2026-01), taxed above. BOTH the SS exemption and the retirement-income modification also require the taxpayer to have reached Social Security full retirement age (66-67 depending on birth year, modeled here as 67) — an AGE gate on top of the AGI threshold, modeled in the Relocation tool as ssAgeGate (joint returns require the YOUNGER spouse to also clear it, since a household-level SS benefit can't be split per spouse). Rhode Island's retirement-income modification (up to $50,000 per person, up from $20,000 starting Tax Year 2025) covers ONLY 401(k)/403(b)/annuity/pension income and EXPLICITLY EXCLUDES all IRAs (traditional, Roth, SEP, SIMPLE). A Roth conversion is IRA income, so it gets NO shelter and is fully taxable. IRA-exclusion-trap family (cf. ME, MD) — RI is the most explicit, naming Roth. Hard all-or-nothing income cliff: $1 over the limit forfeits the entire exclusion. Military pensions fully exempt (no income or age requirement).",
    "bracketsNote": "Same thresholds all filing statuses (no MFJ doubling); inflation-indexed. 5.99% top over $186,450. roth.cr 4.75% representative (typical conversion lands in middle band). Source: RI Division of Taxation 2026.",
    "incomeTax": true,
    "source": "https://tax.ri.gov/"
@@ -5036,7 +5042,8 @@
      "joint": 133500
     },
     "phaseInAboveAGI": null,
-    "maxTaxableFraction": 0.85
+    "maxTaxableFraction": 0.85,
+    "ssAgeGate": 67
    },
    "retirementIncome": {
     "treatment": "exclusion",
