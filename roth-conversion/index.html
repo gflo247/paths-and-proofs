@@ -1736,18 +1736,31 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
       ? 'A commonly used reference point for '+activeLabels[0]+', based on your inputs — not a definitive recommendation.'
       : 'Where your numbers currently stand on the usual conversion checkpoints — nothing actionable to target from these right now.';
 
+  // Title and footer both assumed 3 (or at least several) cards, same
+  // mismatch class as the intro text above — found live: with just one
+  // card rendered, "Thresholds" (plural) and "Click any card" (implying a
+  // choice among several) both read as leftover copy for a layout that
+  // isn't there. Footer is keyed off activeLabels (clickable count), not
+  // cards.length (total boxes shown, dimmed included) — a layout with 3
+  // boxes but only 1 actually clickable should still say "the card," not
+  // "any card," since "any" is the wrong claim regardless of how many
+  // non-interactive boxes sit next to it. Title stays keyed off cards.length
+  // since it's naming how many threshold TOPICS are covered, not how many
+  // you can act on right now.
+  var footerText = activeLabels.length===0 ? '' : activeLabels.length===1
+    ? 'Click the card to load that amount and see the full analysis. Adjust manually from there.'
+    : 'Click any card to load that amount and see the full analysis. Adjust manually from there.';
+
   var ncols=Math.min(3,cards.length);
   return'<div class="card" style="margin-bottom:1.25rem">'
-    +'<div class="stitle">📊 Common Planning Thresholds</div>'
+    +'<div class="stitle">📊 Common Planning '+(cards.length===1?'Threshold':'Thresholds')+'</div>'
     +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.55">'
     +introText
     +'</p>'
     +'<div class="optwrap" style="grid-template-columns:repeat('+ncols+',1fr)">'
     +cards.join('')
     +'</div>'
-    +'<p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;line-height:1.4">'
-    +'Click any card to load that amount and see the full analysis. Adjust manually from there.'
-    +'</p>'
+    +(footerText?'<p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;line-height:1.4">'+footerText+'</p>':'')
     +'</div>';
 }
 
