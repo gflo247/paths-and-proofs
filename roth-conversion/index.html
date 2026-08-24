@@ -1137,7 +1137,7 @@ const ST={
   AR: {n:'Arkansas',cr:.037,ex:false,note:'Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000 retirement exemption covers traditional IRA income but only at 59.5+ (early distributions do not qualify), and it is a small cap a conversion exceeds. Social Security is exempt below $100k AGI; a large conversion could push past that.'},
   CA: {n:'California',cr:.093,ex:false,note:'No retirement income exemption — IRA and Roth-conversion income is taxed as regular income through nine progressive brackets (1% to 12.3%), plus a 1% surcharge on income over $1M (13.3% top). The 9.3% bracket used here covers roughly $73k-$371k single income, where most filers land; your rate may be lower or higher. Social Security is not taxed by California.'},
   CO: {n:'Colorado',cr:.044,ex:false,note:'Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income — up to $20k at 55-64 and $24k at 65+ — but it specifically EXCLUDES early (pre-59.5) distributions, and a meaningful conversion exceeds the cap. Colorado fully exempts Social Security at 65+.'},
-  CT: {n:'Connecticut',cr:.055,ex:false,note:'Connecticut shelters a percentage of your actual IRA/401(k)/conversion income — 100% under $75,000 single / $100,000 joint AGI, then stepping down in ten tiers to $0 by $100,000 single / $150,000 joint AGI, with no age requirement at all (unusual — this applies at any age). A Roth conversion raises AGI and can push you into a lower-percentage tier, so a large conversion shelters a smaller share of itself than a small one. This calculator applies the real stepped table. Connecticut also taxes Social Security above those same AGI thresholds; whatever isn\'t sheltered is taxed at graduated 2%-6.99% rates (about 5.5% is typical for a mid-size conversion).'},
+  CT: {n:'Connecticut',cr:.055,ex:false,note:'Connecticut shelters a percentage of your actual conversion income, stepping down in ten tiers from a top of $75,000 single / $100,000 joint AGI to $0 by $100,000 single / $150,000 joint AGI, with no age requirement at all (unusual — this applies at any age). Important: a Roth conversion is an IRA distribution, and CT\'s own Pension and Annuity Worksheet only lets 75% of an IRA distribution into the sheltered amount before that percentage applies — pension/annuity income gets 100%, but IRA money never does, even in the top tier. This calculator applies that 75% factor plus the real stepped table. A Roth conversion also raises AGI and can push you into a lower-percentage tier, so a large conversion shelters a smaller share of itself than a small one. Connecticut also taxes Social Security above those same AGI thresholds; whatever isn\'t sheltered is taxed at graduated 2%-6.99% rates (about 5.5% is typical for a mid-size conversion).'},
   DE: {n:'Delaware',cr:.066,ex:false,note:'Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k lands at the 6.6% used here (totals under $60k pay 5.55% or less). At 60+, a $12,500 exclusion covers combined pension + IRA income, but it is a small cap a meaningful conversion exceeds — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax.'},
   FL: {n:'Florida',cr:0,ex:true,note:'No state income tax.'},
   GA: {n:'Georgia',cr:.0499,ex:false,note:'Georgia excludes retirement income up to an age-tiered cap — $35,000 per person at 62-64, $65,000 at 65+ — then taxes the rest at its flat 4.99% rate (cut from 5.19% under HB 463, signed May 2026; the 65+ tier itself rises to $70,000 starting TY2027). This calculator applies that cap to your conversion: each spouse\'s own age sets their own tier, summed for a joint return, so how much shelters depends on your age and how much of the cap your other retirement income already uses. Social Security is fully exempt and doesn\'t use up the cap.'},
@@ -1214,7 +1214,7 @@ const RIX={
   VA: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"perSpousePhaseout","ageGate":65,"perPersonCap":12000,"thresholdAGI":{"single":50000,"joint":75000},"thresholdExcludesSS":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
   WI: {"treatment":"exclusion","ageGate":67,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":67,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
   NM: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedAmount","ageGate":65,"perQualifyingSpouse":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"steps":{"single":[{"upTo":18000,"amt":8000},{"upTo":19500,"amt":7000},{"upTo":21000,"amt":6000},{"upTo":22500,"amt":5000},{"upTo":24000,"amt":4000},{"upTo":25500,"amt":3000},{"upTo":27000,"amt":2000},{"upTo":28500,"amt":1000},{"upTo":null,"amt":0}],"joint":[{"upTo":30000,"amt":8000},{"upTo":33000,"amt":7000},{"upTo":36000,"amt":6000},{"upTo":39000,"amt":5000},{"upTo":42000,"amt":4000},{"upTo":45000,"amt":3000},{"upTo":48000,"amt":2000},{"upTo":51000,"amt":1000},{"upTo":null,"amt":0}]}}},
-  CT: {"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":{"single":75000,"joint":100000},"zeroByAGI":{"single":100000,"joint":150000},"excludesIRA":false,"steps":{"single":[{"upTo":74999,"pct":1},{"upTo":77499,"pct":0.85},{"upTo":79999,"pct":0.7},{"upTo":82499,"pct":0.55},{"upTo":84999,"pct":0.4},{"upTo":87499,"pct":0.25},{"upTo":89999,"pct":0.1},{"upTo":94999,"pct":0.05},{"upTo":99999,"pct":0.025},{"upTo":null,"pct":0}],"joint":[{"upTo":99999,"pct":1},{"upTo":104999,"pct":0.85},{"upTo":109999,"pct":0.7},{"upTo":114999,"pct":0.55},{"upTo":119999,"pct":0.4},{"upTo":124999,"pct":0.25},{"upTo":129999,"pct":0.1},{"upTo":139999,"pct":0.05},{"upTo":149999,"pct":0.025},{"upTo":null,"pct":0}]}}},
+  CT: {"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":{"single":75000,"joint":100000},"zeroByAGI":{"single":100000,"joint":150000},"excludesIRA":false,"iraWeightPct":0.75,"steps":{"single":[{"upTo":74999,"pct":1},{"upTo":77499,"pct":0.85},{"upTo":79999,"pct":0.7},{"upTo":82499,"pct":0.55},{"upTo":84999,"pct":0.4},{"upTo":87499,"pct":0.25},{"upTo":89999,"pct":0.1},{"upTo":94999,"pct":0.05},{"upTo":99999,"pct":0.025},{"upTo":null,"pct":0}],"joint":[{"upTo":99999,"pct":1},{"upTo":104999,"pct":0.85},{"upTo":109999,"pct":0.7},{"upTo":114999,"pct":0.55},{"upTo":119999,"pct":0.4},{"upTo":124999,"pct":0.25},{"upTo":129999,"pct":0.1},{"upTo":139999,"pct":0.05},{"upTo":149999,"pct":0.025},{"upTo":null,"pct":0}]}}},
   NJ: {"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":75000,"capJoint":100000,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"thresholdExcludesSS":true,"steps":{"single":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.375},{"upTo":150000,"pct":0.1875},{"upTo":null,"pct":0}],"joint":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.5},{"upTo":150000,"pct":0.25},{"upTo":null,"pct":0}]}}},
   WV: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":8000,"capJoint":16000,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"netAgainstSS":true}},
   NY: {"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":20000,"capJoint":20000,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
@@ -3432,6 +3432,32 @@ function computeConversionCost(cvtAmt, ctx){
     const cap      = rd[status] ?? rd.single;
     const stTiBase = Math.max(0, pensionIncome - Math.min(cap, pensionIncome));
     const stTiWith = Math.max(0, (pensionIncome+taxableCvt) - Math.min(cap, pensionIncome+taxableCvt));
+    cvtTxSt = (stTiWith - stTiBase) * stD.cr;
+  } else if(stateCode==='CT'){
+    // Connecticut's pension/annuity exclusion treats IRA distributions
+    // differently from genuine pension/annuity income — found live via the
+    // official CT-1040 "Pension and Annuity Worksheet" (Line 2): only 75% of
+    // an IRA distribution (other than Roth) enters the eligible base before
+    // the AGI-tiered phase-out percentage applies; pension/annuity income
+    // enters at 100%. A Roth conversion IS an IRA distribution, so this
+    // calculator was overstating CT's shelter at every AGI tier — even the
+    // "fully exempt" tier below $75k single/$100k joint AGI only shelters
+    // 75% of an IRA distribution, never 100%. Applied ONLY to taxableCvt
+    // (unambiguously IRA-sourced); pensionIncome stays at 100% since this
+    // tool can't tell whether a user's entered pension income is genuinely
+    // pension-sourced or IRA money they're already drawing — treating it as
+    // pension (the field's existing behavior) avoids guessing. Same
+    // before/with-delta pattern as the generic RIX branch below, using the
+    // real AGI-tier lookup from this state's own steps table rather than
+    // duplicating it.
+    const CT_IRA_FACTOR = 0.75;
+    const ctStatus = status==='mfj' ? 'joint' : 'single';
+    const ctSteps  = rix.exclusion.steps[ctStatus];
+    const ctTierPct = (agi) => (ctSteps.find(t=>t.upTo==null || agi<=t.upTo) || ctSteps[ctSteps.length-1]).pct;
+    const exBase   = pensionIncome * ctTierPct(agiBase);
+    const exWith   = (pensionIncome + taxableCvt*CT_IRA_FACTOR) * ctTierPct(agiWith);
+    const stTiBase = Math.max(0, pensionIncome - exBase);
+    const stTiWith = Math.max(0, (pensionIncome+taxableCvt) - exWith);
     cvtTxSt = (stTiWith - stTiBase) * stD.cr;
   } else if(rix){
     // Same before/with delta pattern as RETDED above, using this tool's own more

@@ -817,7 +817,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "On the SS-taxing list: SS exempt below $75k single / $100k joint AGI, partial above. IRA/pension exemption reaches 100% in 2026 but ONLY under an AGI cliff ($75k/$100k full, phasing to zero at $100k/$150k) — a conversion raises AGI and a sizable one blows past the cliff, making it taxable (NJ-style). Military/railroad retirement fully exempt. Tax-recapture provision can lift effective rates for high earners.",
+   "ssTreatment": "On the SS-taxing list: SS exempt below $75k single / $100k joint AGI, partial above. IRA/pension exemption reaches 100% of PENSION/ANNUITY income under an AGI cliff ($75k/$100k full, phasing to zero at $100k/$150k) — but IRA distributions (including a Roth conversion, which is one) are only 75% eligible for that same percentage, per the official CT-1040 Pension and Annuity Worksheet — never 100%, even below the AGI cliff. A conversion raises AGI and a sizable one blows past the cliff, making it fully taxable (NJ-style). Military/railroad retirement fully exempt. Tax-recapture provision can lift effective rates for high earners.",
    "bracketsNote": "Single-filer thresholds; MFJ ~2x. Source: CT OLR 2026-R-0057 + DRS CT-1040 instructions.",
    "incomeTax": true,
    "source": "https://portal.ct.gov/DRS"
@@ -825,7 +825,7 @@
   "roth": {
    "cr": 0.055,
    "ex": false,
-   "note": "Connecticut shelters a percentage of your actual IRA/401(k)/conversion income — 100% under $75,000 single / $100,000 joint AGI, then stepping down in ten tiers to $0 by $100,000 single / $150,000 joint AGI, with no age requirement at all (unusual — this applies at any age). A Roth conversion raises AGI and can push you into a lower-percentage tier, so a large conversion shelters a smaller share of itself than a small one. This calculator applies the real stepped table. Connecticut also taxes Social Security above those same AGI thresholds; whatever isn't sheltered is taxed at graduated 2%-6.99% rates (about 5.5% is typical for a mid-size conversion)."
+   "note": "Connecticut shelters a percentage of your actual conversion income, stepping down in ten tiers from a top of $75,000 single / $100,000 joint AGI to $0 by $100,000 single / $150,000 joint AGI, with no age requirement at all (unusual — this applies at any age). Important: a Roth conversion is an IRA distribution, and CT's own Pension and Annuity Worksheet only lets 75% of an IRA distribution into the sheltered amount before that percentage applies — pension/annuity income gets 100%, but IRA money never does, even in the top tier. This calculator applies that 75% factor plus the real stepped table. A Roth conversion also raises AGI and can push you into a lower-percentage tier, so a large conversion shelters a smaller share of itself than a small one. Connecticut also taxes Social Security above those same AGI thresholds; whatever isn't sheltered is taxed at graduated 2%-6.99% rates (about 5.5% is typical for a mid-size conversion)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -976,6 +976,7 @@
       "joint": 150000
      },
      "excludesIRA": false,
+     "iraWeightPct": 0.75,
      "steps": {
       "single": [
        {"upTo": 74999, "pct": 1},
