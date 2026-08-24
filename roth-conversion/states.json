@@ -5503,15 +5503,15 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "On the SS-taxing list: SS exempt below income thresholds (~$50k single / $65k joint AGI), phasing out above. Private IRA/401(k)/conversion income fully taxable; only a small $10,000 deduction for certain government/pension retirement income (income-limited, excludes most IRA). A conversion can also push past the SS-exemption threshold, taxing more benefits that year. Military retirement deduction up to $10k.",
-   "bracketsNote": "Single-filer; 8.75% top near $242k. roth.cr 6.6% representative (typical conversion lands in the 6.6% band, $47,900-$116,000). Inflation-indexed. Source: VT Dept of Taxes.",
+   "ssTreatment": "On the SS-taxing list: SS fully exempt below $55,000 single/HOH/MFS or $70,000 joint AGI (2025, latest published; confirmed via VT Dept of Taxes), phasing out over a $10,000-wide band above that ($0 exemption at $65,000 single / $80,000 joint). Private IRA/401(k)/conversion income fully taxable; only a small $10,000 deduction for certain government/pension retirement income (income-limited, excludes most IRA). A conversion can also push past the SS-exemption threshold, taxing more benefits that year. Military retirement deduction up to $10k. IMPORTANT: MFS and HOH each have their own distinct bracket schedule (narrower than single for MFS, wider for HOH) — confirmed against the official 2025 VT Tax Rate Schedules; do not clone single's thresholds for these statuses.",
+   "bracketsNote": "Single-filer; 8.75% top over $249,700. roth.cr 6.6% representative (typical conversion lands in the 6.6% band, $49,400-$119,700). Inflation-indexed annually; figures confirmed against the 2025 VT Tax Rate Schedules (latest published; 2026 annual schedule not yet located, only 2026 withholding tables). MFJ top starts $304,000; MFS (narrower) $152,000; HOH (wider) $276,850 — all four statuses have genuinely distinct thresholds in VT, unlike most states. Source: tax.vermont.gov.",
    "incomeTax": true,
    "source": "https://tax.vermont.gov/"
   },
   "roth": {
    "cr": 0.066,
    "ex": false,
-   "note": "Graduated 3.35% to 8.75%; the 8.75% top only starts near $230k single / $280k joint, so a typical conversion lands in the 6.6% band used here. IRA and Roth-conversion income is fully taxable (only a small $10k deduction for certain pension/government retirement income, income-limited). A conversion can also push you past Vermont's Social Security exemption thresholds, taxing more of your benefits that year."
+   "note": "Graduated 3.35% to 8.75%; the 8.75% top only starts above $249,700 single / $304,000 joint, so a typical conversion lands in the 6.6% band used here. IRA and Roth-conversion income is fully taxable (only a small $10k deduction for certain pension/government retirement income, income-limited). A conversion can also push you past Vermont's Social Security exemption thresholds, taxing more of your benefits that year."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5554,15 +5554,15 @@
     "mfs": [
      {
       "rate": 0.0335,
-      "upTo": 49400
+      "upTo": 41250
      },
      {
       "rate": 0.066,
-      "upTo": 119700
+      "upTo": 99725
      },
      {
       "rate": 0.076,
-      "upTo": 249700
+      "upTo": 152000
      },
      {
       "rate": 0.0875,
@@ -5572,15 +5572,15 @@
     "hoh": [
      {
       "rate": 0.0335,
-      "upTo": 49400
+      "upTo": 66200
      },
      {
       "rate": 0.066,
-      "upTo": 119700
+      "upTo": 171000
      },
      {
       "rate": 0.076,
-      "upTo": 249700
+      "upTo": 276850
      },
      {
       "rate": 0.0875,
@@ -5592,7 +5592,7 @@
     "taxed": true,
     "exemptBelowAGI": {
      "single": 55000,
-     "joint": 65000
+     "joint": 70000
     },
     "phaseInAboveAGI": {
      "single": 55000,
