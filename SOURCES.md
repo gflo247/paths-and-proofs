@@ -524,6 +524,17 @@ on the conversion). Audited against primary sources. **Two were actively wrong**
   just $3,000, so it's representative). Source:
   [AL DOR — Income Exempt](https://www.revenue.alabama.gov/individual-corporate/income-exempt-from-alabama-income-taxation/),
   LegalClarity (IRA taxability).
+  > **Fixed 2026-08-24 (commit 136d868): the $6,000 exclusion mentioned above was**
+  > **never actually applied by the Roth calculator** — AL wasn't in RETDED or
+  > RIX_STATES, so it silently got $0 shelter. Confirmed via AL DOR's own Schedule
+  > RS instructions (Parts II/III compute the exclusion independently for the
+  > "Primary Taxpayer" and "Spouse," summed in Part IV) that it's genuinely
+  > per-INDIVIDUAL: `capJoint` was also wrong in `states.json` (flat $6,000, same
+  > as single) instead of $12,000. AL's defined-benefit pension is separately,
+  > unconditionally exempt and does NOT compete for this cap — unlike every other
+  > RETDED/RIX state — so it got a dedicated `stateCode==='AL'` branch applying the
+  > cap to the conversion alone. Found while auditing the same per-person-not-flat
+  > bug shape in AR/DE/KY/OK (see those entries) and LA (`roth-co-ri-la-audit.md`).
 
 ### Social Security state-tax disclosure — ✅ added & verified June 2026
 
@@ -858,6 +869,12 @@ line-targeted `set-state.mjs` helper (see Tooling note below).
   small cap; **early distributions (1099-R code 1, pre-59½) do NOT qualify** (DE
   Div. of Revenue / PIT instructions). SS exempt; no sales tax.
 - Full brackets: 0% <$2,000; 2.2%/3.9%/4.8%/5.2%/5.55% to $60k; 6.6% >$60k.
+  > **Fixed 2026-08-24 (commit 136d868): the $12,500 exclusion above was never**
+  > **actually applied by the Roth calculator** (not in RETDED or RIX_STATES —
+  > $0 shelter silently). Confirmed genuinely per-INDIVIDUAL, not flat: "spouses"
+  > who each receive a pension "are each permitted one exclusion," up to $25,000
+  > combined for a joint return with both spouses 60+. `capJoint` in states.json
+  > was also wrong (flat $12,500). Reshaped to the existing ageTieredCap mechanism.
 
 #### Maryland — ✅ rate corrected, county tax modeled 2026-08-24
 
@@ -894,6 +911,12 @@ line-targeted `set-state.mjs` helper (see Tooling note below).
 - `ex:false`; the $10,000 exclusion (65+) **does include IRA income** (IRC §408 per
   OTC) but is a small cap a conversion exceeds. SS fully exempt.
 - Full brackets (2026): 0%/0.25%/2.75%/4.5%; top above ~$7,200 (single).
+  > **Fixed 2026-08-24 (commit 136d868): the $10,000 exclusion above was never**
+  > **actually applied by the Roth calculator** (not in RETDED or RIX_STATES —
+  > $0 shelter silently). Confirmed genuinely per-individual: each spouse can
+  > claim $10,000 separately, up to $20,000 combined for a joint return with
+  > both 65+. `capJoint` in states.json was also wrong (flat $10,000). Reshaped
+  > to the existing ageTieredCap mechanism.
 
 #### South Carolina — ✅ rate fixed June 2026; mechanic CORRECTED 2026-07-28 (NOT two stacking deductions)
 
@@ -934,6 +957,13 @@ line-targeted `set-state.mjs` helper (see Tooling note below).
   [AR DFA Subject 206](https://www.arkansas.gov/dfa/income_tax/documents/206-PensionsandAnnuities.pdf).
 - Full brackets: 0% to ~$5,500, graduated to 3.9% >~$25,700 (separate flatter
   schedule for net income >$94,700).
+  > **Fixed 2026-08-24 (commit 136d868): the $6,000 exemption above was never**
+  > **actually applied by the Roth calculator** (not in RETDED or RIX_STATES —
+  > $0 shelter silently). Confirmed genuinely per-individual: "each spouse gets
+  > their own $6,000 exemption... does not transfer between spouses" — a joint
+  > return with both spouses 59.5+ shelters $12,000, not $6,000. `capJoint` in
+  > states.json was also wrong (flat $6,000). Reshaped to the existing
+  > ageTieredCap mechanism, found while auditing the same bug shape in LA.
 
 ### ✅ Flat-tax `ex:false` audits (June 2026)
 
@@ -944,6 +974,15 @@ Income Tax Rates report and state sources.
 - **Idaho** — **5.695% → 5.3%** (HB40, 2025, retroactive). SS exempt. Flat.
 - **Kentucky** — **4% → 3.5%** (Jan 1 2026 revenue trigger). SS exempt; modest
   retirement exclusion. Flat.
+  > **Fixed 2026-08-24 (commit 136d868): the "modest retirement exclusion" above**
+  > **($31,110, no age requirement) was never actually applied by the Roth**
+  > calculator (not in RETDED or RIX_STATES — $0 shelter silently). Confirmed
+  > genuinely per-individual via KY DOR's own Schedule P (separate "Yourself"/
+  > "Spouse" columns, computed independently and combined for joint filers) —
+  > a joint return with both spouses receiving qualifying income shelters
+  > $62,220, not a flat $31,110. `capJoint` in states.json was also wrong (flat
+  > $31,110). Reshaped to the existing ageTieredCap mechanism (single tier,
+  > minAge:0, since KY has no age requirement at all).
 - **North Carolina** — **4.5% → 3.99%** (final phasedown step Jan 1 2026; heading to
   2.99% by 2028). SS exempt. Flat.
 - **Indiana** — **3.05% → 2.95%** (Jan 1 2026; → ~2.9% in 2027). SS exempt; some
