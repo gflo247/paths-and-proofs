@@ -771,16 +771,32 @@ line-targeted `set-state.mjs` helper (see Tooling note below).
   Div. of Revenue / PIT instructions). SS exempt; no sales tax.
 - Full brackets: 0% <$2,000; 2.2%/3.9%/4.8%/5.2%/5.55% to $60k; 6.6% >$60k.
 
-#### Maryland — ✅ rate noted, IRA-exclusion trap corrected June 2026
+#### Maryland — ✅ rate corrected, county tax modeled 2026-08-24
 
-- **5.75% kept representative** (new 2025 brackets 6.25%/6.5% only hit very high
-  income), but note now flags those new top brackets AND the mandatory **county
-  tax (2.25%–3.2%)** that the state-only figure omits.
+- **`roth.cr` corrected 5.75% → 4.75%.** The 4.75% band actually covers income up
+  to $100k single (the site's own cr yardstick); 5.75% doesn't start until
+  $250k–$500k. 5.75% had been substituted in as a rough, mathematically-wrong
+  attempt to "offset" the unmodeled county tax below (4.75%+3.2% ≈ 7.95%, not
+  5.75%) — found live via the code comment justifying it.
+- **County tax (2.25%–3.30%, mandatory for every resident) now MODELED**, not just
+  disclosed. Applies a flat 3.20% on top of the state rate — the median AND modal
+  rate across all 24 MD jurisdictions (23 counties + Baltimore City), since 12 of
+  24 sit at the 3.20% ceiling; also matches the Comptroller's own stated practice
+  of basing combined withholding on "median local tax rates of Maryland's 23
+  counties and Baltimore City." Unlike Michigan's opt-in city tax (left as
+  text-only disclosure because most MI residents pay $0 local tax), Maryland's is
+  mandatory for 100% of residents, so a representative numeric rate is
+  defensible. Source: [MD Comptroller 2026 State and Local Income Tax Withholding
+  Information memo](https://www.marylandcomptroller.gov/content/dam/mdcomp/md/state-payroll/memos/2026/2026-maryland-state-and-local-withholding-information.pdf)
+  (Attachment 1, all 24 local rates).
 - **IRA-exclusion trap (like ME, RI).** Maryland's ~$36k pension exclusion (65+)
   covers 401(k)/403(b)/pension but **explicitly excludes all IRAs** — a conversion
   gets no shelter. Sources confirm emphatically (RCS planning; SmartAsset). SS
   exempt. Source: [MD Comptroller](https://www.marylandtaxes.gov/).
-- Full brackets: 2%/3%/4%/4.75%/5%/5.25%/5.5%/5.75% to $250k; 6.25%/6.5% above; + county.
+- Full brackets (2026, single): 2%/3%/4%/4.75% to $100k; 5%/5.25%/5.5%/5.75% to
+  $500k; 6.25% to $1M; 6.5% above (H.B. 352/FY26 budget added the last two).
+  County rates range 2.25% (Worcester) to 3.30% (Dorchester, Kent); Anne Arundel
+  and Frederick are themselves income-tiered.
 
 #### Oklahoma — ✅ rate fixed June 2026
 
