@@ -1829,24 +1829,50 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
   // otherInc (wages) and pensionAmt (pension/retirement-account income) are
   // separate, additive federal-income components — pensionAmt is also the ONLY
   // one that competes for MI/LA/RIX states' retirement-income deduction caps.
-  function convTax(otherInc,niiAmt,ltcgAmt,ssV,stat,nsr,cvt,tfrac,pensionAmt){
+  function convTax(otherInc,niiAmt,ltcgAmt,ssV,stat,nsr,cvt,tfrac,pensionAmt,ageForCalc,spouseAgeForCalc){
     var ctx={income:otherInc,pensionIncome:pensionAmt||0,nii:niiAmt,ltcg:ltcgAmt,ss:ssV,status:stat,nSr:nsr,
-              stD:stD,stateCode:stateCode,curAge:curAge,spouseAge:spouseAge,
+              stD:stD,stateCode:stateCode,curAge:ageForCalc,spouseAge:spouseAgeForCalc,
               isCouple:isCouple,taxableFrac:tfrac};
     return computeConversionCost(cvt,ctx).cvtTxTot;
+  }
+
+  // Derives the federal senior-deduction headcount (seniorDed()'s `n` param) from a
+  // row's actual age instead of trusting the wizard's single-year snapshot for the
+  // whole plan -- same root-cause fix as the age-gated state mechanisms below: only
+  // the row whose age equals curAge (today) can use the raw nSr the wizard
+  // captured, since it may encode a birthday earlier in the current year that a
+  // plain integer-age comparison can't see; every other row has no more precision
+  // than the age itself, so it's derived fresh. status==='mfj' (not isCouple)
+  // matches seniorDed's own unconditional mfs-zeroing -- an MFS row's derived
+  // count is computed but inert once it reaches seniorDed(), not a gap.
+  function seniorCountFor(rowAge,rowSpouseAge){
+    if(status==='mfj') return (rowAge>=65?1:0)+(rowSpouseAge!=null&&rowSpouseAge>=65?1:0);
+    return rowAge>=65?1:0;
   }
 
   // Pre-retirement phase
   var preRows=[],tBal=tradBal,rBal=rothBal;
   var nWork=Math.min(Math.max(0,retAge-curAge),15);
-  var preTax=planConvert>0?convTax(income,nii,ltcg,ss,status,nSr,planConvert,taxableFrac,pensionIncome):0;
 
+  // Each row recomputes tax at ITS OWN age (and, for the tail where the balance
+  // runs low, its own actual converted amount) instead of the old "compute once at
+  // today's age, then scale linearly by cv/planConvert" approximation -- that
+  // silently froze every age-gated mechanism (MI's conversionAgeGate, EXAGE
+  // ex:true states, all RIX_STATES' age-tiered caps) and the federal senior
+  // deduction at today's age for the ENTIRE plan, even for rows years in the
+  // future. Found live 2026-08-24: a 55yo MI filer converting through age 64
+  // showed a flat $4,320/yr total tax for all ten years, when ages 60-64 should
+  // show the MI shelter kicking in (age 62 alone: $2,620 -- a $1,700/yr
+  // difference, the entire MI state-tax component, silently never applied).
   for(var i=0;i<nWork;i++){
     var cv=Math.min(planConvert,tBal);
     if(cv<500){tBal*=(1+g);rBal*=(1+g);continue;}
-    var tx=preTax*(cv/planConvert);
+    var rowAge=curAge+i;
+    var rowSpouseAge=spouseAge!=null?spouseAge+(rowAge-curAge):spouseAge;
+    var rowNSr=rowAge===curAge?nSr:seniorCountFor(rowAge,rowSpouseAge);
+    var tx=convTax(income,nii,ltcg,ss,status,rowNSr,cv,taxableFrac,pensionIncome,rowAge,rowSpouseAge);
     tBal=(tBal-cv)*(1+g); rBal=(rBal+cv)*(1+g);
-    preRows.push({year:2026+i,age:curAge+i,convert:Math.round(cv),tax:Math.round(tx),
+    preRows.push({year:2026+i,age:rowAge,convert:Math.round(cv),tax:Math.round(tx),
                   tBal:Math.round(tBal),rBal:Math.round(rBal),phase:'work'});
   }
   var tBalRet=tBal, rBalRet=rBal;
@@ -1895,14 +1921,22 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
         // total the same as pension does, but — unlike retPenV — never competes for
         // a state's retirement-income deduction cap. See computeConversionCost's own
         // income/pensionIncome split for the general version of this same principle.
-        var gTax=convTax(retOtherV,retNiiV,retLtcgV,retSSV,status,nSr,gConv,taxableFrac,retPenV);
-
+        // Recomputed per row at that row's own age (goldStartAge+j, NOT curAge+j --
+        // the golden window anchors on a genuinely different base age), same fix as
+        // the pre-retirement loop above and for the same reason: the golden window
+        // can span years far beyond today, so pricing every row at today's age was
+        // silently wrong for any age-gated mechanism whenever the window crossed a
+        // threshold -- including the WHOLE window for someone not yet 59.5 today
+        // whose golden window starts well past it.
         for(var j=0;j<gYears;j++){
           var gcv=Math.min(gConv,tBal);
           if(gcv<500){tBal*=(1+g);rBal*=(1+g);continue;}
-          var gtx=gTax*(gcv/gConv);
+          var rowAge=goldStartAge+j;
+          var rowSpouseAge=spouseAge!=null?spouseAge+(rowAge-curAge):spouseAge;
+          var rowNSr=rowAge===curAge?nSr:seniorCountFor(rowAge,rowSpouseAge);
+          var gtx=convTax(retOtherV,retNiiV,retLtcgV,retSSV,status,rowNSr,gcv,taxableFrac,retPenV,rowAge,rowSpouseAge);
           tBal=(tBal-gcv)*(1+g); rBal=(rBal+gcv)*(1+g);
-          goldRows.push({year:2026+(goldStartAge-curAge)+j,age:goldStartAge+j,
+          goldRows.push({year:2026+(goldStartAge-curAge)+j,age:rowAge,
                          convert:Math.round(gcv),tax:Math.round(gtx),
                          tBal:Math.round(tBal),rBal:Math.round(rBal),phase:'golden'});
         }
