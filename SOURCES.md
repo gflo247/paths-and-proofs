@@ -918,6 +918,24 @@ Income Tax Rates report and state sources.
   distributions** (CO DOR, primary source). Fully exempts SS at 65+ (on SS list;
   consistent). TABOR can reduce the effective rate. Source:
   [CO DOR pension/annuity topics](https://tax.colorado.gov/income-tax-topics-social-security-pensions-and-annuities).
+  > **Fixed 2026-08-24: the age-tiered shape described above was documented in
+  > this file's prose but never actually MODELED.** `states.json` had a flat
+  > `$24,000` cap for all qualifying ages (`cliffType:"hard"`), and — worse —
+  > Colorado was missing from `_dev/gen-st-table.mjs`'s `RIX_STATES` allowlist
+  > entirely, so the Roth calculator's generated `RIX` table had no CO entry at
+  > all and applied **zero** shelter from this deduction (worse than the
+  > flat-cap bug: a 60-year-old with a $30,000 pension went from a wrongly
+  > sheltered $6,000 taxable to a correct $10,000 taxable under the real
+  > 55–64 tier). Reshaped to `ageTieredCap`/`perPersonTiers` (same mechanism
+  > already used by GA/WI) and added to `RIX_STATES`. Also confirmed via the
+  > same source: below 65, Colorado's Social Security exemption is
+  > age/AGI-conditional (full exemption at 55–64 only under $75k single/$95k
+  > joint AGI, otherwise SS shares the same $20,000 cap with pension/annuity
+  > income; no exemption at all under 55) — disclosed in the `ssTreatment`
+  > note but **not modeled**, since this tool's `socialSecurity` field only
+  > drives the Relocation tool's calculation, not Roth's, and the shared cap
+  > would need new engine mechanism similar to the CT/NM/MT additions this
+  > session. Flagged for a future fix, not built.
 - **Massachusetts** — **5% confirmed**, no retirement exclusion (IRA/401(k) fully
   taxed). SS exempt.
   > **Fixed 2026-08-24: the 4% surtax was disclosed in the note but never
