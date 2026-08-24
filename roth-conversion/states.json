@@ -6039,14 +6039,14 @@
     }
    ],
    "ssTreatment": "Social Security fully exempt. Private IRA/401(k)/conversion income taxable, BUT 2025 Act 15 lets those 67+ subtract up to $24,000 ($48,000 joint) of retirement income INCLUDING IRA/conversion income — so post-67 part of a conversion may be sheltered (a relatively favorable window). Federal/state government pensions for pre-1964 hires fully exempt.",
-   "bracketsNote": "Single-filer; 7.65% top only over ~$323k, so a typical conversion lands in the broad 5.3% band ($29,370-$323,290). roth.cr 5.3% representative. Inflation-indexed. Source: WI Dept of Revenue.",
+   "bracketsNote": "Single-filer; 5.3% band runs $51,950-$332,720, where a typical conversion lands; 7.65% top only above $332,720. roth.cr 5.3% representative. Inflation-indexed annually (figures confirmed current for 2026). Source: WI Dept of Revenue Schedule M / tax rate schedules.",
    "incomeTax": true,
    "source": "https://www.revenue.wi.gov/"
   },
   "roth": {
    "cr": 0.053,
    "ex": false,
-   "note": "Graduated 3.5% to 7.65%; the 7.65% top only starts above ~$315k single / ~$420k joint, so a typical conversion lands in the 5.3% band used here. A 2025 law (Act 15) lets those 67+ subtract up to $24,000 of retirement income, including a conversion — but the $48,000 joint figure only applies if BOTH spouses are 67+; if only one is, the household gets $24,000, not a flat doubling. This calculator applies that per-spouse rule. One thing to weigh: claiming this subtraction forfeits every other Wisconsin tax credit for that year. Social Security is fully exempt."
+   "note": "Graduated 3.5% to 7.65%; the 7.65% top only starts above $332,720 single / $443,630 joint, so a typical conversion lands in the 5.3% band used here ($51,950-$332,720 single). A 2025 law (Act 15) lets those 67+ subtract up to $24,000 of retirement income, including a conversion — but the $48,000 joint figure only applies if BOTH spouses are 67+; if only one is, the household gets $24,000, not a flat doubling. This calculator applies that per-spouse rule. One thing to weigh: claiming this subtraction forfeits every other Wisconsin tax credit for that year. Social Security is fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
