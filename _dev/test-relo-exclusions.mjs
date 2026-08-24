@@ -400,5 +400,29 @@ function check(label, actual, expected, tolerance = 1) {
   check('CO joint, mixed ages, summed cap still covers a modest combined amount', jointMixed.breakdown.taxableSS + jointMixed.breakdown.penTaxable, 0);
 }
 
+// --- 15. LA: retirement-income exclusion reshaped to a per-person ageTieredCap
+// (2026-08-24 fix). Was previously a flat $24,000 capJoint gated only on the primary
+// filer's own age — LA's own regulation (La. Admin. Code tit. 61, section I-1311) confirms
+// the exemption is genuinely per-INDIVIDUAL: only a spouse who is themselves 65+ AND
+// actually received the retirement income gets their own $12,000; a joint return with
+// only one qualifying spouse gets $12,000, not $24,000 (regulation's own worked Example
+// 1: a 65+ non-earning spouse contributes $0, the exemption doesn't transfer).
+{
+  const la = states.LA.taxRules;
+
+  // Joint, only the primary filer (70) is 65+; spouse is 60 (doesn't qualify at all).
+  // Previously wrongly got the full $24,000 cap; correct answer is $12,000.
+  const mixedAge = computeStateIncomeTax(la, 'mfj', { pension: 30000, age: 70, spouseAge: 60 });
+  check('LA joint, only primary filer 65+: capped at $12,000 (not $24,000)', mixedAge.breakdown.penTaxable, 30000 - 12000);
+
+  // Joint, both spouses 65+: the real $24,000 combined cap still applies.
+  const bothQualify = computeStateIncomeTax(la, 'mfj', { pension: 30000, age: 70, spouseAge: 70 });
+  check('LA joint, both spouses 65+: full $24,000 cap applies', bothQualify.breakdown.penTaxable, 30000 - 24000);
+
+  // Single, under 65: no exclusion at all.
+  const tooYoung = computeStateIncomeTax(la, 'single', { pension: 20000, age: 60 });
+  check('LA single, under 65: no exclusion', tooYoung.breakdown.penTaxable, 20000);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

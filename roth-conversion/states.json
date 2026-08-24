@@ -2159,7 +2159,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security fully exempt; most LA government, federal, railroad, and military pensions also exempt. Private IRA/401(k)/conversion income taxable, but a $12,000-per-person retirement-income exclusion at 65+ (doubled from $6k under Act 11, inflation-adjusted from 2026) shelters part of it. Louisiana also lets you deduct federal income tax paid, lowering the effective rate.",
+   "ssTreatment": "Social Security fully exempt; most LA government, federal, railroad, and military pensions also exempt. Private IRA/401(k)/conversion income taxable, but a $12,000-per-person retirement-income exclusion at 65+ (doubled from $6k under Act 11, inflation-adjusted from 2026) shelters part of it. Genuinely per-INDIVIDUAL, not a flat joint doubling: only the spouse who actually received the retirement income, and who is themselves 65+, gets their own $12,000 (La. Admin. Code tit. 61, section I-1311's own worked examples confirm a 65+ non-earning spouse contributes $0 — the exemption doesn't transfer). A joint return with only one qualifying spouse gets $12,000, not $24,000. Louisiana also lets you deduct federal income tax paid, lowering the effective rate.",
    "bracketsNote": "Flat 3% (Act 11, 2024 3rd Extraordinary Session, effective Jan 1 2025; replaced the old 1.85%-4.25% graduated structure). Confirmed against LA DOR FAQ. Revenue-trigger mechanism may cut the rate further from 2026.",
    "incomeTax": true,
    "source": "https://revenue.louisiana.gov/tax-education-and-faqs/faqs/income-tax-reform/what-are-the-individual-income-tax-rates-and-brackets/"
@@ -2167,7 +2167,7 @@
   "roth": {
    "cr": 0.03,
    "ex": false,
-   "note": "Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a retirement-income exclusion at 65+ — $12,000 single, $24,000 joint (CPI-adjusted; exact TY2026 figures pending LDR's 2026 IT-540i) — that this calculator applies before taxing the rest at 3%. This exclusion is for pension/retirement-account income specifically, not wages — already receiving a pension? Enter it in the Pension / Retirement-Account field below. Social Security and most LA government/military pensions are fully exempt."
+   "note": "Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a retirement-income exclusion at 65+ — $12,000 per qualifying spouse (CPI-adjusted; exact TY2026 figures pending LDR's 2026 IT-540i), summed for a joint return only if BOTH spouses are 65+ (this calculator previously modeled a flat $24,000 for any joint return where just the primary filer was 65+, regardless of the spouse's age — now fixed to the real per-person structure) — that this calculator applies before taxing the rest at 3%. This exclusion is for pension/retirement-account income specifically, not wages — already receiving a pension? Enter it in the Pension / Retirement-Account field below. Social Security and most LA government/military pensions are fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -2203,9 +2203,12 @@
     "treatment": "exclusion",
     "ageGate": 65,
     "exclusion": {
-     "capSingle": 12000,
-     "capJoint": 24000,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 65, "cap": 12000}
+     ],
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
