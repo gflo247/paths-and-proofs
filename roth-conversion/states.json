@@ -39,7 +39,7 @@
   "roth": {
    "cr": 0.05,
    "ex": false,
-   "note": "Alabama exempts defined-benefit PENSIONS (government, military, many private) and Social Security, unconditionally — but traditional IRA and 401(k) distributions are FULLY TAXABLE at up to 5%. A Roth conversion is IRA income, so Alabama taxes it; those 65+ can exclude the first $6,000 per person ($12,000 for a joint return with both spouses 65+) -- this calculator now applies that exclusion (previously applied none of it)."
+   "note": "Alabama exempts defined-benefit PENSIONS (government, military, many private) and Social Security, unconditionally — but traditional IRA and 401(k) distributions are FULLY TAXABLE at up to 5%. A Roth conversion is IRA income, so Alabama taxes it; those 65+ can exclude the first $6,000 per person, summed from each spouse's own age -- a joint return only gets the full $12,000 if BOTH spouses are 65+ (this calculator now applies that exclusion correctly per spouse; previously applied none of it, then briefly applied a flat cap regardless of the spouse's own age)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -107,9 +107,12 @@
     "treatment": "exclusion",
     "ageGate": 65,
     "exclusion": {
-     "capSingle": 6000,
-     "capJoint": 12000,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 65, "cap": 6000}
+     ],
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
@@ -4091,7 +4094,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security and all government pensions (federal/state/local) fully exempt. Private IRA/401(k)/conversion income taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20k for 2026 — proposed increases NOT enacted). A conversion above $20k is taxable. NYC residents add 3.078%-3.876% city tax; Yonkers adds a surcharge.",
+   "ssTreatment": "Social Security and all government pensions (federal/state/local) fully exempt. Private IRA/401(k)/conversion income taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20k for 2026 — proposed increases NOT enacted) -- genuinely per-INDIVIDUAL (\"one spouse can't claim the other spouse's unused exclusion\"), so a joint return with both spouses 59.5+ shelters $40,000, not a flat $20,000. A conversion above the per-person cap is taxable. NYC residents add 3.078%-3.876% city tax; Yonkers adds a surcharge.",
    "bracketsNote": "Single-filer. The 2026 state budget CUT rates in the lower five brackets (income under ~$215,400); aggregators report a mix of pre- and post-cut figures. These reflect the post-cut ladder (NerdWallet/Wealthvieu): 4/4.5/5.25/5.5/6/6.85/9.65/10.3/10.9. The old 6.25% mid-bracket was replaced — roth.cr refreshed 6.25%->6% to match the current band a typical conversion lands in. High brackets (6.85%+) unchanged, extended through 2032.",
    "incomeTax": true,
    "source": "https://www.tax.ny.gov/"
@@ -4099,7 +4102,7 @@
   "roth": {
    "cr": 0.06,
    "ex": false,
-   "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income (per person under NY law; still $20,000 for 2026 — proposed increases were not enacted). This calculator applies a $20,000 cap to your conversion once you're 59.5+ — it doesn't model per-spouse IRA ownership, so a joint return gets the same $20,000, not $40,000, and how much shelters also depends on how much of the cap your other retirement income already uses. Government pensions and Social Security are fully exempt and don't use up the cap. NYC residents also pay city tax up to ~3.876%."
+   "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse's age, which could silently zero out the shelter or wrongly double it depending on which spouse's age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don't use up the cap. NYC residents also pay city tax up to ~3.876%."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -4263,9 +4266,12 @@
     "treatment": "exclusion",
     "ageGate": 59.5,
     "exclusion": {
-     "capSingle": 20000,
-     "capJoint": 20000,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 59.5, "cap": 20000}
+     ],
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
@@ -5909,7 +5915,7 @@
   "roth": {
    "cr": 0.0458,
    "ex": false,
-   "note": "Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable. Seniors 65+ get an $8,000 modification ($16,000 married), but it shares one pool with your Social Security benefit and other pension exclusions (W. Va. Code section 11-21-12(c)(9)) — if your Social Security alone exceeds $8,000, which it does for most retirees already claiming it, there's little or nothing left to shelter IRA or conversion income. This calculator nets your Social Security benefit against the cap automatically, so it's fullest for those who haven't started claiming Social Security yet."
+   "note": "Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable. Seniors 65+ get an $8,000 modification, summed from each spouse's own age -- $16,000 only if BOTH spouses are 65+ (this calculator previously applied that $16,000 regardless of the spouse's own age -- now fixed), but it shares one pool with your Social Security benefit and other pension exclusions (W. Va. Code section 11-21-12(c)(9)) — if your Social Security alone exceeds your share of the cap, which it does for most retirees already claiming it, there's little or nothing left to shelter IRA or conversion income. This calculator nets your Social Security benefit against the cap automatically, so it's fullest for those who haven't started claiming Social Security yet."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -6009,9 +6015,12 @@
     "treatment": "exclusion",
     "ageGate": 65,
     "exclusion": {
-     "capSingle": 8000,
-     "capJoint": 16000,
-     "cliffType": "hard",
+     "capSingle": null,
+     "capJoint": null,
+     "cliffType": "ageTieredCap",
+     "perPersonTiers": [
+      {"minAge": 65, "cap": 8000}
+     ],
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,

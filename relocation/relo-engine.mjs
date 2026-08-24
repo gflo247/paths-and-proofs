@@ -250,8 +250,13 @@ export function computeStateIncomeTax(rules, status, income) {
     // but since the engine has no per-spouse income split, summing independently-
     // verified per-person amounts against the household's combined actual income is the
     // best available figure without assuming a flat (and sometimes wrong — see WI) 2x.
-    const cap = tierCapFor(ri.exclusion.perPersonTiers, age)
+    let cap = tierCapFor(ri.exclusion.perPersonTiers, age)
       + (tStatus === "joint" ? tierCapFor(ri.exclusion.perPersonTiers, spouseAge ?? age) : 0);
+    // WV: the $8k/$16k modification shares ONE statutory pool with Social Security —
+    // net the SS BENEFIT itself against the per-person-summed cap (same netAgainstSS
+    // mechanic as the flat-cap branch below, now also needed here since WV's cap is
+    // genuinely per-spouse, not flat — see the WV reshape note in gen-st-table.mjs).
+    if (ri.exclusion.netAgainstSS) cap = Math.max(0, cap - ss);
     const totalEx = Math.min(cap, iraWithdrawal + pension);
     ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, iraWithdrawal, pension));
   } else if (pooled && ri.treatment === "exclusion" && ri.exclusion.cliffType === "steppedAmount") {
@@ -377,7 +382,20 @@ export function computeStateIncomeTax(rules, status, income) {
     // nothing to double-count, so compute each on its own as before.
     if (ri.treatment === "exempt") iraTaxable = 0;
     else if (ri.treatment === "ageExempt") iraTaxable = (age >= (ri.ageGate ?? 0)) ? 0 : iraWithdrawal;
-    else if (ri.treatment === "exclusion") {
+    else if (ri.treatment === "exclusion" && ri.exclusion.cliffType === "ageTieredCap") {
+      // NY: found live 2026-08-24 — the flat-cap branch below gates ONLY on the
+      // primary filer's own age, so a joint return where just the SPOUSE qualifies
+      // got ZERO shelter (should get their own cap), and where just the PRIMARY
+      // qualifies, wrongly got the FULL two-person cap (should be half). NY's real
+      // $20,000 exclusion is per-individual (confirmed: "capped at $20,000 per
+      // person, whether filing jointly or separately... one spouse can't claim the
+      // other spouse's unused exclusion") — same per-person-summing fix already
+      // used by the pooled ageTieredCap branch above, now added here too for any
+      // non-pooled state with this shape.
+      const cap = tierCapFor(ri.exclusion.perPersonTiers, age)
+        + (tStatus === "joint" ? tierCapFor(ri.exclusion.perPersonTiers, spouseAge ?? age) : 0);
+      iraTaxable = Math.max(0, iraWithdrawal - Math.min(cap, iraWithdrawal));
+    } else if (ri.treatment === "exclusion") {
       const gateOk = ri.ageGate == null || age >= ri.ageGate;
       const cap = tStatus === "joint" ? ri.exclusion.capJoint : ri.exclusion.capSingle;
       const exAllowed = gateOk ? allowedExclusion(ri.exclusion, true, agiProxy, tStatus, cap, iraWithdrawal) : 0;
@@ -386,7 +404,11 @@ export function computeStateIncomeTax(rules, status, income) {
 
     if (pr.treatment === "exempt") penTaxable = 0;
     else if (pr.treatment === "ageExempt") penTaxable = (age >= (pr.ageGate ?? 0)) ? 0 : pension;
-    else if (pr.treatment === "exclusion") {
+    else if (pr.treatment === "exclusion" && pr.exclusion.cliffType === "ageTieredCap") {
+      const cap = tierCapFor(pr.exclusion.perPersonTiers, age)
+        + (tStatus === "joint" ? tierCapFor(pr.exclusion.perPersonTiers, spouseAge ?? age) : 0);
+      penTaxable = Math.max(0, pension - Math.min(cap, pension));
+    } else if (pr.treatment === "exclusion") {
       const gateOk = pr.ageGate == null || age >= pr.ageGate;
       const cap = tStatus === "joint" ? pr.exclusion.capJoint : pr.exclusion.capSingle;
       const exAllowed = gateOk ? allowedExclusion(pr.exclusion, false, agiProxy, tStatus, cap, pension) : 0;

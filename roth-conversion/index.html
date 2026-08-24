@@ -1131,7 +1131,7 @@ function irmaaT(magi,st){if(st==='mfs')return magi<=109000?0:magi<391000?4:5;con
 // IMPORTANT: For states where ex=true, converting NOW means paying state tax you'd NEVER pay later
 const ST={
   '': {n:'',cr:0,ex:false,note:''},
-  AL: {n:'Alabama',cr:.05,ex:false,note:'Alabama exempts defined-benefit PENSIONS (government, military, many private) and Social Security, unconditionally — but traditional IRA and 401(k) distributions are FULLY TAXABLE at up to 5%. A Roth conversion is IRA income, so Alabama taxes it; those 65+ can exclude the first $6,000 per person ($12,000 for a joint return with both spouses 65+) -- this calculator now applies that exclusion (previously applied none of it).'},
+  AL: {n:'Alabama',cr:.05,ex:false,note:'Alabama exempts defined-benefit PENSIONS (government, military, many private) and Social Security, unconditionally — but traditional IRA and 401(k) distributions are FULLY TAXABLE at up to 5%. A Roth conversion is IRA income, so Alabama taxes it; those 65+ can exclude the first $6,000 per person, summed from each spouse\'s own age -- a joint return only gets the full $12,000 if BOTH spouses are 65+ (this calculator now applies that exclusion correctly per spouse; previously applied none of it, then briefly applied a flat cap regardless of the spouse\'s own age).'},
   AK: {n:'Alaska',cr:0,ex:true,note:'No state income tax.'},
   AZ: {n:'Arizona',cr:.025,ex:false,note:'Flat 2.5% (one of the lowest in the nation), applied to IRA and conversion income. Social Security is exempt. The flat rate means a conversion is taxed at 2.5% regardless of size, making Arizona one of the cheaper states for a large conversion.'},
   AR: {n:'Arkansas',cr:.037,ex:false,note:'Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000-per-person retirement exemption covers traditional IRA income at 59.5+ (early distributions do not qualify) -- genuinely per-spouse, not a flat joint cap, so a joint return with both spouses 59.5+ shelters $12,000, not $6,000 (this calculator previously applied none of this exclusion at all). Social Security is exempt below $100k AGI; a large conversion could push past that.'},
@@ -1162,7 +1162,7 @@ const ST={
   NH: {n:'New Hampshire',cr:0,ex:true,note:'No income tax (interest/dividend tax ended 2025).'},
   NJ: {n:'New Jersey',cr:.0637,ex:false,note:'New Jersey excludes up to $75,000 single / $100,000 joint of retirement income, including a conversion, for those 62+ — below a $100,000 Total Income threshold (NJ\'s own income line, which excludes Social Security entirely). Between $100,000 and $150,000 the exclusion steps down to a smaller percentage of your actual income rather than disappearing outright; above $150,000 it\'s $0. This calculator applies the real stepped tiers, taxing whatever isn\'t sheltered at rates up to 10.75% (6.37% is typical for a mid-size conversion). Social Security is fully exempt from NJ tax.'},
   NM: {n:'New Mexico',cr:.049,ex:false,note:'Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands near the 4.9% band used here. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AND HEAD OF HOUSEHOLD AGI (NM\'s own table groups HOH with joint, using the wider thresholds, not single\'s) — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico\'s separate Social Security exemption, not this deduction. This calculator applies the real stepped table for single, joint, and HOH; married-filing-separately has its own third, narrower table ($15,000-$25,500) that isn\'t separately modeled — MFS filers here get the single-bucket figures instead, consistent with how this tool handles MFS elsewhere.'},
-  NY: {n:'New York',cr:.06,ex:false,note:'Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income (per person under NY law; still $20,000 for 2026 — proposed increases were not enacted). This calculator applies a $20,000 cap to your conversion once you\'re 59.5+ — it doesn\'t model per-spouse IRA ownership, so a joint return gets the same $20,000, not $40,000, and how much shelters also depends on how much of the cap your other retirement income already uses. Government pensions and Social Security are fully exempt and don\'t use up the cap. NYC residents also pay city tax up to ~3.876%.'},
+  NY: {n:'New York',cr:.06,ex:false,note:'Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse\'s own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse\'s age, which could silently zero out the shelter or wrongly double it depending on which spouse\'s age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don\'t use up the cap. NYC residents also pay city tax up to ~3.876%.'},
   NC: {n:'North Carolina',cr:.0399,ex:false,note:'Flat 3.99% for 2026 (final step of a phasedown; scheduled to keep falling toward 2.99% by 2028), applied to IRA and conversion income. Social Security is exempt. Being flat, the conversion is taxed at the same rate regardless of size.'},
   ND: {n:'North Dakota',cr:.0195,ex:false,note:'Very low rates topping out at 2.5%, applied to IRA and conversion income — among the lowest state taxes on a conversion anywhere. The 2.5% top starts near $245k, so a conversion that brings total income near $100k lands at the 1.95% used here. Social Security is exempt. North Dakota has a 0% bottom bracket, so part of a small conversion may not be taxed at all.'},
   OH: {n:'Ohio',cr:.0275,ex:false,note:'For 2026 Ohio uses a flat 2.75% on income above $26,050 (0% below). IRA and Roth-conversion income is taxable at that rate; a small retirement-income credit (up to $200 total) barely offsets a conversion. Social Security is fully exempt from Ohio tax.'},
@@ -1178,7 +1178,7 @@ const ST={
   VT: {n:'Vermont',cr:.066,ex:false,note:'Graduated 3.35% to 8.75%; the 8.75% top only starts above $249,700 single / $304,000 joint, so a typical conversion lands in the 6.6% band used here. IRA and Roth-conversion income is fully taxable (only a small $10k deduction for certain pension/government retirement income, income-limited). A conversion can also push you past Vermont\'s Social Security exemption thresholds, taxing more of your benefits that year.'},
   VA: {n:'Virginia',cr:.0575,ex:false,note:'Top rate 5.75% starts at just $17,000, so essentially all conversion income is taxed at 5.75%. IRA and Roth-conversion income is taxable. Those 65+ get a $12,000 age deduction, but it phases out dollar-for-dollar above $50,000 single / $75,000 joint AGI — and a conversion raises your AGI, so a large one can erase the deduction. Social Security is fully exempt.'},
   WA: {n:'Washington',cr:0,ex:true,note:'No income tax, so IRA and Roth-conversion income is untaxed (the 7% capital-gains tax exempts retirement accounts). One thing to watch: a new state income tax of 9.9% on household income above $1 million takes effect in 2028 and counts conversion income toward that threshold — so only a very large conversion in 2028 or later could be affected. Social Security is exempt.'},
-  WV: {n:'West Virginia',cr:.0458,ex:false,note:'Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable. Seniors 65+ get an $8,000 modification ($16,000 married), but it shares one pool with your Social Security benefit and other pension exclusions (W. Va. Code section 11-21-12(c)(9)) — if your Social Security alone exceeds $8,000, which it does for most retirees already claiming it, there\'s little or nothing left to shelter IRA or conversion income. This calculator nets your Social Security benefit against the cap automatically, so it\'s fullest for those who haven\'t started claiming Social Security yet.'},
+  WV: {n:'West Virginia',cr:.0458,ex:false,note:'Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable. Seniors 65+ get an $8,000 modification, summed from each spouse\'s own age -- $16,000 only if BOTH spouses are 65+ (this calculator previously applied that $16,000 regardless of the spouse\'s own age -- now fixed), but it shares one pool with your Social Security benefit and other pension exclusions (W. Va. Code section 11-21-12(c)(9)) — if your Social Security alone exceeds your share of the cap, which it does for most retirees already claiming it, there\'s little or nothing left to shelter IRA or conversion income. This calculator nets your Social Security benefit against the cap automatically, so it\'s fullest for those who haven\'t started claiming Social Security yet.'},
   WI: {n:'Wisconsin',cr:.053,ex:false,note:'Graduated 3.5% to 7.65%; the 7.65% top only starts above $332,720 single / $443,630 joint, so a typical conversion lands in the 5.3% band used here ($51,950-$332,720 single). A 2025 law (Act 15) lets those 67+ subtract up to $24,000 of retirement income, including a conversion — but the $48,000 joint figure only applies if BOTH spouses are 67+; if only one is, the household gets $24,000, not a flat doubling. This calculator applies that per-spouse rule. One thing to weigh: claiming this subtraction forfeits every other Wisconsin tax credit for that year. Social Security is fully exempt.'},
   WY: {n:'Wyoming',cr:0,ex:true,note:'No state income tax.'},
   DC: {n:'Washington D.C.',cr:.085,ex:false,note:'Graduated 4% to 10.75%; the 10.75% top only applies above $1M, while the 8.5% band covers roughly $60k-$250k where most conversion income lands (used here). IRA, 401(k), and Roth-conversion income is fully taxable; there is no retirement-income exclusion. Social Security is exempt.'},
@@ -1216,14 +1216,14 @@ const RIX={
   NM: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedAmount","ageGate":65,"perQualifyingSpouse":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"hohMapsToJoint":true,"steps":{"single":[{"upTo":18000,"amt":8000},{"upTo":19500,"amt":7000},{"upTo":21000,"amt":6000},{"upTo":22500,"amt":5000},{"upTo":24000,"amt":4000},{"upTo":25500,"amt":3000},{"upTo":27000,"amt":2000},{"upTo":28500,"amt":1000},{"upTo":null,"amt":0}],"joint":[{"upTo":30000,"amt":8000},{"upTo":33000,"amt":7000},{"upTo":36000,"amt":6000},{"upTo":39000,"amt":5000},{"upTo":42000,"amt":4000},{"upTo":45000,"amt":3000},{"upTo":48000,"amt":2000},{"upTo":51000,"amt":1000},{"upTo":null,"amt":0}]}}},
   CT: {"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":{"single":75000,"joint":100000},"zeroByAGI":{"single":100000,"joint":150000},"excludesIRA":false,"iraWeightPct":0.75,"steps":{"single":[{"upTo":74999,"pct":1},{"upTo":77499,"pct":0.85},{"upTo":79999,"pct":0.7},{"upTo":82499,"pct":0.55},{"upTo":84999,"pct":0.4},{"upTo":87499,"pct":0.25},{"upTo":89999,"pct":0.1},{"upTo":94999,"pct":0.05},{"upTo":99999,"pct":0.025},{"upTo":null,"pct":0}],"joint":[{"upTo":99999,"pct":1},{"upTo":104999,"pct":0.85},{"upTo":109999,"pct":0.7},{"upTo":114999,"pct":0.55},{"upTo":119999,"pct":0.4},{"upTo":124999,"pct":0.25},{"upTo":129999,"pct":0.1},{"upTo":139999,"pct":0.05},{"upTo":149999,"pct":0.025},{"upTo":null,"pct":0}]}}},
   NJ: {"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":75000,"capJoint":100000,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"thresholdExcludesSS":true,"steps":{"single":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.375},{"upTo":150000,"pct":0.1875},{"upTo":null,"pct":0}],"joint":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.5},{"upTo":150000,"pct":0.25},{"upTo":null,"pct":0}]}}},
-  WV: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":8000,"capJoint":16000,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"netAgainstSS":true}},
-  NY: {"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":20000,"capJoint":20000,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
+  WV: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":8000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"netAgainstSS":true}},
+  NY: {"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":59.5,"cap":20000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
   CO: {"treatment":"exclusion","ageGate":55,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":55,"cap":20000},{"minAge":65,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"sharesCapWithSS":true}},
   AR: {"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":59.5,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
   DE: {"treatment":"exclusion","ageGate":60,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":60,"cap":12500}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
   KY: {"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":0,"cap":31110}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
   OK: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":10000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
-  AL: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":6000,"capJoint":12000,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
+  AL: {"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},
 };
 
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
@@ -3265,7 +3265,11 @@ function rixExcluded(rix, status, age, spouseAge, competingAmt, agiProxy, ssAmt,
     // GA (two real age tiers) / WI (one tier, but still needs summing so a joint
     // return with only one qualifying spouse doesn't get the full doubled cap).
     const tierFor=(a)=>{ let c=0; for(const t of ex.perPersonTiers) if(a>=t.minAge) c=Math.max(c,t.cap); return c; };
-    const cap = tierFor(age) + (isJoint ? tierFor(spouseAge ?? age) : 0);
+    let cap = tierFor(age) + (isJoint ? tierFor(spouseAge ?? age) : 0);
+    // WV: nets the gross SS benefit against the per-person-summed cap — same
+    // mechanic as the generic "hard" branch's netAgainstSS below, now also needed
+    // here since WV's cap is genuinely per-spouse, not flat.
+    if(ex.netAgainstSS) cap = Math.max(0, cap - (ssGross || 0));
     return Math.min(cap, competingAmt);
   }
 
@@ -3470,25 +3474,24 @@ function computeConversionCost(cvtAmt, ctx){
     const stTiBase = Math.max(0, pensionIncome - exBase);
     const stTiWith = Math.max(0, (pensionIncome+taxableCvt) - exWith);
     cvtTxSt = (stTiWith - stTiBase) * stD.cr;
-  } else if(stateCode==='AL'){
-    // Alabama has TWO separate, independent provisions: defined-benefit pension
-    // income is fully, unconditionally exempt (pensionIncome.treatment:"exempt",
-    // never reaches this branch), and a SEPARATE $6,000-per-person exclusion (65+)
-    // applies only to IRA/401(k) distributions — the ONLY category a Roth
-    // conversion falls into. Confirmed via AL DOR's own Schedule RS instructions:
-    // the exclusion is computed independently for "Primary Taxpayer" (Part II)
-    // and "Spouse" (Part III), then summed (Part IV) — a joint return with two
-    // 65+ spouses gets $12,000, not a flat $6,000. Unlike every RETDED/RIX state,
-    // pensionIncome does NOT compete for this cap at all, so it applies against
-    // taxableCvt alone. Age gate uses the primary filer only (matching this
-    // tool's existing flat-cap simplification for non-pooled ageTieredCap-
-    // incompatible states — see the NY comment in gen-st-table.mjs). Uses
-    // status==='mfj' directly (not isCouple, which also covers MFS — an MFS
-    // filer reports only their OWN income under AL's per-individual rule and
-    // should get capSingle, not the two-person capJoint).
-    const alGateOk = curAge >= (rix.ageGate ?? 0);
-    const alCap = alGateOk ? (status==='mfj' ? rix.exclusion.capJoint : rix.exclusion.capSingle) : 0;
-    cvtTxSt = Math.max(0, taxableCvt - (alCap ?? 0)) * stD.cr;
+  } else if(stateCode==='AL' || stateCode==='NY'){
+    // AL and NY share the same shape: pension/annuity income is a SEPARATE,
+    // unconditionally exempt category (pensionIncome.treatment:"exempt", never
+    // reaches this branch) — a Roth conversion is IRA-sourced, so it competes
+    // ONLY against a per-person-summed exclusion of its own, never pooled with
+    // pensionIncome (unlike every RETDED/RIX state). AL: AL DOR's Schedule RS
+    // computes the exclusion independently for "Primary Taxpayer" (Part II) and
+    // "Spouse" (Part III), summed in Part IV — a joint return with two 65+
+    // spouses gets $12,000, not a flat $6,000. NY: confirmed per-individual —
+    // "capped at $20,000 per person, whether filing jointly or separately... one
+    // spouse can't claim the other spouse's unused exclusion" — $40,000 for two
+    // 59.5+ spouses, not a flat $20,000. Both found live 2026-08-24: the tool
+    // previously gated only on the PRIMARY filer's own age, so a joint return
+    // where just the spouse qualified got ZERO shelter, and where just the
+    // primary qualified, wrongly got the FULL two-person amount.
+    const tierFor = (a) => { let c=0; for(const t of rix.exclusion.perPersonTiers) if(a>=t.minAge) c=Math.max(c,t.cap); return c; };
+    const cap = tierFor(curAge) + (status==='mfj' ? tierFor(spouseAge ?? curAge) : 0);
+    cvtTxSt = Math.max(0, taxableCvt - cap) * stD.cr;
   } else if(rix){
     // Same before/with delta pattern as RETDED above, using this tool's own more
     // precise AGI/taxable-SS figures (already computed above) rather than a cruder

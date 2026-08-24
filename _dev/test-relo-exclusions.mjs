@@ -424,5 +424,62 @@ function check(label, actual, expected, tolerance = 1) {
   check('LA single, under 65: no exclusion', tooYoung.breakdown.penTaxable, 20000);
 }
 
+// --- 16. WV reshaped to ageTieredCap (2026-08-24 fix, same day as #10/#11 above): the
+// $8k/$16k cap was flat and gated only on the primary filer's own age, so a mixed-age
+// joint return got the WRONG shelter either way — the full $16,000 if only the primary
+// qualified (should be $8,000), or $0 if only the spouse qualified (should be $8,000).
+// Also re-verifies netAgainstSS still works correctly on the new ageTieredCap shape.
+{
+  const wv = states.WV.taxRules;
+
+  const mixedPrimary = computeStateIncomeTax(wv, 'mfj', { pension: 20000, age: 70, spouseAge: 50 });
+  check('WV joint, only primary 65+: capped at $8,000 (not $16,000)', mixedPrimary.breakdown.penTaxable, 20000 - 8000);
+
+  const mixedSpouse = computeStateIncomeTax(wv, 'mfj', { pension: 20000, age: 50, spouseAge: 70 });
+  check('WV joint, only spouse 65+ (order-independence): still $8,000 sheltered', mixedSpouse.breakdown.penTaxable, 20000 - 8000);
+
+  const bothQualify = computeStateIncomeTax(wv, 'mfj', { pension: 20000, age: 70, spouseAge: 70 });
+  check('WV joint, both 65+: full $16,000 cap applies', bothQualify.breakdown.penTaxable, 20000 - 16000);
+
+  const netted = computeStateIncomeTax(wv, 'mfj', { pension: 20000, ss: 10000, age: 70, spouseAge: 70 });
+  check('WV joint, both 65+, SS=$10k nets against the $16,000 cap', netted.breakdown.penTaxable, 20000 - (16000 - 10000));
+}
+
+// --- 17. NY reshaped to ageTieredCap (2026-08-24 fix): the $20,000 exclusion was flat
+// and gated only on the primary filer's own age — same bug class as WV/AL above. NY's
+// own rule is confirmed per-individual ("capped at $20,000 per person... one spouse
+// can't claim the other spouse's unused exclusion"). NY's pensionIncome is separately,
+// unconditionally exempt (government pensions) and does NOT compete for this cap —
+// exercised here via iraWithdrawal, same convention as the rest of this file for
+// non-pooled states.
+{
+  const ny = states.NY.taxRules;
+
+  const mixedPrimary = computeStateIncomeTax(ny, 'mfj', { iraWithdrawal: 30000, age: 62, spouseAge: 50 });
+  check('NY joint, only primary 59.5+: capped at $20,000 (not $40,000)', mixedPrimary.breakdown.iraTaxable, 30000 - 20000);
+
+  const mixedSpouse = computeStateIncomeTax(ny, 'mfj', { iraWithdrawal: 30000, age: 50, spouseAge: 62 });
+  check('NY joint, only spouse 59.5+ (order-independence): still $20,000 sheltered', mixedSpouse.breakdown.iraTaxable, 30000 - 20000);
+
+  const bothQualify = computeStateIncomeTax(ny, 'mfj', { iraWithdrawal: 50000, age: 62, spouseAge: 62 });
+  check('NY joint, both 59.5+: full $40,000 cap applies', bothQualify.breakdown.iraTaxable, 50000 - 40000);
+
+  const tooYoung = computeStateIncomeTax(ny, 'single', { iraWithdrawal: 15000, age: 55 });
+  check('NY single, under 59.5: no exclusion', tooYoung.breakdown.iraTaxable, 15000);
+}
+
+// --- 18. AL reshaped to ageTieredCap (2026-08-24 fix, later same day as the initial
+// AL per-individual-cap fix): the $6k/$12k cap was flat and gated only on the primary
+// filer's own age -- same mixed-age bug WV/NY had. ---
+{
+  const al = states.AL.taxRules;
+
+  const mixedPrimary = computeStateIncomeTax(al, 'mfj', { iraWithdrawal: 20000, age: 70, spouseAge: 50 });
+  check('AL joint, only primary 65+: capped at $6,000 (not $12,000)', mixedPrimary.breakdown.iraTaxable, 20000 - 6000);
+
+  const mixedSpouse = computeStateIncomeTax(al, 'mfj', { iraWithdrawal: 20000, age: 50, spouseAge: 70 });
+  check('AL joint, only spouse 65+ (order-independence): still $6,000 sheltered', mixedSpouse.breakdown.iraTaxable, 20000 - 6000);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

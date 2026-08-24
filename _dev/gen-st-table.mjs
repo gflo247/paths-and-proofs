@@ -120,13 +120,19 @@ function buildExAgeBlock(json) {
 // never added to this allowlist, so NY silently fell back to the flat-cr approximation
 // despite the site's own displayed note telling users about the exclusion — found live
 // (a 62-year-old converting $15,000, entirely within the disclosed cap, was still charged
-// NY tax on the full amount). Considered re-shaping to ageTieredCap/perPersonTiers (like
-// WI) so a joint return sums each spouse's own $20k instead of sharing one flat $20k, but
-// reverted: NY's pensionIncome is NOT pooled with retirementIncome in relo-engine.mjs
-// (unlike every other ageTieredCap state), and relo-engine's non-pooled branch has no
-// ageTieredCap support — that combination would have silently broken the Relocation
-// tool's NY calculation. Kept the flat cap (same known per-spouse-approximation as
-// LA/WV) rather than fix a shared-core gap as a side effect of a Roth-only fix.
+// NY tax on the full amount). Originally kept as a flat cap rather than reshaping to
+// ageTieredCap/perPersonTiers, because NY's pensionIncome is NOT pooled with
+// retirementIncome in relo-engine.mjs (unlike every other ageTieredCap state at the
+// time), and relo-engine's non-pooled branch had no ageTieredCap support.
+// NY reshaped to ageTieredCap 2026-08-24 (later same day): the flat cap turned out to
+// have its OWN live bug — gated only on the primary filer's own age, so a joint return
+// where just the spouse qualified got ZERO shelter, and where just the primary
+// qualified, wrongly got the FULL $20,000 (should be $20k per person, $40k combined,
+// confirmed: "one spouse can't claim the other spouse's unused exclusion"). Fixed by
+// building ageTieredCap support into relo-engine.mjs's NON-POOLED branch (the missing
+// piece flagged above) and giving Roth a dedicated stateCode==='NY' branch (shared with
+// AL below) that applies the per-person-summed cap to the conversion alone, since
+// pensionIncome still doesn't compete for it.
 // CO added 2026-08-24: the SAME bug class as NY, but worse — CO's retirementIncome had
 // a "hard" cliffType with a flat $24,000 cap, when the real rule (per CO DOR's own
 // Income Tax Topics guide) is genuinely age-tiered ($20,000 at 55-64, $24,000 at 65+).
@@ -150,12 +156,20 @@ function buildExAgeBlock(json) {
 // own Schedule RS computes it separately in Part II/Part III for primary/spouse), but
 // AL's pensionIncome is NOT pooled with retirementIncome — defined-benefit pensions are
 // separately, unconditionally exempt (pensionIncome.treatment:"exempt"), and don't compete
-// for the $6,000 IRA-only cap at all. Kept cliffType:"hard" (not reshaped to ageTieredCap,
-// which the non-pooled Relocation branch doesn't support — same gap flagged in the NY
-// comment above) and given a dedicated stateCode==='AL' branch in computeConversionCost
-// that reads capSingle/capJoint from this table but applies them to the conversion alone,
-// never pooling with pensionIncome. AL's capJoint was ALSO wrong (flat $6,000 instead of
-// the real $12,000 for two 65+ spouses) — fixed in states.json for both tools.
+// for the $6,000 IRA-only cap at all. Initially kept cliffType:"hard" (the non-pooled
+// Relocation branch didn't support ageTieredCap yet) with a dedicated stateCode==='AL'
+// Roth branch applying the flat cap to the conversion alone.
+// AL reshaped to ageTieredCap 2026-08-24 (later same day), same fix and same reason as NY
+// above: the flat cap gated only on the primary filer's own age, so a mixed-age joint
+// return got the wrong shelter either way (zero if the qualifying spouse wasn't the
+// primary, or the full two-person amount if only the primary qualified). Now shares the
+// same stateCode==='AL' || stateCode==='NY' branch in Roth (see roth-conversion/index.html),
+// applying a per-person-summed ageTieredCap to the conversion alone in both cases.
+// WV reshaped to ageTieredCap 2026-08-24, same reason: its $8k/$16k netAgainstSS cap was
+// also flat and gated on the primary filer's own age only. Unlike AL/NY, WV's pensionIncome
+// IS pooled, so this was a pure reclassification into the existing pooled ageTieredCap
+// branch — but that branch had no netAgainstSS handling yet (only the flat-cap branch did),
+// so netAgainstSS support was added to both engines' ageTieredCap branches too.
 export const RIX_STATES = ['GA', 'LA', 'SC', 'VA', 'WI', 'NM', 'CT', 'NJ', 'WV', 'NY', 'CO', 'AR', 'DE', 'KY', 'OK', 'AL'];
 const RIX_OPEN = 'const RIX={';
 const RIX_CLOSE = '};';
