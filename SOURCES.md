@@ -105,6 +105,36 @@ user's own state when accuracy matters to them.
   > Fixed June 2026: the prior note said exemptions "vary by birth year" — that
   > described the pre-2026 tiered system the phase-in replaced. Updated to the
   > 2026 rules.
+  > **Fixed 2026-08-24 (commit 31d9cfc, adversarially reviewed): a Roth**
+  > **CONVERSION specifically is an exception to the birth-year-independent rule**
+  > **above.** Confirmed via MI Treasury's own Roth-conversion FAQ: "the rollover
+  > distribution from a regular IRA qualifies for the pension subtraction...
+  > if the individual is at least 59 1/2 years of age when the rollover occurs."
+  > This calculator had NO age check at all before this fix, wrongly sheltering
+  > conversions made before 59.5 (confirmed live: a 45-year-old converting
+  > $50,000 showed $0 Michigan tax — a 100% error, the correct figure is
+  > $2,125). Ordinary pension/IRA income already being received is genuinely
+  > unaffected by this gate (confirmed both via the general guidance and by an
+  > independent adversarial review pass) — only the conversion itself is
+  > gated, via a new `conversionAgeGate` field. Roth-calculator-only: the
+  > Relocation tool's `iraWithdrawal` field has no conversion-specific
+  > semantics (per user decision) and can represent a genuine pre-59.5
+  > withdrawal-to-spend, which still qualifies under the age-independent rule.
+  > **Stronger citation found during the adversarial review**: MI's 2026 Form
+  > 446 (Withholding Guide, rev. Feb 2026) states the $67,610/$135,220 figures
+  > directly and explicitly — "For 2026, recipients born after 1945 may
+  > generally subtract qualifying retirement and pension benefits up to
+  > $67,610 if single or married filing separately, or $135,220 if married
+  > and filing a joint return" — a stronger, more direct source than RAB
+  > 2026-1 alone for these exact dollar figures.
+  > **Two related items surfaced but NOT modeled** (flagged, not fixed): (1)
+  > Form 446 confirms recipients born **before 1946** ("Tier 1") get an
+  > **unlimited** public-pension deduction, not capped at $67,610 — same
+  > accepted-simplification pattern as VA's pre-1939 grandfather clause
+  > (small, shrinking population). (2) "Premature distributions" are excluded
+  > from the general subtraction based on a **plan's own** retirement
+  > eligibility rules, not a fixed age — a different, harder-to-model
+  > mechanism than the 59.5 conversion gate, pre-existing and out of scope.
 - **The deduction is for 1099-R retirement/pension distributions specifically —
   it does NOT apply to wages, salary, or self-employment income.** Confirmed
   against MI Treasury's own "Retirement and Pension Benefits" guidance: "wages,
