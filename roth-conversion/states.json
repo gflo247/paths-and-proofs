@@ -2801,7 +2801,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "On the SS-taxing list: SS fully exempt below $82,190 single / $105,380 joint AGI (2026), phasing out above. NO retirement-income exclusion — pension, IRA, 401(k), and Roth conversion income all taxed as ordinary income at full rates. A conversion both adds taxable income and can push past the SS-subtraction threshold, pulling more benefits into tax.",
+   "ssTreatment": "On the SS-taxing list: SS fully exempt below $86,410 single / $110,780 joint AGI (2026, per MN DOR's official inflation-adjusted-amounts table), phasing out above. NO retirement-income exclusion — pension, IRA, 401(k), and Roth conversion income all taxed as ordinary income at full rates. A conversion both adds taxable income and can push past the SS-subtraction threshold, pulling more benefits into tax.",
    "bracketsNote": "Single-filer, MN DOR official 2026 schedule (inflation-adjusted, via kare11/MN Revenue): 9.85% top only over $203,150. MFJ thresholds wider. roth.cr 7.85% representative (top only above $203k).",
    "incomeTax": true,
    "source": "https://www.revenue.state.mn.us/minnesota-income-tax-rates-and-brackets"
@@ -2889,12 +2889,12 @@
    "socialSecurity": {
     "taxed": true,
     "exemptBelowAGI": {
-     "single": 82190,
-     "joint": 105380
+     "single": 86410,
+     "joint": 110780
     },
     "phaseInAboveAGI": {
-     "single": 82190,
-     "joint": 105380
+     "single": 86410,
+     "joint": 110780
     },
     "maxTaxableFraction": 0.85
    },
