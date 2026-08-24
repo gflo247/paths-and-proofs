@@ -23,9 +23,32 @@ function bracketTax(amount, brackets) {
   return tax;
 }
 
+// The real federal Social Security taxability formula (IRS Pub 915's "quick method"
+// worksheet — combined income vs. the $25k/$34k single or $32k/$44k joint two-tier
+// base/additional thresholds, MFS taxed at a flat 85% immediately). Ported verbatim
+// from roth-conversion/index.html's calcTaxableSS() — same federal figures, same
+// shape, just renamed for this file's naming convention. Used for states (Montana is
+// the only one confirmed so far — its own DOR literally says "follows the federal
+// formula," and the source Utah Legislature policy brief that cross-referenced all
+// nine SS-taxing states explicitly lists Montana as "N/A" for state-specific
+// thresholds) that have NO separate state threshold of their own, unlike MN/UT/VT/NM/CT,
+// which each have genuinely distinct state-specific formulas already modeled with
+// their own real figures via the exemptBelowAGI/phaseInAboveAGI shape below.
+function federalTaxableSS(ssBenefit, otherIncome, rawStatus) {
+  if (!ssBenefit || ssBenefit <= 0) return 0;
+  if (rawStatus === "mfs") return ssBenefit * 0.85;
+  const [lo, hi] = rawStatus === "mfj" ? [32000, 44000] : [25000, 34000]; // hoh uses single's thresholds, same as federal
+  const pi = otherIncome + ssBenefit * 0.5;
+  if (pi <= lo) return 0;
+  if (pi <= hi) return Math.min(ssBenefit * 0.5, (pi - lo) * 0.5);
+  const zone1 = Math.min(ssBenefit * 0.5, (hi - lo) * 0.5);
+  return Math.min(ssBenefit * 0.85, zone1 + (pi - hi) * 0.85);
+}
+
 // Taxable Social Security under a state's threshold/phase-in rule.
-function taxableSS(ssRule, ssBenefit, agiProxy, status) {
+function taxableSS(ssRule, ssBenefit, agiProxy, status, otherIncome, rawStatus) {
   if (!ssRule.taxed || ssBenefit <= 0) return 0;
+  if (ssRule.followsFederalFormula) return federalTaxableSS(ssBenefit, otherIncome, rawStatus);
   const exempt = ssRule.exemptBelowAGI[status];
   if (agiProxy <= exempt) return 0;
   const maxTaxable = ssBenefit * (ssRule.maxTaxableFraction ?? 0.85);
@@ -128,7 +151,7 @@ export function computeStateIncomeTax(rules, status, income) {
   // single/mfs/hoh -> "single" mapping for this one lookup without changing tStatus
   // globally (unverified for this state's OTHER thresholds).
   const ssStatus = (status === "hoh" && rules.socialSecurity.hohMapsToJoint) ? "joint" : tStatus;
-  const tSS = taxableSS(rules.socialSecurity, ss, agiProxy, ssStatus);
+  const tSS = taxableSS(rules.socialSecurity, ss, agiProxy, ssStatus, agiProxy - ss, status);
   breakdown.taxableSS = tSS;
 
   // --- IRA / 401k / conversion withdrawal, and Pension ---

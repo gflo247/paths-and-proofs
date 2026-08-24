@@ -3302,15 +3302,7 @@
    },
    "socialSecurity": {
     "taxed": true,
-    "exemptBelowAGI": {
-     "single": 25000,
-     "joint": 32000
-    },
-    "phaseInAboveAGI": {
-     "single": 25000,
-     "joint": 32000
-    },
-    "maxTaxableFraction": 0.85
+    "followsFederalFormula": true
    },
    "retirementIncome": {
     "treatment": "taxed",

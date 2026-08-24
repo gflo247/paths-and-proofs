@@ -295,5 +295,35 @@ function check(label, actual, expected, tolerance = 1) {
   check('WV joint, SS $10k: $6,000 of the $16,000 cap remains', jointPartial.breakdown.penTaxable + jointPartial.breakdown.iraTaxable, 16000 - 6000);
 }
 
+// --- 12. MT: Social Security follows the real federal formula (2026-08-24 fix) ---
+// Montana has NO state-specific SS threshold of its own — confirmed via MT DOR and the
+// Utah Legislature's cross-state policy brief, which lists Montana as "N/A" for
+// state-specific thresholds among all nine SS-taxing states. Previously approximated
+// as a single linear ramp to 85% over a narrow band, which badly overstated MT's tax
+// for filers still in the real formula's 50% tier.
+{
+  const mt = states.MT.taxRules;
+  check('MT socialSecurity.followsFederalFormula flag is set', mt.socialSecurity.followsFederalFormula, true);
+
+  // Single, SS $20,000 + wages $20,000: combined income = 20,000 + 10,000 = 30,000,
+  // squarely in the 50% tier ($25k-$34k) — taxable = min(10,000, 0.5*(30,000-25,000)) = 2,500.
+  const midTier = computeStateIncomeTax(mt, 'single', { ss: 20000, wages: 20000, age: 67 });
+  check('MT single, SS+wages in the 50% federal tier: taxableSS = $2,500 (not ~85% of benefit)', midTier.breakdown.taxableSS, 2500);
+
+  // Single, well below the $25,000 base threshold: fully exempt.
+  const belowBase = computeStateIncomeTax(mt, 'single', { ss: 15000, wages: 5000, age: 67 });
+  check('MT single, combined income below $25,000 base: taxableSS = $0', belowBase.breakdown.taxableSS, 0);
+
+  // MFS is taxed at a flat 85% immediately under federal rules, no threshold at all.
+  const mfs = computeStateIncomeTax(mt, 'mfs', { ss: 10000, wages: 0, age: 67 });
+  check('MT mfs: flat 85% of SS benefit taxable regardless of income', mfs.breakdown.taxableSS, 8500);
+
+  // Joint, deep into the 85% tier: combined income = 60,000 + 15,000 = 75,000, well past
+  // the $44,000 additional threshold. zone1 = min(0.5*30000, 0.5*12000) = 6,000;
+  // taxable = min(0.85*30000, 6000 + 0.85*(75000-44000)) = min(25500, 32350) = 25,500.
+  const deepTier = computeStateIncomeTax(mt, 'mfj', { ss: 30000, wages: 60000, age: 67, spouseAge: 67 });
+  check('MT joint, deep in the 85% federal tier: taxableSS = $25,500 (the 85%-of-benefit cap)', deepTier.breakdown.taxableSS, 25500);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
