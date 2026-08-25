@@ -1144,7 +1144,7 @@ const ST={
   HI: {n:'Hawaii',cr:.0825,ex:false,note:'Graduated 1.4% to 11% across twelve brackets; the 11% top only applies above $200k single / $400k joint, and Act 46 (2024) is widening the brackets in stages through 2031. A typical conversion lands in the 8.25% band ($48k-$150k single, used here). Hawaii fully exempts pensions and Social Security, but traditional IRA and 401(k) income is fully taxable — a Roth conversion is IRA income, so Hawaii taxes it.'},
   ID: {n:'Idaho',cr:.053,ex:false,note:'Flat 5.3% (cut from 5.695% under 2025 reform, retroactive to that year), applied to IRA and conversion income. Social Security is exempt. Being flat, the rate on a conversion does not change with its size.'},
   IL: {n:'Illinois',cr:.0495,ex:true,note:'Illinois exempts qualified retirement income — IRA, 401(k), and pension — from its 4.95% flat tax, and the Department of Revenue treats the taxable portion of a Roth conversion as exempt too (subtracted on Schedule M). No age requirement, no income cap, no cliff — so a conversion is genuinely Illinois-tax-free. Social Security is also exempt.'},
-  IN: {n:'Indiana',cr:.0295,ex:false,note:'Flat 2.95% for 2026 (cut from 3.05%, scheduled to keep falling toward ~2.9% in 2027), applied to IRA and conversion income. Social Security is exempt. The flat rate means a conversion is taxed the same regardless of size; some counties add a small local income tax on top.'},
+  IN: {n:'Indiana',cr:.0295,ex:false,note:'Flat 2.95% for 2026 (cut from 3.05%, scheduled to keep falling toward ~2.9% in 2027), applied to IRA and conversion income. Social Security is exempt. Every one of Indiana\'s 92 counties ALSO levies a mandatory local income tax -- not a minor add-on: rates range 0.50% to 3.00% (Indiana DOR Departmental Notice #1, effective Jan. 1, 2026), with a median of ~1.97% across all 92 counties and Marion County (Indianapolis, the state\'s most populous) at 2.02% -- roughly doubling the effective rate for a typical filer. This calculator applies that ~1.97% median county rate explicitly on top of the state rate, the same mandatory-local-tax pattern used for Maryland\'s county tax.'},
   IA: {n:'Iowa',cr:.038,ex:true,note:'Since 2023 Iowa fully exempts retirement income — including Roth conversion income — for residents age 55 and older (no dollar cap), so a conversion at 55+ is Iowa-tax-free. Under 55, the conversion is taxable at Iowa\'s flat 3.8% rate (SF 2442 collapsed the old brackets to a single flat rate for 2025+). Social Security is fully exempt at any age.'},
   KS: {n:'Kansas',cr:.0558,ex:false,note:'Two brackets; the top ~5.58% rate starts at just ~$23k single, so a typical conversion is taxed near that rate. IRA, 401(k), and conversion income is fully taxable (KPERS, federal, and military pensions are exempt, but private retirement accounts are not). Kansas fully exempted Social Security starting in 2024, so a conversion here does not pull benefits into tax.'},
   KY: {n:'Kentucky',cr:.035,ex:false,note:'Flat 3.5% (cut from 4% on Jan 1 2026 via a revenue trigger), applied to IRA and conversion income. Kentucky exempts Social Security and gives a $31,110-per-person retirement exclusion (no age requirement) that this calculator now applies -- genuinely per-spouse, so a joint return with both spouses receiving qualifying income shelters $62,220 (this calculator previously applied none of this exclusion at all). A meaningful conversion can still exceed the cap.'},
@@ -3491,6 +3491,24 @@ function computeConversionCost(cvtAmt, ctx){
     const MD_COUNTY_RATE = 0.032;
     cvtTxSt = taxableCvt * (stD.cr + MD_COUNTY_RATE);
     stMarginalDisp = stD.cr + MD_COUNTY_RATE;
+  } else if(stateCode==='IN'){
+    // Indiana's county income tax is MANDATORY for every resident, same shape
+    // as Maryland's above — found live during the 2026-08-25 broader audit:
+    // the note called it "a small local income tax," when the real figure is
+    // anything but small. Extracted the full 92-county rate table directly
+    // from Indiana DOR's Departmental Notice #1 (effective Jan. 1, 2026,
+    // in.gov/dor/files/dn01.pdf) — rates range 0.50% (Porter) to 3.00%
+    // (Randolph), median 1.97% across all 92 counties, no single dominant
+    // rate the way MD has one (no state-published "typical" blended figure
+    // to lean on, unlike MD's Comptroller-stated median-withholding
+    // practice) — so the median across all 92 counties is the modeling
+    // choice here, corroborated by Marion County (Indianapolis, the state's
+    // most populous) independently sitting close by at 2.02%. On a 2.95%
+    // state rate, this roughly DOUBLES the effective rate for a typical
+    // filer — not the minor add-on the old note implied.
+    const IN_COUNTY_RATE = 0.0197;
+    cvtTxSt = taxableCvt * (stD.cr + IN_COUNTY_RATE);
+    stMarginalDisp = stD.cr + IN_COUNTY_RATE;
   } else {
     cvtTxSt = taxableCvt * stD.cr;
   }

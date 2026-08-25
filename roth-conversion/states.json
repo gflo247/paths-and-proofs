@@ -1849,14 +1849,14 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security exempt. Flat 2.95% for 2026 (falling toward ~2.9% in 2027); some counties add local income tax.",
+   "ssTreatment": "Social Security exempt. Flat 2.95% for 2026 (falling toward ~2.9% in 2027); every county ALSO levies a mandatory local income tax, ranging 0.50%-3.00% (median ~1.97%) per Indiana DOR Departmental Notice #1 (eff. Jan. 1, 2026) -- roughly doubling the effective rate for a typical filer, not a minor add-on.",
    "incomeTax": true,
    "source": "https://www.in.gov/dor/"
   },
   "roth": {
    "cr": 0.0295,
    "ex": false,
-   "note": "Flat 2.95% for 2026 (cut from 3.05%, scheduled to keep falling toward ~2.9% in 2027), applied to IRA and conversion income. Social Security is exempt. The flat rate means a conversion is taxed the same regardless of size; some counties add a small local income tax on top."
+   "note": "Flat 2.95% for 2026 (cut from 3.05%, scheduled to keep falling toward ~2.9% in 2027), applied to IRA and conversion income. Social Security is exempt. Every one of Indiana's 92 counties ALSO levies a mandatory local income tax -- not a minor add-on: rates range 0.50% to 3.00% (Indiana DOR Departmental Notice #1, effective Jan. 1, 2026), with a median of ~1.97% across all 92 counties and Marion County (Indianapolis, the state's most populous) at 2.02% -- roughly doubling the effective rate for a typical filer. This calculator applies that ~1.97% median county rate explicitly on top of the state rate, the same mandatory-local-tax pattern used for Maryland's county tax."
   },
   "taxRules": {
    "bracketsByStatus": {
