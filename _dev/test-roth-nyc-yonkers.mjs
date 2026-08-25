@@ -8,14 +8,14 @@
 // rather than the raw conversion amount.
 //
 // Extracts the REAL computeConversionCost/NYCTAX/bracketTax definitions verbatim
-// from the shipped HTML via jsdom (same approach as test-roth-rix.mjs), plus — for
-// the "neither" regression guard — the SAME extraction from the git HEAD version of
-// the file that predates this feature entirely (commit b93655b), so ordinary NY
-// behavior is proven byte-identical before/after, not just plausible-looking.
+// from the shipped HTML via jsdom (same approach as test-roth-rix.mjs). The
+// "neither" regression guard (#6 below) checks against hardcoded expected values
+// computed once from commit b93655b (the last commit before this feature), not a
+// live `git show HEAD` diff -- see that check's own comment for why a dynamic HEAD
+// comparison would silently stop meaning anything the moment this file is committed.
 
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { readFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
 import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
 
 // Same harness pattern as test-roth-rix.mjs: computeConversionCost calls
@@ -42,15 +42,7 @@ function extractCC(html) {
   const scriptStart = html.lastIndexOf('<script>', markerIdx) + '<script>'.length;
   const scriptEnd = html.indexOf('</script>', markerIdx);
   const scriptSrc = html.slice(scriptStart, scriptEnd);
-  // Defensive typeof guards: the git-HEAD extraction (pre-feature) has neither
-  // NYCTAX nor bracketTax defined at all, so a direct reference would throw.
-  return new Function(scriptSrc + `
-    return {
-      computeConversionCost,
-      NYCTAX: typeof NYCTAX !== 'undefined' ? NYCTAX : null,
-      bracketTax: typeof bracketTax !== 'undefined' ? bracketTax : null,
-    };
-  `)();
+  return new Function(scriptSrc + '\nreturn {computeConversionCost, NYCTAX, bracketTax};')();
 }
 
 const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.url), 'utf8');
@@ -136,24 +128,28 @@ const baseCtx = { pensionIncome: 0, nii: 0, ltcg: 0, ss: 0, nSr: 0, stD: { cr: 0
 }
 
 // --- 6. Golden-snapshot regression guard: "neither" (localTax='') must produce
-// byte-identical results to the pre-feature code (git HEAD, commit b93655b, before
-// any NYC/Yonkers work), across several NY scenarios -- proof ordinary NY behavior
-// (including the existing per-spouse $20k/40k exclusion logic) is untouched. ---
+// the SAME results as the pre-feature code, across several NY scenarios -- proof
+// ordinary NY behavior (including the existing per-spouse $20k/40k exclusion logic)
+// is untouched. Expected values are HARDCODED, computed once from commit b93655b
+// (the last commit before any NYC/Yonkers work) rather than fetched live via `git
+// show HEAD` -- a dynamic HEAD comparison only means anything in the single moment
+// before this feature's own commit lands; the instant it does, HEAD IS this code,
+// so the comparison would silently degrade into comparing the file against itself,
+// always passing regardless of any future regression. Hardcoding is what every
+// other test in this suite already does (test-roth-multiyear.mjs's "$2,620"/"$4,320"
+// etc.), and is what actually keeps this check meaningful going forward. ---
 {
-  const oldHtml = execSync('git show HEAD:roth-conversion/index.html', { cwd: new URL('..', import.meta.url), maxBuffer: 1024 * 1024 * 20 }).toString();
-  const { computeConversionCost: oldCC } = extractCC(oldHtml);
   const scenarios = [
-    { income: 40000, status: 'single', curAge: 45, cvt: 20000 },
-    { income: 30000, status: 'single', curAge: 60, cvt: 15000 },
-    { income: 60000, status: 'mfj', curAge: 62, spouseAge: 62, isCouple: true, cvt: 50000 },
-    { income: 60000, status: 'mfj', curAge: 45, spouseAge: 62, isCouple: true, cvt: 50000 },
-    { income: 20000, status: 'hoh', curAge: 65, cvt: 25000 },
+    { income: 40000, status: 'single', curAge: 45, cvt: 20000, expected: 1200 },
+    { income: 30000, status: 'single', curAge: 60, cvt: 15000, expected: 0 },
+    { income: 60000, status: 'mfj', curAge: 62, spouseAge: 62, isCouple: true, cvt: 50000, expected: 600 },
+    { income: 60000, status: 'mfj', curAge: 45, spouseAge: 62, isCouple: true, cvt: 50000, expected: 1800 },
+    { income: 20000, status: 'hoh', curAge: 65, cvt: 25000, expected: 300 },
   ];
   for (const s of scenarios) {
     const ctx = { ...baseCtx, income: s.income, status: s.status, curAge: s.curAge, spouseAge: s.spouseAge, isCouple: !!s.isCouple, localTax: '' };
     const got = computeConversionCost(s.cvt, ctx).cvtTxSt;
-    const expected = oldCC(s.cvt, ctx).cvtTxSt;
-    check(`Golden snapshot (localTax=''), ${s.status} age=${s.curAge} income=${s.income} cvt=${s.cvt}: byte-identical to pre-feature code`, got, expected, 0.001);
+    check(`Golden snapshot (localTax=''), ${s.status} age=${s.curAge} income=${s.income} cvt=${s.cvt}: matches pre-feature code (b93655b)`, got, s.expected, 0.001);
   }
 }
 
