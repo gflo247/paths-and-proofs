@@ -793,6 +793,18 @@
         <div class="ttip" id="tip-state"><strong>Why this matters:</strong> State income taxes can add 3–13% to the cost of a Roth conversion. Some states also exempt IRA withdrawals in retirement — meaning you'd pay state tax on the conversion today but nothing when you withdraw later, which affects the comparison. Selecting your state adds these numbers automatically.</div>
         <div id="stateRetNote" style="margin-top:6px;"></div>
 
+        <div id="nyLocalTaxField" style="display:none">
+          <div class="field">
+            <div class="flr"><label>NYC or Yonkers Resident?</label><button class="tb" onclick="toggleTip('nyLocal')">ⓘ</button></div>
+            <select id="nyLocalTax" onchange="calc()">
+              <option value="">Neither — rest of New York State</option>
+              <option value="nyc">New York City resident</option>
+              <option value="yonkers">Yonkers resident</option>
+            </select>
+            <div class="ttip" id="tip-nyLocal">NYC and Yonkers are the only New York localities with their own income tax. NYC charges a separate, genuinely graduated city tax (3.078%-3.876%) on the same base as your NY State tax, including a Roth conversion. Yonkers instead charges a 16.75% surcharge on your NY State tax bill itself — not a separate income-based tax. Every other New York resident pays $0 local income tax.</div>
+          </div>
+        </div>
+
         <details class="rest">
           <summary>Planning to move before you convert?</summary>
           <div class="restb">
@@ -1162,7 +1174,7 @@ const ST={
   NH: {n:'New Hampshire',cr:0,ex:true,note:'No income tax (interest/dividend tax ended 2025).'},
   NJ: {n:'New Jersey',cr:.0637,ex:false,note:'New Jersey excludes up to $75,000 single / $100,000 joint of retirement income, including a conversion, for those 62+ — below a $100,000 Total Income threshold (NJ\'s own income line, which excludes Social Security entirely). Between $100,000 and $150,000 the exclusion steps down to a smaller percentage of your actual income rather than disappearing outright; above $150,000 it\'s $0. This calculator applies the real stepped tiers, taxing whatever isn\'t sheltered at rates up to 10.75% (6.37% is typical for a mid-size conversion). Social Security is fully exempt from NJ tax.'},
   NM: {n:'New Mexico',cr:.049,ex:false,note:'Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands near the 4.9% band used here. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AND HEAD OF HOUSEHOLD AGI (NM\'s own table groups HOH with joint, using the wider thresholds, not single\'s) — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico\'s separate Social Security exemption, not this deduction. This calculator applies the real stepped table for single, joint, and HOH; married-filing-separately has its own third, narrower table ($15,000-$25,500) that isn\'t separately modeled — MFS filers here get the single-bucket figures instead, consistent with how this tool handles MFS elsewhere.'},
-  NY: {n:'New York',cr:.06,ex:false,note:'Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse\'s own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse\'s age, which could silently zero out the shelter or wrongly double it depending on which spouse\'s age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don\'t use up the cap. NYC residents also pay city tax up to ~3.876%.'},
+  NY: {n:'New York',cr:.06,ex:false,note:'Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse\'s own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse\'s age, which could silently zero out the shelter or wrongly double it depending on which spouse\'s age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don\'t use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax.'},
   NC: {n:'North Carolina',cr:.0399,ex:false,note:'Flat 3.99% for 2026 (final step of a phasedown; scheduled to keep falling toward 2.99% by 2028), applied to IRA and conversion income. Social Security is exempt. Being flat, the conversion is taxed at the same rate regardless of size.'},
   ND: {n:'North Dakota',cr:.0195,ex:false,note:'Very low rates topping out at 2.5%, applied to IRA and conversion income — among the lowest state taxes on a conversion anywhere. The 2.5% top starts near $245k, so a conversion that brings total income near $100k lands at the 1.95% used here. Social Security is exempt. North Dakota has a 0% bottom bracket, so part of a small conversion may not be taxed at all.'},
   OH: {n:'Ohio',cr:.0275,ex:false,note:'For 2026 Ohio uses a flat 2.75% on income above $26,050 (0% below). IRA and Roth-conversion income is taxable at that rate; a small retirement-income credit (up to $200 total) barely offsets a conversion. Social Security is fully exempt from Ohio tax.'},
@@ -1226,6 +1238,14 @@ const RIX={
   AL: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"socialSecurity":{"taxed":false}},
 };
 
+// NYCTAX: New York City's and Yonkers' local income tax (see states.json
+// _schema.fields["roth.localTax"]). NY-only, generated from states.json's
+// roth.localTax by _dev/gen-st-table.mjs -- do not hand-edit.
+const NYCTAX={
+  nyc: {"single":[{"rate":0.03078,"upTo":12000},{"rate":0.03762,"upTo":25000},{"rate":0.03819,"upTo":50000},{"rate":0.03876,"upTo":null}],"mfj":[{"rate":0.03078,"upTo":21600},{"rate":0.03762,"upTo":45000},{"rate":0.03819,"upTo":90000},{"rate":0.03876,"upTo":null}],"mfs":[{"rate":0.03078,"upTo":12000},{"rate":0.03762,"upTo":25000},{"rate":0.03819,"upTo":50000},{"rate":0.03876,"upTo":null}],"hoh":[{"rate":0.03078,"upTo":14400},{"rate":0.03762,"upTo":30000},{"rate":0.03819,"upTo":60000},{"rate":0.03876,"upTo":null}]},
+  yonkersRate: .1675,
+};
+
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
 // calcTaxableSS moved to core/retirement-rules.js (as federalTaxableSS) 2026-08-24 —
 // it was already a confirmed byte-identical duplicate of relo-engine.mjs's own
@@ -1283,6 +1303,15 @@ function lifeExJoint(sex1,age1,sex2,age2){
 function lifeEx(sex,from){let s=1,e=0;for(let a=from;a<=110;a++){const q=(QX[sex][a]??500)/1000;e+=(a+.5)*s*q;s*=(1-q);}return Math.round(e*10)/10;}
 
 function calcTax(ti,st){if(ti<=0)return 0;let t=0,p=0;for(const b of BRAX[st]){if(ti<=p)break;t+=(Math.min(ti,b.m)-p)*b.r;p=b.m;}return t;}
+// Generic graduated-bracket walker over the {rate,upTo} shape used everywhere else
+// in this project (states.json's taxRules.bracketsByStatus, NYCTAX below) -- NOT the
+// same {m,r} shape calcTax above uses for federal brackets, so kept separate rather
+// than reshaping calcTax's own tight hot-path loop. A documented, byte-identical
+// port of relocation/relo-engine.mjs's own bracketTax() (confirmed same logic before
+// porting) -- this file is a self-contained single page with no imports, so it can't
+// literally share that function, only mirror it, same convention as
+// core/retirement-rules.js's federalTaxableSS being ported rather than imported here.
+function bracketTax(ti,brackets){if(ti<=0)return 0;let t=0,lo=0;for(const b of brackets){const hi=b.upTo==null?Infinity:b.upTo;if(ti>lo)t+=(Math.min(ti,hi)-lo)*b.rate;lo=hi;if(ti<=hi)break;}return t;}
 // Tax on a block of LTCG/qualified-dividend income sitting on top of ordinary
 // taxable income — stackStart is where ordinary income ends (post-deduction),
 // amt is how much LTCG stacks above that. Walks the same bracket boundaries as
@@ -1816,7 +1845,7 @@ function useRetRate(rate){
 
 
 // ── MULTI-YEAR PLAN COMPUTATION ──
-function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,planConvert,spouseAge,isCouple,pensionIncome){
+function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,planConvert,spouseAge,isCouple,pensionIncome,localTax){
   if(planConvert<=0||tradBal<=0)return null;
 
   // Compute conversion tax for a given income scenario. A thin adapter around
@@ -1832,7 +1861,7 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
   function convTax(otherInc,niiAmt,ltcgAmt,ssV,stat,nsr,cvt,tfrac,pensionAmt,ageForCalc,spouseAgeForCalc){
     var ctx={income:otherInc,pensionIncome:pensionAmt||0,nii:niiAmt,ltcg:ltcgAmt,ss:ssV,status:stat,nSr:nsr,
               stD:stD,stateCode:stateCode,curAge:ageForCalc,spouseAge:spouseAgeForCalc,
-              isCouple:isCouple,taxableFrac:tfrac};
+              isCouple:isCouple,taxableFrac:tfrac,localTax:localTax};
     return computeConversionCost(cvt,ctx).cvtTxTot;
   }
 
@@ -3276,7 +3305,7 @@ function loadSavedInputs(){
 
 // ctx: {income, pensionIncome, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac}
 function computeConversionCost(cvtAmt, ctx){
-  const {income: wagesInc, pensionIncome, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac} = ctx;
+  const {income: wagesInc, pensionIncome, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac, localTax} = ctx;
   const taxableCvt = cvtAmt * taxableFrac;
   // Wages/other income (wagesInc) and pension/retirement-account income
   // (pensionIncome) are two DISTINCT, ADDITIVE amounts the user enters
@@ -3427,7 +3456,43 @@ function computeConversionCost(cvtAmt, ctx){
     // (the conversion's own state-tax effect) are read.
     const base    = window.resolveRetirementIncome(rix, status, {age: curAge, spouseAge, ira: 0, pension: pensionIncome, agiProxy: agiBase, ss, ssForThreshold: ssBase, otherIncomeForSS: income+nii});
     const withCvt = window.resolveRetirementIncome(rix, status, {age: curAge, spouseAge, ira: taxableCvt, pension: pensionIncome, agiProxy: agiWith, ss, ssForThreshold: ssWith, otherIncomeForSS: income+nii+taxableCvt});
-    cvtTxSt = ((withCvt.iraTaxable + withCvt.penTaxable) - (base.iraTaxable + base.penTaxable)) * stD.cr;
+    const stDeltaBefore = base.iraTaxable + base.penTaxable;
+    const stDeltaWith   = withCvt.iraTaxable + withCvt.penTaxable;
+    cvtTxSt = (stDeltaWith - stDeltaBefore) * stD.cr;
+
+    // NYC / Yonkers local income tax — NY-specific, and unlike MD/IN's mandatory
+    // county tax (baked unconditionally into stD.cr's sibling branches below),
+    // applies ONLY to residents of these two SPECIFIC jurisdictions (most NY
+    // residents pay $0 local income tax), so it's opt-in via the wizard's
+    // nyLocalTax selector rather than unconditional. Layered on stDeltaBefore/
+    // stDeltaWith (the SAME NY-exclusion-adjusted amount the state tax above just
+    // used), not the raw taxableCvt — NY's own instructions define NYC taxable
+    // income relative to NY taxable income, so a conversion NY's own $20k/59.5+
+    // per-person exclusion already sheltered owes $0 city tax too, not just $0
+    // state tax. wagesInc/nii/ltcg aren't excludable under NY's retirement
+    // exclusion (only pension/IRA income is), so they count toward the NYC
+    // bracket base unchanged before/with the conversion.
+    if(stateCode==='NY' && localTax==='nyc'){
+      const nycBrax   = NYCTAX.nyc[status] || NYCTAX.nyc.single;
+      const nycBefore = bracketTax(wagesInc+nii+ltcg+stDeltaBefore, nycBrax);
+      const nycWith   = bracketTax(wagesInc+nii+ltcg+stDeltaWith,   nycBrax);
+      const nycCvtTax = nycWith - nycBefore;
+      cvtTxSt += nycCvtTax;
+      if(nycCvtTax>0){
+        const nycTopBracket = nycBrax.find(b=>(wagesInc+nii+ltcg+stDeltaWith)<=(b.upTo??Infinity)) || nycBrax[nycBrax.length-1];
+        stMarginalDisp = stD.cr + nycTopBracket.rate;
+      }
+    } else if(stateCode==='NY' && localTax==='yonkers'){
+      // Yonkers is NOT a separate income-based tax — it's a 16.75% SURCHARGE on
+      // the filer's NY STATE tax liability itself (NY Form IT-201-I's Yonkers
+      // worksheet). Because it's a strict linear function of the state tax
+      // already computed above, applying it to cvtTxSt is mathematically EXACT,
+      // not an approximation: surcharge(taxWith)-surcharge(taxBefore) always
+      // equals yonkersRate*(taxWith-taxBefore) regardless of what those are.
+      const yonkersTax = cvtTxSt * NYCTAX.yonkersRate;
+      cvtTxSt += yonkersTax;
+      if(yonkersTax>0) stMarginalDisp = stD.cr * (1 + NYCTAX.yonkersRate);
+    }
   } else if(stateCode==='OH'){
     // Ohio taxes nonbusiness income above a flat, filing-status-independent
     // zero-bracket threshold (ORC 5747.02, effective 2026: 0% up to $26,050,
@@ -3625,6 +3690,12 @@ function calc(){
   const nMed     = medSt==='two'?2:medSt==='one'?1:0;
   const stateCode= _ae ? _ae.stateCode         : _rv('stateCode');
   const stD      = ST[stateCode]||{n:'',cr:0,ex:false,note:''};
+  const nyLocalField = document.getElementById('nyLocalTaxField');
+  if(nyLocalField) nyLocalField.style.display = (stateCode==='NY') ? 'block' : 'none';
+  // Force-reset to '' whenever state != NY, so a stale selection left over from an
+  // earlier NY selection (the <select> itself is just hidden, not cleared) can't
+  // silently leak a NYC/Yonkers tax into a different state's calculation.
+  const localTax = (stateCode==='NY') ? (_ae ? (_ae.nyLocalTax||'') : _rv('nyLocalTax')) : '';
   const isCouple = (status==='mfj'||status==='mfs');
   const spFields = document.getElementById('spouseFields');
   if(spFields) spFields.style.display = isCouple ? 'block' : 'none';
@@ -3657,7 +3728,7 @@ function calc(){
   }
 
   // ── PER-POINT TAX COST (ctx is also what the marginal-rate sweep uses) ──
-  const ccCtx = {income, pensionIncome, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac};
+  const ccCtx = {income, pensionIncome, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac, localTax};
   const cc = computeConversionCost(cvtAmt, ccCtx);
   const {ssBase, ssWith, torpedoInc,
          agiBase, agiWith, ordAgiBase, ordAgiWith, std, srD, srDW, tiBase, tiWith,
@@ -4076,7 +4147,7 @@ function calc(){
     var myConv = myOpts.bracketAmt > 0 ? myOpts.bracketAmt : 0;
     if(myOpts.irmaaAmt!==null && myOpts.irmaaAmt>0 && (myConv===0 || myOpts.irmaaAmt<myConv)) myConv=myOpts.irmaaAmt;
     if(myConv > 500 && tradBal > 0){
-      var myPlan = computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,myConv,spouseAge,isCouple,pensionIncome);
+      var myPlan = computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,myConv,spouseAge,isCouple,pensionIncome,localTax);
       multiYearHTML = buildMultiYearHTML(myPlan,curAge,retAge,fmt,pct,fmtK);
     }
   }

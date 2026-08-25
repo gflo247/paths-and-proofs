@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "gen": "node _dev/gen-st-table.mjs && node _dev/gen-header.mjs && node _dev/gen-relo-data.mjs && node _dev/gen-medicare-data.mjs",
-    "verify": "node _dev/gen-st-table.mjs --check && node _dev/gen-header.mjs --check && node _dev/gen-relo-data.mjs --check && node _dev/gen-medicare-data.mjs --check && node _dev/verify-all.mjs && node _dev/check-states-json.mjs && node _dev/test-roth-rix.mjs && node _dev/test-relo-exclusions.mjs && node _dev/test-roth-retded.mjs && node _dev/test-roth-multiyear.mjs",
+    "verify": "node _dev/gen-st-table.mjs --check && node _dev/gen-header.mjs --check && node _dev/gen-relo-data.mjs --check && node _dev/gen-medicare-data.mjs --check && node _dev/verify-all.mjs && node _dev/check-states-json.mjs && node _dev/test-roth-rix.mjs && node _dev/test-relo-exclusions.mjs && node _dev/test-roth-retded.mjs && node _dev/test-roth-multiyear.mjs && node _dev/test-roth-nyc-yonkers.mjs",
     "serve": "/usr/bin/python3 -m http.server 8000"
   },
   "devDependencies": {

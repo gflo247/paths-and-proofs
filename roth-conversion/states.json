@@ -12,7 +12,8 @@
    "facts.incomeTax": "Boolean; false for the nine no-income-tax states.",
    "facts.source": "Primary-source URL (state Department of Revenue preferred).",
    "roth.retDeduction": "OPTIONAL. Present only for states with a large, flat, non-phased-out retirement-income deduction that a Roth conversion competes for (verified against a primary source). {single, mfj, mfs, hoh} — dollar cap per filing status. The engine computes state tax before/with the conversion (mirroring the federal calc) and subtracts min(cap, pension-income + taxable-conversion) from each side before applying roth.cr, so the deduction correctly shelters conversion income only once the user's other retirement income has not already exhausted the cap. Most states have a SMALLER or more complex cap (age-tiered, phased out by AGI, or a whole-income exemption band) that this simple field does NOT model — those states deliberately still use the flat taxableCvt*cr approximation and disclose it in roth.note. Do not add retDeduction to a state without verifying it fits this exact shape (single flat cap, no age gate, no phase-out) against a primary source.",
-   "roth.exMinAge": "OPTIONAL, only meaningful when roth.ex=true. Minimum qualifying age below which the exemption does NOT apply and the conversion is taxed at the real roth.cr instead (an early-distribution rule). Absent means the ex:true exemption is unconditional (e.g. Illinois). For a joint return the engine requires BOTH spouses to meet the age before treating the whole conversion as exempt — a conservative simplification since the tool does not model per-spouse IRA ownership."
+   "roth.exMinAge": "OPTIONAL, only meaningful when roth.ex=true. Minimum qualifying age below which the exemption does NOT apply and the conversion is taxed at the real roth.cr instead (an early-distribution rule). Absent means the ex:true exemption is unconditional (e.g. Illinois). For a joint return the engine requires BOTH spouses to meet the age before treating the whole conversion as exempt — a conservative simplification since the tool does not model per-spouse IRA ownership.",
+   "roth.localTax": "OPTIONAL, NY-only as of 2026-08-25 (New York City and Yonkers are the largest verified US local income taxes that reach retirement/IRA income, not just wages -- most other states' local taxes are wage-only and irrelevant to a Roth conversion, or don't reach retirement income at all; see the 2026-08-25 audit notes for the states checked). Unlike Maryland/Indiana's mandatory, unconditional county tax (a flat rate literal inside computeConversionCost's stateCode branch, since EVERY resident of those states pays it), NY's local taxes only apply to residents of two SPECIFIC jurisdictions -- most NY residents pay $0 -- so this is opt-in via a wizard selector, not baked into roth.cr. Two mechanically different sub-shapes: localTax.nyc.bracketsByStatus is a genuinely graduated 4-tier {rate,upTo} ladder per filing status (NYC taxable income is defined relative to NY taxable income, so it inherits NY's own $20k/59.5+ per-person retirement exclusion -- applied to the SAME already-excluded delta the state tax itself uses, never to the raw unsheltered conversion). localTax.yonkers.rate is a flat surcharge PERCENTAGE OF THE FILER'S NY STATE TAX LIABILITY ITSELF, not a separate income-based tax -- applying it to the conversion's own already-computed marginal NY state tax is mathematically exact, not an approximation."
   }
  },
  "AL": {
@@ -4103,7 +4104,42 @@
   "roth": {
    "cr": 0.06,
    "ex": false,
-   "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse's age, which could silently zero out the shelter or wrongly double it depending on which spouse's age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don't use up the cap. NYC residents also pay city tax up to ~3.876%."
+   "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse's age, which could silently zero out the shelter or wrongly double it depending on which spouse's age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don't use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax.",
+   "localTax": {
+    "nyc": {
+     "bracketsByStatus": {
+      "single": [
+       { "rate": 0.03078, "upTo": 12000 },
+       { "rate": 0.03762, "upTo": 25000 },
+       { "rate": 0.03819, "upTo": 50000 },
+       { "rate": 0.03876, "upTo": null }
+      ],
+      "mfj": [
+       { "rate": 0.03078, "upTo": 21600 },
+       { "rate": 0.03762, "upTo": 45000 },
+       { "rate": 0.03819, "upTo": 90000 },
+       { "rate": 0.03876, "upTo": null }
+      ],
+      "mfs": [
+       { "rate": 0.03078, "upTo": 12000 },
+       { "rate": 0.03762, "upTo": 25000 },
+       { "rate": 0.03819, "upTo": 50000 },
+       { "rate": 0.03876, "upTo": null }
+      ],
+      "hoh": [
+       { "rate": 0.03078, "upTo": 14400 },
+       { "rate": 0.03762, "upTo": 30000 },
+       { "rate": 0.03819, "upTo": 60000 },
+       { "rate": 0.03876, "upTo": null }
+      ]
+     },
+     "source": "NY Form IT-201-I (2025 instructions, the latest published year), p.40, \"New York City tax rate schedule\""
+    },
+    "yonkers": {
+     "rate": 0.1675,
+     "source": "NY Form IT-201-I (2025 instructions), Yonkers resident income tax surcharge worksheet -- 16.75% of net NY State tax liability, not a separate income-based tax"
+    }
+   }
   },
   "taxRules": {
    "bracketsByStatus": {

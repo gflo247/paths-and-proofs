@@ -165,5 +165,56 @@ function check(label, cond) {
   setRet(0, 0, 0, 0, 0);
 }
 
+// --- 7. NYC/Yonkers wiring: computeMultiYear() has its own SEPARATE positional-
+// parameter path into computeConversionCost (via the internal convTax() adapter),
+// fully independent of the single-point calculator's ccCtx -- added 2026-08-25
+// alongside the NYC/Yonkers feature itself, following the exact failure class this
+// file's own header comment already warns about (convTax() drifting out of sync
+// with computeConversionCost, the original Michigan-deduction bug). Confirms
+// localTax reaches every row, not just row 0, and that NYC's tax correctly tracks
+// NY's own age-gated $20k/59.5+ exclusion as it changes row to row (curAge=55,
+// retAge=65 crosses 59.5 at row age 60, same shape as the MI RETDED test above). ---
+{
+  const planNyc = computeMultiYear(30000, 0, 0, 0, 'single', 500000, 0, 0, 0.05, 0, ST.NY, 'NY', 0, 55, 65, 1, 20000, undefined, false, 0, 'nyc');
+  const preGate = planNyc.preRows.filter(r => r.age < 59.5);
+  const postGate = planNyc.preRows.filter(r => r.age >= 59.5);
+  check('NYC multi-year: rows before 59.5 all match each other', preGate.length === 5 && preGate.every(r => r.tax === preGate[0].tax));
+  check('NYC multi-year: rows at/after 59.5 all match each other', postGate.length === 5 && postGate.every(r => r.tax === postGate[0].tax));
+  // Post-gate tax should be LOWER: NY's own $20k exclusion (feeding the NYC base
+  // too) kicks in, same age-staleness shape as MI/EXAGE/RIX above -- if localTax
+  // only reached row 0 (a wiring bug), every row's tax would look identical
+  // instead of dropping at the gate.
+  check('NYC multi-year: post-gate tax is lower (NY exclusion + NYC tax both shrink)', postGate[0].tax < preGate[0].tax);
+  // Direct cross-check: row 0's OWN tax must match a standalone computeConversionCost
+  // call with the same inputs -- proves localTax genuinely reached this row's ctx,
+  // not just that the plan ran without crashing.
+  const directRow0 = computeConversionCost(20000, {
+    income: 30000, pensionIncome: 0, nii: 0, ltcg: 0, ss: 0, status: 'single', nSr: 0,
+    stD: ST.NY, stateCode: 'NY', curAge: 55, spouseAge: undefined, isCouple: false, taxableFrac: 1, localTax: 'nyc',
+  }).cvtTxTot;
+  check('NYC multi-year: row 0 matches a direct computeConversionCost call with the same inputs', Math.round(directRow0) === planNyc.preRows[0].tax);
+}
+{
+  const planYonkers = computeMultiYear(30000, 0, 0, 0, 'single', 500000, 0, 0, 0.05, 0, ST.NY, 'NY', 0, 55, 65, 1, 20000, undefined, false, 0, 'yonkers');
+  const planNeither = computeMultiYear(30000, 0, 0, 0, 'single', 500000, 0, 0, 0.05, 0, ST.NY, 'NY', 0, 55, 65, 1, 20000, undefined, false, 0, '');
+  // .tax is cvtTxTot (federal+state+NIIT combined), not state alone. At $20k
+  // income and a $20k conversion, NY's own $20k single exclusion fully shelters
+  // the conversion once 59.5+ is reached (same gate as the NYC test above) --
+  // NY state tax, and therefore the Yonkers surcharge on it, both correctly go
+  // to exactly $0 for those rows, so Yonkers and "neither" converge post-gate;
+  // only the pre-gate (unsheltered) rows should show a real Yonkers premium.
+  const preGateY = planYonkers.preRows.filter(r => r.age < 59.5);
+  const preGateN = planNeither.preRows.filter(r => r.age < 59.5);
+  const postGateY = planYonkers.preRows.filter(r => r.age >= 59.5);
+  const postGateN = planNeither.preRows.filter(r => r.age >= 59.5);
+  check('Yonkers multi-year: pre-gate (unsheltered) rows are taxed higher than "neither"', preGateY.every((r, i) => r.tax > preGateN[i].tax));
+  check('Yonkers multi-year: post-gate rows (NY state tax = $0) correctly converge with "neither" (surcharge on $0 is $0)', postGateY.every((r, i) => r.tax === postGateN[i].tax));
+  const directRow0 = computeConversionCost(20000, {
+    income: 30000, pensionIncome: 0, nii: 0, ltcg: 0, ss: 0, status: 'single', nSr: 0,
+    stD: ST.NY, stateCode: 'NY', curAge: 55, spouseAge: undefined, isCouple: false, taxableFrac: 1, localTax: 'yonkers',
+  }).cvtTxTot;
+  check('Yonkers multi-year: row 0 matches a direct computeConversionCost call with the same inputs', Math.round(directRow0) === planYonkers.preRows[0].tax);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

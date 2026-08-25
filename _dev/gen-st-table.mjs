@@ -202,6 +202,33 @@ function buildRixBlock(json) {
   return lines.join('\n');
 }
 
+// NYCTAX: a fourth sparse table — New York City's and Yonkers' local income tax
+// (see states.json _schema.fields["roth.localTax"]). Different in KIND from
+// RETDED/EXAGE/RIX (a city tax layered ON TOP of state tax, not a deduction/
+// exemption/exclusion) and different from Maryland/Indiana's flat, unconditional
+// county tax (inline literal constants inside computeConversionCost's
+// stateCode==='MD'/'IN' branches, since every resident of those states pays it):
+// NYC's schedule is a genuinely graduated 4-tier ladder per filing status (too much
+// to inline as a literal), and — critically — NYC/Yonkers only apply to residents of
+// those two SPECIFIC jurisdictions, not every NY resident, so this is opt-in via a
+// wizard selector rather than baked unconditionally into roth.cr the way MD/IN are.
+// NY-only as of 2026-08-25 (the largest verified US local tax reaching retirement
+// income; most other states' local taxes are wage-only or don't reach retirement
+// income at all — see the 2026-08-25 audit notes).
+const NYC_OPEN = 'const NYCTAX={';
+const NYC_CLOSE = '};';
+
+function buildNycTaxBlock(json) {
+  const lt = json.NY?.roth?.localTax;
+  if (!lt?.nyc || !lt?.yonkers) throw new Error('states.json: NY has no roth.localTax.{nyc,yonkers} for NYCTAX');
+  const lines = [];
+  lines.push(NYC_OPEN);
+  lines.push(`  nyc: ${JSON.stringify(lt.nyc.bracketsByStatus)},`);
+  lines.push(`  yonkersRate: ${num(lt.yonkers.rate)},`);
+  lines.push(NYC_CLOSE);
+  return lines.join('\n');
+}
+
 function splice(html, block, open, close) {
   const start = html.indexOf(open);
   if (start === -1) throw new Error(`Could not find "${open}" in ${HTML}`);
@@ -223,10 +250,12 @@ const block = buildBlock(json);
 const rdBlock = buildRetDedBlock(json);
 const eaBlock = buildExAgeBlock(json);
 const rixBlock = buildRixBlock(json);
+const nycBlock = buildNycTaxBlock(json);
 const withSt = splice(html, block, OPEN, CLOSE);
 const withRd = splice(withSt, rdBlock, RD_OPEN, RD_CLOSE);
 const withEa = splice(withRd, eaBlock, EA_OPEN, EA_CLOSE);
-const next = splice(withEa, rixBlock, RIX_OPEN, RIX_CLOSE);
+const withRix = splice(withEa, rixBlock, RIX_OPEN, RIX_CLOSE);
+const next = splice(withRix, nycBlock, NYC_OPEN, NYC_CLOSE);
 
 const isCheck = process.argv.includes('--check');
 if (isCheck) {
