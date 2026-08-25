@@ -119,12 +119,18 @@ const baseCtx = { pensionIncome: 0, nii: 0, ltcg: 0, ss: 0, nSr: 0, stD: { cr: 0
   check('Yonkers MFJ (partial NY shelter): surcharge still exact', rYonkers.cvtTxSt, rNeither.cvtTxSt * 1.1675, 0.001);
 }
 
-// --- 5. Non-NY state with a stray localTax value must be silently ignored. ---
+// --- 5. Non-NY state with a stray localTax value must be silently ignored. Uses GA
+// (a RIX state, like NY) rather than MD (a dedicated stateCode==='MD' branch that
+// never reaches the shared `rix` branch at all) -- an adversarial review flagged
+// that the original version of this check used MD and so never actually exercised
+// the stateCode==='NY' guard inside the rix branch it claimed to test. curAge=45 is
+// under GA's own ageGate:62, so the conversion is fully taxable regardless -- the
+// point of this check is purely that a stray 'nyc' value changes nothing for GA. ---
 {
-  const ctx = { ...baseCtx, income: 40000, status: 'single', curAge: 45, stateCode: 'MD', localTax: 'nyc' };
+  const ctx = { ...baseCtx, income: 40000, status: 'single', curAge: 45, stateCode: 'GA', localTax: 'nyc' };
   const rStray = computeConversionCost(20000, ctx);
   const rClean = computeConversionCost(20000, { ...ctx, localTax: '' });
-  check('Non-NY state ignores a stray localTax value', rStray.cvtTxSt, rClean.cvtTxSt, 0.01);
+  check('Non-NY RIX state (GA) ignores a stray localTax value', rStray.cvtTxSt, rClean.cvtTxSt, 0.01);
 }
 
 // --- 6. Golden-snapshot regression guard: "neither" (localTax='') must produce
