@@ -216,5 +216,41 @@ function check(label, cond) {
   check('Yonkers multi-year: row 0 matches a direct computeConversionCost call with the same inputs', Math.round(directRow0) === planYonkers.preRows[0].tax);
 }
 
+// --- 9. Metro/Multnomah wiring: same rationale as the NYC/Yonkers checks above --
+// computeMultiYear() has its own separate positional-parameter path into
+// computeConversionCost, fully independent of the single-point calculator's ccCtx.
+// Unlike NY's mechanisms, OR's local taxes have NO age dependence (purely
+// income-based) and income is assumed flat within a phase, so EVERY row should
+// show the identical local-tax delta -- but that alone wouldn't distinguish "wiring
+// reaches every row" from "wiring only reached row 0, and every row happens to
+// look the same because nothing else varies." Cross-checking row 0 AND a later row
+// (index 3) against independent direct computeConversionCost calls closes that gap
+// -- this is exactly the failure class the file's own header comment warns about
+// (a value reaching row 0 but not later rows). ---
+{
+  const planMetro = computeMultiYear(100000, 0, 0, 0, 'single', 5000000, 0, 0, 0.05, 0, ST.OR, 'OR', 0, 55, 65, 1, 50000, undefined, false, 0, 'metro');
+  const planNeither = computeMultiYear(100000, 0, 0, 0, 'single', 5000000, 0, 0, 0.05, 0, ST.OR, 'OR', 0, 55, 65, 1, 50000, undefined, false, 0, '');
+  check('Metro multi-year: every row taxed higher than the matching "neither" row', planMetro.preRows.every((r, i) => r.tax > planNeither.preRows[i].tax));
+  for (const rowIdx of [0, 3]) {
+    const directTax = computeConversionCost(50000, {
+      income: 100000, pensionIncome: 0, nii: 0, ltcg: 0, ss: 0, status: 'single', nSr: 0,
+      stD: ST.OR, stateCode: 'OR', curAge: 55 + rowIdx, spouseAge: undefined, isCouple: false, taxableFrac: 1, localTax: 'metro',
+    }).cvtTxTot;
+    check(`Metro multi-year: row ${rowIdx} matches a direct computeConversionCost call with the same inputs`, Math.round(directTax) === planMetro.preRows[rowIdx].tax);
+  }
+}
+{
+  const planMulti = computeMultiYear(100000, 0, 0, 0, 'single', 5000000, 0, 0, 0.05, 0, ST.OR, 'OR', 0, 55, 65, 1, 50000, undefined, false, 0, 'multnomah');
+  const planMetro = computeMultiYear(100000, 0, 0, 0, 'single', 5000000, 0, 0, 0.05, 0, ST.OR, 'OR', 0, 55, 65, 1, 50000, undefined, false, 0, 'metro');
+  // Multnomah stacks PFA on top of Metro -- every row should be strictly higher
+  // than the matching Metro-only row, not just higher than "neither".
+  check('Multnomah multi-year: every row taxed higher than the matching Metro-only row (PFA stacks)', planMulti.preRows.every((r, i) => r.tax > planMetro.preRows[i].tax));
+  const directTax = computeConversionCost(50000, {
+    income: 100000, pensionIncome: 0, nii: 0, ltcg: 0, ss: 0, status: 'single', nSr: 0,
+    stD: ST.OR, stateCode: 'OR', curAge: 58, spouseAge: undefined, isCouple: false, taxableFrac: 1, localTax: 'multnomah',
+  }).cvtTxTot;
+  check('Multnomah multi-year: row 3 matches a direct computeConversionCost call with the same inputs', Math.round(directTax) === planMulti.preRows[3].tax);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

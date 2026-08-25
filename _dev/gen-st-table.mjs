@@ -229,6 +229,34 @@ function buildNycTaxBlock(json) {
   return lines.join('\n');
 }
 
+// ORTAX: a fifth sparse table — Portland Metro's Supportive Housing Services tax and
+// Multnomah County's Preschool For All tax (see states.json _schema.fields
+// ["roth.localTax"]). A separate table from NYCTAX rather than a rename/merge into
+// a state-neutral shape — pure addition, zero risk to the already-shipped and
+// twice-adversarially-reviewed NYC/Yonkers code, and matches this file's own
+// precedent of one sparse table per genuinely different shape (RETDED/EXAGE/RIX are
+// already 3 separate tables, not one unified one). Genuinely different from NY's
+// shape in one important way: Metro and Multnomah are NOT mutually exclusive (NYC
+// vs Yonkers are) — Multnomah County is a SUBSET of Metro's 3-county district, so a
+// Multnomah resident owes BOTH taxes stacked, while a Washington/Clackamas County
+// resident inside Metro owes only Metro's. Both tables are ordinary {rate,upTo}
+// ladders with a deliberate rate:0 leading tier below their threshold — the
+// mechanism that lets a flat-above-a-threshold tax reuse the same generic
+// bracketTax() walker NYC uses, rather than needing new bracket-walking logic.
+const OR_OPEN = 'const ORTAX={';
+const OR_CLOSE = '};';
+
+function buildOrTaxBlock(json) {
+  const lt = json.OR?.roth?.localTax;
+  if (!lt?.metro || !lt?.multnomah) throw new Error('states.json: OR has no roth.localTax.{metro,multnomah} for ORTAX');
+  const lines = [];
+  lines.push(OR_OPEN);
+  lines.push(`  metro: ${JSON.stringify(lt.metro.bracketsByStatus)},`);
+  lines.push(`  multnomah: ${JSON.stringify(lt.multnomah.bracketsByStatus)},`);
+  lines.push(OR_CLOSE);
+  return lines.join('\n');
+}
+
 function splice(html, block, open, close) {
   const start = html.indexOf(open);
   if (start === -1) throw new Error(`Could not find "${open}" in ${HTML}`);
@@ -251,11 +279,13 @@ const rdBlock = buildRetDedBlock(json);
 const eaBlock = buildExAgeBlock(json);
 const rixBlock = buildRixBlock(json);
 const nycBlock = buildNycTaxBlock(json);
+const orBlock = buildOrTaxBlock(json);
 const withSt = splice(html, block, OPEN, CLOSE);
 const withRd = splice(withSt, rdBlock, RD_OPEN, RD_CLOSE);
 const withEa = splice(withRd, eaBlock, EA_OPEN, EA_CLOSE);
 const withRix = splice(withEa, rixBlock, RIX_OPEN, RIX_CLOSE);
-const next = splice(withRix, nycBlock, NYC_OPEN, NYC_CLOSE);
+const withNyc = splice(withRix, nycBlock, NYC_OPEN, NYC_CLOSE);
+const next = splice(withNyc, orBlock, OR_OPEN, OR_CLOSE);
 
 const isCheck = process.argv.includes('--check');
 if (isCheck) {

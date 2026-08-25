@@ -805,6 +805,18 @@
           </div>
         </div>
 
+        <div id="orLocalTaxField" style="display:none">
+          <div class="field">
+            <div class="flr"><label>Portland-Area Locality?</label><button class="tb" onclick="toggleTip('orLocal')">ⓘ</button></div>
+            <select id="orLocalTax" onchange="calc()">
+              <option value="">Neither — rest of Oregon</option>
+              <option value="metro">Metro area (Washington or Clackamas County)</option>
+              <option value="multnomah">Multnomah County (Portland)</option>
+            </select>
+            <div class="ttip" id="tip-orLocal">Metro's Supportive Housing Services tax (1% above $125,000 single / $200,000 joint) covers the whole 3-county Metro district — Multnomah, Washington, and Clackamas. Multnomah County residents ALSO owe the county's own Preschool For All tax on top (1.5% above the same thresholds, an additional 1.5% — 3% total — above $250,000 single / $400,000 joint), so a Multnomah filer can owe up to 4% combined. Washington/Clackamas County residents inside Metro owe only the 1% Metro tax, not Preschool For All. Every other Oregon resident pays $0 local income tax.</div>
+          </div>
+        </div>
+
         <details class="rest">
           <summary>Planning to move before you convert?</summary>
           <div class="restb">
@@ -1179,7 +1191,7 @@ const ST={
   ND: {n:'North Dakota',cr:.0195,ex:false,note:'Very low rates topping out at 2.5%, applied to IRA and conversion income — among the lowest state taxes on a conversion anywhere. The 2.5% top starts near $245k, so a conversion that brings total income near $100k lands at the 1.95% used here. Social Security is exempt. North Dakota has a 0% bottom bracket, so part of a small conversion may not be taxed at all.'},
   OH: {n:'Ohio',cr:.0275,ex:false,note:'For 2026 Ohio uses a flat 2.75% on income above $26,050 (0% below). IRA and Roth-conversion income is taxable at that rate; a small retirement-income credit (up to $200 total) barely offsets a conversion. Social Security is fully exempt from Ohio tax.'},
   OK: {n:'Oklahoma',cr:.0475,ex:false,note:'Oklahoma taxes traditional IRA and 401(k) conversion income; the top rate for tax year 2025 (the latest year with a complete published bracket table) is 4.75%, reached at low income, so a conversion is effectively taxed at 4.75%. A 2025 law, House Bill 2764, cuts the top rate to 4.5% and moves to three brackets beginning tax year 2026, but the full 2026 bracket amounts are not yet published, so this tool uses the confirmed 2025 schedule. The $10,000-per-person retirement-income exclusion (age 65+) does include IRA income -- genuinely per-spouse, so a joint return with both spouses 65+ shelters $20,000, not a flat $10,000 (this calculator previously applied none of this exclusion at all) -- leaving the rest taxable. Social Security is fully exempt.'},
-  OR: {n:'Oregon',cr:.0875,ex:false,note:'Graduated 4.75% to 9.9%; the 8.75% bracket runs up to $125,000, so most conversion income lands there (9.9% applies above that). IRA and Roth-conversion income is fully taxable, and the retirement-income credit is limited to low household income, so it rarely helps with a conversion. Social Security is fully exempt; Oregon has no sales tax. Portland-area residents may owe extra county/metro income tax.'},
+  OR: {n:'Oregon',cr:.0875,ex:false,note:'Graduated 4.75% to 9.9%; the 8.75% bracket runs up to $125,000, so most conversion income lands there (9.9% applies above that). IRA and Roth-conversion income is fully taxable, and the retirement-income credit is limited to low household income, so it rarely helps with a conversion. Social Security is fully exempt; Oregon has no sales tax. Portland-area residents owe real, material local income taxes on top of this -- this calculator now models both explicitly if you select your locality below: Metro\'s Supportive Housing Services tax (a flat 1% above $125,000 single / $200,000 joint Oregon taxable income, covering Multnomah, Washington, and Clackamas counties), and Multnomah County\'s Preschool For All tax on top of that for Multnomah residents specifically (1.5% above the same thresholds, an additional 1.5% -- 3% total -- above $250,000 single / $400,000 joint) -- together up to 4% for a Multnomah County filer, larger than New York City\'s rate.'},
   PA: {n:'Pennsylvania',cr:.0307,ex:true,note:'Pennsylvania does not tax a Roth conversion at ANY age. A full trustee-to-trustee (or timely 60-day) conversion is a transfer into another \'eligible Pennsylvania retirement plan\' — Roth IRAs qualify — not a taxable distribution, per the PA DOR\'s own Personal Income Tax Guide. This is different from an ORDINARY IRA withdrawal you spend, which PA taxes before age 59.5 under its cost-recovery method — the age-59.5 rule commonly associated with PA retirement income applies to that case, not to a conversion. Caveat: if part of the distribution is withheld (e.g. for federal taxes) rather than fully converted, that withheld portion IS taxable — this calculator assumes a full conversion with no withholding leakage, which is the standard case. Social Security is fully exempt.'},
   RI: {n:'Rhode Island',cr:.0475,ex:false,note:'Three brackets (3.75% / 4.75% / 5.99%); 5.99% only starts near $176k, so a typical conversion lands in the 4.75% band used here. Important: Rhode Island\'s up-to-$50,000 retirement-income modification covers 401(k)/403(b)/pension/annuity income but specifically EXCLUDES all IRAs — so a Roth conversion gets no shelter and is fully taxable. Rhode Island also taxes Social Security above $107,000 single / $133,500 joint federal AGI, a threshold a conversion can cross (both this and the pension modification above also require reaching Social Security full retirement age, not just staying under the AGI limit).'},
   SC: {n:'South Carolina',cr:.0521,ex:false,note:'Two-bracket system for 2026 under H.4216 (signed March 2026): 1.99% on the first $30,000, then 5.21% above. The retirement deduction covers traditional IRA and conversion income, but it\'s really two deductions sharing one $15,000-per-person ceiling: under 65 you get up to $3,000, rising to the full $15,000 at 65+. This calculator applies the age-appropriate ceiling, so post-65 is a meaningfully more favorable conversion window here. Social Security is fully exempt. (Note: qualified Roth distributions are already federally excluded and carry over, but a Roth conversion is taxable income.)'},
@@ -1244,6 +1256,15 @@ const RIX={
 const NYCTAX={
   nyc: {"single":[{"rate":0.03078,"upTo":12000},{"rate":0.03762,"upTo":25000},{"rate":0.03819,"upTo":50000},{"rate":0.03876,"upTo":null}],"mfj":[{"rate":0.03078,"upTo":21600},{"rate":0.03762,"upTo":45000},{"rate":0.03819,"upTo":90000},{"rate":0.03876,"upTo":null}],"mfs":[{"rate":0.03078,"upTo":12000},{"rate":0.03762,"upTo":25000},{"rate":0.03819,"upTo":50000},{"rate":0.03876,"upTo":null}],"hoh":[{"rate":0.03078,"upTo":14400},{"rate":0.03762,"upTo":30000},{"rate":0.03819,"upTo":60000},{"rate":0.03876,"upTo":null}]},
   yonkersRate: .1675,
+};
+
+// ORTAX: Portland Metro's Supportive Housing Services tax and Multnomah County's
+// Preschool For All tax (see states.json _schema.fields["roth.localTax"]).
+// OR-only, generated from states.json's roth.localTax by _dev/gen-st-table.mjs --
+// do not hand-edit.
+const ORTAX={
+  metro: {"single":[{"rate":0,"upTo":125000},{"rate":0.01,"upTo":null}],"mfj":[{"rate":0,"upTo":200000},{"rate":0.01,"upTo":null}],"mfs":[{"rate":0,"upTo":125000},{"rate":0.01,"upTo":null}],"hoh":[{"rate":0,"upTo":200000},{"rate":0.01,"upTo":null}]},
+  multnomah: {"single":[{"rate":0,"upTo":125000},{"rate":0.015,"upTo":250000},{"rate":0.03,"upTo":null}],"mfj":[{"rate":0,"upTo":200000},{"rate":0.015,"upTo":400000},{"rate":0.03,"upTo":null}],"mfs":[{"rate":0,"upTo":125000},{"rate":0.015,"upTo":250000},{"rate":0.03,"upTo":null}],"hoh":[{"rate":0,"upTo":200000},{"rate":0.015,"upTo":400000},{"rate":0.03,"upTo":null}]},
 };
 
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
@@ -3574,6 +3595,41 @@ function computeConversionCost(cvtAmt, ctx){
     const IN_COUNTY_RATE = 0.0197;
     cvtTxSt = taxableCvt * (stD.cr + IN_COUNTY_RATE);
     stMarginalDisp = stD.cr + IN_COUNTY_RATE;
+  } else if(stateCode==='OR'){
+    // Portland-area local taxes — unlike MD/IN's mandatory county tax, and like
+    // NY's NYC/Yonkers above, these only apply to residents of specific
+    // jurisdictions (most OR residents pay $0), so they're opt-in via the
+    // wizard's orLocalTax selector. Genuinely different from NY's shape though:
+    // Metro's Supportive Housing Services tax and Multnomah County's Preschool
+    // For All tax are NOT mutually exclusive — Multnomah County is a SUBSET of
+    // Metro's 3-county district (Multnomah/Washington/Clackamas), so a Multnomah
+    // filer owes BOTH, stacked, while a Washington/Clackamas filer inside Metro
+    // owes only Metro's. Both taxes apply to "Oregon taxable income" (OR-40 line
+    // 19, confirmed via the official Form MET-40) — the same ordinary-income
+    // proxy OH's and MA's branches above already use (income is already
+    // wagesInc+pensionIncome, reassigned near the top of this function).
+    const orBase = income + nii + ltcg;
+    const orWith = orBase + taxableCvt;
+    cvtTxSt = taxableCvt * stD.cr;
+    if(localTax==='metro' || localTax==='multnomah'){
+      const metroBrax = ORTAX.metro[status] || ORTAX.metro.single;
+      const metroTax  = bracketTax(orWith, metroBrax) - bracketTax(orBase, metroBrax);
+      cvtTxSt += metroTax;
+      if(metroTax>0) stMarginalDisp = stD.cr + 0.01;
+    }
+    if(localTax==='multnomah'){
+      // Preschool For All is a SEPARATE tax computed on the SAME base and
+      // SUMMED with Metro's above — two distinct taxing authorities, not one
+      // combined bracket ladder (their thresholds don't share a single scale:
+      // Metro is flat 1% above $125k/$200k; PFA is its own 1.5%/3% ladder).
+      const pfaBrax = ORTAX.multnomah[status] || ORTAX.multnomah.single;
+      const pfaTax  = bracketTax(orWith, pfaBrax) - bracketTax(orBase, pfaBrax);
+      cvtTxSt += pfaTax;
+      if(pfaTax>0){
+        const pfaTopBracket = pfaBrax.find(b=>orWith<=(b.upTo??Infinity)) || pfaBrax[pfaBrax.length-1];
+        stMarginalDisp = stD.cr + 0.01 + pfaTopBracket.rate; // Metro's 1% + PFA's own marginal rate, stacked
+      }
+    }
   } else {
     cvtTxSt = taxableCvt * stD.cr;
   }
@@ -3692,10 +3748,18 @@ function calc(){
   const stD      = ST[stateCode]||{n:'',cr:0,ex:false,note:''};
   const nyLocalField = document.getElementById('nyLocalTaxField');
   if(nyLocalField) nyLocalField.style.display = (stateCode==='NY') ? 'block' : 'none';
-  // Force-reset to '' whenever state != NY, so a stale selection left over from an
-  // earlier NY selection (the <select> itself is just hidden, not cleared) can't
-  // silently leak a NYC/Yonkers tax into a different state's calculation.
-  const localTax = (stateCode==='NY') ? (_ae ? (_ae.nyLocalTax||'') : _rv('nyLocalTax')) : '';
+  const orLocalField = document.getElementById('orLocalTaxField');
+  if(orLocalField) orLocalField.style.display = (stateCode==='OR') ? 'block' : 'none';
+  // Force-reset to '' whenever state doesn't match, so a stale selection left over
+  // from an earlier NY/OR selection (the <select> itself is just hidden, not
+  // cleared) can't silently leak a local tax into a different state's calculation.
+  // Values don't collide between states ('nyc'/'yonkers' vs 'metro'/'multnomah'),
+  // and every consumer of `localTax` already gates on stateCode first, so reusing
+  // one generic ctx field for both states (rather than two separately-named ones)
+  // is safe.
+  const localTax = (stateCode==='NY') ? (_ae ? (_ae.nyLocalTax||'') : _rv('nyLocalTax'))
+                  : (stateCode==='OR') ? (_ae ? (_ae.orLocalTax||'') : _rv('orLocalTax'))
+                  : '';
   const isCouple = (status==='mfj'||status==='mfs');
   const spFields = document.getElementById('spouseFields');
   if(spFields) spFields.style.display = isCouple ? 'block' : 'none';

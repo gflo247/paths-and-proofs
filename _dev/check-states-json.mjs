@@ -206,46 +206,82 @@ for (const code of htmlCodes) {
   }
 }
 
-// --- 7. NYC/Yonkers local-tax shape guard (G6) ---
-// Added 2026-08-25 alongside the feature itself. NY's roth.localTax is hand-authored
-// JSON (unlike the RIX/RETDED tables above, which are derived from taxRules), so a
-// typo here (a gap in the bracket ladder, a missing filing status, an implausible
-// Yonkers rate) would silently corrupt every NYC/Yonkers conversion's tax — catch it
-// at build time instead of live.
+// --- 7. Local-tax shape guard (G6) ---
+// Added 2026-08-25 for NY (NYC/Yonkers), extended 2026-08-25 for OR (Metro/
+// Multnomah). Every state's roth.localTax is hand-authored JSON (unlike the RIX/
+// RETDED tables above, which are derived from taxRules), so a typo here (a gap in
+// the bracket ladder, a missing filing status, an implausible rate) would silently
+// corrupt every affected conversion's tax — catch it at build time instead of live.
+//
+// checkBracketLadder validates ONE {rate,upTo}[] tier list: strictly ascending,
+// gapless, null-terminated, each rate a plausible decimal. The leading tier of a
+// threshold-gated tax (Metro SHS, Multnomah PFA — flat-above-a-threshold, modeled
+// as an ordinary bracket ladder with a deliberate rate:0 first tier so it can reuse
+// the same generic bracketTax() walker NYC uses) is the ONE place rate:0 is valid
+// and expected — allowLeadingZero exists specifically for that shape. NYC's own
+// ladder has no zero-rate tier (it taxes from dollar one), so callers for NY pass
+// allowLeadingZero:false and get the original, stricter check unchanged.
+function checkBracketLadder(label, tiers, { allowLeadingZero = false } = {}) {
+  if (!Array.isArray(tiers) || tiers.length === 0) {
+    diffs.push(`${label} is missing or empty`);
+    return;
+  }
+  let lo = 0;
+  for (let i = 0; i < tiers.length; i++) {
+    const t = tiers[i];
+    const isLast = i === tiers.length - 1;
+    const rateOk = typeof t.rate === 'number' && t.rate < 1
+      && (allowLeadingZero && i === 0 ? t.rate >= 0 : t.rate > 0);
+    if (!rateOk) {
+      diffs.push(`${label}[${i}].rate is not a plausible decimal rate: ${t.rate}`);
+    }
+    if (isLast) {
+      if (t.upTo !== null) diffs.push(`${label}: final tier must have upTo:null (open-ended)`);
+    } else {
+      if (typeof t.upTo !== 'number' || t.upTo <= lo) {
+        diffs.push(`${label}[${i}].upTo must strictly ascend from the prior tier (gapless, no overlap): got ${t.upTo}, prior floor ${lo}`);
+      }
+      lo = t.upTo;
+    }
+  }
+}
+
+const LOCAL_TAX_STATUSES = ['single', 'mfj', 'mfs', 'hoh'];
+
 {
+  // NY: NYC (graduated from dollar one, no zero-rate tier) + Yonkers (a flat
+  // surcharge on state tax, not a bracket ladder at all).
   const lt = json.NY?.roth?.localTax;
   if (lt) {
-    const statuses = ['single', 'mfj', 'mfs', 'hoh'];
     const brax = lt.nyc?.bracketsByStatus;
     if (!brax) {
       diffs.push('NY.roth.localTax.nyc.bracketsByStatus is missing');
     } else {
-      for (const status of statuses) {
-        const tiers = brax[status];
-        if (!Array.isArray(tiers) || tiers.length === 0) {
-          diffs.push(`NY.roth.localTax.nyc.bracketsByStatus.${status} is missing or empty`);
-          continue;
-        }
-        let lo = 0;
-        for (let i = 0; i < tiers.length; i++) {
-          const t = tiers[i];
-          const isLast = i === tiers.length - 1;
-          if (typeof t.rate !== 'number' || t.rate <= 0 || t.rate >= 1) {
-            diffs.push(`NY.roth.localTax.nyc.bracketsByStatus.${status}[${i}].rate is not a plausible decimal rate (0,1): ${t.rate}`);
-          }
-          if (isLast) {
-            if (t.upTo !== null) diffs.push(`NY.roth.localTax.nyc.bracketsByStatus.${status}: final tier must have upTo:null (open-ended)`);
-          } else {
-            if (typeof t.upTo !== 'number' || t.upTo <= lo) {
-              diffs.push(`NY.roth.localTax.nyc.bracketsByStatus.${status}[${i}].upTo must strictly ascend from the prior tier (gapless, no overlap): got ${t.upTo}, prior floor ${lo}`);
-            }
-            lo = t.upTo;
-          }
-        }
+      for (const status of LOCAL_TAX_STATUSES) {
+        checkBracketLadder(`NY.roth.localTax.nyc.bracketsByStatus.${status}`, brax[status]);
       }
     }
     if (typeof lt.yonkers?.rate !== 'number' || lt.yonkers.rate <= 0 || lt.yonkers.rate >= 1) {
       diffs.push(`NY.roth.localTax.yonkers.rate is not a plausible decimal rate (0,1): ${lt.yonkers?.rate}`);
+    }
+  }
+}
+
+{
+  // OR: Metro SHS + Multnomah PFA, both threshold-gated (flat/stepped above a
+  // dollar threshold), modeled with a deliberate rate:0 leading tier -- see
+  // checkBracketLadder's own comment for why that's valid here specifically.
+  const lt = json.OR?.roth?.localTax;
+  if (lt) {
+    for (const key of ['metro', 'multnomah']) {
+      const brax = lt[key]?.bracketsByStatus;
+      if (!brax) {
+        diffs.push(`OR.roth.localTax.${key}.bracketsByStatus is missing`);
+        continue;
+      }
+      for (const status of LOCAL_TAX_STATUSES) {
+        checkBracketLadder(`OR.roth.localTax.${key}.bracketsByStatus.${status}`, brax[status], { allowLeadingZero: true });
+      }
     }
   }
 }
