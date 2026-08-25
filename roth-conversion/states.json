@@ -3361,37 +3361,37 @@
    "brackets": [
     {
      "rate": 0.0246,
-     "upTo": 3000
+     "upTo": 4130
     },
     {
      "rate": 0.0351,
-     "upTo": 18000
+     "upTo": 24760
     },
     {
      "rate": 0.0455,
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security FULLY exempt (2025+) regardless of income — so unlike some neighbors, a conversion here does not pull more SS into tax. IRA/conversion income fully taxable with no special retirement exclusion.",
-   "bracketsNote": "Single-filer 2026 three-bracket schedule (LB 754 collapsed the prior four brackets — the 2025 5.01% and 5.20% rates BOTH drop to 4.55% for 2026, merging into the top bracket). Top 4.55% starts at $18,000 single. Falls to 3.99% in 2027. Thresholds NOT inflation-indexed. Source: Neb. Rev. Stat. 77-2715.03 / NE DOR.",
+   "ssTreatment": "Social Security FULLY exempt (as of tax year 2024, not 2025 -- LB 754 accelerated full exemption to 2024) regardless of income — so unlike some neighbors, a conversion here does not pull more SS into tax. IRA/conversion income fully taxable with no special retirement exclusion.",
+   "bracketsNote": "Single-filer 2026 three-bracket schedule (LB 754 collapsed the prior four brackets — the 2025 5.01% and 5.20% rates BOTH drop to 4.55% for 2026, merging into the top bracket). Top 4.55% starts at $24,760 single -- fixed 2026-08-25 from a stale $18,000 figure (the pre-2026 threshold); confirmed directly via Nebraska DOR's own official 'Tax Rate Chronologies' document (Rev. 2-2026). Falls to 3.99% in 2027. Thresholds NOT inflation-indexed. Source: Neb. Rev. Stat. 77-2715.03 / NE DOR.",
    "incomeTax": true,
    "source": "https://revenue.nebraska.gov/"
   },
   "roth": {
    "cr": 0.0455,
    "ex": false,
-   "note": "Top rate is 4.55% for 2026 (down from 5.84%; falling to 3.99% in 2027 under LB 754), and a typical conversion lands at or near that top rate. IRA and conversion income is fully taxable with no special exemption. Social Security is now fully exempt (as of 2025) regardless of income — so unlike some neighbors, a conversion here does not pull more SS into tax."
+   "note": "Top rate is 4.55% for 2026 (down from 5.84%; falling to 3.99% in 2027 under LB 754), and a typical conversion lands at or near that top rate ($100k clears the top-bracket threshold for every filing status). IRA and conversion income is fully taxable with no special exemption. Social Security is fully exempt (since tax year 2024) regardless of income — so unlike some neighbors, a conversion here does not pull more SS into tax."
   },
   "taxRules": {
    "bracketsByStatus": {
     "single": [
      {
       "rate": 0.0246,
-      "upTo": 3000
+      "upTo": 4130
      },
      {
       "rate": 0.0351,
-      "upTo": 18000
+      "upTo": 24760
      },
      {
       "rate": 0.0455,
@@ -3401,11 +3401,11 @@
     "mfj": [
      {
       "rate": 0.0246,
-      "upTo": 6000
+      "upTo": 8250
      },
      {
       "rate": 0.0351,
-      "upTo": 36000
+      "upTo": 49530
      },
      {
       "rate": 0.0455,
@@ -3415,11 +3415,11 @@
     "mfs": [
      {
       "rate": 0.0246,
-      "upTo": 3000
+      "upTo": 4130
      },
      {
       "rate": 0.0351,
-      "upTo": 18000
+      "upTo": 24760
      },
      {
       "rate": 0.0455,
@@ -3429,11 +3429,11 @@
     "hoh": [
      {
       "rate": 0.0246,
-      "upTo": 5600
+      "upTo": 7700
      },
      {
       "rate": 0.0351,
-      "upTo": 28800
+      "upTo": 39620
      },
      {
       "rate": 0.0455,
@@ -4426,7 +4426,7 @@
     }
    ],
    "ssTreatment": "Social Security fully exempt. IRA/conversion income taxable but at among the lowest rates in the nation (top 2.5%). The 0% bottom bracket (up to ~$47k single taxable income) means part of a modest conversion may be untaxed entirely.",
-   "bracketsNote": "Single-filer; ND has a 0% bottom bracket then 1.95% and 2.5% (top 2.5% over ~$244,825 single). Two taxable brackets above the zero bracket. Source: ND OST / TurboTax 2026. roth.cr 2.5% is the top (conservative for a sizable conversion).",
+   "bracketsNote": "Single-filer; ND has a 0% bottom bracket then 1.95% and 2.5% (top 2.5% over ~$244,825 single). Two taxable brackets above the zero bracket. Source: ND OST / TurboTax 2026. roth.cr is 1.95% (the $100k, single-filer yardstick lands here, well under the $244,825 top-bracket threshold) -- fixed 2026-08-25, this comment previously said 2.5%, which never matched the actual coded roth.cr and was dev-comment-only drift (roth.note itself was already correct).",
    "incomeTax": true,
    "source": "https://www.tax.nd.gov/"
   },
