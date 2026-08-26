@@ -172,9 +172,13 @@ const AGE_END = 100;    // chart horizon
  * Household monthly income at a given calendar age of each person, for one
  * claiming plan. While both are alive, each person receives the LARGER of their
  * own worker benefit and their spousal benefit (the spousal top-up rule \u2014 you
- * get the bigger of the two, never both). Spousal benefits require the higher
- * earner to have already filed, so the lower earner\u2019s spousal portion does
- * not begin until then.
+ * get the bigger of the two, never both). This is symmetric under CFR
+ * 404.410(b): EITHER spouse can draw a spousal benefit off the OTHER\u2019s
+ * record, not just the lower earner off the higher earner\u2019s. It is usually
+ * the lower earner\u2019s top-up that binds, but not always \u2014 e.g. the higher
+ * earner claiming very early can reduce their own worker benefit below half
+ * of the lower earner\u2019s full-retirement-age amount. Each side\u2019s spousal
+ * benefit requires the OTHER person to have already filed.
  *
  * After the first death, the spousal relationship ends and a survivor
  * relationship replaces it: the survivor keeps the LARGER of their own worker
@@ -187,22 +191,32 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
   const highWorker = highCurrentAge >= values.claimHigh ? workerBenefit(values.piaHigh, values.claimHigh) : 0;
   const lowWorker  = lowCurrentAge  >= values.claimLow  ? workerBenefit(values.piaLow,  values.claimLow)  : 0;
 
-  // Spousal top-up for the lower earner, gated on the higher earner having filed.
   const highHasFiled = highCurrentAge >= values.claimHigh;
+  const lowHasFiled = lowCurrentAge >= values.claimLow;
+
+  // Spousal top-up, gated on the OTHER person having filed. Symmetric: either
+  // spouse can draw off the other's record.
   const lowSpousal = (lowCurrentAge >= values.claimLow && highHasFiled)
     ? spousalBenefit(values.piaHigh, values.claimLow)
     : 0;
-  const lowOwn = Math.max(lowWorker, lowSpousal);   // larger of own vs spousal
+  const highSpousal = (highCurrentAge >= values.claimHigh && lowHasFiled)
+    ? spousalBenefit(values.piaLow, values.claimHigh)
+    : 0;
+  const lowOwn = Math.max(lowWorker, lowSpousal);     // larger of own vs spousal
+  const highOwn = Math.max(highWorker, highSpousal);  // larger of own vs spousal
 
   // The two benefit streams actually being paid right now, while both live.
-  const highBenefit = highWorker;
+  const highBenefit = highOwn;
   const lowBenefit = lowOwn;
 
   if (highAlive && lowAlive) return highBenefit + lowBenefit;
   if (highAlive && !lowAlive) {
-    // Low has died; high survives and may inherit a survivor benefit off low's record.
+    // Low has died; the spousal relationship (and any highSpousal top-up drawn
+    // off low's record) ends with it, replaced by a possible survivor benefit.
+    // Compare high's OWN worker benefit against the inherited amount, not
+    // highBenefit (which could still include a now-defunct spousal top-up).
     const inherited = survivorBenefit(values.piaLow, values.claimLow, highCurrentAge);
-    return Math.max(highBenefit, inherited);
+    return Math.max(highWorker, inherited);
   }
   if (!highAlive && lowAlive) {
     // High has died; low survives and may inherit a survivor benefit off high's record.
@@ -303,21 +317,33 @@ export function compute(values) {
     headlineValue = 'claiming early wins';
   }
 
-  // Monthly figures for the summary cards.
-  const highAt70 = workerBenefit(values.piaHigh, 70);
-  const highAt62 = workerBenefit(values.piaHigh, 62);
+  // Monthly figures for the summary cards. Spousal top-up is symmetric (CFR
+  // 404.410(b)) -- usually the lower earner's top-up binds, but the higher
+  // earner claiming very early can also dip below half the lower earner's
+  // full-retirement-age amount, so both sides check it the same way.
+  const highOwn70 = workerBenefit(values.piaHigh, 70);
+  const highOwn62 = workerBenefit(values.piaHigh, 62);
+  const highSpousal70 = spousalBenefit(values.piaLow, 70);
+  const highSpousal62 = spousalBenefit(values.piaLow, 62);
+  const highGetsSpousal70 = highSpousal70 > highOwn70;
+  const highGetsSpousal62 = highSpousal62 > highOwn62;
+
   const lowOwn = workerBenefit(values.piaLow, values.claimLow);
   const lowSpousalAtClaim = spousalBenefit(values.piaHigh, values.claimLow);
   const lowGetsSpousal = lowSpousalAtClaim > lowOwn;
 
   const summary = [
     {
-      label: 'Higher earner\u2019s monthly check if they wait to 70',
-      value: `$${highAt70.toFixed(0)}`,
+      label: highGetsSpousal70
+        ? 'Higher earner\u2019s monthly check if they wait to 70 (spousal top-up applies)'
+        : 'Higher earner\u2019s monthly check if they wait to 70',
+      value: `$${Math.max(highOwn70, highSpousal70).toFixed(0)}`,
     },
     {
-      label: 'Higher earner\u2019s monthly check if they claim at 62',
-      value: `$${highAt62.toFixed(0)}`,
+      label: highGetsSpousal62
+        ? 'Higher earner\u2019s monthly check if they claim at 62 (spousal top-up applies)'
+        : 'Higher earner\u2019s monthly check if they claim at 62',
+      value: `$${Math.max(highOwn62, highSpousal62).toFixed(0)}`,
     },
     {
       label: lowGetsSpousal

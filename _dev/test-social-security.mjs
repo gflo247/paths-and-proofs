@@ -16,6 +16,7 @@ import {
   spousalBenefit,
   survivorBenefit,
   householdMonthly,
+  compute,
   FULL_RETIREMENT_AGE,
   SURVIVOR_FULL_RETIREMENT_AGE,
 } from '../social-security/social-security.js';
@@ -170,6 +171,58 @@ const values = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62 };
 
 // Both dead: unaffected, still zero.
 check('householdMonthly: both dead is still 0', householdMonthly(values, false, false, 80, 80), 0);
+
+// --- Symmetric spousal top-up fix (2026-08-26) ------------------------------
+// Prior bug: only the "low" earner field ever got a spousal top-up check;
+// the "high" earner field used raw workerBenefit() with no comparison at
+// all. Real SSA rule (CFR 404.410(b)) is symmetric -- either spouse can draw
+// off the other's record. Use piaHigh < piaLow (the high-earner FIELD does
+// not have the higher PIA here) so the high side's top-up actually binds.
+{
+  const values3 = { piaHigh: 800, claimHigh: 62, piaLow: 3000, claimLow: 70 };
+  const highWorker = workerBenefit(800, 62);
+  const highSpousal = spousalBenefit(3000, 62);
+  if (highSpousal <= highWorker) { fail++; console.log('FAIL  test setup: expected highSpousal to be the larger branch'); } else pass++;
+
+  // Both alive, both filed (ages past both claim ages): high side's own
+  // worker benefit must lose to the spousal top-up off low's record.
+  const gotBothFiled = householdMonthly(values3, true, true, 75, 75);
+  const lowWorkerAt70 = workerBenefit(3000, 70);
+  const lowSpousalOff800 = spousalBenefit(800, 70);
+  const expectedBothFiled = Math.max(highWorker, highSpousal) + Math.max(lowWorkerAt70, lowSpousalOff800);
+  check('householdMonthly: high earner field gets the spousal top-up when it is larger', gotBothFiled, expectedBothFiled);
+
+  // Gating: high has filed (75 >= 62) but low has NOT filed yet (65 < 70) --
+  // the high side's spousal top-up requires the OTHER person to have filed,
+  // so it must be withheld even though it would otherwise be larger.
+  const gotLowNotFiled = householdMonthly(values3, true, true, 75, 65);
+  check('householdMonthly: high-side spousal top-up withheld until low has filed', gotLowNotFiled, highWorker + 0);
+}
+
+// After the low earner dies, the high survivor's benefit must revert to
+// their OWN worker benefit (or the inherited survivor benefit) -- NOT keep
+// the spousal top-up off low's record, since that relationship ended at death.
+{
+  const values3 = { piaHigh: 800, claimHigh: 62, piaLow: 3000, claimLow: 70 };
+  const got = householdMonthly(values3, true, false, 75, 75);
+  const highWorker = workerBenefit(800, 62);
+  const inherited = survivorBenefit(3000, 70, 75);
+  check('householdMonthly: low died, high survivor drops the defunct spousal top-up', got, Math.max(highWorker, inherited));
+}
+
+// --- compute() summary cards reflect the same symmetric top-up --------------
+{
+  const values4 = { piaHigh: 800, claimHigh: 62, piaLow: 3000, claimLow: 62, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
+  const result = compute(values4);
+  const expectedAt70 = Math.max(workerBenefit(800, 70), spousalBenefit(3000, 70));
+  const expectedAt62 = Math.max(workerBenefit(800, 62), spousalBenefit(3000, 62));
+  check('compute(): "wait to 70" card reflects the high-earner spousal top-up', parseFloat(result.summary[0].value.replace('$', '')), expectedAt70);
+  check('compute(): "claim at 62" card reflects the high-earner spousal top-up', parseFloat(result.summary[1].value.replace('$', '')), expectedAt62);
+  if (!result.summary[0].label.includes('spousal top-up applies')) {
+    fail++;
+    console.log('FAIL  compute(): "wait to 70" card label should flag the spousal top-up');
+  } else pass++;
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
