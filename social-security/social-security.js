@@ -235,7 +235,7 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
  * the second, so each curve answers: "if one of us lives to age X, what is the
  * plan worth?"
  */
-function planValueBySecondDeath(values, claimPlan, firstDeathAge, firstIsHigh) {
+function planValueBySecondDeath(values, firstDeathAge, firstIsHigh) {
   const r = values.discountRate / 100;
   const grid = [];
   for (let a = AGE_START; a <= AGE_END + 1e-9; a += 1) grid.push(a);
@@ -265,6 +265,34 @@ function planValueBySecondDeath(values, claimPlan, firstDeathAge, firstIsHigh) {
     });
 }
 
+/**
+ * Classifies the delay-vs-early comparison for one death order into exactly
+ * one of three outcomes. findCrossover returns null in two opposite
+ * situations \u2014 delay wins at every age, or delay never catches up \u2014 so we
+ * disambiguate by comparing the two plans at the far end of the grid.
+ */
+function classifyOutcome(delayPoints, earlyPoints) {
+  const breakeven = findCrossover({ points: earlyPoints }, { points: delayPoints });
+  if (breakeven !== null) return { type: 'breakeven', age: breakeven };
+  const lastDelay = delayPoints[delayPoints.length - 1]?.y ?? 0;
+  const lastEarly = earlyPoints[earlyPoints.length - 1]?.y ?? 0;
+  return lastDelay >= lastEarly ? { type: 'delayWins' } : { type: 'earlyWins' };
+}
+
+/**
+ * How conservative an outcome is, as a single comparable number \u2014 higher
+ * means delay's payoff is less certain / requires living longer. earlyWins
+ * ranks above every breakeven age (delay isn't shown to pay off at all);
+ * delayWins ranks below every breakeven age (delay always wins, no waiting
+ * required); a breakeven age ranks by that age itself, since a later
+ * breakeven asks more of the survivor's lifespan before waiting pays off.
+ */
+function conservativenessScore(outcome) {
+  if (outcome.type === 'earlyWins') return Infinity;
+  if (outcome.type === 'delayWins') return -Infinity;
+  return outcome.age;
+}
+
 export function compute(values) {
   // Two plans to compare: the higher earner DELAYS to 70 vs. the higher earner
   // claims EARLY at 62. Everything else (lower earner's plan, discount rate)
@@ -274,42 +302,42 @@ export function compute(values) {
   const planEarly = { ...values, claimHigh: 62 };
 
   // Hold the first death at the EARLIER of the two life-expectancy planning
-  // ages; vary the second death along the x-axis. We model the HIGHER earner
-  // as the first death \u2014 NOT because the two orderings give the same answer
-  // (they don't: RIB-LIM only floors an INHERITED survivor benefit, never a
-  // survivor's own record, so which spouse's record the survivor ends up on
-  // changes the number), but because this ordering is the more conservative
-  // one. A live-imported sweep of thousands of input combinations (2026-08-26
-  // audit) found the shown ordering never overstates delay's payoff relative
-  // to the unshown reverse order \u2014 only ever understates it, by as much as a
-  // decade of breakeven age in extreme cases (small low-earner PIA relative to
-  // 82.5% of the high earner's PIA, combined with an early "claim early" age).
-  // The heatmap below varies both death orders independently and is the place
-  // to see the case this chart doesn't show.
+  // ages; vary the second death along the x-axis. Which spouse actually dies
+  // first isn't something the user tells us, and the two orderings do NOT
+  // give the same answer: RIB-LIM only floors an INHERITED survivor benefit,
+  // never a survivor's own record, so which spouse's record the survivor
+  // ends up on changes the number \u2014 confirmed by a live-imported sweep of
+  // thousands of input combinations (2026-08-26 audit). Rather than hardcode
+  // one order and hope it stays the more conservative one, compute BOTH and
+  // show whichever is more conservative for THESE inputs. The number shown
+  // is then true no matter which spouse actually goes first, not just true
+  // in one assumed scenario. The heatmap below still shows the full picture
+  // \u2014 both death orders varied independently \u2014 for anyone who wants it.
   const firstDeathAge = Math.min(values.lifeHigh, values.lifeLow);
 
-  const delayPoints = planValueBySecondDeath(planDelay, planDelay, firstDeathAge, true);
-  const earlyPoints = planValueBySecondDeath(planEarly, planEarly, firstDeathAge, true);
+  function evaluateOrder(firstIsHigh) {
+    const delayPoints = planValueBySecondDeath(planDelay, firstDeathAge, firstIsHigh);
+    const earlyPoints = planValueBySecondDeath(planEarly, firstDeathAge, firstIsHigh);
+    return { delayPoints, earlyPoints, outcome: classifyOutcome(delayPoints, earlyPoints) };
+  }
 
-  const seriesDelay = { name: 'Higher earner waits to 70', color: '#98c379', points: delayPoints };
-  const seriesEarly = { name: 'Higher earner claims at 62', color: '#e06c75', points: earlyPoints };
+  const highDiesFirst = evaluateOrder(true);
+  const lowDiesFirst = evaluateOrder(false);
+  const chosen = conservativenessScore(highDiesFirst.outcome) >= conservativenessScore(lowDiesFirst.outcome)
+    ? highDiesFirst
+    : lowDiesFirst;
+
+  const seriesDelay = { name: 'Higher earner waits to 70', color: '#98c379', points: chosen.delayPoints };
+  const seriesEarly = { name: 'Higher earner claims at 62', color: '#e06c75', points: chosen.earlyPoints };
   const series = [seriesEarly, seriesDelay];
 
-  const breakeven = findCrossover(seriesEarly, seriesDelay);
-
-  // findCrossover returns null in two opposite situations: delay wins at every
-  // age, or delay never catches up. Disambiguate by comparing the two plans at
-  // the far end of the grid, so the headline is never backwards.
-  const lastDelay = seriesDelay.points[seriesDelay.points.length - 1]?.y ?? 0;
-  const lastEarly = seriesEarly.points[seriesEarly.points.length - 1]?.y ?? 0;
-  const delayWinsThroughout = breakeven === null && lastDelay >= lastEarly;
-  const earlyWinsThroughout = breakeven === null && lastDelay < lastEarly;
+  const outcome = chosen.outcome;
 
   let headlineLabel, headlineValue;
-  if (breakeven) {
+  if (outcome.type === 'breakeven') {
     headlineLabel = 'Higher earner waiting to 70 pays off as long as one of you lives past';
-    headlineValue = `age ${breakeven.toFixed(0)}`;
-  } else if (delayWinsThroughout) {
+    headlineValue = `age ${outcome.age.toFixed(0)}`;
+  } else if (outcome.type === 'delayWins') {
     headlineLabel = 'Higher earner waiting to 70 pays off across every lifespan shown here';
     headlineValue = 'waiting wins';
   } else {

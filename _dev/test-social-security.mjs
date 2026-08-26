@@ -27,6 +27,11 @@ function check(label, actual, expected, tolerance = 0.01) {
   if (ok) pass++;
   else { fail++; console.log(`FAIL  ${label}  (got=${actual}, expected=${expected})`); }
 }
+function checkEqual(label, actual, expected) {
+  const ok = actual === expected;
+  if (ok) pass++;
+  else { fail++; console.log(`FAIL  ${label}  (got=${JSON.stringify(actual)}, expected=${JSON.stringify(expected)})`); }
+}
 
 // Sanity: the survivor FRA table is a real, different table from worker/spousal FRA.
 check('SURVIVOR_FULL_RETIREMENT_AGE is 66y8mo, not 67', SURVIVOR_FULL_RETIREMENT_AGE, 66 + 8 / 12);
@@ -222,6 +227,44 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
     fail++;
     console.log('FAIL  compute(): "wait to 70" card label should flag the spousal top-up');
   } else pass++;
+}
+
+// --- compute() shows the worse of the two death orders (2026-08-26 fix) -----
+// Prior behavior: the main chart hardcoded "higher earner dies first" always.
+// An audit sweep found this is usually (not always) the more conservative
+// order; a targeted sweep for this fix found real, non-exotic cases where
+// the reverse order ("lower earner dies first") is actually MORE conservative
+// -- meaning the old hardcoded chart would have shown a too-early breakeven
+// age, or even shown "waiting wins" when the true worst case is "claiming
+// early wins". compute() must now pick whichever order is worse for the
+// user's own inputs, not always the same hardcoded one.
+{
+  // Found via sweep: piaLow > piaHigh (the "low" field isn't actually lower)
+  // flips which order is worse. High-dies-first alone gives breakeven age 85;
+  // low-dies-first is truly worse at age 96. The shown headline must be 96.
+  const case1 = { piaHigh: 1100, claimHigh: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0 };
+  const r1 = compute(case1);
+  check('compute(): shows the worse breakeven age across both death orders (96, not 85)', parseFloat(r1.summary[3].value.replace('age ', '')), 96);
+
+  // A more extreme case from the same sweep: high-dies-first alone would show
+  // a breakeven near the far edge of the chart (age 100); low-dies-first is
+  // actually worse still -- delay never catches up at all ("early wins").
+  // The shown headline must be the "claiming early wins" verdict, not a
+  // deceptively optimistic breakeven age.
+  const case2 = { piaHigh: 500, claimHigh: 62, piaLow: 800, claimLow: 62, lifeHigh: 95, lifeLow: 75, discountRate: 0 };
+  const r2 = compute(case2);
+  checkEqual('compute(): shows "claiming early wins" when that is the true worst case', r2.summary[3].value, 'claiming early wins');
+}
+
+// Regression: a normally-labeled household (piaHigh > piaLow, the common
+// case) should still show the same result as the pre-fix hardcoded
+// high-dies-first order, since that IS the more conservative order here --
+// this fix should not change the answer for the typical, correctly-labeled
+// household, only for the edge cases the sweep above found.
+{
+  const normal = { piaHigh: 3200, claimHigh: 62, piaLow: 1400, claimLow: 62, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
+  const r = compute(normal);
+  checkEqual('compute(): normally-labeled household is unaffected by the fix', r.summary[3].value, 'waiting wins');
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
