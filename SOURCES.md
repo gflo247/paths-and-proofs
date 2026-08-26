@@ -29,12 +29,25 @@ annually inflation-adjusted figures, so they change rarely (only by statute).
 | Spousal early reduction, beyond 36 mo | 5/12 of 1%/mo | [CFR 404.410(b)](https://www.ssa.gov/OP_Home/cfr20/404/404-0410.htm) | ✅ |
 | Delayed retirement credit | 2/3 of 1%/mo (8%/yr), stops at 70 | [CFR 404.313](https://www.ssa.gov/OP_Home/cfr20/404/404-0313.htm) | ✅ |
 | Spousal benefit cap | 50% of partner's FRA amount, no delayed credits | [SSA spousal](https://www.ssa.gov/benefits/retirement/planner/applying7.html) | ✅ |
-| Survivor rule | survivor keeps the larger of the two benefits | [CFR 404.410](https://www.ssa.gov/OP_Home/cfr20/404/404-0410.htm) | ✅ |
+| Survivor full retirement age (born 1960) | 66 years 8 months — a separate, younger table than worker/spousal FRA | independently corroborated via [ssa.tools](https://ssa.tools/guides/survivor-benefits) and [Adara Wealth](https://www.adarawealth.com/blog/critical-ages-on-the-social-security-benefits-timeline), both citing SSA's own survivor NRA table (direct ssa.gov fetch 403s in this environment) | ✅ |
+| Survivor's own age-based reduction | 0% at survivor FRA, scaling linearly to 28.5% at age 60 | [CFR 404.410(c)(1)](https://www.law.cornell.edu/cfr/text/20/404.410) — exact formula quoted: months of entitlement prior to FRA × 0.285, divided by months from age 60 to FRA | ✅ |
+| RIB-LIM (widow/widower limit) | survivor's benefit floors at the larger of the deceased's actual reduced benefit or 82.5% of PIA, when the deceased claimed before their own FRA | SSA POMS GN 00615.320 | ✅ |
 
-**Scope note (honest limitation):** assumes FRA 67 (born 1960+); does not model
-the earnings test, benefit taxation, or divorced-spouse benefits. The main chart
-shows only the "higher earner dies first" case; the reverse appears in the
-heatmap. All of this is stated in the on-page disclaimer.
+Survivor rule fixed 2026-08-26 (commits b7e5b11, 68e59eb/167831c) — the tool
+previously just kept `Math.max(highBenefit, lowBenefit)` with no RIB-LIM or
+age-reduction applied at all, despite an old header comment claiming CFR
+404.410 governed "survivor reduction." See `roth-ss-survivor-benefit-fix.md`.
+
+**Scope note (honest limitation):** assumes FRA 67 (born 1960+) for worker/
+spousal benefits; does not model the earnings test, benefit taxation, or
+divorced-spouse benefits; models both spouses as always the same current age
+(no age gap between spouses). The main chart shows only the "higher earner
+dies first" case — confirmed (2026-08-26, ~5,500-combination sweep) that this
+is the more conservative of the two orderings (RIB-LIM only floors an
+*inherited* benefit, never a survivor's own), never overstating delay's
+payoff but understating it by up to a decade of breakeven age in some cases;
+the reverse case appears in the heatmap. All of this is stated in the on-page
+disclaimer.
 
 ---
 
