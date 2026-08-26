@@ -260,10 +260,18 @@ export function compute(values) {
   const planEarly = { ...values, claimHigh: 62 };
 
   // Hold the first death at the EARLIER of the two life-expectancy planning
-  // ages; vary the second death along the x-axis. By symmetry of the survivor
-  // rule (survivor keeps the larger benefit either way), we model the higher
-  // earner as the first death so the surviving lower earner inherits the
-  // higher, delay-boosted benefit \u2014 the case that makes delay matter most.
+  // ages; vary the second death along the x-axis. We model the HIGHER earner
+  // as the first death \u2014 NOT because the two orderings give the same answer
+  // (they don't: RIB-LIM only floors an INHERITED survivor benefit, never a
+  // survivor's own record, so which spouse's record the survivor ends up on
+  // changes the number), but because this ordering is the more conservative
+  // one. A live-imported sweep of thousands of input combinations (2026-08-26
+  // audit) found the shown ordering never overstates delay's payoff relative
+  // to the unshown reverse order \u2014 only ever understates it, by as much as a
+  // decade of breakeven age in extreme cases (small low-earner PIA relative to
+  // 82.5% of the high earner's PIA, combined with an early "claim early" age).
+  // The heatmap below varies both death orders independently and is the place
+  // to see the case this chart doesn't show.
   const firstDeathAge = Math.min(values.lifeHigh, values.lifeLow);
 
   const delayPoints = planValueBySecondDeath(planDelay, planDelay, firstDeathAge, true);
