@@ -9,20 +9,36 @@
 //
 // Every rule and constant below links to the specific government page that
 // defines it, so any single number can be checked at its source:
-//   - Worker reduction (5/9, 5/12), spousal reduction (25/36, 5/12), and
-//     survivor reduction: Code of Federal Regulations section 404.410
+//   - Worker reduction (5/9, 5/12): CFR 404.410(a)
 //     https://www.ssa.gov/OP_Home/cfr20/404/404-0410.htm
+//   - Spousal reduction (25/36, 5/12): CFR 404.410(b)
+//   - Survivor reduction (0.285 of PIA, prorated by month down to age 60):
+//     CFR 404.410(c)(1) -- a third, proportional formula, distinct from the
+//     stepped worker/spousal ones above
 //   - Delayed retirement credits (8%/yr, stop at 70): CFR section 404.313
 //     https://www.ssa.gov/OP_Home/cfr20/404/404-0313.htm
-//   - Full retirement age 67 for those born 1960 or later:
-//     https://www.ssa.gov/benefits/retirement/planner/1960-delay.html
+//   - Full retirement age 67 for WORKER and SPOUSAL benefits, born 1960 or
+//     later: https://www.ssa.gov/benefits/retirement/planner/1960-delay.html
+//   - Full retirement age for SURVIVOR benefits is a separate, younger table:
+//     66 years 8 months for the same 1960 birth cohort.
+//     https://www.ssa.gov/survivor/full-retirement-age-survivor
+//   - RIB-LIM (the widow(er) limit): a survivor's benefit floors at the
+//     larger of the deceased's actual reduced benefit or 82.5% of their PIA,
+//     whenever the deceased claimed before their own full retirement age.
+//     SSA POMS GN 00615.320
 //   - 50% spousal cap, no delayed credits on spousal benefits:
 //     https://www.ssa.gov/benefits/retirement/planner/applying7.html
 
 import { presentValueOfStream, findCrossover } from '../core/finance.js';
 
 const CONSTANTS_YEAR = 2026;          // re-verify against ssa.gov each year
-const FULL_RETIREMENT_AGE = 67;       // born 1960 or later
+export const FULL_RETIREMENT_AGE = 67;       // worker/spousal FRA, born 1960 or later
+export const SURVIVOR_FULL_RETIREMENT_AGE = 66 + 8 / 12;   // survivor FRA runs on its
+                                                     // own, younger table --
+                                                     // 66y8mo for the same
+                                                     // 1960 birth cohort.
+                                                     // Do not reuse
+                                                     // FULL_RETIREMENT_AGE here.
 
 /**
  * A worker's own monthly benefit at a given claiming age, from their
@@ -31,7 +47,7 @@ const FULL_RETIREMENT_AGE = 67;       // born 1960 or later
  * 1% per month beyond that. Delayed credit: 2/3 of 1% per month (8%/year),
  * stopping at age 70. Source: CFR 404.410(a) and CFR 404.313.
  */
-function workerBenefit(primaryInsuranceAmount, claimAge) {
+export function workerBenefit(primaryInsuranceAmount, claimAge) {
   const age = Math.min(claimAge, 70);   // credits stop accruing at 70
   if (age <= FULL_RETIREMENT_AGE) {
     const monthsEarly = Math.round((FULL_RETIREMENT_AGE - age) * 12);
@@ -53,7 +69,7 @@ function workerBenefit(primaryInsuranceAmount, claimAge) {
  * delayed retirement credits — they never exceed 50% of the partner's amount,
  * no matter how long claiming is delayed. Source: CFR 404.410(b).
  */
-function spousalBenefit(partnerPrimaryInsuranceAmount, claimAge) {
+export function spousalBenefit(partnerPrimaryInsuranceAmount, claimAge) {
   const unreduced = partnerPrimaryInsuranceAmount * 0.5;
   if (claimAge >= FULL_RETIREMENT_AGE) return unreduced;   // no credits past FRA
   const monthsEarly = Math.round((FULL_RETIREMENT_AGE - claimAge) * 12);
@@ -61,6 +77,36 @@ function spousalBenefit(partnerPrimaryInsuranceAmount, claimAge) {
     (Math.min(monthsEarly, 36) * (25 / 36) +
      Math.max(monthsEarly - 36, 0) * (5 / 12)) / 100;
   return unreduced * (1 - reduction);
+}
+
+/**
+ * A survivor's monthly benefit inherited from a deceased spouse's earnings
+ * record, at the survivor's current age. Two SSA rules combine:
+ *
+ *   1. RIB-LIM (the widow(er) limit), SSA POMS GN 00615.320: the survivor's
+ *      base amount is the LARGER of what the deceased was actually receiving
+ *      (already reduced, if they claimed before their own full retirement
+ *      age) or 82.5% of the deceased's primary insurance amount. Applying
+ *      this as an unconditional max() is deliberate, not a missing gate: if
+ *      the deceased delayed past their own full retirement age, their actual
+ *      benefit already exceeds 82.5% of PIA, so the max() is a no-op exactly
+ *      when RIB-LIM shouldn't apply.
+ *   2. The survivor's OWN age-based reduction, CFR 404.410(c)(1): a third,
+ *      proportional formula distinct from the stepped worker/spousal ones
+ *      above -- 0% at the survivor's own full retirement age (a separate,
+ *      younger table than worker/spousal FRA -- see SURVIVOR_FULL_RETIREMENT_AGE),
+ *      scaling linearly to 28.5% at the earliest survivor-claiming age of 60.
+ */
+export function survivorBenefit(deceasedPia, deceasedClaimAge, survivorCurrentAge) {
+  const deceasedActual = workerBenefit(deceasedPia, deceasedClaimAge);
+  const base = Math.max(deceasedActual, deceasedPia * 0.825);
+
+  const age = Math.max(60, Math.min(survivorCurrentAge, SURVIVOR_FULL_RETIREMENT_AGE));
+  const monthsEarly = Math.round((SURVIVOR_FULL_RETIREMENT_AGE - age) * 12);
+  const monthsInWindow = Math.round((SURVIVOR_FULL_RETIREMENT_AGE - 60) * 12);
+  const reduction = monthsInWindow > 0 ? (0.285 * monthsEarly) / monthsInWindow : 0;
+
+  return base * (1 - reduction);
 }
 
 export const meta = {
@@ -126,13 +172,18 @@ const AGE_END = 100;    // chart horizon
  * Household monthly income at a given calendar age of each person, for one
  * claiming plan. While both are alive, each person receives the LARGER of their
  * own worker benefit and their spousal benefit (the spousal top-up rule \u2014 you
- * get the bigger of the two, never both). After the first death, the survivor
- * keeps the LARGER of the two benefits that were being paid, and the smaller one
- * stops. This survivor rule is what ties the higher earner\u2019s delay to the
- * second death. Spousal benefits require the higher earner to have already
- * filed, so the lower earner\u2019s spousal portion does not begin until then.
+ * get the bigger of the two, never both). Spousal benefits require the higher
+ * earner to have already filed, so the lower earner\u2019s spousal portion does
+ * not begin until then.
+ *
+ * After the first death, the spousal relationship ends and a survivor
+ * relationship replaces it: the survivor keeps the LARGER of their own worker
+ * benefit and a survivor benefit inherited from the deceased\u2019s record (see
+ * survivorBenefit \u2014 RIB-LIM-floored and reduced for the survivor\u2019s own age,
+ * not simply whatever the deceased happened to be receiving). This survivor
+ * rule is what ties the higher earner\u2019s delay decision to the second death.
  */
-function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lowCurrentAge) {
+export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lowCurrentAge) {
   const highWorker = highCurrentAge >= values.claimHigh ? workerBenefit(values.piaHigh, values.claimHigh) : 0;
   const lowWorker  = lowCurrentAge  >= values.claimLow  ? workerBenefit(values.piaLow,  values.claimLow)  : 0;
 
@@ -143,13 +194,21 @@ function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lowCurren
     : 0;
   const lowOwn = Math.max(lowWorker, lowSpousal);   // larger of own vs spousal
 
-  // The two benefit streams actually being paid right now.
+  // The two benefit streams actually being paid right now, while both live.
   const highBenefit = highWorker;
   const lowBenefit = lowOwn;
 
   if (highAlive && lowAlive) return highBenefit + lowBenefit;
-  if (highAlive && !lowAlive) return Math.max(highBenefit, lowBenefit);   // survivor keeps larger
-  if (!highAlive && lowAlive) return Math.max(highBenefit, lowBenefit);   // survivor keeps larger
+  if (highAlive && !lowAlive) {
+    // Low has died; high survives and may inherit a survivor benefit off low's record.
+    const inherited = survivorBenefit(values.piaLow, values.claimLow, highCurrentAge);
+    return Math.max(highBenefit, inherited);
+  }
+  if (!highAlive && lowAlive) {
+    // High has died; low survives and may inherit a survivor benefit off high's record.
+    const inherited = survivorBenefit(values.piaHigh, values.claimHigh, lowCurrentAge);
+    return Math.max(lowWorker, inherited);
+  }
   return 0;
 }
 
