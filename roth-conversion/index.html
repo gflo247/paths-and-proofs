@@ -1906,7 +1906,7 @@ function useRetRate(rate){
 
 
 // ── MULTI-YEAR PLAN COMPUTATION ──
-function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,planConvert,spouseAge,isCouple,pensionIncome,localTax){
+function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,planConvert,spouseAge,isCouple,pensionIncome,localTax,taxSrc){
   if(planConvert<=0||tradBal<=0)return null;
 
   // Compute conversion tax for a given income scenario. A thin adapter around
@@ -1961,7 +1961,14 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
     var rowSpouseAge=spouseAge!=null?spouseAge+(rowAge-curAge):spouseAge;
     var rowNSr=rowAge===curAge?nSr:seniorCountFor(rowAge,rowSpouseAge);
     var tx=convTax(income,nii,ltcg,ss,status,rowNSr,cv,taxableFrac,pensionIncome,rowAge,rowSpouseAge);
-    tBal=(tBal-cv)*(1+g); rBal=(rBal+cv)*(1+g);
+    // 'inside': tax is withheld from the conversion itself, so less than cv
+    // actually reaches the Roth (same fix as rothIn in the main projection).
+    // 'outside' (default): the full cv lands in Roth — this table shows literal
+    // account balances, not a wealth comparison, so unlike the main projection
+    // there's no separate opportunity-cost tracking needed here; the balance
+    // itself is already correct once it reflects the real funding choice.
+    var rothInRow = taxSrc==='inside' ? Math.max(0,cv-tx) : cv;
+    tBal=(tBal-cv)*(1+g); rBal=(rBal+rothInRow)*(1+g);
     preRows.push({year:2026+i,age:rowAge,convert:Math.round(cv),tax:Math.round(tx),
                   tBal:Math.round(tBal),rBal:Math.round(rBal),phase:'work'});
   }
@@ -2025,7 +2032,8 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
           var rowSpouseAge=spouseAge!=null?spouseAge+(rowAge-curAge):spouseAge;
           var rowNSr=rowAge===curAge?nSr:seniorCountFor(rowAge,rowSpouseAge);
           var gtx=convTax(retOtherV,retNiiV,retLtcgV,retSSV,status,rowNSr,gcv,taxableFrac,retPenV,rowAge,rowSpouseAge);
-          tBal=(tBal-gcv)*(1+g); rBal=(rBal+gcv)*(1+g);
+          var rothInGRow = taxSrc==='inside' ? Math.max(0,gcv-gtx) : gcv;
+          tBal=(tBal-gcv)*(1+g); rBal=(rBal+rothInGRow)*(1+g);
           goldRows.push({year:2026+(goldStartAge-curAge)+j,age:rowAge,
                          convert:Math.round(gcv),tax:Math.round(gtx),
                          tBal:Math.round(tBal),rBal:Math.round(rBal),phase:'golden'});
@@ -2041,7 +2049,7 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
 }
 
 // ── MULTI-YEAR PLAN HTML ──
-function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn){
+function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn,taxSrc){
   if(!plan)return'';
   var allRows=plan.preRows.concat(plan.goldRows);
   var goldStartAge=Math.max(retAge,curAge);
@@ -2078,7 +2086,10 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn){
     ctx+='Enter expected retirement SS and pension in the rate estimator above to also see the golden window (age '+goldStartAge+' to 73).';
   else if(goldStartAge>=73)
     ctx+='RMDs start at or before retirement — consider converting more aggressively now while income is predictable.';
-  html+='<p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.55">'+ctx+' Income assumed flat within each phase; taxes paid from outside savings.</p>';
+  var fundingNote = taxSrc==='inside'
+    ? 'taxes are withheld from each conversion, so less than the recommended amount reaches your Roth'
+    : 'taxes are paid from outside savings, so the full recommended amount reaches your Roth';
+  html+='<p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.55">'+ctx+' Income assumed flat within each phase; '+fundingNote+'.</p>';
 
   // Table
   html+='<div style="overflow-x:auto;margin-bottom:1rem">';
@@ -4375,8 +4386,8 @@ function calc(){
     var myConv = myOpts.bracketAmt > 0 ? myOpts.bracketAmt : 0;
     if(myOpts.irmaaAmt!==null && myOpts.irmaaAmt>0 && (myConv===0 || myOpts.irmaaAmt<myConv)) myConv=myOpts.irmaaAmt;
     if(myConv > 500 && tradBal > 0){
-      var myPlan = computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,myConv,spouseAge,isCouple,pensionIncome,localTax);
-      multiYearHTML = buildMultiYearHTML(myPlan,curAge,retAge,fmt,pct,fmtK);
+      var myPlan = computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,myConv,spouseAge,isCouple,pensionIncome,localTax,taxSrc);
+      multiYearHTML = buildMultiYearHTML(myPlan,curAge,retAge,fmt,pct,fmtK,taxSrc);
     }
   }
 
