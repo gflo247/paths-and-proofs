@@ -300,6 +300,22 @@
     .why-body{flex:1;}
     .why-body strong{color:var(--navy);}
     .why-jump{flex-shrink:0;color:var(--navy-mid);font-size:.78rem;font-weight:600;white-space:nowrap;}
+    /* ── Rest-of-Life Bet: compact helps/hurts rows ── */
+    .bet-row{padding:.65rem .85rem;border-radius:var(--rsm);background:var(--navy-pale);border:1px solid var(--tip-bdr);margin-bottom:.55rem;}
+    .bet-row-hd{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-weight:700;color:var(--navy);font-size:.87rem;margin-bottom:.5rem;}
+    .bet-dirs{display:flex;flex-wrap:wrap;gap:.5rem;}
+    .bet-chip{flex:1 1 170px;font-size:.82rem;padding:.4rem .65rem;border-radius:7px;line-height:1.4;}
+    .bet-chip b{display:block;font-size:.68rem;letter-spacing:.03em;text-transform:uppercase;opacity:.75;margin-bottom:.1rem;}
+    .bet-chip.help{background:rgba(45,138,82,.12);color:var(--success);}
+    .bet-chip.hurt{background:rgba(139,26,26,.12);color:var(--danger);}
+    [data-theme="dark"] .bet-chip.help{background:rgba(94,201,138,.16);}
+    [data-theme="dark"] .bet-chip.hurt{background:rgba(234,112,112,.16);}
+    .bet-fact{font-size:.78rem;color:var(--muted);margin-top:.45rem;}
+    .bet-why{margin-top:.45rem;}
+    .bet-why summary{font-size:.78rem;color:var(--navy-mid);font-weight:600;cursor:pointer;list-style:none;}
+    .bet-why summary::-webkit-details-marker{display:none;}
+    .bet-why[open] summary{margin-bottom:.35rem;}
+    .bet-why p{font-size:.83rem;color:var(--muted);line-height:1.55;margin:0;}
     .btip{background:var(--amber-pale);border:1px solid #E8C97A;border-radius:var(--rsm);padding:9px 12px;font-size:.88rem;color:#5A3500;margin-top:.85rem;line-height:1.55;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
     .fade-up{animation:fadeUp .4s ease forwards;}
@@ -2986,26 +3002,39 @@ function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName,ltcgCo
 // stay a plain explainer of asymmetric exposure — never a new blended
 // "risk-adjusted" number.
 function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
-  var row = function(label,body,clickable){
-    return '<div class="why-item'+(clickable?'':' static')+'"'+(clickable?' onclick="jumpToLever(\'sensitivityCard\',false)"':'')+'>'
-      +'<div class="why-body"><strong>'+label+':</strong> '+body+'</div>'
-      +(clickable?'<span class="why-jump">↓ details</span>':'')
+  // Compact chip-table layout, chosen over full-sentence rows (the original
+  // version of this section) after user feedback that four paragraphs was
+  // too much prose on an already text-heavy page — each row states its two
+  // directions as short phrases, with the fuller reasoning collapsed behind
+  // a per-row <details> toggle rather than always shown.
+  var row = function(label,help,hurt,why,jumpLink,fact){
+    return '<div class="bet-row">'
+      +'<div class="bet-row-hd"><span>'+label+'</span>'+(jumpLink?'<span class="why-jump" onclick="jumpToLever(\'sensitivityCard\',false)" style="cursor:pointer">↓ sensitivity chart</span>':'')+'</div>'
+      +'<div class="bet-dirs">'
+      +'<div class="bet-chip help"><b>Helps Roth</b>'+help+'</div>'
+      +'<div class="bet-chip hurt"><b>Hurts Roth</b>'+hurt+'</div>'
+      +'</div>'
+      +(fact?'<div class="bet-fact">'+fact+'</div>':'')
+      +'<details class="bet-why"><summary>Why this matters ↓</summary><p>'+why+'</p></details>'
       +'</div>';
   };
+  var longevityFact = (beAge&&beAge>curAge&&survBE)
+    ? '<strong>'+Math.round(survBE*100)+'%</strong> chance '+youOrOneOfYou+' live'+(isCouple?'s':'')+' to age '+beAge+', when the wait ends.'
+    : '';
   var rows = ''
-    + row('Future tax rates',
-        'Converting locks in today\'s rate. If rates rise later, today\'s rate becomes a bargain in hindsight — <span class="bet">helps Roth</span>. If rates fall instead, you paid more than you needed to — <span class="wor">hurts Roth</span>.')
-    + row('Investment returns',
-        'Higher returns mean more future growth escapes tax entirely — <span class="bet">helps Roth</span>. Lower returns narrow or reverse that advantage — <span class="wor">hurts Roth</span>. See exactly how much below.', true)
-    + row(isCouple?'Your longevity':'Your own longevity',
-        'Living longer means more years of tax-free compounding and more required withdrawals avoided — <span class="bet">helps Roth</span>. Dying sooner than expected means paying tax on money that may never have needed to be touched — <span class="wor">hurts Roth</span>, a real loss, not just a smaller win.'
-        +(beAge&&beAge>curAge&&survBE?' A real number for this: <strong>'+Math.round(survBE*100)+'%</strong> chance '+youOrOneOfYou+' live'+(isCouple?'':'s')+' to age '+beAge+', when the wait ends.':''))
-    + row('Spend-down vs. heirs',
-        'Roth IRAs pass to heirs income-tax-free — <span class="bet">helps Roth</span>, though most non-spouse heirs still must empty the account within 10 years of your death, a real deadline even though the withdrawals themselves owe no tax (<a href="https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-beneficiary" target="_blank" rel="noopener" style="color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px">IRS rules for beneficiaries</a>). Traditional IRAs pass the tax bill along with the inheritance instead. Needing to spend the account down yourself — a long-term-care cost, say — favors traditional too, since it\'s only ever taxed on what\'s actually withdrawn — <span class="wor">hurts Roth</span>.');
+    + row('Future tax rates', 'Rates rise later', 'Rates fall later',
+        'Converting locks in today\'s rate. If federal or state rates increase later, today\'s rate becomes a bargain in hindsight. If rates fall instead, you paid more than you needed to.')
+    + row('Investment returns', 'Higher returns', 'Lower returns',
+        'Higher returns mean more future growth escapes tax entirely. Lower returns narrow or reverse that advantage.', true)
+    + row(isCouple?'Your longevity':'Your own longevity', 'You live longer', 'You die sooner',
+        'Living longer means more years of tax-free compounding and more required withdrawals avoided. Dying sooner than expected means paying tax on money that may never have needed to be touched — a real loss, not just a smaller win.',
+        false, longevityFact)
+    + row('Spend-down vs. heirs', 'Money passes to heirs', 'You spend it down',
+        'Roth IRAs pass to heirs income-tax-free, though most non-spouse heirs still must empty the account within 10 years of your death, a real deadline even though the withdrawals themselves owe no tax (<a href="https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-beneficiary" target="_blank" rel="noopener" style="color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px">IRS rules for beneficiaries</a>). Traditional IRAs pass the tax bill along with the inheritance instead. Needing to spend the account down yourself — a long-term-care cost, say — favors traditional too, since it\'s only ever taxed on what\'s actually withdrawn.');
   return '<div class="card" id="betCard" style="margin-top:1.25rem;margin-bottom:1.25rem">'
     +'<div class="stitle">🎲 The Rest-of-Life Bet</div>'
     +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.6rem;line-height:1.55"><strong style="color:var(--text)">'+costTxt+'</strong> is a certain cost, paid today. Everything after that is a bet that these four things go your way over the rest of '+(isCouple?'your lives':'your life')+':</p>'
-    +'<div class="why-list">'+rows+'</div>'
+    +rows
     +'</div>';
 }
 
