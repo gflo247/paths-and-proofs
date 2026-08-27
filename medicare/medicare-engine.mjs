@@ -35,9 +35,18 @@
 // one. See _dev/medicare-research-2026-08.md and the 2026-08-20 conversation that scoped
 // this design for the full reasoning.
 
-// 2026 CMS national figures — see _dev/medicare-research-2026-08.md section 1 for sourcing
-// (the same CMS fact sheet roth-conversion/index.html already cites for Part B/IRMAA).
+// 2026 CMS national figures — PRIMARY-sourced, see _dev/medicare-research-2026-08.md
+// section 1 for the full citation trail.
+// Part B deductible: CMS Federal Register notice CMS-8091-N, "Medicare Program; Medicare
+// Part B Monthly Actuarial Rates, Premium Rates, and Annual Deductible Beginning January 1,
+// 2026" — https://public-inspection.federalregister.gov/2025-20251.pdf — quoted directly:
+// "The Part B deductible for 2026 is $283.00 for all Part B beneficiaries."
 export const DEFAULT_ADVANTAGE_OOP_MAX = 9250; // in-network ceiling; combined in+out-of-network is $13,900
+// ^ CMS's own "Final Contract Year (CY) 2026 Standards for Part C Benefits, Bid Review and
+// Evaluation" memorandum (April 16, 2025), Table 3 "FINAL CY 2026 PART C MOOP LIMITS BY PLAN
+// TYPE" — https://mabenefitsmailbox.lmi.org/MABenefitsMailbox/S3Browser/GetFile?path=Final+CY+2026+Part+C+Bid+Review+Memorandum+and+Appendix-4-15-25.pdf
+// (CMS's official MA-plan mailbox distribution system, run by contractor LMI — not cms.gov's
+// own domain, but the genuine primary document, not a secondary summary of it).
 export const DEFAULT_PART_B_DEDUCTIBLE = 283;
 export const DEFAULT_COINSURANCE_RATE = 0.20;
 // ^ Medicare Part B's standard coinsurance is 20% of the Medicare-approved amount for most

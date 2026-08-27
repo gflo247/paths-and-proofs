@@ -21,6 +21,8 @@
   .medicare-context .ctx-block.has-note { border-left-color: var(--accent); }
   .medicare-context p { margin: 0 0 6px; font-size: 14px; color: var(--fg); }
   .medicare-context .ctx-meta { font-size: 12px; color: var(--muted); }
+  .src-note { font-size: .78rem; color: var(--muted); margin: 4px 0 0; }
+  .src-note a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
   .medicare-context .gi-period { margin: 8px 0; padding: 8px 10px; background: var(--card-bg, rgba(0,0,0,0.02)); border-radius: 6px; }
   .medicare-context .gi-period .gi-title { font-weight: 600; font-size: 13px; }
   .medicare-context .gi-period .gi-detail { font-size: 13px; color: var(--muted); margin-top: 2px; }
@@ -143,6 +145,12 @@
       by specific plan, so treat the exact dollar breakeven as a useful estimate, not a
       guarantee. Medigap's own plan-letter differences (for example, Plan N's small
       office-visit copays) aren't modeled at this level of detail either.</p>
+    <p class="src-note">The $283 Part B deductible folded into Medigap's cost comes from
+      CMS's <a href="https://public-inspection.federalregister.gov/2025-20251.pdf" target="_blank" rel="noopener">2026 Part B premium and deductible notice</a>.
+      The $9,250 Advantage out-of-pocket cap shown as this tool's starting value (edit it to
+      match your own plan) is the CMS-set 2026 in-network ceiling, from CMS's
+      <a href="https://mabenefitsmailbox.lmi.org/MABenefitsMailbox/S3Browser/GetFile?path=Final+CY+2026+Part+C+Bid+Review+Memorandum+and+Appendix-4-15-25.pdf" target="_blank" rel="noopener">2026 Part C bid review memorandum</a>
+      (Table 3).</p>
     <p>It does not model prescription drug coverage on the Medicare Advantage side (most
       Advantage plans bundle it into the numbers already being compared), the extra benefits
       many Advantage plans include (dental, vision, hearing), or network restrictions. The

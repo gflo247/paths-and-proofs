@@ -55,23 +55,45 @@ Footnotes (from the same page): Plans C & F closed to anyone turning 65 on/after
 only applies after *also* meeting the $283 Part B deductible. Plan N excludes copays on
 some office/ER visits.
 
-### Part A/B costs (2026) — OFFICIAL-SUMMARY
-Source: CMS fact sheet, same one Roth cites
-(cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles),
-confirmed via WebSearch of CMS's Nov 14, 2025 release, not read directly (medicare.gov
-blocks WebFetch with 403; browser-fetch wasn't attempted for this specific page since
-the figures matched Roth's already-verified numbers).
+### Part B premium/deductible (2026) — PRIMARY (upgraded 2026-08-27)
+Source: the actual CMS Federal Register notice, "Medicare Program; Medicare Part B
+Monthly Actuarial Rates, Premium Rates, and Annual Deductible Beginning January 1, 2026"
+(CMS-8091-N), read directly (cms.gov/medicare.gov both 403 WebFetch, but the notice's
+own public-inspection PDF is fetchable:
+https://public-inspection.federalregister.gov/2025-20251.pdf — canonical published
+version at federalregister.gov/documents/2025/11/19/2025-20251/... redirects through a
+bot-check page for automated fetches, but is the correct citable URL for a human
+reader). Quoted directly from the notice: "The standard monthly Part B premium rate for
+all enrollees for 2026 is $202.90... The Part B deductible for 2026 is $283.00 for all
+Part B beneficiaries." Exact match to the figures already coded — no correction needed,
+just a real upgrade from OFFICIAL-SUMMARY (previously "confirmed via WebSearch... not
+read directly").
 
-- Part A inpatient hospital deductible: $1,736
+- Part A inpatient hospital deductible: $1,736 (OFFICIAL-SUMMARY still, not directly
+  re-verified in this pass — not used by medicare-engine.mjs's defaults)
 - Part A coinsurance: $434/day (days 61-90), $868/day (lifetime reserve days), $217/day
-  (skilled nursing, days 21-100)
-- Part B standard premium: $202.90/month
-- Part B deductible: $283/year
+  (skilled nursing, days 21-100) (OFFICIAL-SUMMARY still, same reason)
+- Part B standard premium: $202.90/month — PRIMARY, see above
+- Part B deductible: $283/year — PRIMARY, see above
 
-### Medicare Advantage out-of-pocket ceiling (2026) — OFFICIAL-SUMMARY
-CMS-set cap: $9,250 in-network / $13,900 combined. Confirmed via KFF and CMS's own MA
-out-of-pocket-limits page (cms.gov/medicare/health-drug-plans/medigap/k-l-out-of-pocket-limits-announcements
-surfaced in search results, not read directly).
+### Medicare Advantage out-of-pocket ceiling (2026) — PRIMARY (upgraded 2026-08-27)
+Source: CMS's own "Final Contract Year (CY) 2026 Standards for Part C Benefits, Bid
+Review and Evaluation" memorandum (dated April 16, 2025, signed by Kathryn A. Coleman,
+Director, Medicare Drug & Health Plan Contract Administration Group), read directly:
+https://mabenefitsmailbox.lmi.org/MABenefitsMailbox/S3Browser/GetFile?path=Final+CY+2026+Part+C+Bid+Review+Memorandum+and+Appendix-4-15-25.pdf
+-- not hosted on cms.gov's own public pages (HPMS memoranda like this one are
+distributed to MA organizations via CMS's official mailbox system, run by LMI, a
+federally-funded CMS contractor -- not a random third-party site, just not the cms.gov
+domain). Table 3, "FINAL CY 2026 PART C MOOP LIMITS BY PLAN TYPE": mandatory MOOP is
+$6,751-$9,250 in-network (HMO/HMO POS/PFFS/PPO) and $6,751-$13,900 combined
+(PPO only) -- "Mandatory: Highest in-network MOOP amount allowed by CMS" per the
+memo's own definitions, so $9,250/$13,900 are literally the ceiling, matching
+medicare-engine.mjs's existing comment exactly. Exact match, no correction needed.
+Bonus fact confirmed directly in the memo: the CY2026 mandatory MOOP is actually a
+$100 (~1%) DECREASE from CY2025's, an unusual reversal of the typical year-over-year
+increase, caused by a shift in the underlying 95th-percentile FFS cost projection
+(ESRD enrollment shifting from Original Medicare to MA) -- not from any benefit-design
+change.
 
 ### IRMAA — PRIMARY (reused)
 Already fully sourced and verified in `roth-conversion/index.html`'s `ITIERS`/`ITHR`
