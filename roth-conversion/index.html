@@ -146,6 +146,7 @@
     .hv-dgrn{background:var(--sbg);color:var(--ink-green);}
     .hv-dneu{background:var(--navy-pale);color:var(--ink-pale);font-weight:500;}
     .hv-damb{background:var(--amber-pale);color:var(--ink-amber);}
+    .viz-hd{font-weight:700;color:var(--navy);font-size:.83rem;margin-bottom:.3rem;}
     /* ── Breakeven timeline ── */
     .be-tl{margin:.5rem 0 .9rem;}
     .be-track{position:relative;display:flex;height:11px;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.12);}
@@ -301,16 +302,15 @@
     .why-body strong{color:var(--navy);}
     .why-jump{flex-shrink:0;color:var(--navy-mid);font-size:.78rem;font-weight:600;white-space:nowrap;}
     /* ── Rest-of-Life Bet: compact helps/hurts rows ── */
-    .bet-row{padding:.65rem .85rem;border-radius:var(--rsm);background:var(--navy-pale);border:1px solid var(--tip-bdr);margin-bottom:.55rem;}
-    .bet-row-hd{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-weight:700;color:var(--navy);font-size:.87rem;margin-bottom:.5rem;}
-    .bet-dirs{display:flex;flex-wrap:wrap;gap:.5rem;}
-    .bet-chip{flex:1 1 170px;font-size:.82rem;padding:.4rem .65rem;border-radius:7px;line-height:1.4;}
-    .bet-chip b{display:block;font-size:.68rem;letter-spacing:.03em;text-transform:uppercase;opacity:.75;margin-bottom:.1rem;}
-    .bet-chip.help{background:rgba(45,138,82,.12);color:var(--success);}
-    .bet-chip.hurt{background:rgba(139,26,26,.12);color:var(--danger);}
-    [data-theme="dark"] .bet-chip.help{background:rgba(94,201,138,.16);}
-    [data-theme="dark"] .bet-chip.hurt{background:rgba(234,112,112,.16);}
-    .bet-fact{font-size:.78rem;color:var(--muted);margin-top:.45rem;}
+    .bet-row{padding:.55rem .75rem;border-radius:var(--rsm);background:var(--navy-pale);border:1px solid var(--tip-bdr);margin-bottom:.45rem;}
+    .bet-row-hd{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;font-weight:700;color:var(--navy);font-size:.85rem;margin-bottom:.4rem;}
+    .bet-dirs{display:flex;flex-wrap:wrap;gap:.4rem;}
+    .bet-chip{display:inline-block;font-size:.79rem;padding:.28rem .6rem;border-radius:20px;line-height:1.3;white-space:nowrap;}
+    .bet-chip.help{background:rgba(45,138,82,.14);color:var(--success);}
+    .bet-chip.hurt{background:rgba(139,26,26,.14);color:var(--danger);}
+    [data-theme="dark"] .bet-chip.help{background:rgba(94,201,138,.18);}
+    [data-theme="dark"] .bet-chip.hurt{background:rgba(234,112,112,.18);}
+    .bet-fact{font-size:.76rem;color:var(--muted);margin-top:.4rem;}
     .bet-why{margin-top:.45rem;}
     .bet-why summary{font-size:.78rem;color:var(--navy-mid);font-weight:600;cursor:pointer;list-style:none;}
     .bet-why summary::-webkit-details-marker{display:none;}
@@ -2972,7 +2972,8 @@ function buildBeTimeline(curAge,beAge,leAge,survBE,isCouple,costTxt){
     var survStr=survBE?' &nbsp;·&nbsp; <strong>'+Math.round(survBE*100)+'%</strong> chance of reaching it':'';
     note='<div class="be-note"><strong style="color:var(--success)">'+winYrs+' yrs</strong> of Roth winning'+survStr+'</div>';
   }
-  return '<div class="be-tl">'+track+ages+note+'</div>';
+  return '<div class="viz-hd">📅 When does Roth pull ahead, over the rest of your life?</div>'
+    +'<div class="be-tl">'+track+ages+note+'</div>';
 }
 
 // ── TAX COMPOSITION BAR ──
@@ -2988,7 +2989,8 @@ function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName,ltcgCo
   seg(cvtTxSt/cvtTxTot*100,'#B06000',stName||'State');
   seg((ltcgCost||0)/cvtTxTot*100,'#2E7D5B','Qual. div./LTCG');
   seg(niitCost/cvtTxTot*100,'#7B5EA7','NIIT');
-  return '<div class="tx-wrap"><div class="tx-bar">'+segs+'</div><div class="tx-lbls">'+lbls+'</div></div>';
+  return '<div class="viz-hd">🧾 What makes up your '+fmt(cvtTxTot)+' cost</div>'
+    +'<div class="tx-wrap"><div class="tx-bar">'+segs+'</div><div class="tx-lbls">'+lbls+'</div></div>';
 }
 
 // A conversion pays a certain tax cost today for a payoff that only
@@ -3011,8 +3013,8 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
     return '<div class="bet-row">'
       +'<div class="bet-row-hd"><span>'+label+'</span>'+(jumpLink?'<span class="why-jump" onclick="jumpToLever(\'sensitivityCard\',false)" style="cursor:pointer">↓ sensitivity chart</span>':'')+'</div>'
       +'<div class="bet-dirs">'
-      +'<div class="bet-chip help"><b>Helps Roth</b>'+help+'</div>'
-      +'<div class="bet-chip hurt"><b>Hurts Roth</b>'+hurt+'</div>'
+      +'<span class="bet-chip help">↑ '+help+'</span>'
+      +'<span class="bet-chip hurt">↓ '+hurt+'</span>'
       +'</div>'
       +(fact?'<div class="bet-fact">'+fact+'</div>':'')
       +'<details class="bet-why"><summary>Why this matters ↓</summary><p>'+why+'</p></details>'
@@ -3033,7 +3035,7 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
         'Roth IRAs pass to heirs income-tax-free, though most non-spouse heirs still must empty the account within 10 years of your death, a real deadline even though the withdrawals themselves owe no tax (<a href="https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-beneficiary" target="_blank" rel="noopener" style="color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px">IRS rules for beneficiaries</a>). Traditional IRAs pass the tax bill along with the inheritance instead. Needing to spend the account down yourself — a long-term-care cost, say — favors traditional too, since it\'s only ever taxed on what\'s actually withdrawn.');
   return '<div class="card" id="betCard" style="margin-top:1.25rem;margin-bottom:1.25rem">'
     +'<div class="stitle">🎲 The Rest-of-Life Bet</div>'
-    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.6rem;line-height:1.55"><strong style="color:var(--text)">'+costTxt+'</strong> is a certain cost, paid today. Everything after that is a bet that these four things go your way over the rest of '+(isCouple?'your lives':'your life')+':</p>'
+    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.6rem;line-height:1.55"><strong style="color:var(--text)">'+costTxt+'</strong> is a certain cost, paid today. Everything after that is a bet that these four things go your way over the rest of '+(isCouple?'your lives':'your life')+' (<span class="bet">↑ helps</span> · <span class="wor">↓ hurts</span>):</p>'
     +rows
     +'</div>';
 }
