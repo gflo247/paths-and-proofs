@@ -2132,12 +2132,16 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn){
 
 // ── SENSITIVITY SURFACE CHART ──
 // Single simulation at a grid point; returns Roth advantage normalised by portfolio size
-function simAdvantageForGrid(gv, totalRetR_v, tradBal, rothBal, rothIn, cvtAmt, curAge, leAge, taxableFrac){
+function simAdvantageForGrid(gv, totalRetR_v, tradBal, rothBal, rothIn, cvtAmt, curAge, leAge, taxableFrac, oppCost0){
   var sr = Math.max(0, totalRetR_v * taxableFrac);
   var DRAG = gv * 0.72;
   var rA = rothBal + rothIn, tA = Math.max(0, tradBal - cvtAmt);
   var rB = rothBal, tB = tradBal;
   var rmdA = 0, rmdB = 0;
+  // Opportunity cost of outside-funded taxes, same reasoning as the main
+  // projection loop in calc() — grows at THIS cell's own DRAG (gv*0.72),
+  // since every grid cell tests its own growth-rate hypothesis.
+  var oppCost = oppCost0 || 0;
   var target = Math.min(leAge, 98);
   for(var age = curAge; age < target; age++){
     if(age >= 73){
@@ -2147,8 +2151,9 @@ function simAdvantageForGrid(gv, totalRetR_v, tradBal, rothBal, rothIn, cvtAmt, 
     }
     rA *= (1+gv); tA *= (1+gv); rmdA *= (1+DRAG);
     rB *= (1+gv); tB *= (1+gv); rmdB *= (1+DRAG);
+    oppCost *= (1+DRAG);
   }
-  var vA = rA + tA*(1-sr) + rmdA;
+  var vA = rA + tA*(1-sr) + rmdA - oppCost;
   var vB = rB + tB*(1-sr) + rmdB;
   var denom = tradBal + rothBal;
   return denom > 0 ? (vA - vB) / denom : 0;
@@ -2685,7 +2690,8 @@ function renderSensChart(p){
   var leAge = p.isCouple && p.leJoint ? p.leJoint : p.le;
 
   // Use params from calc() directly — computed from live form values at call time.
-  var rothIn = p.rothIn;   // = cvtAmt - cvtTxFed when taxSrc==='inside'
+  var rothIn = p.rothIn;   // = cvtAmt - cvtTxTot when taxSrc==='inside'; oppCost0/rothIn precomputed once in calc(), consistent for every grid cell
+  var oppCost0 = p.oppCost0 || 0;
   var domCvtAmt = p.cvtAmt;
   var domTradBal = p.tradBal;
   var domRothBal = p.rothBal;
@@ -2699,7 +2705,7 @@ function renderSensChart(p){
       var gv = gRange[0] + gi*gStep;
       var rv = rRange[0] + ri*rStep;
       var adv = simAdvantageForGrid(gv, rv, p.tradBal, p.rothBal, rothIn,
-                                     p.cvtAmt, p.curAge, leAge, p.taxableFrac);
+                                     p.cvtAmt, p.curAge, leAge, p.taxableFrac, oppCost0);
       cells.push({gi:gi, ri:ri, gv:gv, rv:rv, adv:adv});
       vals[(N-1-ri)*N + gi] = adv; // flip for d3.contours (row 0 = top)
       if(adv < minAdv) minAdv = adv;
@@ -3985,7 +3991,7 @@ function calc(){
   // curBR (the CURRENT bracket, unaffected by this) above.
   const brOpt = computeOptTargets(income+pensionIncome+nii, ltcg, ss, status, STDD[status], nSr, nMed, taxableFrac);
   const brRoomShown = brOpt.bracketState==='ok' ? brOpt.bracketAmt : 0;
-  const rothIn  = taxSrc==='inside' ? Math.max(0, cvtAmt-cvtTxFed) : cvtAmt;
+  const rothIn  = taxSrc==='inside' ? Math.max(0, cvtAmt-cvtTxTot) : cvtAmt;
 
   // ── IRMAA (MAGI = AGI including taxable SS) ──
   const iSt      = cc.iSt;
@@ -4103,6 +4109,10 @@ function calc(){
 
   const taxSrcRow = taxSrc==='inside'
     ? '<div class="trow"><span class="tl">Amount actually entering Roth</span><span class="tv">'+fmt(rothIn)+'</span></div>'
+    : '<div class="trow"><span class="tl">Opportunity cost of taxes paid from savings</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>';
+
+  const oppCostTip = taxSrc==='outside'
+    ? '<div class="btip">💡 <strong>What this costs you:</strong> The '+fmt(cvtTxTot)+' you pay in taxes today comes out of savings that would otherwise keep growing. The projections below still let that money grow, but at an ordinary taxable-account rate — not the tax-free rate your Roth gets — so the gap between the two paths widens over time.</div>'
     : '';
 
   const brTip = (brRoomShown>0 && brRoomShown<120000)
@@ -4157,6 +4167,7 @@ function calc(){
       + stateSectionHtml
       + reloCompareHtml
       + taxSrcRow
+      + oppCostTip
       + brTip
       + exemptTip;
   } else {
@@ -4181,12 +4192,23 @@ function calc(){
   let rA=rothBal+rothIn, tA=Math.max(0,tradBal-cvtAmt);
   let rB=rothBal,        tB=tradBal;
   let rmdA=0,rmdB=0;
+  // Opportunity cost of taxes paid from outside savings: real money that left
+  // the household to fund the conversion, tracked separately from rA since it
+  // was never IRA/Roth money. Grows at DRAG (this file's existing rate for
+  // ordinary taxable-account money, already used for rmdA/rmdB below), not at
+  // the plain growth rate g — growing it at g would make it indistinguishable
+  // from a dollar compounding tax-free in Roth, silently erasing the real
+  // advantage 'outside' funding has over 'inside' (this file's own tooltip,
+  // ~line 1061, already claims that advantage exists). Stays 0 for
+  // taxSrc==='inside' — that mode already nets the full tax cost out of
+  // rothIn directly, so giving it a nonzero oppCost too would double-count.
+  let oppCost = taxSrc==='outside' ? cvtTxTot : 0;
   const DRAG=g*.72, simRetR=totalRetR*taxableFrac;  // taxable fraction applies equally in retirement
   const ages=[],vA=[],vB=[];
   const rmdYrA={},rmdYrB={};  // per-year forced withdrawals, captured for the RMD counterfactual card
   const maxAge=Math.min(100,retAge+38);
   for(let age=curAge;age<=maxAge;age++){
-    vA.push(rA+tA*(1-simRetR)+rmdA);
+    vA.push(rA+tA*(1-simRetR)+rmdA-oppCost);
     vB.push(rB+tB*(1-simRetR)+rmdB);
     ages.push(age);
     if(age>=73){
@@ -4198,6 +4220,7 @@ function calc(){
     }
     rA*=(1+g);tA*=(1+g);rmdA*=(1+DRAG);
     rB*=(1+g);tB*=(1+g);rmdB*=(1+DRAG);
+    oppCost*=(1+DRAG);
   }
   let beAge=null;
   if(vA[0]>vB[0]) beAge=ages[0];
@@ -4679,7 +4702,7 @@ function calc(){
       g:g, totalRetR:totalRetR, effR:effR, stRetR:stRetR, taxableFrac:taxableFrac,
       curAge:curAge, retAge:retAge, le:leAge, leJoint:leJoint,
       isCouple:isCouple, sex:sex, spouseAge:spouseAge, spouseSex:spouseSex,
-      stEx:stD.ex, taxSrc:taxSrc
+      stEx:stD.ex, oppCost0: taxSrc==='outside' ? cvtTxTot : 0
     }); }catch(e){ console.warn("Sensitivity chart error:", e); }
   }
   updateWayfindBar();
