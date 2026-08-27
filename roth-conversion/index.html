@@ -158,6 +158,9 @@
     .be-ages{position:relative;height:34px;margin-top:4px;font-size:.67rem;}
     .be-pin{position:absolute;transform:translateX(-50%);text-align:center;line-height:1.3;}
     .be-note{font-size:.71rem;color:var(--muted);text-align:center;margin-top:4px;}
+    .gap-spark{margin-top:.6rem;padding:.5rem .65rem .4rem;border-radius:var(--rsm);background:var(--navy-pale);border:1px solid var(--tip-bdr);}
+    .gap-spark-lbl{font-size:.72rem;color:var(--muted);text-align:center;margin-top:.35rem;line-height:1.45;}
+    .gap-spark-lbl strong{color:var(--text);}
     /* ── Tax composition bar ── */
     .tx-wrap{margin:8px 0 5px;}
     .tx-bar{display:flex;height:13px;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.1);}
@@ -2982,6 +2985,42 @@ function buildBeTimeline(curAge,beAge,leAge,survBE,isCouple,costTxt){
     +'<div class="be-tl">'+track+ages+note+'</div>';
 }
 
+// A flat colored be-tl bar asserts a verdict ("Roth wins from day one") but
+// gives no sense of HOW — a paid-today tax cost still nets out ahead. This
+// renders the actual gap between the two paths' after-tax wealth, age by
+// age, as a small inline sparkline. No new computation: reuses the same
+// vA/vB after-tax-wealth arrays already simulated for the chart further
+// down the page (see the "── PROJECTION SIMULATION ──" block above), just
+// plotted as a difference instead of two absolute lines.
+function buildGapSpark(agesArr,vAArr,vBArr,curAge,leAge){
+  var pts=[];
+  for(var i=0;i<agesArr.length;i++){
+    if(agesArr[i]<curAge) continue;
+    if(agesArr[i]>leAge) break;
+    pts.push(vAArr[i]-vBArr[i]);
+  }
+  if(pts.length<2) return '';
+  var w=600,h=64,pad=4;
+  var minV=Math.min(0,Math.min.apply(null,pts)), maxV=Math.max(0,Math.max.apply(null,pts));
+  var range=(maxV-minV)||1;
+  var xStep=(w-2*pad)/(pts.length-1);
+  var yFor=function(v){ return pad+(h-2*pad)*(1-(v-minV)/range); };
+  var zeroY=yFor(0);
+  var coords=pts.map(function(v,i){ return (pad+i*xStep).toFixed(1)+','+yFor(v).toFixed(1); }).join(' ');
+  var lineColor = pts[pts.length-1]>=0 ? 'var(--success)' : 'var(--danger)';
+  var areaPts = coords+' '+(pad+(pts.length-1)*xStep).toFixed(1)+','+zeroY.toFixed(1)+' '+pad+','+zeroY.toFixed(1);
+  var startTxt = pts[0]>=0 ? fmt(pts[0])+' ahead' : fmt(pts[0])+' behind';
+  var endTxt = pts[pts.length-1]>=0 ? fmt(pts[pts.length-1])+' ahead' : fmt(pts[pts.length-1])+' behind';
+  return '<div class="gap-spark">'
+    +'<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="width:100%;height:'+h+'px;display:block" role="img" aria-label="Roth minus traditional after-tax wealth, age '+curAge+' to '+leAge+'">'
+    +'<line x1="'+pad+'" y1="'+zeroY.toFixed(1)+'" x2="'+(w-pad)+'" y2="'+zeroY.toFixed(1)+'" stroke="var(--tip-bdr)" stroke-width="1" stroke-dasharray="3,3"/>'
+    +'<polygon points="'+areaPts+'" fill="'+lineColor+'" opacity=".14"/>'
+    +'<polyline points="'+coords+'" fill="none" stroke="'+lineColor+'" stroke-width="2"/>'
+    +'</svg>'
+    +'<div class="gap-spark-lbl">Roth &minus; traditional after-tax wealth, at your assumed rates: <strong>'+startTxt+'</strong> at age '+curAge+' &rarr; <strong>'+endTxt+'</strong> by age '+leAge+'</div>'
+    +'</div>';
+}
+
 // ── TAX COMPOSITION BAR ──
 function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName,ltcgCost){
   if(!cvtTxTot) return '';
@@ -2991,11 +3030,11 @@ function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName,ltcgCo
     segs+='<div style="width:'+w+'%;background:'+bg+'"></div>';
     lbls+='<span class="tx-lbl"><span class="tx-dot" style="background:'+bg+'"></span>'+label+'</span>';
   }
-  seg(cvtTxFed/cvtTxTot*100,'#1C3A5E','Federal'+(torpedoInc>0?' <em style=\'font-style:normal;opacity:.8\'>(incl. SS hidden tax)</em>':''));
-  seg(cvtTxSt/cvtTxTot*100,'#B06000',stName||'State');
-  seg((ltcgCost||0)/cvtTxTot*100,'#2E7D5B','Qual. div./LTCG');
+  seg(cvtTxFed/cvtTxTot*100,'#1C3A5E','Federal tax'+(torpedoInc>0?' <em style=\'font-style:normal;opacity:.8\'>(incl. SS hidden tax)</em>':''));
+  seg(cvtTxSt/cvtTxTot*100,'#B06000',(stName||'State')+' tax');
+  seg((ltcgCost||0)/cvtTxTot*100,'#2E7D5B','LTCG tax');
   seg(niitCost/cvtTxTot*100,'#7B5EA7','NIIT');
-  return '<div class="viz-hd">🧾 What makes up your '+fmt(cvtTxTot)+' cost</div>'
+  return '<div class="viz-hd">🧾 What makes up your '+fmt(cvtTxTot)+' tax bill</div>'
     +'<div class="tx-wrap"><div class="tx-bar">'+segs+'</div><div class="tx-lbls">'+lbls+'</div></div>';
 }
 
@@ -4506,6 +4545,7 @@ function calc(){
     +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'<br><span style="font-size:.76rem">Full age-by-age odds below ↓</span></div></div>'
     +'</div>'
     +buildBeTimeline(curAge,beAge,leAge??le,survBE,isCouple,fmt(cvtTxTot))
+    +buildGapSpark(ages,vA,vB,curAge,leAge??le)
     +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n,cvtTxLtcg)
     +buildBetSection(fmt(cvtTxTot),beAge,curAge,survBE,isCouple,youOrOneOfYou)
     +'<div class="verdict '+vCls+'"><div class="vi">'+vIco+'</div><div class="vb"><strong>'+vHd+'</strong><p>'+vBd+'</p></div></div>'
