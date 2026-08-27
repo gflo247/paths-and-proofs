@@ -295,6 +295,18 @@ const LOCAL_TAX_STATUSES = ['single', 'mfj', 'mfs', 'hoh'];
   }
 }
 
+{
+  // MD/IN: a single flat, mandatory county rate (not a bracket ladder) — every
+  // resident pays it, no wizard selector. Both Roth (COUNTYTAX, via
+  // gen-st-table.mjs) and Relocation (computeLocalTax) read this same field.
+  for (const code of ['MD', 'IN']) {
+    const rate = json[code]?.localTax?.county?.rate;
+    if (rate != null && (typeof rate !== 'number' || rate <= 0 || rate >= 1)) {
+      diffs.push(`${code}.localTax.county.rate is not a plausible decimal rate (0,1): ${rate}`);
+    }
+  }
+}
+
 if (diffs.length) {
   fail(`${diffs.length} field mismatch(es):\n  ` + diffs.join('\n  '));
 }

@@ -1251,20 +1251,29 @@ const RIX={
 };
 
 // NYCTAX: New York City's and Yonkers' local income tax (see states.json
-// _schema.fields["roth.localTax"]). NY-only, generated from states.json's
-// roth.localTax by _dev/gen-st-table.mjs -- do not hand-edit.
+// _schema.fields["localTax"]). NY-only, generated from states.json's top-level
+// localTax by _dev/gen-st-table.mjs -- do not hand-edit.
 const NYCTAX={
   nyc: {"single":[{"rate":0.03078,"upTo":12000},{"rate":0.03762,"upTo":25000},{"rate":0.03819,"upTo":50000},{"rate":0.03876,"upTo":null}],"mfj":[{"rate":0.03078,"upTo":21600},{"rate":0.03762,"upTo":45000},{"rate":0.03819,"upTo":90000},{"rate":0.03876,"upTo":null}],"mfs":[{"rate":0.03078,"upTo":12000},{"rate":0.03762,"upTo":25000},{"rate":0.03819,"upTo":50000},{"rate":0.03876,"upTo":null}],"hoh":[{"rate":0.03078,"upTo":14400},{"rate":0.03762,"upTo":30000},{"rate":0.03819,"upTo":60000},{"rate":0.03876,"upTo":null}]},
   yonkersRate: .1675,
 };
 
 // ORTAX: Portland Metro's Supportive Housing Services tax and Multnomah County's
-// Preschool For All tax (see states.json _schema.fields["roth.localTax"]).
-// OR-only, generated from states.json's roth.localTax by _dev/gen-st-table.mjs --
+// Preschool For All tax (see states.json _schema.fields["localTax"]).
+// OR-only, generated from states.json's top-level localTax by _dev/gen-st-table.mjs --
 // do not hand-edit.
 const ORTAX={
   metro: {"single":[{"rate":0,"upTo":125000},{"rate":0.01,"upTo":null}],"mfj":[{"rate":0,"upTo":200000},{"rate":0.01,"upTo":null}],"mfs":[{"rate":0,"upTo":125000},{"rate":0.01,"upTo":null}],"hoh":[{"rate":0,"upTo":200000},{"rate":0.01,"upTo":null}]},
   multnomah: {"single":[{"rate":0,"upTo":125000},{"rate":0.015,"upTo":250000},{"rate":0.03,"upTo":null}],"mfj":[{"rate":0,"upTo":200000},{"rate":0.015,"upTo":400000},{"rate":0.03,"upTo":null}],"mfs":[{"rate":0,"upTo":125000},{"rate":0.015,"upTo":250000},{"rate":0.03,"upTo":null}],"hoh":[{"rate":0,"upTo":200000},{"rate":0.015,"upTo":400000},{"rate":0.03,"upTo":null}]},
+};
+
+// COUNTYTAX: Maryland's and Indiana's mandatory, unconditional county income tax
+// (see states.json _schema.fields["localTax"]). A single flat rate per state, not a
+// bracket ladder -- every resident pays it, no wizard selector. Generated from
+// states.json's top-level localTax by _dev/gen-st-table.mjs -- do not hand-edit.
+const COUNTYTAX={
+  MD: .032,
+  IN: .0197,
 };
 
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
@@ -3574,9 +3583,11 @@ function computeConversionCost(cvtAmt, ctx){
     // stated practice of basing combined withholding on the median local
     // rate. Actual county rates range 2.25% (Worcester) to 3.30% (Dorchester,
     // Kent); Anne Arundel and Frederick are themselves income-tiered.
-    const MD_COUNTY_RATE = 0.032;
-    cvtTxSt = taxableCvt * (stD.cr + MD_COUNTY_RATE);
-    stMarginalDisp = stD.cr + MD_COUNTY_RATE;
+    // Sourced from states.json's localTax.county.rate via COUNTYTAX (moved off
+    // a hand-maintained literal 2026-08-27, closing the same unguarded-magic-
+    // number gap the earlier AL/AR/DE/KY/OK G5 guard work closed elsewhere).
+    cvtTxSt = taxableCvt * (stD.cr + COUNTYTAX.MD);
+    stMarginalDisp = stD.cr + COUNTYTAX.MD;
   } else if(stateCode==='IN'){
     // Indiana's county income tax is MANDATORY for every resident, same shape
     // as Maryland's above — found live during the 2026-08-25 broader audit:
@@ -3592,9 +3603,10 @@ function computeConversionCost(cvtAmt, ctx){
     // most populous) independently sitting close by at 2.02%. On a 2.95%
     // state rate, this roughly DOUBLES the effective rate for a typical
     // filer — not the minor add-on the old note implied.
-    const IN_COUNTY_RATE = 0.0197;
-    cvtTxSt = taxableCvt * (stD.cr + IN_COUNTY_RATE);
-    stMarginalDisp = stD.cr + IN_COUNTY_RATE;
+    // Sourced from states.json's localTax.county.rate via COUNTYTAX (moved off
+    // a hand-maintained literal 2026-08-27, same as MD above).
+    cvtTxSt = taxableCvt * (stD.cr + COUNTYTAX.IN);
+    stMarginalDisp = stD.cr + COUNTYTAX.IN;
   } else if(stateCode==='OR'){
     // Portland-area local taxes — unlike MD/IN's mandatory county tax, and like
     // NY's NYC/Yonkers above, these only apply to residents of specific

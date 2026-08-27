@@ -257,6 +257,30 @@ function buildOrTaxBlock(json) {
   return lines.join('\n');
 }
 
+// COUNTYTAX: a sixth sparse table — Maryland's and Indiana's MANDATORY, unconditional
+// county income tax (see states.json _schema.fields["localTax"]). Genuinely different
+// shape from NYCTAX/ORTAX: a single flat rate per state (localTax.county.rate), not a
+// bracket ladder, and every resident of MD/IN pays it (no wizard selector, unlike NY/
+// OR's opt-in localTax). Previously these two rates existed ONLY as hardcoded JS
+// literals (MD_COUNTY_RATE, IN_COUNTY_RATE) inside computeConversionCost, with zero
+// guard coverage — states.json now has the real, guard-validated source of truth, and
+// this table lets Roth read from it instead of hand-maintained magic numbers. Uses the
+// SAME multi-line-placeholder convention as NYCTAX/ORTAX above (never a one-liner) —
+// splice()'s "\n};" search would otherwise silently match a later, unrelated block.
+const CT_OPEN = 'const COUNTYTAX={';
+const CT_CLOSE = '};';
+
+function buildCountyTaxBlock(json) {
+  const lines = [CT_OPEN];
+  for (const code of ['MD', 'IN']) {
+    const rate = json[code]?.localTax?.county?.rate;
+    if (rate == null) throw new Error(`states.json: ${code} has no localTax.county.rate for COUNTYTAX`);
+    lines.push(`  ${code}: ${num(rate)},`);
+  }
+  lines.push(CT_CLOSE);
+  return lines.join('\n');
+}
+
 function splice(html, block, open, close) {
   const start = html.indexOf(open);
   if (start === -1) throw new Error(`Could not find "${open}" in ${HTML}`);
@@ -280,12 +304,14 @@ const eaBlock = buildExAgeBlock(json);
 const rixBlock = buildRixBlock(json);
 const nycBlock = buildNycTaxBlock(json);
 const orBlock = buildOrTaxBlock(json);
+const ctBlock = buildCountyTaxBlock(json);
 const withSt = splice(html, block, OPEN, CLOSE);
 const withRd = splice(withSt, rdBlock, RD_OPEN, RD_CLOSE);
 const withEa = splice(withRd, eaBlock, EA_OPEN, EA_CLOSE);
 const withRix = splice(withEa, rixBlock, RIX_OPEN, RIX_CLOSE);
 const withNyc = splice(withRix, nycBlock, NYC_OPEN, NYC_CLOSE);
-const next = splice(withNyc, orBlock, OR_OPEN, OR_CLOSE);
+const withOr = splice(withNyc, orBlock, OR_OPEN, OR_CLOSE);
+const next = splice(withOr, ctBlock, CT_OPEN, CT_CLOSE);
 
 const isCheck = process.argv.includes('--check');
 if (isCheck) {
