@@ -148,7 +148,8 @@
     .hv-damb{background:var(--amber-pale);color:var(--ink-amber);}
     /* ── Breakeven timeline ── */
     .be-tl{margin:.5rem 0 .9rem;}
-    .be-track{display:flex;height:11px;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.12);}
+    .be-track{position:relative;display:flex;height:11px;border-radius:6px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.12);}
+    .be-cost-mark{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--danger);z-index:1;}
     .be-wait{background:#D1D5DB;transition:width .6s ease;}
     .be-win{background:linear-gradient(90deg,#2D8A52,var(--success));transition:width .6s ease;}
     .be-all-grn{background:linear-gradient(90deg,#2D8A52,var(--success));border-radius:6px;height:11px;}
@@ -2622,7 +2623,7 @@ function renderMarginalChart(p){
 }
 
 function buildSensitivityHTML(){
-  return '<div class="card" style="margin-top:1.25rem">'
+  return '<div class="card" id="sensitivityCard" style="margin-top:1.25rem">'
     + '<div class="stitle">📊 How Sensitive Is the Conclusion?</div>'
     + '<div id="sensExLabel" style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem"></div>'
     + '<p style="font-size:.88rem;color:var(--muted);margin-bottom:.7rem;line-height:1.55">'
@@ -2924,24 +2925,25 @@ function buildWidowCliffHTML(status){
 
 
 // ── BREAKEVEN TIMELINE ──
-function buildBeTimeline(curAge,beAge,leAge,survBE,isCouple){
+function buildBeTimeline(curAge,beAge,leAge,survBE,isCouple,costTxt){
   var span=leAge-curAge; if(span<=0) return '';
+  var costMark='<div class="be-cost-mark"></div>';
   var track,ages,note;
   if(!beAge||beAge>leAge){
-    track='<div class="be-track"><div class="be-all-amb" style="width:100%"></div></div>';
+    track='<div class="be-track">'+costMark+'<div class="be-all-amb" style="width:100%"></div></div>';
     ages='<div class="be-ages"><span class="be-pin" style="left:0;transform:none;color:var(--muted)">Age '+curAge+'<br>now</span>'
         +'<span class="be-pin" style="right:0;left:auto;transform:none;text-align:right;color:var(--muted)">Age '+leAge+'<br>est. lifespan</span></div>';
     note='<div class="be-note">Traditional stays ahead throughout estimated lifespan</div>';
   } else if(beAge<=curAge){
-    track='<div class="be-track"><div class="be-all-grn" style="width:100%"></div></div>';
+    track='<div class="be-track">'+costMark+'<div class="be-all-grn" style="width:100%"></div></div>';
     ages='<div class="be-ages"><span class="be-pin" style="left:0;transform:none;color:var(--muted)">Age '+curAge+'<br>now</span>'
         +'<span class="be-pin" style="right:0;left:auto;transform:none;text-align:right;color:var(--muted)">Age '+leAge+'<br>est. lifespan</span></div>';
-    note='<div class="be-note" style="color:var(--success);font-weight:600">Roth wins from day one</div>';
+    note='<div class="be-note" style="color:var(--success);font-weight:600">Roth wins from day one — but '+costTxt+' was paid today either way</div>';
   } else {
     var wPct=(beAge-curAge)/span*100;
     var gPct=(leAge-beAge)/span*100;
     var winYrs=leAge-beAge;
-    track='<div class="be-track">'
+    track='<div class="be-track">'+costMark
       +'<div class="be-wait" style="width:'+wPct+'%"></div>'
       +'<div class="be-win" style="width:'+gPct+'%"></div>'
       +'</div>';
@@ -2970,6 +2972,40 @@ function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName,ltcgCo
   seg((ltcgCost||0)/cvtTxTot*100,'#2E7D5B','Qual. div./LTCG');
   seg(niitCost/cvtTxTot*100,'#7B5EA7','NIIT');
   return '<div class="tx-wrap"><div class="tx-bar">'+segs+'</div><div class="tx-lbls">'+lbls+'</div></div>';
+}
+
+// A conversion pays a certain tax cost today for a payoff that only
+// materializes if several things hold true for the rest of the person's
+// life — that asymmetry (certain cost now, contingent payoff later) doesn't
+// come through in a single verdict or in a same-day "Roth wins" bar. This
+// names the four real assumptions and states BOTH directions each one can
+// break, not just the direction that favors Roth. No new computation: every
+// value here is already computed by the caller (same as buildBeTimeline/
+// buildTaxBar above). Per CLAUDE.md's cliffs-not-optimums rule, this must
+// stay a plain explainer of asymmetric exposure — never a new blended
+// "risk-adjusted" number.
+function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
+  var row = function(label,body,clickable){
+    return '<div class="why-item'+(clickable?'':' static')+'"'+(clickable?' onclick="jumpToLever(\'sensitivityCard\',false)"':'')+'>'
+      +'<div class="why-body"><strong>'+label+':</strong> '+body+'</div>'
+      +(clickable?'<span class="why-jump">↓ details</span>':'')
+      +'</div>';
+  };
+  var rows = ''
+    + row('Future tax rates',
+        'Converting locks in today\'s rate. If rates rise later, today\'s rate becomes a bargain in hindsight — <span class="bet">helps Roth</span>. If rates fall instead, you paid more than you needed to — <span class="wor">hurts Roth</span>.')
+    + row('Investment returns',
+        'Higher returns mean more future growth escapes tax entirely — <span class="bet">helps Roth</span>. Lower returns narrow or reverse that advantage — <span class="wor">hurts Roth</span>. See exactly how much below.', true)
+    + row(isCouple?'Your longevity':'Your own longevity',
+        'Living longer means more years of tax-free compounding and more required withdrawals avoided — <span class="bet">helps Roth</span>. Dying sooner than expected means paying tax on money that may never have needed to be touched — <span class="wor">hurts Roth</span>, a real loss, not just a smaller win.'
+        +(beAge&&beAge>curAge&&survBE?' A real number for this: <strong>'+Math.round(survBE*100)+'%</strong> chance '+youOrOneOfYou+' live'+(isCouple?'':'s')+' to age '+beAge+', when the wait ends.':''))
+    + row('Spend-down vs. heirs',
+        'Roth IRAs pass to heirs income-tax-free — <span class="bet">helps Roth</span>, though most non-spouse heirs still must empty the account within 10 years of your death, a real deadline even though the withdrawals themselves owe no tax (<a href="https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-beneficiary" target="_blank" rel="noopener" style="color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px">IRS rules for beneficiaries</a>). Traditional IRAs pass the tax bill along with the inheritance instead. Needing to spend the account down yourself — a long-term-care cost, say — favors traditional too, since it\'s only ever taxed on what\'s actually withdrawn — <span class="wor">hurts Roth</span>.');
+  return '<div class="card" id="betCard" style="margin-top:1.25rem;margin-bottom:1.25rem">'
+    +'<div class="stitle">🎲 The Rest-of-Life Bet</div>'
+    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.6rem;line-height:1.55"><strong style="color:var(--text)">'+costTxt+'</strong> is a certain cost, paid today. Everything after that is a bet that these four things go your way over the rest of '+(isCouple?'your lives':'your life')+':</p>'
+    +'<div class="why-list">'+rows+'</div>'
+    +'</div>';
 }
 
 
@@ -4238,7 +4274,7 @@ function calc(){
     if(stD.ex && !exQualifies && taxSrc==='outside'){
       // Chart would be misleading: it can't capture the state exemption cost.
       // Show a clear explanation card instead.
-      sensitivityHTML = '<div class="card" style="margin-top:1.25rem">'
+      sensitivityHTML = '<div class="card" id="sensitivityCard" style="margin-top:1.25rem">'
         +'<div class="stitle">📊 How Sensitive Is the Conclusion?</div>'
         +'<div class="alert aamb" style="margin-top:.6rem">'
         +'<strong>Sensitivity chart not shown for this scenario.</strong> '
@@ -4298,11 +4334,7 @@ function calc(){
       +'</div>';
   } else {
     nextBody='<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.65">The math is genuinely close for your situation \u2014 within the margin of your assumptions. That\'s not a failure of the calculator; it means the decision turns on things that are hard to quantify:</p>'
-      +'<ul style="font-size:.87rem;color:var(--muted);line-height:1.7;padding-left:1.25rem;margin-bottom:.85rem">'
-      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">How long you live.</strong> The longer you live, the more the Roth\'s tax-free compounding helps. The sensitivity chart above shows you what happens under different growth and longevity assumptions.</li>'
-      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">Whether tax rates rise.</strong> Converting now locks in today\'s rates. If federal or state tax rates increase later, today\'s rate becomes a bargain in hindsight.</li>'
-      +'<li><strong style="color:var(--text)">Your heirs.</strong> Roth IRAs pass to heirs income-tax-free — but most non-spouse heirs still must empty the account within 10 years of your death, a real deadline even though the withdrawals themselves owe no tax (<a href="https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-beneficiary" target="_blank" rel="noopener" style="color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px">IRS rules for beneficiaries</a>). Traditional IRAs pass the tax bill along with the inheritance. If leaving money is part of your plan, this tips toward Roth.</li>'
-      +'</ul>'
+      +'<p style="font-size:.87rem;color:var(--muted);line-height:1.7;margin-bottom:.85rem">See <strong><a onclick="jumpToLever(\'betCard\',false)" style="color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px;cursor:pointer">"The Rest-of-Life Bet"</a></strong> above for how longevity, future tax rates, investment returns, and heirs vs. spend-down each cut for or against converting.</p>'
       +'<div class="alert anvy" style="font-size:.85rem">'
       +'<div style="margin-top:.85rem"><p style="font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.4rem">Questions to bring to your advisor:</p>'
       +'<ul style="font-size:.84rem;color:var(--muted);line-height:1.65;padding-left:1.25rem;margin-bottom:.5rem">'
@@ -4435,8 +4467,9 @@ function calc(){
     +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Not in range')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
     +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'<br><span style="font-size:.76rem">Full age-by-age odds below ↓</span></div></div>'
     +'</div>'
-    +buildBeTimeline(curAge,beAge,leAge??le,survBE,isCouple)
+    +buildBeTimeline(curAge,beAge,leAge??le,survBE,isCouple,fmt(cvtTxTot))
     +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n,cvtTxLtcg)
+    +buildBetSection(fmt(cvtTxTot),beAge,curAge,survBE,isCouple,youOrOneOfYou)
     +'<div class="verdict '+vCls+'"><div class="vi">'+vIco+'</div><div class="vb"><strong>'+vHd+'</strong><p>'+vBd+'</p></div></div>'
     +marginalChartHTML
     +sensitivityHTML
