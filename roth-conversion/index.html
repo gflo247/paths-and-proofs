@@ -4263,7 +4263,7 @@ function calc(){
 
   // ── "What to do next" card ──
   var nextBody='';
-  if(vCls==='green'){
+  if(vCls==='good'){
     nextBody='<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.65">Based on your numbers, converting looks like the better path. Here\'s what actually doing a Roth conversion involves \u2014 it\'s simpler than it sounds:</p>'
       +'<ol style="font-size:.87rem;color:var(--muted);line-height:1.7;padding-left:1.25rem;margin-bottom:.85rem">'
       +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">Contact your IRA provider.</strong> That\'s the company holding your IRA \u2014 Fidelity, Vanguard, Schwab, TIAA, or similar. Ask them about a Roth conversion. Most have an online form or a short phone call.</li>'
@@ -4280,7 +4280,7 @@ function calc(){
       +'</ul></div>'
       +'<strong>Who to talk to:</strong> A fee-only financial advisor or CPA can sequence conversions around Social Security, Medicare, and ACA subsidies \u2014 factors this tool can\'t fully model. Look for "fee-only" so they\'re paid by you, not by commissions.'
       +'</div>';
-  } else if(vCls==='amber'){
+  } else if(vCls==='bad'){
     nextBody='<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.65">Under your current assumptions, keeping the money in traditional comes out ahead. A few things worth knowing before you close this tab:</p>'
       +'<ul style="font-size:.87rem;color:var(--muted);line-height:1.7;padding-left:1.25rem;margin-bottom:.85rem">'
       +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">This result can change.</strong> A drop in income, a move to a different state, or a change in tax law can flip the verdict. Bookmark this and check back when circumstances shift.</li>'
