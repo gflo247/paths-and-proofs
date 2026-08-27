@@ -129,6 +129,73 @@ check(
   survivorBenefit(3000, 62, SURVIVOR_FULL_RETIREMENT_AGE)
 );
 
+// --- Survivor benefit when the deceased died BEFORE ever filing (2026-08-27 fix) --
+// 20 CFR 404.338(a)-(c): the early-claim reduction and RIB-LIM only apply if the
+// deceased actually chose to receive benefits before FRA. If they died without ever
+// filing, neither applies -- base is full PIA (death before their own FRA) or PIA
+// plus actually-accrued delayed credits (death after FRA, still before filing).
+// Previously unreachable: lifeHigh/lifeLow floored at 70, and the two compared
+// plans only use claim ages 62/70, so the deceased always reached their claim age
+// before the (then 70-floored) death-age sliders could let them die.
+
+check(
+  'survivorBenefit: died before FRA, before ever filing -> full PIA, no reduction',
+  survivorBenefit(3000, 70, 70, 55),
+  3000
+);
+check(
+  'survivorBenefit: died after FRA, before filing -> PIA + accrued DRCs only (not the full delayed-to-70 amount)',
+  survivorBenefit(3000, 70, 70, 68),
+  3000 * (1 + 12 * (2 / 3) / 100) // 3240, NOT workerBenefit(3000,70)=3720
+);
+check(
+  'survivorBenefit: explicitly passing deceasedDeathAge >= claimAge reproduces the RIB-LIM formula exactly',
+  survivorBenefit(3000, 62, 70, 62),
+  3000 * 0.825
+);
+check(
+  'survivorBenefit: deceasedDeathAge omitted still defaults to "already filed" (backward compatible)',
+  survivorBenefit(3000, 62, 70),
+  survivorBenefit(3000, 62, 70, 90)
+);
+
+// householdMonthly wired to the "died before filing" branch, with a real deathAge.
+{
+  const v = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62 };
+  const gotBeforeFRA = householdMonthly(v, false, true, 65, 70, 65, Infinity);
+  check('householdMonthly: high died at 65 (before FRA, before filing at 70) -- survivor gets full PIA, not the assumed-filed amount', gotBeforeFRA, 3000);
+
+  const gotAfterFRA = householdMonthly(v, false, true, 68, 70, 68, Infinity);
+  check('householdMonthly: high died at 68 (after FRA, before filing at 70) -- survivor gets PIA + accrued DRCs only', gotAfterFRA, 3240);
+}
+
+// compute(): lifeHigh now reachable in 60-69 (previously floored at 70) -- exercises
+// the fix end-to-end through planValueBySecondDeath's death-age derivation.
+{
+  const case1 = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62, lifeHigh: 65, lifeLow: 90, discountRate: 0 };
+  const r1 = compute(case1);
+  check('compute(): lifeHigh=65 (died before FRA, before filing) gives the corrected breakeven age', parseFloat(r1.summary[3].value.replace('age ', '')), 78);
+
+  const case1b = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62, lifeHigh: 68, lifeLow: 90, discountRate: 0 };
+  const r1b = compute(case1b);
+  check('compute(): lifeHigh=68 (died after FRA, before filing) gives the corrected breakeven age', parseFloat(r1b.summary[3].value.replace('age ', '')), 86);
+}
+
+// computeSurface(): a grid cell in the newly-opened 60-70 range reflects the
+// corrected formula, and the grid itself now starts at 60 (matching the main
+// chart's new floor). Also confirms the degenerate "both die before AGE_START"
+// case (newly reachable even at ageGap=0) doesn't crash or produce NaN.
+{
+  const plan = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62, discountRate: 0, ageGap: 0 };
+  const { ages, cells } = computeSurface(plan, 5);
+  if (!ages.includes(60)) { fail++; console.log('FAIL  computeSurface(): ages grid should now start at 60'); } else pass++;
+  const cell = cells.find((c) => c.highDeath === 65 && c.lowDeath === 90);
+  check('computeSurface(): cell in the 60-70 range reflects the died-before-filing fix', cell.margin, 76647.234375, 0.5);
+
+  const degenerate = cells.find((c) => c.highDeath === 60 && c.lowDeath === 60);
+  check('computeSurface(): both dying before AGE_START gives margin 0, not NaN/crash', degenerate.margin, 0);
+}
+
 // --- householdMonthly wiring -------------------------------------------------
 
 const values = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62 };

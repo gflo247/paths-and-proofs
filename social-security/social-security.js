@@ -26,6 +26,11 @@
 //     larger of the deceased's actual reduced benefit or 82.5% of their PIA,
 //     whenever the deceased claimed before their own full retirement age.
 //     SSA POMS GN 00615.320
+//   - If the deceased died WITHOUT ever filing, RIB-LIM and the early-claim
+//     reduction never apply at all -- the survivor's base is 100% of PIA
+//     (death before the deceased's own full retirement age) or PIA plus
+//     delayed credits actually earned by the death date (after): CFR 404.338(a)-(c)
+//     https://www.ssa.gov/OP_Home/cfr20/404/404-0338.htm
 //   - 50% spousal cap, no delayed credits on spousal benefits:
 //     https://www.ssa.gov/benefits/retirement/planner/applying7.html
 
@@ -88,25 +93,54 @@ export function spousalBenefit(partnerPrimaryInsuranceAmount, claimAge) {
 
 /**
  * A survivor's monthly benefit inherited from a deceased spouse's earnings
- * record, at the survivor's current age. Two SSA rules combine:
+ * record, at the survivor's current age. The BASE amount depends on whether
+ * the deceased ever actually filed for their own benefit before dying --
+ * CFR 404.338(a)-(c) draws a hard line at the moment of filing:
  *
- *   1. RIB-LIM (the widow(er) limit), SSA POMS GN 00615.320: the survivor's
- *      base amount is the LARGER of what the deceased was actually receiving
- *      (already reduced, if they claimed before their own full retirement
- *      age) or 82.5% of the deceased's primary insurance amount. Applying
- *      this as an unconditional max() is deliberate, not a missing gate: if
- *      the deceased delayed past their own full retirement age, their actual
- *      benefit already exceeds 82.5% of PIA, so the max() is a no-op exactly
- *      when RIB-LIM shouldn't apply.
- *   2. The survivor's OWN age-based reduction, CFR 404.410(c)(1): a third,
- *      proportional formula distinct from the stepped worker/spousal ones
- *      above -- 0% at the survivor's own full retirement age (a separate,
- *      younger table than worker/spousal FRA -- see SURVIVOR_FULL_RETIREMENT_AGE),
- *      scaling linearly to 28.5% at the earliest survivor-claiming age of 60.
+ *   A. The deceased filed before dying (deceasedDeathAge >= deceasedClaimAge --
+ *      the default when deceasedDeathAge is omitted): RIB-LIM applies, SSA
+ *      POMS GN 00615.320. The base is the LARGER of what the deceased was
+ *      actually receiving (already reduced, if they claimed before their own
+ *      full retirement age) or 82.5% of PIA. Applying this as an
+ *      unconditional max() is deliberate, not a missing gate: if the deceased
+ *      delayed past their own full retirement age, their actual benefit
+ *      already exceeds 82.5% of PIA, so the max() is a no-op exactly when
+ *      RIB-LIM shouldn't apply.
+ *   B. The deceased died WITHOUT ever filing: CFR 404.338(c)'s early-claim
+ *      reduction never triggers at all -- it only applies "if the insured
+ *      chooses to receive old-age benefits before full retirement age," which
+ *      requires having filed. RIB-LIM never applies either (nothing to floor
+ *      against). The base is 100% of PIA if death came before the deceased's
+ *      own full retirement age (no reduction, no delayed credits), or PIA
+ *      plus whatever delayed retirement credits had actually accrued by the
+ *      death date otherwise -- reusing workerBenefit()'s delayed-credit
+ *      formula is correct here since that math doesn't care whether the age
+ *      passed in was an intentional claim or a death date.
+ *
+ *   NOTE: this makes filing a genuine one-month cliff, not smoothing error --
+ *   dying the month before a planned claim age can pay the survivor MORE than
+ *   dying the month after, because filing itself is what the regulation uses
+ *   to trigger the early-claim reduction. That is the actual shape of the law.
+ *
+ * On top of whichever base applies: the survivor's OWN age-based reduction,
+ * CFR 404.410(c)(1) -- a third, proportional formula distinct from the
+ * stepped worker/spousal ones above -- 0% at the survivor's own full
+ * retirement age (a separate, younger table than worker/spousal FRA -- see
+ * SURVIVOR_FULL_RETIREMENT_AGE), scaling linearly to 28.5% at the earliest
+ * survivor-claiming age of 60. This reduction is orthogonal to whether the
+ * deceased filed -- it always applies.
  */
-export function survivorBenefit(deceasedPia, deceasedClaimAge, survivorCurrentAge) {
-  const deceasedActual = workerBenefit(deceasedPia, deceasedClaimAge);
-  const base = Math.max(deceasedActual, deceasedPia * 0.825);
+export function survivorBenefit(deceasedPia, deceasedClaimAge, survivorCurrentAge, deceasedDeathAge = Infinity) {
+  const hasFiled = deceasedDeathAge >= deceasedClaimAge;
+  let base;
+  if (hasFiled) {
+    const deceasedActual = workerBenefit(deceasedPia, deceasedClaimAge);
+    base = Math.max(deceasedActual, deceasedPia * 0.825);
+  } else {
+    base = deceasedDeathAge >= FULL_RETIREMENT_AGE
+      ? workerBenefit(deceasedPia, Math.min(deceasedDeathAge, 70))
+      : deceasedPia;
+  }
 
   const age = Math.max(60, Math.min(survivorCurrentAge, SURVIVOR_FULL_RETIREMENT_AGE));
   const monthsEarly = Math.round((SURVIVOR_FULL_RETIREMENT_AGE - age) * 12);
@@ -155,13 +189,13 @@ export const inputs = [
   {
     id: 'lifeHigh', type: 'slider',
     label: 'Higher earner: life expectancy',
-    min: 70, max: 100, step: 1, default: 84, unit: 'years',
+    min: 60, max: 100, step: 1, default: 84, unit: 'years',
     help: 'A planning age for the higher earner. Marked on the chart \u2014 not a prediction.',
   },
   {
     id: 'lifeLow', type: 'slider',
     label: 'Lower earner: life expectancy',
-    min: 70, max: 100, step: 1, default: 87, unit: 'years',
+    min: 60, max: 100, step: 1, default: 87, unit: 'years',
     help: 'A planning age for the lower earner. Marked on the chart \u2014 not a prediction.',
   },
   {
@@ -200,7 +234,7 @@ const AGE_END = 100;    // chart horizon
  * not simply whatever the deceased happened to be receiving). This survivor
  * rule is what ties the higher earner\u2019s delay decision to the second death.
  */
-export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lowCurrentAge) {
+export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lowCurrentAge, highDeathAge = Infinity, lowDeathAge = Infinity) {
   const highWorker = highCurrentAge >= values.claimHigh ? workerBenefit(values.piaHigh, values.claimHigh) : 0;
   const lowWorker  = lowCurrentAge  >= values.claimLow  ? workerBenefit(values.piaLow,  values.claimLow)  : 0;
 
@@ -232,7 +266,7 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
     // benefit yet -- survivorBenefit()'s own age-reduction formula clamps up
     // to 60 rather than gating this, so callers must check it explicitly.
     const inherited = highCurrentAge >= SURVIVOR_MIN_CLAIM_AGE
-      ? survivorBenefit(values.piaLow, values.claimLow, highCurrentAge)
+      ? survivorBenefit(values.piaLow, values.claimLow, highCurrentAge, lowDeathAge)
       : 0;
     return Math.max(highWorker, inherited);
   }
@@ -240,7 +274,7 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
     // High has died; low survives and may inherit a survivor benefit off high's
     // record, subject to the same SURVIVOR_MIN_CLAIM_AGE eligibility floor.
     const inherited = lowCurrentAge >= SURVIVOR_MIN_CLAIM_AGE
-      ? survivorBenefit(values.piaHigh, values.claimHigh, lowCurrentAge)
+      ? survivorBenefit(values.piaHigh, values.claimHigh, lowCurrentAge, highDeathAge)
       : 0;
     return Math.max(lowWorker, inherited);
   }
@@ -264,6 +298,24 @@ function planValueBySecondDeath(values, firstDeathAge, firstIsHigh, ageGap) {
   const firstDeathMonth = Math.round((firstDeathAge - AGE_START) * 12);
   const i = Math.pow(1 + r, 1 / 12) - 1;
 
+  // The death age of whoever dies first, in THEIR OWN age-frame -- passed
+  // into householdMonthly so survivorBenefit can tell whether they died
+  // before or after their own claim age. The survivor's own eventual death
+  // is the loop's upper bound (secondDeathAge), never reached inside this
+  // loop, so Infinity for them is correct (unused -- they never hit the
+  // "deceased" branch here). This equals values.lifeHigh only when the
+  // firstIsHigh hypothesis agrees with which life expectancy is actually
+  // smaller (lifeHighOnClock <= lifeLowOnClock); compute() tests BOTH
+  // hypotheses unconditionally, so when a hypothesis disagrees with that,
+  // highDeathAge is deliberately the hypothesis's own generic first-death
+  // anchor (firstDeathAge, shifted into high's frame), not high's separately
+  // -stated life expectancy -- consistent with firstDeathAge being a
+  // role-agnostic anchor everywhere else in compute(). This is the
+  // internally-consistent choice: the PV timeline and the filed/not-filed
+  // determination must agree within one hypothesis, and this keeps them so.
+  const highDeathAge = firstIsHigh ? firstDeathAge + ageGap : Infinity;
+  const lowDeathAge = firstIsHigh ? Infinity : firstDeathAge;
+
   // The x-axis is the SECOND death \u2014 only defined at or after the first death.
   // For each second-death age, sum the FULL household timeline from age 62:
   // both-alive years first, then the survivor years. No leading zeros \u2014 the
@@ -283,7 +335,7 @@ function planValueBySecondDeath(values, firstDeathAge, firstIsHigh, ageGap) {
         // survivor lives until secondDeathAge (the loop bound).
         const hAlive = firstIsHigh ? m < firstDeathMonth : true;
         const lAlive = firstIsHigh ? true : m < firstDeathMonth;
-        const monthly = householdMonthly(values, hAlive, lAlive, highAge, lowAge);
+        const monthly = householdMonthly(values, hAlive, lAlive, highAge, lowAge, highDeathAge, lowDeathAge);
         pv += i === 0 ? monthly : monthly / Math.pow(1 + i, m);
       }
       return { x: secondDeathAge, y: pv };
@@ -499,14 +551,14 @@ export function computeSurface(values, stepYears = 2) {
       const highAge = lowAge + ageGap;
       const hAlive = m < highDeathMonth;
       const lAlive = m < lowDeathMonth;
-      const monthly = householdMonthly(plan, hAlive, lAlive, highAge, lowAge);
+      const monthly = householdMonthly(plan, hAlive, lAlive, highAge, lowAge, highDeathAge, lowDeathAge);
       pv += i === 0 ? monthly : monthly / Math.pow(1 + i, m);
     }
     return pv;
   }
 
   const ages = [];
-  for (let a = 70; a <= AGE_END + 1e-9; a += stepYears) ages.push(a);
+  for (let a = 60; a <= AGE_END + 1e-9; a += stepYears) ages.push(a);
 
   const cells = [];
   for (const hd of ages) {
