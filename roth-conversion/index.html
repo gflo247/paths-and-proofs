@@ -158,7 +158,11 @@
     .be-ages{position:relative;height:34px;margin-top:4px;font-size:.67rem;}
     .be-pin{position:absolute;transform:translateX(-50%);text-align:center;line-height:1.3;}
     .be-note{font-size:.71rem;color:var(--muted);text-align:center;margin-top:4px;}
-    .gap-spark{margin-top:.6rem;padding:.5rem .65rem .4rem;border-radius:var(--rsm);background:var(--navy-pale);border:1px solid var(--tip-bdr);}
+    .gap-spark{margin:.6rem 0 .9rem;padding:.5rem .65rem .4rem;border-radius:var(--rsm);background:var(--navy-pale);border:1px solid var(--tip-bdr);}
+    .gap-spark-chart{position:relative;}
+    .gap-spark-zero,.gap-spark-end{position:absolute;transform:translateY(-50%);font-size:.65rem;line-height:1;white-space:nowrap;background:var(--navy-pale);padding:0 4px;}
+    .gap-spark-zero{left:-2px;color:var(--muted);}
+    .gap-spark-end{right:-2px;font-weight:700;}
     .gap-spark-lbl{font-size:.72rem;color:var(--muted);text-align:center;margin-top:.35rem;line-height:1.45;}
     .gap-spark-lbl strong{color:var(--text);}
     /* ── Tax composition bar ── */
@@ -3011,12 +3015,24 @@ function buildGapSpark(agesArr,vAArr,vBArr,curAge,leAge){
   var areaPts = coords+' '+(pad+(pts.length-1)*xStep).toFixed(1)+','+zeroY.toFixed(1)+' '+pad+','+zeroY.toFixed(1);
   var startTxt = pts[0]>=0 ? fmt(pts[0])+' ahead' : fmt(pts[0])+' behind';
   var endTxt = pts[pts.length-1]>=0 ? fmt(pts[pts.length-1])+' ahead' : fmt(pts[pts.length-1])+' behind';
+  // Labels are HTML overlays, not SVG <text> — the SVG uses
+  // preserveAspectRatio="none" so it can stretch to the card's full width
+  // while keeping a fixed px height; text glyphs would visibly distort
+  // under that non-uniform scaling, but a polyline/polygon's coordinates
+  // don't, so only those stay inside the <svg>. Position is expressed as a
+  // % of h, which lines up with the SVG regardless of its rendered width.
+  var zeroPct=(zeroY/h*100).toFixed(1);
+  var endPct=(yFor(pts[pts.length-1])/h*100).toFixed(1);
   return '<div class="gap-spark">'
-    +'<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="width:100%;height:'+h+'px;display:block" role="img" aria-label="Roth minus traditional after-tax wealth, age '+curAge+' to '+leAge+'">'
+    +'<div class="gap-spark-chart" style="height:'+h+'px">'
+    +'<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="width:100%;height:100%;display:block" role="img" aria-label="Roth minus traditional after-tax wealth, age '+curAge+' to '+leAge+'">'
     +'<line x1="'+pad+'" y1="'+zeroY.toFixed(1)+'" x2="'+(w-pad)+'" y2="'+zeroY.toFixed(1)+'" stroke="var(--tip-bdr)" stroke-width="1" stroke-dasharray="3,3"/>'
     +'<polygon points="'+areaPts+'" fill="'+lineColor+'" opacity=".14"/>'
     +'<polyline points="'+coords+'" fill="none" stroke="'+lineColor+'" stroke-width="2"/>'
     +'</svg>'
+    +'<span class="gap-spark-zero" style="top:'+zeroPct+'%">$0</span>'
+    +'<span class="gap-spark-end" style="top:'+endPct+'%;color:'+lineColor+'">'+endTxt+'</span>'
+    +'</div>'
     +'<div class="gap-spark-lbl">Roth &minus; traditional after-tax wealth, at your assumed rates: <strong>'+startTxt+'</strong> at age '+curAge+' &rarr; <strong>'+endTxt+'</strong> by age '+leAge+'</div>'
     +'</div>';
 }
@@ -4534,6 +4550,14 @@ function calc(){
     +'<div class="why-list">'+whyItems.join('')+'</div>'
     +'</div>';
 
+  // leAge below (line ~4652) is declared with `var`, so it's hoisted but
+  // still undefined here — leAge??le at this point always falls through to
+  // the individual `le`, silently skipping the joint-survivor `leJoint` for
+  // couples. Computing the real value directly, once, for both consumers
+  // that need it (buildBeTimeline and buildGapSpark, right below) rather
+  // than relying on that later declaration.
+  const betLifespan = isCouple && leJoint ? leJoint : le;
+
   $('resultsWrap').innerHTML =
     '<div class="fade-up">'
     +'<div class="disclaimer">📌 <strong>Planning tool, not financial advice.</strong> This calculator models common tax rules but cannot see your full picture — estate goals, healthcare subsidies, future moves, charitable plans, and income changes all matter. State rates are approximate. Use this to understand the landscape and size the conversation with your CPA or financial advisor, not to make the decision alone.</div>'
@@ -4544,8 +4568,8 @@ function calc(){
     +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Not in range')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
     +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'<br><span style="font-size:.76rem">Full age-by-age odds below ↓</span></div></div>'
     +'</div>'
-    +buildBeTimeline(curAge,beAge,leAge??le,survBE,isCouple,fmt(cvtTxTot))
-    +buildGapSpark(ages,vA,vB,curAge,leAge??le)
+    +buildBeTimeline(curAge,beAge,betLifespan,survBE,isCouple,fmt(cvtTxTot))
+    +buildGapSpark(ages,vA,vB,curAge,betLifespan)
     +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n,cvtTxLtcg)
     +buildBetSection(fmt(cvtTxTot),beAge,curAge,survBE,isCouple,youOrOneOfYou)
     +'<div class="verdict '+vCls+'"><div class="vi">'+vIco+'</div><div class="vb"><strong>'+vHd+'</strong><p>'+vBd+'</p></div></div>'
