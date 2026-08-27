@@ -1859,6 +1859,13 @@
    "ex": false,
    "note": "Flat 2.95% for 2026 (cut from 3.05%, scheduled to keep falling toward ~2.9% in 2027), applied to IRA and conversion income. Social Security is exempt. Every one of Indiana's 92 counties ALSO levies a mandatory local income tax -- not a minor add-on: rates range 0.50% to 3.00% (Indiana DOR Departmental Notice #1, effective Jan. 1, 2026), with a median of ~1.97% across all 92 counties and Marion County (Indianapolis, the state's most populous) at 2.02% -- roughly doubling the effective rate for a typical filer. This calculator applies that ~1.97% median county rate explicitly on top of the state rate, the same mandatory-local-tax pattern used for Maryland's county tax."
   },
+  "localTax": {
+   "county": {
+    "rate": 0.0197,
+    "note": "Median across all 92 Indiana counties (Indiana DOR Departmental Notice #1, effective Jan. 1, 2026); range 0.50% (Porter) to 3.00% (Randolph); Marion County (Indianapolis, the state's most populous) close by at 2.02%. Mandatory for every IN resident, unconditional -- unlike NY/OR's opt-in localTax shapes, there is no selector for this.",
+    "source": "Indiana DOR Departmental Notice #1 (effective Jan. 1, 2026), in.gov/dor"
+   }
+  },
   "taxRules": {
    "bracketsByStatus": {
     "single": [
@@ -2429,6 +2436,13 @@
    "ex": false,
    "note": "State 2% to 6.5% (2026 H.B. 352/FY26 budget added new 6.25%/6.5% top brackets over $500k/$1M single); a conversion near $100k lands at the 4.75% state rate used here. Maryland's county income tax is MANDATORY for every resident (unlike Michigan's opt-in city tax) and applies on top — this calculator adds 3.20%, the median AND modal rate across all 24 Maryland jurisdictions (23 counties + Baltimore City) per the Comptroller's 2026 local withholding table, since 12 of the 24 sit at the 3.20% ceiling. Actual county rates range 2.25% (Worcester) to 3.30% (Dorchester, Kent) — check your own county if it's not near 3.20%. Important: Maryland's pension exclusion (about $36k at 65+) covers 401(k)/403(b)/pension income but EXCLUDES all IRAs, so a Roth conversion gets no shelter and is fully taxable. Social Security is exempt."
   },
+  "localTax": {
+   "county": {
+    "rate": 0.032,
+    "note": "Median AND modal rate across all 24 Maryland jurisdictions (23 counties + Baltimore City) per the Comptroller's 2026 local withholding table -- 12 of the 24 sit at the 3.20% ceiling. Actual range 2.25% (Worcester) to 3.30% (Dorchester, Kent); Anne Arundel and Frederick are themselves income-tiered. Mandatory for every MD resident, unconditional -- unlike NY/OR's opt-in localTax shapes, there is no selector for this.",
+    "source": "MD Comptroller 2026 local income tax rate table (marylandtaxes.gov)"
+   }
+  },
   "taxRules": {
    "bracketsByStatus": {
     "single": [
@@ -2625,7 +2639,7 @@
     "has": true,
     "kind": "both",
     "exemption": 5000000,
-    "note": "Estate tax ($5M exemption) AND inheritance tax on non-lineal heirs. Plus mandatory county income tax 2.25-3.30% (Tier-2: not modeled)."
+    "note": "Estate tax ($5M exemption) AND inheritance tax on non-lineal heirs."
    }
   }
  },
@@ -4326,7 +4340,7 @@
   },
   "taxContext": {
    "salesTaxRate": 0.04,
-   "salesTaxNote": "state 4%; local add-ons to ~8.5% (NYC 8.875%); groceries, prescriptions exempt. NYC/Yonkers residents owe LOCAL income tax (Tier-2: not modeled)",
+   "salesTaxNote": "state 4%; local add-ons to ~8.5% (NYC 8.875%); groceries, prescriptions exempt",
    "propertyTaxRateMedian": 0.014,
    "estateTax": {
     "has": true,

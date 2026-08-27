@@ -9,8 +9,11 @@
 //   so drift is structurally impossible.
 //
 //   The generated RELO entry is the relocation-layer view the engine consumes:
-//     KEY: { name, taxRules, taxContext }
-//   (taxRules drives computeStateIncomeTax; taxContext is the disclosed Tier-2 panel.)
+//     KEY: { name, taxRules, taxContext, localTax? }
+//   (taxRules drives computeStateIncomeTax; taxContext is the disclosed Tier-2 panel;
+//   localTax — present only for NY/OR/MD/IN — drives computeLocalTax. localTax lives
+//   as a top-level key in states.json, sibling to facts/roth/taxRules/taxContext, NOT
+//   nested under roth — Roth's own gen-st-table.mjs reads the same top-level key.)
 //
 // USAGE:
 //   node _dev/gen-relo-data.mjs            # rewrite the RELO block in place
@@ -34,6 +37,7 @@ function buildBlock(json) {
       name: s.facts.name,
       taxRules: s.taxRules,
       taxContext: s.taxContext,
+      ...(s.localTax ? { localTax: s.localTax } : {}),
     };
   }
   // Compact but readable: one state per line keeps diffs legible.

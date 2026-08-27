@@ -7,13 +7,18 @@
  * @typedef {Object} InputControl
  * @property {string} id        Key written into the values object.
  * @property {string} label     User-facing. Spell every term out in full.
- * @property {'slider'|'number'|'toggle'} type
+ * @property {'slider'|'number'|'toggle'|'select'} type
  * @property {number} [min]
  * @property {number} [max]
  * @property {number} [step]
- * @property {number|boolean} default
+ * @property {number|boolean|string} default
  * @property {string} [unit]    e.g. '$', '%', 'years'
  * @property {string} [help]    One-line plain-English explanation.
+ * @property {{value:string,label:string}[]} [options]   Required when type is 'select'.
+ * @property {boolean} [custom]   The page renders and wires this control itself
+ *   (conditional visibility, non-standard markup) instead of core/controls.js
+ *   auto-rendering it. Still seeded into values/presets/compute like any other
+ *   input; the page must push changes via the mount() API's setValue(id, value).
  */
 
 /**

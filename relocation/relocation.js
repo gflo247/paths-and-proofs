@@ -12,7 +12,7 @@
 // difference is small, the tool says so plainly: income tax should not drive the
 // decision, and the context beside it may matter more.
 
-import { computeStateIncomeTax } from './relo-engine.mjs';
+import { computeStateIncomeTax, computeLocalTax } from './relo-engine.mjs';
 import { findCrossover } from '../core/finance.js';
 
 // RELO is inlined into index.html (generated from states.json). Read it off window
@@ -48,6 +48,30 @@ export const inputs = [
   { id: 'capGains',       type: 'number', label: 'Capital gains per year',       min: 0, max: 500000, step: 1000, default: 10000, unit: '$' },
   { id: 'moveCost',       type: 'number', label: 'One-time cost to move',        min: 0, max: 200000, step: 1000, default: 15000, unit: '$',
     help: 'Everything the move itself costs — movers, travel, and any costs to sell one home and buy another.' },
+  // custom:true — the page renders and wires these itself (conditional
+  // visibility based on fromState/toState; see relocation/index.html), not
+  // core/controls.js. Still real inputs: seeded into values, included in
+  // presets/compute like any other. Only NY and OR have an opt-in local-tax
+  // selector — MD/IN's county tax is mandatory and unconditional, so it needs
+  // no selector at all (see computeLocalTax).
+  { id: 'fromLocalTax', type: 'select', custom: true, default: '',
+    label: 'Local tax where you live now',
+    options: [
+      { value: '', label: 'None' },
+      { value: 'nyc', label: 'New York City' },
+      { value: 'yonkers', label: 'Yonkers, NY' },
+      { value: 'metro', label: 'Portland Metro area (OR)' },
+      { value: 'multnomah', label: 'Multnomah County, OR' },
+    ] },
+  { id: 'toLocalTax', type: 'select', custom: true, default: '',
+    label: 'Local tax where you would move',
+    options: [
+      { value: '', label: 'None' },
+      { value: 'nyc', label: 'New York City' },
+      { value: 'yonkers', label: 'Yonkers, NY' },
+      { value: 'metro', label: 'Portland Metro area (OR)' },
+      { value: 'multnomah', label: 'Multnomah County, OR' },
+    ] },
 ];
 
 export const presets = {
@@ -61,8 +85,19 @@ const pct = (r) => `${(r * 100).toFixed(2)}%`;
 
 function stateTax(code, status, income) {
   const s = RELO[code];
-  if (!s) return 0;
-  return computeStateIncomeTax(s.taxRules, status, income).tax;
+  if (!s) return { tax: 0, breakdown: {} };
+  return computeStateIncomeTax(s.taxRules, status, income);
+}
+
+// NY and OR are the only states with an opt-in local-tax selector (MD/IN's
+// county tax is mandatory, no selector). A stale selection left over from
+// switching away from NY/OR must never leak into a different state's tax —
+// gated here at the point of use, not by relying on the DOM control actually
+// being cleared (the same safety net Roth's calc() relies on for its own
+// nyLocalTax/orLocalTax selectors).
+const LOCAL_TAX_STATES = new Set(['NY', 'OR']);
+function localCodeFor(code, rawCode) {
+  return LOCAL_TAX_STATES.has(code) ? rawCode : '';
 }
 
 export function compute(values) {
@@ -77,8 +112,12 @@ export function compute(values) {
     age: values.age,
   };
 
-  const fromTax = stateTax(from, status, income);
-  const toTax = stateTax(to, status, income);
+  const fromResult = stateTax(from, status, income);
+  const toResult = stateTax(to, status, income);
+  const fromLocal = computeLocalTax(RELO[from]?.localTax, status, fromResult.breakdown, fromResult.tax, localCodeFor(from, values.fromLocalTax));
+  const toLocal = computeLocalTax(RELO[to]?.localTax, status, toResult.breakdown, toResult.tax, localCodeFor(to, values.toLocalTax));
+  const fromTax = fromResult.tax + fromLocal;
+  const toTax = toResult.tax + toLocal;
   const annualSaving = fromTax - toTax; // positive => moving lowers your income tax
   const moveCost = values.moveCost;
 
@@ -180,5 +219,9 @@ export function compute(values) {
     yAxis: { label: 'Dollars', format: (n) => `$${Math.round(n / 1000)}k` },
     note,
     context,
+    // For the page's own local-tax selector visibility (see relocation/index.html)
+    // — NOT part of the CalculatorModule contract, read directly off the result
+    // by this page's script, same pattern as `note`/`context` above.
+    localTaxUI: { from: { state: from }, to: { state: to } },
   };
 }

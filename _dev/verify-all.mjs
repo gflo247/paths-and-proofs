@@ -17,7 +17,7 @@ globalThis.d3 = d3;
 const states = JSON.parse(readFileSync(new URL('../roth-conversion/states.json', import.meta.url), 'utf8'));
 const RELO = {};
 for (const code of Object.keys(states).filter((k) => k !== '_schema')) {
-  RELO[code] = { name: states[code].facts.name, taxRules: states[code].taxRules, taxContext: states[code].taxContext };
+  RELO[code] = { name: states[code].facts.name, taxRules: states[code].taxRules, taxContext: states[code].taxContext, localTax: states[code].localTax };
 }
 globalThis.window.RELO = RELO;
 const relocation = await import('../relocation/relocation.js');
@@ -50,7 +50,11 @@ function check(mod) {
   mount(mod, root);
   const primary = root.querySelector('.summary-primary .summary-value')?.textContent;
   console.log(`\n--- ${mod.meta.name} ---`);
-  ok('controls render', root.querySelectorAll('.control').length === mod.inputs.length);
+  // custom:true inputs (see core/contract.js) are seeded into values/compute like
+  // any other input but are rendered by the page itself, not core/controls.js — so
+  // they don't count toward the auto-rendered .control count.
+  const renderableInputs = mod.inputs.filter((c) => !c.custom).length;
+  ok('controls render', root.querySelectorAll('.control').length === renderableInputs);
   ok('chart renders', !!root.querySelector('svg'));
   ok('one line per series', root.querySelectorAll('path[stroke-width="2.5"]').length === mod.compute(Object.fromEntries(mod.inputs.map(c => [c.id, c.default]))).series.length);
   ok('headline result present', !!primary, primary);

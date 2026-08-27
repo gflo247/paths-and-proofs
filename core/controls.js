@@ -24,6 +24,12 @@ export function buildControls(inputs, values, onChange, container) {
   container.replaceChildren();
 
   inputs.forEach((c) => {
+    // custom:true means the PAGE renders and wires this control itself (e.g.
+    // Relocation's from/to local-tax selectors, which need conditional
+    // visibility this generic renderer has no concept of). Still seeded into
+    // values/presets/compute like any other input — only rendering is skipped.
+    if (c.custom) return;
+
     const wrap = document.createElement('div');
     wrap.className = 'control';
 

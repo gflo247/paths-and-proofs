@@ -38,5 +38,12 @@ export function mount(calculator, root, onResult) {
       buildControls(calculator.inputs, values, recompute, root.querySelector('[data-controls]'));
       recompute();
     },
+    // For custom:true inputs (see core/controls.js) — the page owns that
+    // control's markup and events, but still needs to push a change into the
+    // shared `values`/`recompute` loop like any other input would.
+    setValue(id, value) {
+      values[id] = value;
+      recompute();
+    },
   };
 }

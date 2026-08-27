@@ -147,3 +147,46 @@ export function computeStateIncomeTax(rules, status, income) {
   const tax = incomeTax + cgSeparateTax;
   return { tax: Math.round(tax), breakdown };
 }
+
+// Local (city/county) tax layered ON TOP of state tax — NY (NYC/Yonkers), OR
+// (Metro/Multnomah), MD/IN (mandatory county tax). A sibling to
+// computeStateIncomeTax, not a parameter on it: 47 states have no localTax at
+// all, and the four that do need the SAME ordinary-income base and state-tax
+// total computeStateIncomeTax already derived (breakdown.ordinaryIncome,
+// stateTax), not a re-derivation of the exclusion math.
+//
+// local: RELO[code].localTax — undefined for states without one (safe no-op).
+// localCode: '' | 'nyc' | 'yonkers' | 'metro' | 'multnomah' — the filer's
+//   opt-in selection for NY/OR. Has no effect on MD/IN's county.rate, which
+//   is mandatory and unconditional (no opt-out selector exists for it).
+export function computeLocalTax(local, status, breakdown, stateTax, localCode) {
+  if (!local) return 0;
+  const base = breakdown.ordinaryIncome;
+  let tax = 0;
+
+  if (localCode === 'nyc' && local.nyc) {
+    const brax = local.nyc.bracketsByStatus[status] || local.nyc.bracketsByStatus.single;
+    tax += bracketTax(base, brax);
+  } else if (localCode === 'yonkers' && local.yonkers) {
+    // A flat surcharge on the filer's already-computed NY state tax
+    // liability, mathematically exact (linear) rather than a separate
+    // income-based calculation — NOT the ordinary-income base.
+    tax += stateTax * local.yonkers.rate;
+  }
+
+  // Metro and Multnomah are NOT mutually exclusive — Multnomah is a SUBSET of
+  // Metro's 3-county district, so a Multnomah filer owes BOTH, stacked.
+  if ((localCode === 'metro' || localCode === 'multnomah') && local.metro) {
+    const brax = local.metro.bracketsByStatus[status] || local.metro.bracketsByStatus.single;
+    tax += bracketTax(base, brax);
+  }
+  if (localCode === 'multnomah' && local.multnomah) {
+    const brax = local.multnomah.bracketsByStatus[status] || local.multnomah.bracketsByStatus.single;
+    tax += bracketTax(base, brax);
+  }
+
+  // MD/IN: mandatory flat add-on for every resident — unconditional, ignores localCode.
+  if (local.county) tax += base * local.county.rate;
+
+  return Math.round(tax);
+}
