@@ -208,10 +208,13 @@ for (const code of htmlCodes) {
 
 // --- 7. Local-tax shape guard (G6) ---
 // Added 2026-08-25 for NY (NYC/Yonkers), extended 2026-08-25 for OR (Metro/
-// Multnomah). Every state's roth.localTax is hand-authored JSON (unlike the RIX/
+// Multnomah). Every state's localTax is hand-authored JSON (unlike the RIX/
 // RETDED tables above, which are derived from taxRules), so a typo here (a gap in
 // the bracket ladder, a missing filing status, an implausible rate) would silently
 // corrupt every affected conversion's tax — catch it at build time instead of live.
+// Moved 2026-08-27 from roth.localTax to a top-level localTax key, shared by both
+// Roth (gen-st-table.mjs) and Relocation (gen-relo-data.mjs) — previously nested
+// under roth, invisible to Relocation's data generator entirely.
 //
 // checkBracketLadder validates ONE {rate,upTo}[] tier list: strictly ascending,
 // gapless, null-terminated, each rate a plausible decimal. The leading tier of a
@@ -251,19 +254,22 @@ const LOCAL_TAX_STATUSES = ['single', 'mfj', 'mfs', 'hoh'];
 {
   // NY: NYC (graduated from dollar one, no zero-rate tier) + Yonkers (a flat
   // surcharge on state tax, not a bracket ladder at all).
-  const lt = json.NY?.roth?.localTax;
+  const lt = json.NY?.localTax;
   if (lt) {
     const brax = lt.nyc?.bracketsByStatus;
     if (!brax) {
-      diffs.push('NY.roth.localTax.nyc.bracketsByStatus is missing');
+      diffs.push('NY.localTax.nyc.bracketsByStatus is missing');
     } else {
       for (const status of LOCAL_TAX_STATUSES) {
-        checkBracketLadder(`NY.roth.localTax.nyc.bracketsByStatus.${status}`, brax[status]);
+        checkBracketLadder(`NY.localTax.nyc.bracketsByStatus.${status}`, brax[status]);
       }
     }
     if (typeof lt.yonkers?.rate !== 'number' || lt.yonkers.rate <= 0 || lt.yonkers.rate >= 1) {
-      diffs.push(`NY.roth.localTax.yonkers.rate is not a plausible decimal rate (0,1): ${lt.yonkers?.rate}`);
+      diffs.push(`NY.localTax.yonkers.rate is not a plausible decimal rate (0,1): ${lt.yonkers?.rate}`);
     }
+  }
+  if (json.NY?.roth?.localTax) {
+    diffs.push('NY.roth.localTax is deprecated (moved to top-level localTax) — remove the stale copy');
   }
 }
 
@@ -271,18 +277,21 @@ const LOCAL_TAX_STATUSES = ['single', 'mfj', 'mfs', 'hoh'];
   // OR: Metro SHS + Multnomah PFA, both threshold-gated (flat/stepped above a
   // dollar threshold), modeled with a deliberate rate:0 leading tier -- see
   // checkBracketLadder's own comment for why that's valid here specifically.
-  const lt = json.OR?.roth?.localTax;
+  const lt = json.OR?.localTax;
   if (lt) {
     for (const key of ['metro', 'multnomah']) {
       const brax = lt[key]?.bracketsByStatus;
       if (!brax) {
-        diffs.push(`OR.roth.localTax.${key}.bracketsByStatus is missing`);
+        diffs.push(`OR.localTax.${key}.bracketsByStatus is missing`);
         continue;
       }
       for (const status of LOCAL_TAX_STATUSES) {
-        checkBracketLadder(`OR.roth.localTax.${key}.bracketsByStatus.${status}`, brax[status], { allowLeadingZero: true });
+        checkBracketLadder(`OR.localTax.${key}.bracketsByStatus.${status}`, brax[status], { allowLeadingZero: true });
       }
     }
+  }
+  if (json.OR?.roth?.localTax) {
+    diffs.push('OR.roth.localTax is deprecated (moved to top-level localTax) — remove the stale copy');
   }
 }
 

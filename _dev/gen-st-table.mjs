@@ -203,7 +203,7 @@ function buildRixBlock(json) {
 }
 
 // NYCTAX: a fourth sparse table — New York City's and Yonkers' local income tax
-// (see states.json _schema.fields["roth.localTax"]). Different in KIND from
+// (see states.json _schema.fields["localTax"]). Different in KIND from
 // RETDED/EXAGE/RIX (a city tax layered ON TOP of state tax, not a deduction/
 // exemption/exclusion) and different from Maryland/Indiana's flat, unconditional
 // county tax (inline literal constants inside computeConversionCost's
@@ -219,8 +219,8 @@ const NYC_OPEN = 'const NYCTAX={';
 const NYC_CLOSE = '};';
 
 function buildNycTaxBlock(json) {
-  const lt = json.NY?.roth?.localTax;
-  if (!lt?.nyc || !lt?.yonkers) throw new Error('states.json: NY has no roth.localTax.{nyc,yonkers} for NYCTAX');
+  const lt = json.NY?.localTax;
+  if (!lt?.nyc || !lt?.yonkers) throw new Error('states.json: NY has no localTax.{nyc,yonkers} for NYCTAX');
   const lines = [];
   lines.push(NYC_OPEN);
   lines.push(`  nyc: ${JSON.stringify(lt.nyc.bracketsByStatus)},`);
@@ -231,7 +231,7 @@ function buildNycTaxBlock(json) {
 
 // ORTAX: a fifth sparse table — Portland Metro's Supportive Housing Services tax and
 // Multnomah County's Preschool For All tax (see states.json _schema.fields
-// ["roth.localTax"]). A separate table from NYCTAX rather than a rename/merge into
+// ["localTax"]). A separate table from NYCTAX rather than a rename/merge into
 // a state-neutral shape — pure addition, zero risk to the already-shipped and
 // twice-adversarially-reviewed NYC/Yonkers code, and matches this file's own
 // precedent of one sparse table per genuinely different shape (RETDED/EXAGE/RIX are
@@ -247,8 +247,8 @@ const OR_OPEN = 'const ORTAX={';
 const OR_CLOSE = '};';
 
 function buildOrTaxBlock(json) {
-  const lt = json.OR?.roth?.localTax;
-  if (!lt?.metro || !lt?.multnomah) throw new Error('states.json: OR has no roth.localTax.{metro,multnomah} for ORTAX');
+  const lt = json.OR?.localTax;
+  if (!lt?.metro || !lt?.multnomah) throw new Error('states.json: OR has no localTax.{metro,multnomah} for ORTAX');
   const lines = [];
   lines.push(OR_OPEN);
   lines.push(`  metro: ${JSON.stringify(lt.metro.bracketsByStatus)},`);

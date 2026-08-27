@@ -13,7 +13,7 @@
    "facts.source": "Primary-source URL (state Department of Revenue preferred).",
    "roth.retDeduction": "OPTIONAL. Present only for states with a large, flat, non-phased-out retirement-income deduction that a Roth conversion competes for (verified against a primary source). {single, mfj, mfs, hoh} — dollar cap per filing status. The engine computes state tax before/with the conversion (mirroring the federal calc) and subtracts min(cap, pension-income + taxable-conversion) from each side before applying roth.cr, so the deduction correctly shelters conversion income only once the user's other retirement income has not already exhausted the cap. Most states have a SMALLER or more complex cap (age-tiered, phased out by AGI, or a whole-income exemption band) that this simple field does NOT model — those states deliberately still use the flat taxableCvt*cr approximation and disclose it in roth.note. Do not add retDeduction to a state without verifying it fits this exact shape (single flat cap, no age gate, no phase-out) against a primary source.",
    "roth.exMinAge": "OPTIONAL, only meaningful when roth.ex=true. Minimum qualifying age below which the exemption does NOT apply and the conversion is taxed at the real roth.cr instead (an early-distribution rule). Absent means the ex:true exemption is unconditional (e.g. Illinois). For a joint return the engine requires BOTH spouses to meet the age before treating the whole conversion as exempt — a conservative simplification since the tool does not model per-spouse IRA ownership.",
-   "roth.localTax": "OPTIONAL. NY (added 2026-08-25) and OR (added 2026-08-25) are the only states using this field so far -- the largest verified US local income taxes that reach retirement/IRA income, not just wages (most other states' local taxes are wage-only and irrelevant to a Roth conversion, or don't reach retirement income at all; see the 2026-08-25 audit notes for the states checked). Unlike Maryland/Indiana's mandatory, unconditional county tax (a flat rate literal inside computeConversionCost's stateCode branch, since EVERY resident of those states pays it), these local taxes only apply to residents of SPECIFIC jurisdictions within the state -- most residents pay $0 -- so this is opt-in via a wizard selector, not baked into roth.cr. NY's shape (localTax.nyc/.yonkers): two MUTUALLY EXCLUSIVE options (NYC and Yonkers are different, non-overlapping cities). localTax.nyc.bracketsByStatus is a genuinely graduated 4-tier {rate,upTo} ladder per filing status, applied to the SAME NY-exclusion-adjusted delta the state tax itself uses (NYC taxable income is defined relative to NY taxable income, so it inherits NY's own $20k/59.5+ per-person exclusion). localTax.yonkers.rate is a flat surcharge PERCENTAGE OF THE FILER'S NY STATE TAX LIABILITY ITSELF (mathematically exact, not an approximation, since it's linear). OR's shape (localTax.metro/.multnomah): NOT mutually exclusive -- Multnomah County is a SUBSET of Metro's 3-county district (Multnomah/Washington/Clackamas), so a Multnomah resident owes BOTH taxes, stacked, while a Washington/Clackamas resident inside Metro owes only Metro's. Both localTax.metro.bracketsByStatus and localTax.multnomah.bracketsByStatus are ordinary {rate,upTo} ladders with a deliberate rate:0 FIRST TIER below their threshold (the mechanism that makes a flat-above-a-threshold tax expressible via the same generic bracketTax() walker NYC uses, rather than needing separate logic) -- do not \"clean up\" the leading zero-rate tier, it is load-bearing. Both states use their own OR-specific filing-status grouping (single/MFS -> single bracket; MFJ/HOH/qualifying surviving spouse -> joint bracket, confirmed directly from Form MET-40's own filing-status checkboxes), NOT the project's usual single-vs-hoh-as-its-own-thing convention."
+   "localTax": "OPTIONAL. A top-level key, sibling to facts/roth/taxRules/taxContext -- NOT nested under roth. Moved here 2026-08-27 (was roth.localTax) specifically so it is visible to BOTH Roth (_dev/gen-st-table.mjs) and Relocation (_dev/gen-relo-data.mjs); nested under roth it was invisible to Relocation's generator entirely, which only ever forwarded facts/taxRules/taxContext. NY (added 2026-08-25) and OR (added 2026-08-25) are the only states using the graduated/surcharge shapes so far -- the largest verified US local income taxes that reach retirement/IRA income, not just wages (most other states' local taxes are wage-only and irrelevant to a Roth conversion, or don't reach retirement income at all; see the 2026-08-25 audit notes for the states checked). NY's shape (localTax.nyc/.yonkers): two MUTUALLY EXCLUSIVE options (NYC and Yonkers are different, non-overlapping cities). localTax.nyc.bracketsByStatus is a genuinely graduated 4-tier {rate,upTo} ladder per filing status, applied to the SAME NY-exclusion-adjusted delta the state tax itself uses (NYC taxable income is defined relative to NY taxable income, so it inherits NY's own $20k/59.5+ per-person exclusion). localTax.yonkers.rate is a flat surcharge PERCENTAGE OF THE FILER'S NY STATE TAX LIABILITY ITSELF (mathematically exact, not an approximation, since it's linear). OR's shape (localTax.metro/.multnomah): NOT mutually exclusive -- Multnomah County is a SUBSET of Metro's 3-county district (Multnomah/Washington/Clackamas), so a Multnomah resident owes BOTH taxes, stacked, while a Washington/Clackamas resident inside Metro owes only Metro's. Both localTax.metro.bracketsByStatus and localTax.multnomah.bracketsByStatus are ordinary {rate,upTo} ladders with a deliberate rate:0 FIRST TIER below their threshold (the mechanism that makes a flat-above-a-threshold tax expressible via the same generic bracketTax() walker NYC uses, rather than needing separate logic) -- do not \"clean up\" the leading zero-rate tier, it is load-bearing. Both states use their own OR-specific filing-status grouping (single/MFS -> single bracket; MFJ/HOH/qualifying surviving spouse -> joint bracket, confirmed directly from Form MET-40's own filing-status checkboxes), NOT the project's usual single-vs-hoh-as-its-own-thing convention. NY/OR's local tax is opt-in via a wizard selector (most residents of those states pay $0). A third shape, localTax.county.rate (a flat, unconditional decimal), exists for states where every resident of the state pays it -- see MD/IN."
   }
  },
  "AL": {
@@ -4104,41 +4104,41 @@
   "roth": {
    "cr": 0.06,
    "ex": false,
-   "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse's age, which could silently zero out the shelter or wrongly double it depending on which spouse's age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don't use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax.",
-   "localTax": {
-    "nyc": {
-     "bracketsByStatus": {
-      "single": [
-       { "rate": 0.03078, "upTo": 12000 },
-       { "rate": 0.03762, "upTo": 25000 },
-       { "rate": 0.03819, "upTo": 50000 },
-       { "rate": 0.03876, "upTo": null }
-      ],
-      "mfj": [
-       { "rate": 0.03078, "upTo": 21600 },
-       { "rate": 0.03762, "upTo": 45000 },
-       { "rate": 0.03819, "upTo": 90000 },
-       { "rate": 0.03876, "upTo": null }
-      ],
-      "mfs": [
-       { "rate": 0.03078, "upTo": 12000 },
-       { "rate": 0.03762, "upTo": 25000 },
-       { "rate": 0.03819, "upTo": 50000 },
-       { "rate": 0.03876, "upTo": null }
-      ],
-      "hoh": [
-       { "rate": 0.03078, "upTo": 14400 },
-       { "rate": 0.03762, "upTo": 30000 },
-       { "rate": 0.03819, "upTo": 60000 },
-       { "rate": 0.03876, "upTo": null }
-      ]
-     },
-     "source": "NY Form IT-201-I (2025 instructions, the latest published year), p.40, \"New York City tax rate schedule\""
+   "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse's age, which could silently zero out the shelter or wrongly double it depending on which spouse's age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don't use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax."
+  },
+  "localTax": {
+   "nyc": {
+    "bracketsByStatus": {
+     "single": [
+      { "rate": 0.03078, "upTo": 12000 },
+      { "rate": 0.03762, "upTo": 25000 },
+      { "rate": 0.03819, "upTo": 50000 },
+      { "rate": 0.03876, "upTo": null }
+     ],
+     "mfj": [
+      { "rate": 0.03078, "upTo": 21600 },
+      { "rate": 0.03762, "upTo": 45000 },
+      { "rate": 0.03819, "upTo": 90000 },
+      { "rate": 0.03876, "upTo": null }
+     ],
+     "mfs": [
+      { "rate": 0.03078, "upTo": 12000 },
+      { "rate": 0.03762, "upTo": 25000 },
+      { "rate": 0.03819, "upTo": 50000 },
+      { "rate": 0.03876, "upTo": null }
+     ],
+     "hoh": [
+      { "rate": 0.03078, "upTo": 14400 },
+      { "rate": 0.03762, "upTo": 30000 },
+      { "rate": 0.03819, "upTo": 60000 },
+      { "rate": 0.03876, "upTo": null }
+     ]
     },
-    "yonkers": {
-     "rate": 0.1675,
-     "source": "NY Form IT-201-I (2025 instructions), Yonkers resident income tax surcharge worksheet -- 16.75% of net NY State tax liability, not a separate income-based tax"
-    }
+    "source": "NY Form IT-201-I (2025 instructions, the latest published year), p.40, \"New York City tax rate schedule\""
+   },
+   "yonkers": {
+    "rate": 0.1675,
+    "source": "NY Form IT-201-I (2025 instructions), Yonkers resident income tax surcharge worksheet -- 16.75% of net NY State tax liability, not a separate income-based tax"
    }
   },
   "taxRules": {
@@ -4831,9 +4831,10 @@
   "roth": {
    "cr": 0.0875,
    "ex": false,
-   "note": "Graduated 4.75% to 9.9%; the 8.75% bracket runs up to $125,000, so most conversion income lands there (9.9% applies above that). IRA and Roth-conversion income is fully taxable, and the retirement-income credit is limited to low household income, so it rarely helps with a conversion. Social Security is fully exempt; Oregon has no sales tax. Portland-area residents owe real, material local income taxes on top of this -- this calculator now models both explicitly if you select your locality below: Metro's Supportive Housing Services tax (a flat 1% above $125,000 single / $200,000 joint Oregon taxable income, covering Multnomah, Washington, and Clackamas counties), and Multnomah County's Preschool For All tax on top of that for Multnomah residents specifically (1.5% above the same thresholds, an additional 1.5% -- 3% total -- above $250,000 single / $400,000 joint) -- together up to 4% for a Multnomah County filer, larger than New York City's rate.",
-   "localTax": {
-    "metro": {
+   "note": "Graduated 4.75% to 9.9%; the 8.75% bracket runs up to $125,000, so most conversion income lands there (9.9% applies above that). IRA and Roth-conversion income is fully taxable, and the retirement-income credit is limited to low household income, so it rarely helps with a conversion. Social Security is fully exempt; Oregon has no sales tax. Portland-area residents owe real, material local income taxes on top of this -- this calculator now models both explicitly if you select your locality below: Metro's Supportive Housing Services tax (a flat 1% above $125,000 single / $200,000 joint Oregon taxable income, covering Multnomah, Washington, and Clackamas counties), and Multnomah County's Preschool For All tax on top of that for Multnomah residents specifically (1.5% above the same thresholds, an additional 1.5% -- 3% total -- above $250,000 single / $400,000 joint) -- together up to 4% for a Multnomah County filer, larger than New York City's rate."
+  },
+  "localTax": {
+   "metro": {
     "bracketsByStatus": {
      "single": [
       { "rate": 0, "upTo": 125000 },
@@ -4878,7 +4879,6 @@
      ]
     },
     "source": "Official 'Updated 1/05/26' 2026 Multnomah County Preschool For All Personal Income Tax Tables (multco.us) -- rate/threshold reconstructed by walking the table's implied marginal rate across every income band and cross-checked exactly against its own stated formulas ('$9,375 plus 3% of excess over $500,000' single, '$6,000 plus 3% of excess over $500,000' joint). Applies ON TOP of Metro's tax for Multnomah County residents -- Multnomah is a subset of Metro's 3-county district, not a separate/exclusive choice."
-    }
    }
   },
   "taxRules": {
