@@ -302,7 +302,12 @@
     .why-body strong{color:var(--navy);}
     .why-jump{flex-shrink:0;color:var(--navy-mid);font-size:.78rem;font-weight:600;white-space:nowrap;}
     /* ── Rest-of-Life Bet: compact helps/hurts rows ── */
-    .bet-row{padding:.55rem .75rem;border-radius:var(--rsm);background:var(--navy-pale);border:1px solid var(--tip-bdr);margin-bottom:.45rem;}
+    /* Same 2-up/1-up responsive grid pattern as .optwrap (the bracket-fill/
+       IRMAA/torpedo optimizer cards) — reused here so the four factor cards
+       use desktop's width instead of stacking full-bleed with empty space
+       to the right of each short pill pair. */
+    .bet-grid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;align-items:start;}
+    .bet-row{padding:.55rem .75rem;border-radius:var(--rsm);background:var(--navy-pale);border:1px solid var(--tip-bdr);}
     .bet-row-hd{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;font-weight:700;color:var(--navy);font-size:.85rem;margin-bottom:.4rem;}
     .bet-dirs{display:flex;flex-wrap:wrap;gap:.4rem;}
     .bet-chip{display:inline-block;font-size:.79rem;padding:.28rem .6rem;border-radius:20px;line-height:1.3;white-space:nowrap;}
@@ -451,6 +456,7 @@
       .optamt{font-size:1.75rem;}
       .optcard{padding:.9rem 1rem;}
       .optwrap{grid-template-columns:1fr!important;}
+      .bet-grid{grid-template-columns:1fr!important;}
       .site-header{flex-wrap:nowrap;height:auto;min-height:52px;padding:.5rem .9rem;gap:.5rem;}
       .pnp-brand{font-size:.92rem;min-width:0;}
       .pnp-brand .pnp-glyph{width:26px;height:17px;}
@@ -3036,7 +3042,7 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
   return '<div class="card" id="betCard" style="margin-top:1.25rem;margin-bottom:1.25rem">'
     +'<div class="stitle">🎲 The Rest-of-Life Bet</div>'
     +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.6rem;line-height:1.55"><strong style="color:var(--text)">'+costTxt+'</strong> is a certain cost, paid today. Everything after that is a bet that these four things go your way over the rest of '+(isCouple?'your lives':'your life')+' (<span class="bet">↑ helps</span> · <span class="wor">↓ hurts</span>):</p>'
-    +rows
+    +'<div class="bet-grid">'+rows+'</div>'
     +'</div>';
 }
 
