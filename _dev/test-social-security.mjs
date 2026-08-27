@@ -17,8 +17,10 @@ import {
   survivorBenefit,
   householdMonthly,
   compute,
+  computeSurface,
   FULL_RETIREMENT_AGE,
   SURVIVOR_FULL_RETIREMENT_AGE,
+  SURVIVOR_MIN_CLAIM_AGE,
 } from '../social-security/social-security.js';
 
 let pass = 0, fail = 0;
@@ -265,6 +267,88 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
   const normal = { piaHigh: 3200, claimHigh: 62, piaLow: 1400, claimLow: 62, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
   const r = compute(normal);
   checkEqual('compute(): normally-labeled household is unaffected by the fix', r.summary[3].value, 'waiting wins');
+}
+
+// --- Real age gap between spouses (2026-08-26 feature) ----------------------
+// Prior simplification: compute()/computeSurface() always passed the SAME
+// current age for both spouses into householdMonthly(), even though that
+// function already accepted two independent ages. Now a new `ageGap` input
+// (years the higher earner is older than the lower earner; negative if
+// younger) flows through: the lower earner stays the internal clock, the
+// higher earner's own age is clock + ageGap.
+
+// householdMonthly: exercise the already-existing-but-never-tested asymmetric
+// current-age path directly. High hasn't filed yet (64 < claimHigh 65); low
+// has (66 >= claimLow 63). Household total should be exactly low's own
+// worker benefit -- high contributes $0 (not filed) and gets no spousal
+// top-up either (requires low to have filed AND high to have filed; high
+// hasn't).
+{
+  const v = { piaHigh: 3000, claimHigh: 65, piaLow: 1200, claimLow: 63 };
+  const got = householdMonthly(v, true, true, 64, 66);
+  check('householdMonthly: independent current ages, high not yet filed', got, workerBenefit(1200, 63));
+}
+
+// SURVIVOR_MIN_CLAIM_AGE gate (real bug found while designing the age-gap
+// feature): survivorBenefit()'s own age-reduction formula clamps UP to age
+// 60 rather than gating eligibility, so before this fix a survivor younger
+// than 60 still got a nonzero inherited benefit -- invisible until ageGap
+// could push a current age below AGE_START (62). Confirmed live pre-fix: a
+// 42-year-old "survivor" got $707.85/mo. Must be exactly $0 below 60, and
+// still the normal nonzero amount starting exactly at 60.
+{
+  const v = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62 };
+  check('householdMonthly: survivor benefit withheld below SURVIVOR_MIN_CLAIM_AGE', householdMonthly(v, true, false, 42, 62), 0);
+  check('householdMonthly: survivor benefit resumes exactly at SURVIVOR_MIN_CLAIM_AGE', householdMonthly(v, true, false, SURVIVOR_MIN_CLAIM_AGE, 62), 707.85, 0.01);
+}
+
+// compute(): a nonzero ageGap shifts the breakeven age and the marker by
+// exactly the survivor-offset amount. Same fixture as the worst-case-order
+// test above (case1), with ageGap=1 added -- chosen order stays
+// lowDiesFirst (high survives), so offset=ageGap=1: breakeven 96->93,
+// marker 75->76.
+{
+  const withGap = { piaHigh: 1100, claimHigh: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 1 };
+  const r = compute(withGap);
+  check('compute(): breakeven age reflects ageGap offset', parseFloat(r.summary[3].value.replace('age ', '')), 93);
+  check('compute(): marker reflects ageGap offset', r.markers[0].x, 76);
+}
+
+// Backward compatibility: ageGap omitted (undefined) must default to 0 and
+// reproduce every existing number bit-for-bit -- this is the hard bar the
+// whole feature was designed around. Re-check the same case1 fixture with NO
+// ageGap field at all.
+{
+  const noGap = { piaHigh: 1100, claimHigh: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0 };
+  const r = compute(noGap);
+  check('compute(): ageGap-omitted breakeven age unchanged from pre-feature value', parseFloat(r.summary[3].value.replace('age ', '')), 96);
+  check('compute(): ageGap-omitted marker unchanged from pre-feature value', r.markers[0].x, 75);
+}
+
+// computeSurface(): independently hand-derive one cell's PV with a real
+// ageGap, walking the same month-by-month logic outside the module (not
+// copy-pasting its internals) to confirm the clock-conversion math.
+{
+  const plan = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62, discountRate: 0, ageGap: 5 };
+  const { cells } = computeSurface(plan, 5);
+  const cell = cells.find((c) => c.highDeath === 75 && c.lowDeath === 80);
+  // highDeathAgeOnClock = 75-5=70, lowDeathAgeOnClock=80 (unchanged).
+  const highDeathMonth = Math.round((70 - 62) * 12);
+  const lowDeathMonth = Math.round((80 - 62) * 12);
+  const months = Math.round((80 - 62) * 12);
+  const planDelay = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62, discountRate: 0 };
+  const planEarly = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62, discountRate: 0 };
+  let pvDelay = 0, pvEarly = 0;
+  for (let m = 0; m < months; m++) {
+    const lowAge = 62 + m / 12;
+    const highAge = lowAge + 5;
+    const hAlive = m < highDeathMonth;
+    const lAlive = m < lowDeathMonth;
+    pvDelay += householdMonthly(planDelay, hAlive, lAlive, highAge, lowAge);
+    pvEarly += householdMonthly(planEarly, hAlive, lAlive, highAge, lowAge);
+  }
+  check('computeSurface(): cell margin matches independent hand-derivation with ageGap', cell.margin, pvDelay - pvEarly);
+  check('computeSurface(): ageGap sanity -- margin is a large, specific number, not a placeholder', cell.margin, 166140, 1);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -39,6 +39,13 @@ export const SURVIVOR_FULL_RETIREMENT_AGE = 66 + 8 / 12;   // survivor FRA runs 
                                                      // 1960 birth cohort.
                                                      // Do not reuse
                                                      // FULL_RETIREMENT_AGE here.
+export const SURVIVOR_MIN_CLAIM_AGE = 60;   // earliest age a widow(er) can claim
+                                             // a survivor benefit at all (SSA
+                                             // POMS GN 00615.100). survivorBenefit()
+                                             // clamps its age-reduction formula at
+                                             // 60 but does not itself gate
+                                             // eligibility -- callers must check
+                                             // this separately.
 
 /**
  * A worker's own monthly benefit at a given claiming age, from their
@@ -140,6 +147,12 @@ export const inputs = [
     help: 'The age the lower earner starts benefits.',
   },
   {
+    id: 'ageGap', type: 'slider',
+    label: 'Age gap between you',
+    min: -20, max: 20, step: 1, default: 0, unit: 'years',
+    help: 'How many years older the higher earner is than the lower earner. Negative means the higher earner is younger. Leave at 0 if you’re close in age.',
+  },
+  {
     id: 'lifeHigh', type: 'slider',
     label: 'Higher earner: life expectancy',
     min: 70, max: 100, step: 1, default: 84, unit: 'years',
@@ -215,12 +228,20 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
     // off low's record) ends with it, replaced by a possible survivor benefit.
     // Compare high's OWN worker benefit against the inherited amount, not
     // highBenefit (which could still include a now-defunct spousal top-up).
-    const inherited = survivorBenefit(values.piaLow, values.claimLow, highCurrentAge);
+    // A survivor under SURVIVOR_MIN_CLAIM_AGE isn't eligible for ANY survivor
+    // benefit yet -- survivorBenefit()'s own age-reduction formula clamps up
+    // to 60 rather than gating this, so callers must check it explicitly.
+    const inherited = highCurrentAge >= SURVIVOR_MIN_CLAIM_AGE
+      ? survivorBenefit(values.piaLow, values.claimLow, highCurrentAge)
+      : 0;
     return Math.max(highWorker, inherited);
   }
   if (!highAlive && lowAlive) {
-    // High has died; low survives and may inherit a survivor benefit off high's record.
-    const inherited = survivorBenefit(values.piaHigh, values.claimHigh, lowCurrentAge);
+    // High has died; low survives and may inherit a survivor benefit off high's
+    // record, subject to the same SURVIVOR_MIN_CLAIM_AGE eligibility floor.
+    const inherited = lowCurrentAge >= SURVIVOR_MIN_CLAIM_AGE
+      ? survivorBenefit(values.piaHigh, values.claimHigh, lowCurrentAge)
+      : 0;
     return Math.max(lowWorker, inherited);
   }
   return 0;
@@ -235,7 +256,7 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
  * the second, so each curve answers: "if one of us lives to age X, what is the
  * plan worth?"
  */
-function planValueBySecondDeath(values, firstDeathAge, firstIsHigh) {
+function planValueBySecondDeath(values, firstDeathAge, firstIsHigh, ageGap) {
   const r = values.discountRate / 100;
   const grid = [];
   for (let a = AGE_START; a <= AGE_END + 1e-9; a += 1) grid.push(a);
@@ -253,12 +274,16 @@ function planValueBySecondDeath(values, firstDeathAge, firstIsHigh) {
       let pv = 0;
       const monthsTotal = Math.round((secondDeathAge - AGE_START) * 12);
       for (let m = 0; m < monthsTotal; m++) {
-        const ageNow = AGE_START + m / 12;
+        // The clock is the LOWER earner's own age; the higher earner's own
+        // age is offset by ageGap (positive = higher earner is older). At
+        // ageGap=0 this collapses to the old shared-ageNow behavior exactly.
+        const lowAge = AGE_START + m / 12;
+        const highAge = lowAge + ageGap;
         // The first person to die is gone from firstDeathMonth onward; the
         // survivor lives until secondDeathAge (the loop bound).
         const hAlive = firstIsHigh ? m < firstDeathMonth : true;
         const lAlive = firstIsHigh ? true : m < firstDeathMonth;
-        const monthly = householdMonthly(values, hAlive, lAlive, ageNow, ageNow);
+        const monthly = householdMonthly(values, hAlive, lAlive, highAge, lowAge);
         pv += i === 0 ? monthly : monthly / Math.pow(1 + i, m);
       }
       return { x: secondDeathAge, y: pv };
@@ -301,24 +326,43 @@ export function compute(values) {
   const planDelay = { ...values, claimHigh: 70 };
   const planEarly = { ...values, claimHigh: 62 };
 
+  // Age gap between the two of you (positive = higher earner older). Life
+  // expectancies stay in each person's OWN years (unchanged meaning); convert
+  // to the shared (lower-earner) clock before comparing them. At ageGap=0
+  // this is a no-op and every formula below collapses to its pre-feature form.
+  const ageGap = values.ageGap || 0;
+  const lifeHighOnClock = values.lifeHigh - ageGap;
+  const lifeLowOnClock = values.lifeLow;
+
   // Hold the first death at the EARLIER of the two life-expectancy planning
-  // ages; vary the second death along the x-axis. Which spouse actually dies
-  // first isn't something the user tells us, and the two orderings do NOT
-  // give the same answer: RIB-LIM only floors an INHERITED survivor benefit,
-  // never a survivor's own record, so which spouse's record the survivor
-  // ends up on changes the number \u2014 confirmed by a live-imported sweep of
-  // thousands of input combinations (2026-08-26 audit). Rather than hardcode
-  // one order and hope it stays the more conservative one, compute BOTH and
-  // show whichever is more conservative for THESE inputs. The number shown
-  // is then true no matter which spouse actually goes first, not just true
-  // in one assumed scenario. The heatmap below still shows the full picture
-  // \u2014 both death orders varied independently \u2014 for anyone who wants it.
-  const firstDeathAge = Math.min(values.lifeHigh, values.lifeLow);
+  // ages (on the shared clock); vary the second death along the x-axis. Which
+  // spouse actually dies first isn't something the user tells us, and the two
+  // orderings do NOT give the same answer: RIB-LIM only floors an INHERITED
+  // survivor benefit, never a survivor's own record, so which spouse's record
+  // the survivor ends up on changes the number \u2014 confirmed by a live-imported
+  // sweep of thousands of input combinations (2026-08-26 audit). Rather than
+  // hardcode one order and hope it stays the more conservative one, compute
+  // BOTH and show whichever is more conservative for THESE inputs. The number
+  // shown is then true no matter which spouse actually goes first, not just
+  // true in one assumed scenario. The heatmap below still shows the full
+  // picture \u2014 both death orders varied independently \u2014 for anyone who wants it.
+  const firstDeathAge = Math.min(lifeHighOnClock, lifeLowOnClock);
 
   function evaluateOrder(firstIsHigh) {
-    const delayPoints = planValueBySecondDeath(planDelay, firstDeathAge, firstIsHigh);
-    const earlyPoints = planValueBySecondDeath(planEarly, firstDeathAge, firstIsHigh);
-    return { delayPoints, earlyPoints, outcome: classifyOutcome(delayPoints, earlyPoints) };
+    let delayPoints = planValueBySecondDeath(planDelay, firstDeathAge, firstIsHigh, ageGap);
+    let earlyPoints = planValueBySecondDeath(planEarly, firstDeathAge, firstIsHigh, ageGap);
+
+    // Points are generated on the shared clock. The actual survivor in this
+    // hypothesis is the low earner (firstIsHigh=true) or the high earner
+    // (firstIsHigh=false) \u2014 shift x onto THAT person's own age before
+    // classifying, so outcome.age comes out already in survivor-own-age
+    // terms. At ageGap=0 this is always a no-op regardless of firstIsHigh.
+    const survivorOffset = firstIsHigh ? 0 : ageGap;
+    if (survivorOffset !== 0) {
+      delayPoints = delayPoints.map((p) => ({ x: p.x + survivorOffset, y: p.y }));
+      earlyPoints = earlyPoints.map((p) => ({ x: p.x + survivorOffset, y: p.y }));
+    }
+    return { delayPoints, earlyPoints, outcome: classifyOutcome(delayPoints, earlyPoints), firstIsHigh };
   }
 
   const highDiesFirst = evaluateOrder(true);
@@ -388,9 +432,19 @@ export function compute(values) {
 
   // Anchor the abstract curve to the couple's own numbers: mark the age the
   // longer-living spouse is projected to reach (the later of the two life
-  // expectancies), since the x-axis is the survivor's age. This is a planning
-  // age the user chose — a "you are roughly here" marker, not a prediction.
-  const projectedSecondDeath = Math.max(values.lifeHigh, values.lifeLow);
+  // expectancies, on the shared clock), translated onto whichever spouse's
+  // own age the chart is currently tracking (the chosen order's survivor).
+  // At ageGap=0 this is always Math.max(values.lifeHigh, values.lifeLow),
+  // exactly as before, regardless of which order is chosen. This is a
+  // planning age the user chose — a "you are roughly here" marker, not a
+  // prediction. NOTE: at nonzero ageGap, the chosen order is picked purely
+  // for financial conservativeness, independent of which life expectancy is
+  // numerically larger — so in unusual cases this marker's age won't equal
+  // either spouse's literal typed input for the specific person the axis is
+  // tracking. It still marks the same later-of-your-two-lifespans anchor,
+  // just expressed in whichever spouse's years the chart happens to use.
+  const secondDeathOnClock = Math.max(lifeHighOnClock, lifeLowOnClock);
+  const projectedSecondDeath = secondDeathOnClock + (chosen.firstIsHigh ? 0 : ageGap);
   const markers = [{
     x: projectedSecondDeath,
     label: `your planning age (${projectedSecondDeath})`,
@@ -425,18 +479,27 @@ export function computeSurface(values, stepYears = 2) {
   const planDelay = { ...values, claimHigh: 70 };
   const planEarly = { ...values, claimHigh: 62 };
 
-  /** PV of a plan given explicit death ages for each person. */
+  /**
+   * PV of a plan given explicit death ages for each person, each in that
+   * person's OWN years (matching the main chart's lifeHigh/lifeLow meaning).
+   * Converted to the shared (lower-earner) clock via ageGap before use, same
+   * convention as planValueBySecondDeath. At ageGap=0 this is a no-op.
+   */
   function planValue(plan, highDeathAge, lowDeathAge) {
-    const lastAge = Math.max(highDeathAge, lowDeathAge);
+    const ageGap = plan.ageGap || 0;
+    const highDeathAgeOnClock = highDeathAge - ageGap;
+    const lowDeathAgeOnClock = lowDeathAge;
+    const lastAge = Math.max(highDeathAgeOnClock, lowDeathAgeOnClock);
     const months = Math.round((lastAge - AGE_START) * 12);
-    const highDeathMonth = Math.round((highDeathAge - AGE_START) * 12);
-    const lowDeathMonth = Math.round((lowDeathAge - AGE_START) * 12);
+    const highDeathMonth = Math.round((highDeathAgeOnClock - AGE_START) * 12);
+    const lowDeathMonth = Math.round((lowDeathAgeOnClock - AGE_START) * 12);
     let pv = 0;
     for (let m = 0; m < months; m++) {
-      const ageNow = AGE_START + m / 12;
+      const lowAge = AGE_START + m / 12;
+      const highAge = lowAge + ageGap;
       const hAlive = m < highDeathMonth;
       const lAlive = m < lowDeathMonth;
-      const monthly = householdMonthly(plan, hAlive, lAlive, ageNow, ageNow);
+      const monthly = householdMonthly(plan, hAlive, lAlive, highAge, lowAge);
       pv += i === 0 ? monthly : monthly / Math.pow(1 + i, m);
     }
     return pv;
