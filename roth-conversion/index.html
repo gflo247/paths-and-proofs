@@ -910,27 +910,22 @@
           </div>
         </details>
     </div>
-    <details class="rest">
-      <summary>Optional: your sex — used only for the survival-probability estimate</summary>
-      <div class="restb">
-        <div class="field">
-          <div class="flr"><label>Your Sex</label></div>
-          <select id="sex" onchange="calc()">
-            <option value="male">Male</option>
-            <option value="female" selected>Female</option>
-          </select>
-          <div class="hint">Used only for survival probability estimates</div>
-        </div>
-        <div class="field" id="spouseSexField" style="display:none">
-          <div class="flr"><label>Spouse's Sex</label></div>
-          <select id="spouseSex" onchange="calc()">
-            <option value="male">Male</option>
-            <option value="female" selected>Female</option>
-          </select>
-          <div class="hint">For joint survival odds in the analysis</div>
-        </div>
-      </div>
-    </details>
+    <div class="field">
+      <div class="flr"><label>Your Sex</label></div>
+      <select id="sex" onchange="calc()">
+        <option value="male">Male</option>
+        <option value="female" selected>Female</option>
+      </select>
+      <div class="hint">Optional, but affects your own numbers — used only for the survival-probability estimate (skip it and you get a reasonable default; answer it and your own odds are accurate)</div>
+    </div>
+    <div class="field" id="spouseSexField" style="display:none">
+      <div class="flr"><label>Spouse's Sex</label></div>
+      <select id="spouseSex" onchange="calc()">
+        <option value="male">Male</option>
+        <option value="female" selected>Female</option>
+      </select>
+      <div class="hint">For joint survival odds in the analysis</div>
+    </div>
     <div class="step-nav">
       <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
       <div class="step-nav-right">
@@ -3290,11 +3285,11 @@ var PROFILES = {
   borderline: {
     label: 'Late converter in Texas — borderline case',
     stats: 'Age 68 · Single · $175K IRA · converting $22K',
-    context: 'Converting at 24% but expecting 18% in retirement — check the sensitivity chart for the close-call boundary.',
+    context: 'Converting at 23.5% but expecting 18% in retirement — check the sensitivity chart for the close-call boundary.',
     f: {
       currentAge:68, retirementAge:72, filingStatus:'single',
       sex:'male', spouseAge:null, spouseSex:null,
-      seniorDeduction:0, stateCode:'TX',
+      seniorDeduction:1, stateCode:'TX',
       income:105000, pensionIncome:0, ssIncome:0, niiIncome:0, ltcgIncome:0,
       convertAmt:22000, tradBal:175000, rothBal:0, iraBasis:0,
       growthRate:6, retRate:18,
@@ -3871,6 +3866,13 @@ function sweepMarginalCurve(ctx, maxAmt){
 }
 
 let myChart=null;
+// Tracks the (curAge, spouseAge, filingStatus) combination the "Are you 65+"
+// select was last auto-synced against — lets calc() re-derive that select's
+// default only when one of those specific inputs actually changes, not on
+// every calc() call (which fires on ANY input, including the user directly
+// editing this same select — syncing unconditionally would immediately
+// stomp their own manual choice the moment they made it).
+let _seniorSyncKey = null;
 function calc(){
 
   var _ae = _activeExample;
@@ -3898,7 +3900,6 @@ function calc(){
   const g        = _ae ? +_ae.growthRate/100   : (parseFloat(_rv('growthRate'))/100||0.07);
   const retRate  = _ae ? +_ae.retRate/100      : (parseFloat(_rv('retRate'))/100||0.22);
   const taxSrc   = _ae ? _ae.taxSource         : _rv('taxSource');
-  const nSr      = _ae ? +_ae.seniorDeduction  : (parseInt(_rv('seniorDeduction'))||0);
   const medSt    = _ae ? _ae.medicareStatus    : _rv('medicareStatus');
   const inclD    = (_ae ? _ae.partD : _rv('partD'))==='yes';
   const nMed     = medSt==='two'?2:medSt==='one'?1:0;
@@ -3929,6 +3930,28 @@ function calc(){
   if(seniorMfsNoteEl) seniorMfsNoteEl.style.display = (status==='mfs') ? 'block' : 'none';
   const spouseAge= isCouple ? (_ae?+_ae.spouseAge:(parseInt(_rv('spouseAge'))||60)) : null;
   const spouseSex= isCouple ? (_ae ? _ae.spouseSex : $('spouseSex').value) : null;
+
+  // Auto-derive "Are you 65+" from the age(s) already entered above, instead
+  // of always defaulting to "Under 65" regardless of curAge — previously a
+  // 69-year-old (or anyone 65+) silently got $0 senior deduction unless they
+  // separately, manually corrected this second question after already
+  // answering their real age. curAge>=65 is unambiguous (IRS Pub 501: anyone
+  // who turns 65 by January 1 of the following year qualifies, so anyone
+  // already 65+ today always does) — only re-synced when age/filing status
+  // actually change (via _seniorSyncKey above), so a user's own manual edit
+  // to this exact select is never immediately overwritten by this same
+  // calc() pass. Skipped in preset/advisor mode (_ae) — those already carry
+  // their own hand-authored seniorDeduction value via a separate code path.
+  if(seniorSelEl && !_ae){
+    const syncKey = curAge+'|'+(spouseAge??'')+'|'+status;
+    if(syncKey !== _seniorSyncKey){
+      const selfSr = curAge>=65 ? 1 : 0;
+      const spouseSr = (isCouple && spouseAge>=65) ? 1 : 0;
+      seniorSelEl.value = String(selfSr+spouseSr);
+    }
+    _seniorSyncKey = syncKey;
+  }
+  const nSr      = _ae ? +_ae.seniorDeduction  : (parseInt(_rv('seniorDeduction'))||0);
 
   // ── SS hint: clarify combined total for married couples ──
   const ssHintEl=$('ssHint');
