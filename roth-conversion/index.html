@@ -766,6 +766,22 @@
         <div class="hint" id="seniorMfsNote" style="display:none">Not available for Married Filing Separately — this deduction requires a joint return, so it won't change your results even if selected.</div>
       </div>
     <div class="field">
+      <div class="flr"><label>Your Sex</label></div>
+      <select id="sex" onchange="calc()">
+        <option value="male">Male</option>
+        <option value="female" selected>Female</option>
+      </select>
+      <div class="hint">Optional, but affects your own numbers — used only for the survival-probability estimate (skip it and you get a reasonable default; answer it and your own odds are accurate)</div>
+    </div>
+    <div class="field" id="spouseSexField" style="display:none">
+      <div class="flr"><label>Spouse's Sex</label></div>
+      <select id="spouseSex" onchange="calc()">
+        <option value="male">Male</option>
+        <option value="female" selected>Female</option>
+      </select>
+      <div class="hint">For joint survival odds in the analysis</div>
+    </div>
+    <div class="field">
       <div class="flr"><label>Your State</label><button class="tb" onclick="toggleTip('state')">ⓘ</button></div>
       <select id="stateCode" onchange="calc()">
         <option value="">— Select your state —</option>
@@ -909,22 +925,6 @@
             <p style="font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.5">Shows what the same conversion would cost if you wait until you're a resident of this state instead — using your same age, income, and conversion amount. See the full breakdown below for the comparison.</p>
           </div>
         </details>
-    </div>
-    <div class="field">
-      <div class="flr"><label>Your Sex</label></div>
-      <select id="sex" onchange="calc()">
-        <option value="male">Male</option>
-        <option value="female" selected>Female</option>
-      </select>
-      <div class="hint">Optional, but affects your own numbers — used only for the survival-probability estimate (skip it and you get a reasonable default; answer it and your own odds are accurate)</div>
-    </div>
-    <div class="field" id="spouseSexField" style="display:none">
-      <div class="flr"><label>Spouse's Sex</label></div>
-      <select id="spouseSex" onchange="calc()">
-        <option value="male">Male</option>
-        <option value="female" selected>Female</option>
-      </select>
-      <div class="hint">For joint survival odds in the analysis</div>
     </div>
     <div class="step-nav">
       <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
