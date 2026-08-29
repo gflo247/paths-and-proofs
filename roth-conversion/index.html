@@ -537,7 +537,7 @@
   <div style="text-align:center;margin-bottom:.5rem">
     <span class="ex-pill" style="font-size:.72rem;padding:3px 13px">EXAMPLE — NOT YOUR NUMBERS</span>
   </div>
-  <p style="font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);text-align:center;margin:.6rem 0 .6rem;opacity:.75">$300K IRA Converted Gradually</p>
+  <p id="heroVisAmtHd" style="font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);text-align:center;margin:.6rem 0 .6rem;opacity:.75">$380K IRA Converted Gradually</p>
   <p style="font-size:.78rem;color:var(--muted);text-align:center;line-height:1.5;max-width:440px;margin:0 auto .9rem;font-style:italic">Totals over a full retirement, not a single year — these assume the conversion is spread across several years to stay in lower brackets, the approach this tool recommends.</p>
   <div class="ex-bar" id="examplesSection">
     <span class="ex-label" style="width:100%;text-align:center;margin-bottom:.2rem">Six example scenarios across the spectrum — click any to explore:</span>
@@ -571,43 +571,43 @@
   <div class="hero-vis" id="heroVis">
     <div class="hv-col">
       <div class="hv-bar">
-        <div class="hv-gseg" id="hvTradGreen" style="height:194px">
-          <div class="hv-damt" id="hvTradGreenAmt">$198K</div>
-          <div class="hv-seg-pct" id="hvTradPct">~66%</div>
+        <div class="hv-gseg" id="hvTradGreen" style="height:226px">
+          <div class="hv-damt" id="hvTradGreenAmt">$286K</div>
+          <div class="hv-seg-pct" id="hvTradPct">~75%</div>
           <div class="hv-slbl">estimated net</div>
           <div class="hv-chip">⚠️ annual withdrawals required</div>
         </div>
-        <div class="hv-aseg" id="hvTradAmber" style="height:106px">
-          <div class="hv-damt" id="hvTradAmberAmt">$102K</div>
-          <div class="hv-seg-pct" id="hvTradAmberPct">~34%</div>
+        <div class="hv-aseg" id="hvTradAmber" style="height:88px">
+          <div class="hv-damt" id="hvTradAmberAmt">$94K</div>
+          <div class="hv-seg-pct" id="hvTradAmberPct">~25%</div>
           <div class="hv-slbl" id="hvTradAmberLbl">to IRS</div>
         </div>
       </div>
       <div class="hv-col-lbl">Traditional IRA</div>
-      <div class="hv-col-sub" id="hvTradSub">Large tax owed on every withdrawal — and it compounds too</div>
+      <div class="hv-col-sub" id="hvTradSub">Tax owed on every withdrawal in retirement — and it compounds over time</div>
     </div>
 
     <div class="hv-vs">VS</div>
 
     <div class="hv-col">
       <div class="hv-bar" style="animation-delay:.3s">
-        <div class="hv-gseg hv-win" id="hvRothGreen" style="height:212px">
-          <div class="hv-damt" id="hvRothGreenAmt">$234K</div>
-          <div class="hv-seg-pct" id="hvRothGreenPct">~78%</div>
+        <div class="hv-gseg hv-win" id="hvRothGreen" style="height:256px">
+          <div class="hv-damt" id="hvRothGreenAmt">$324K</div>
+          <div class="hv-seg-pct" id="hvRothGreenPct">~85%</div>
           <div class="hv-slbl">tax-free · by law</div>
           <div class="hv-chip">✓ no withdrawals required</div>
         </div>
         <div class="hv-aseg" id="hvRothAmber" style="height:88px;animation:none">
-          <div class="hv-damt" id="hvRothAmberAmt">$66K</div>
-          <div class="hv-seg-pct" id="hvRothAmberPct">~22%</div>
+          <div class="hv-damt" id="hvRothAmberAmt">$56K</div>
+          <div class="hv-seg-pct" id="hvRothAmberPct">~15%</div>
           <div class="hv-slbl">total tax to convert</div>
         </div>
       </div>
       <div class="hv-col-lbl">After Converting</div>
-      <div class="hv-col-sub" id="hvRothSub">More take-home — grows tax-free from here</div>
+      <div class="hv-col-sub" id="hvRothSub">More take-home — grows tax-free from here on</div>
     </div>
   </div>
-  <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$36K in total taxes vs keeping traditional</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in a known rate — more take-home, no forced withdrawals</div></div>
+  <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$38K in total taxes vs keeping traditional (on this $380K IRA)</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in a known rate today — more take-home, no forced withdrawals ever</div></div>
   <p style="font-size:.72rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.6rem auto 0;font-style:italic">Real tax paid today either way — the payoff above only holds if future rates, returns, and lifespan land as assumed.</p>
   <p class="hv-note" style="margin-top:.6rem;font-style:normal;font-weight:500;color:var(--navy-mid)">Want more detail? Scroll down to plug in your own numbers ↓</p>
   <details class="faq-expand">
@@ -3111,88 +3111,111 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
 }
 
 
-// ── HERO VISUAL STATES ──
-var VIS_STATES = {
-  traditional: {
-    // 300px green + 88px amber (min for text fit). Trad: 74%/26%. Roth: 71%/29%.
-    tradGreen:212, tradAmberH:88,
-    tradPct:'~74%', tradGreenAmt:'$222K',
-    tradAmberPct:'~26%', tradAmberAmt:'$78K', tradAmberLbl:'to IRS',
-    tradSub:'Only federal tax owed in retirement — state exempts IRA withdrawals',
-    rothGreen:208, rothAmberH:92,
-    rothGreenPct:'~71%', rothGreenAmt:'$213K',
-    rothAmberPct:'~29%', rothAmberAmt:'$87K',
-    rothSub:'Paid more to convert than you\'d ever owe staying traditional',
-    caption:'This example state exempts IRA withdrawals from state tax — converting means paying tax that traditional avoids here',
-    savingsLine:'In this example, traditional saves ~$9K — the state exemption changes the math.',
-    savingsCls:'hv-damb', winSide:'trad', exKey:'single'
-  },
-  borderline: {
-    // Nearly identical bars. 75%/25% each.
-    tradGreen:212, tradAmberH:88,
-    tradPct:'~75%', tradGreenAmt:'$225K',
-    tradAmberPct:'~25%', tradAmberAmt:'$75K', tradAmberLbl:'to IRS',
-    tradSub:'Tax cost nearly identical either way',
-    rothGreen:212, rothAmberH:88,
-    rothGreenPct:'~75%', rothGreenAmt:'$226K',
-    rothAmberPct:'~25%', rothAmberAmt:'$74K',
-    rothSub:'Marginally less tax — but the difference is essentially a toss-up',
-    caption:'Growth rate, lifespan, and state taxes decide it at this margin',
-    savingsLine:'$74K vs $75K in taxes on this $300K IRA — a genuine toss-up.',
-    savingsCls:'hv-dneu', winSide:null, exKey:'borderline'
-  },
-  roth: {
-    // Roth green noticeably taller. 66%/34% trad, 78%/22% roth.
-    tradGreen:194, tradAmberH:106,
-    tradPct:'~66%', tradGreenAmt:'$198K',
-    tradAmberPct:'~34%', tradAmberAmt:'$102K', tradAmberLbl:'to IRS',
-    tradSub:'Large tax owed on every withdrawal — and it compounds too',
-    rothGreen:212, rothAmberH:88,
-    rothGreenPct:'~78%', rothGreenAmt:'$234K',
-    rothAmberPct:'~22%', rothAmberAmt:'$66K',
-    rothSub:'More take-home — grows tax-free from here',
-    caption:'Locks in a known rate — more take-home, no forced withdrawals ever',
-    savingsLine:'Converting saves ~$36K in total taxes vs keeping traditional (on a $300K IRA)',
-    savingsCls:'hv-dgrn', winSide:'roth', exKey:'couple'
+// ── HERO VISUAL: driven by real numbers from a named PROFILES entry ──
+// Deliberately NOT wired into calc() itself: calc() fires on every wizard
+// keystroke, including with clearAllInputs()'s own raw default field values,
+// and convertAmt=0 there produces effR=0 exactly (a nonsensical 0%-tax Roth
+// bar) -- confirmed live. Every caller here instead passes an explicit
+// PROFILES key, so the six real example buttons and the one curated
+// "couple" default (used at page load and by both "Clear" resets) always
+// render a real, non-degenerate scenario.
+//
+// computeConversionCost() below depends on window.calcTaxableSS, which is
+// only set once the trailing <script type="module"> bridge (near the end of
+// this file) has run. That only happens after DOMContentLoaded fires (see
+// that block's own comment). So updateHeroVis() must only ever be called
+// from inside/after the DOMContentLoaded handler -- never at bare top-level
+// script scope -- exactly like calc()'s own one eager call already is.
+var HV_BAR_TOTAL_PX = 300;  // matches the historical hand-tuned bar heights
+var HV_SEG_MIN_PX   = 88;   // empirical floor -- below this, a segment's two lines of text don't fit
+
+function heroVisSegPx(frac){
+  return Math.max(HV_SEG_MIN_PX, Math.round(frac*HV_BAR_TOTAL_PX));
+}
+
+function updateHeroVis(name){
+  var p = PROFILES[name]; if(!p) return;
+  var f = p.f;
+
+  // Same ctx computeConversionCost() needs, derived directly from the
+  // profile's own fields -- mirrors calc()'s _activeExample (_ae) branch
+  // field-for-field, so these numbers can never drift from what actually
+  // clicking this example and reading the real results would show.
+  var status      = f.filingStatus;
+  var isCouple    = (status==='mfj'||status==='mfs');
+  var stD         = ST[f.stateCode] || {n:'',cr:0,ex:false,note:''};
+  var basis       = Math.min(f.iraBasis, f.tradBal);
+  var taxableFrac = f.tradBal>0 ? Math.max(0, Math.min(1,(f.tradBal-basis)/f.tradBal)) : 1;
+  var ctx = {
+    income: f.income, pensionIncome: f.pensionIncome||0, nii: f.niiIncome, ltcg: f.ltcgIncome,
+    ss: f.ssIncome, status: status, nSr: f.seniorDeduction, stD: stD, stateCode: f.stateCode,
+    curAge: f.currentAge, spouseAge: isCouple ? f.spouseAge : null, isCouple: isCouple,
+    taxableFrac: taxableFrac, localTax: ''  // none of PROFILES' six entries use NY/OR
+  };
+  var cc        = computeConversionCost(f.convertAmt, ctx);
+  var effR      = cc.effR;
+  var stRetR    = stD.ex ? 0 : stD.cr;
+  var totalRetR = f.retRate/100 + stRetR;
+  var rateDiff  = totalRetR - effR;
+  var tradBal   = f.tradBal;
+
+  var vCls = rateDiff>=.03 ? 'good' : (rateDiff>=-0.02 ? 'neutral' : 'bad');
+
+  var tradGreenFrac = 1-totalRetR, tradAmberFrac = totalRetR;
+  var rothGreenFrac = 1-effR,      rothAmberFrac = effR;
+
+  function pctLbl(frac){ return '~'+Math.round(frac*100)+'%'; }
+  function upd(id,val,prop){
+    var el=document.getElementById(id); if(!el||val===undefined) return;
+    if(prop) el.style[prop]=val+'px'; else el.textContent=val;
   }
-};
-function setVisState(name){
-  var s=VIS_STATES[name]; if(!s) return;
-  // Animate bars + update all labels
-  function upd(id,val,prop){var el=document.getElementById(id);if(el&&val!==undefined){if(prop)el.style[prop]=val+'px';else el.textContent=val;}}
-  upd('hvTradGreen',s.tradGreen,'height');
-  upd('hvTradAmber',s.tradAmberH,'height');
-  upd('hvRothGreen',s.rothGreen,'height');
-  upd('hvRothAmber',s.rothAmberH,'height');
-  upd('hvTradGreenAmt',s.tradGreenAmt);
-  upd('hvTradAmberAmt',s.tradAmberAmt);
-  upd('hvRothGreenAmt',s.rothGreenAmt);
-  upd('hvRothAmberAmt',s.rothAmberAmt);
-  upd('hvTradPct',s.tradPct);
-  upd('hvTradAmberPct',s.tradAmberPct);
-  upd('hvRothGreenPct',s.rothGreenPct);
-  upd('hvRothAmberPct',s.rothAmberPct);
-  upd('hvTradAmberLbl',s.tradAmberLbl);
-  upd('hvTradSub',s.tradSub);
-  upd('hvRothSub',s.rothSub);
-  upd('hvCaption',s.caption);
-  // Highlight winning green section
-  var tradG=document.getElementById('hvTradGreen');
-  var rothG=document.getElementById('hvRothGreen');
-  if(tradG) tradG.classList.toggle('hv-win', s.winSide==='trad');
-  if(rothG) rothG.classList.toggle('hv-win', s.winSide==='roth');
-  // Pre-select the matching example button (no data load, no scroll)
-  document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
-    b.classList.toggle('active', b.dataset.ex===s.exKey);
-  });
-  // Update dollar callout
-  var dl=document.getElementById('hvDollar');
-  if(dl&&s.savingsLine){
-    var st=document.getElementById('hvSavingsText');
-    if(st) st.textContent=s.savingsLine;
-    dl.className='hv-dollar '+(s.savingsCls||'hv-dneu')+' py-pad';
-    dl.style.cssText='padding:.65rem 1rem';
+
+  upd('heroVisAmtHd', fmtK(tradBal)+' IRA Converted Gradually');
+  upd('hvTradGreen', heroVisSegPx(tradGreenFrac), 'height');
+  upd('hvTradAmber', heroVisSegPx(tradAmberFrac), 'height');
+  upd('hvRothGreen', heroVisSegPx(rothGreenFrac), 'height');
+  upd('hvRothAmber', heroVisSegPx(rothAmberFrac), 'height');
+  upd('hvTradGreenAmt', fmtK(tradBal*tradGreenFrac));
+  upd('hvTradAmberAmt', fmtK(tradBal*tradAmberFrac));
+  upd('hvRothGreenAmt', fmtK(tradBal*rothGreenFrac));
+  upd('hvRothAmberAmt', fmtK(tradBal*rothAmberFrac));
+  upd('hvTradPct', pctLbl(tradGreenFrac));
+  upd('hvTradAmberPct', pctLbl(tradAmberFrac));
+  upd('hvRothGreenPct', pctLbl(rothGreenFrac));
+  upd('hvRothAmberPct', pctLbl(rothAmberFrac));
+
+  var tradG = document.getElementById('hvTradGreen');
+  var rothG = document.getElementById('hvRothGreen');
+  if(tradG) tradG.classList.toggle('hv-win', vCls==='bad');
+  if(rothG) rothG.classList.toggle('hv-win', vCls==='good');
+
+  var savingsAmt = Math.abs(tradBal*tradAmberFrac - tradBal*rothAmberFrac);
+  var tradSub, rothSub, caption, savingsText, savingsCls;
+  if(vCls==='good'){
+    tradSub     = 'Tax owed on every withdrawal in retirement — and it compounds over time';
+    rothSub     = 'More take-home — grows tax-free from here on';
+    caption     = 'Locks in a known rate today — more take-home, no forced withdrawals ever';
+    savingsText = 'Converting saves ~'+fmtK(savingsAmt)+' in total taxes vs keeping traditional (on this '+fmtK(tradBal)+' IRA)';
+    savingsCls  = 'hv-dgrn';
+  } else if(vCls==='neutral'){
+    tradSub     = 'Tax cost is close either way';
+    rothSub     = 'A modest difference — close to a toss-up';
+    caption     = 'Growth rate, lifespan, and state taxes can tip a case this close either way';
+    savingsText = fmtK(tradBal*tradAmberFrac)+' vs '+fmtK(tradBal*rothAmberFrac)+' in taxes on this '+fmtK(tradBal)+' IRA — a genuine toss-up.';
+    savingsCls  = 'hv-dneu';
+  } else {
+    tradSub     = 'Lower tax rate expected in retirement than it costs to convert today';
+    rothSub     = 'Costs more to convert now than you would likely owe waiting';
+    caption     = 'Your expected retirement rate is lower than today\'s conversion cost here';
+    savingsText = 'In this example, traditional saves ~'+fmtK(savingsAmt)+' — converting costs more than waiting.';
+    savingsCls  = 'hv-damb';
   }
+  upd('hvTradSub', tradSub);
+  upd('hvRothSub', rothSub);
+  upd('hvCaption', caption);
+  upd('hvSavingsText', savingsText);
+  var dl = document.getElementById('hvDollar');
+  if(dl){ dl.className='hv-dollar '+savingsCls; dl.style.cssText='padding:.65rem 1rem'; }
 }
 
 
@@ -3217,12 +3240,11 @@ function clearAllInputs(){
   // Hide example banner
   var banner=document.getElementById('exBanner');
   if(banner) banner.style.display='none';
-  // Reset visual toggle to default (roth wins state). setVisState() re-
-  // highlights ITS OWN matching example button as a side effect (via
-  // VIS_STATES.roth.exKey='couple'), so the active-class removal below must
-  // run AFTER it, not before, or that button is left looking selected even
-  // though no real data was loaded for it.
-  setVisState('roth');
+  // Reset the hero illustration to the same curated real default shown at
+  // page load. updateHeroVis() has no .ex-btn side effect (unlike the old
+  // setVisState()), so unlike before, this can run in any order relative to
+  // the active-class removal below.
+  updateHeroVis('couple');
   // Clear example active states
   document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
     b.classList.remove('active');
@@ -3367,32 +3389,8 @@ function loadExample(name){
   document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
     b.classList.toggle('active', b.dataset.ex===name);
   });
-  // Sync hero visual toggle (without triggering loadExample again)
-  var visMap={couple:'roth',borderline:'borderline',single:'traditional',michigan:'roth',michSingle:'traditional',medicare:'borderline'};
-  var visName=visMap[name];
-  if(visName){
-    var s=VIS_STATES[visName];
-    if(s){
-      var tg=document.getElementById('hvTradGreen'),ta=document.getElementById('hvTradAmber'),rg=document.getElementById('hvRothGreen');
-      if(tg)tg.style.height=s.tradGreen+'px';
-      if(ta)ta.style.height=s.tradAmberH+'px';
-      if(rg)rg.style.height=s.rothGreen+'px';
-      function upd2(id,val,prop){var el=document.getElementById(id);if(el&&val!==undefined){if(prop)el.style[prop]=val;else el.textContent=val;}}
-      upd2('hvTradGreen',s.tradGreen+'px','height'); upd2('hvTradAmber',s.tradAmberH+'px','height');
-      upd2('hvRothGreen',s.rothGreen+'px','height'); upd2('hvRothAmber',s.rothAmberH+'px','height');
-      upd2('hvTradGreenAmt',s.tradGreenAmt); upd2('hvTradAmberAmt',s.tradAmberAmt);
-      upd2('hvRothGreenAmt',s.rothGreenAmt); upd2('hvRothAmberAmt',s.rothAmberAmt);
-      upd2('hvTradPct',s.tradPct); upd2('hvTradAmberPct',s.tradAmberPct);
-      upd2('hvRothGreenPct',s.rothGreenPct); upd2('hvRothAmberPct',s.rothAmberPct);
-      upd2('hvTradAmberLbl',s.tradAmberLbl); upd2('hvTradSub',s.tradSub);
-      upd2('hvRothSub',s.rothSub); upd2('hvCaption',s.caption);
-      var tG2=document.getElementById('hvTradGreen'),rG2=document.getElementById('hvRothGreen');
-      if(tG2)tG2.classList.toggle('hv-win',s.winSide==='trad');
-      if(rG2)rG2.classList.toggle('hv-win',s.winSide==='roth');
-      var dl2=document.getElementById('hvDollar');
-      if(dl2&&s.savingsLine){var st2=document.getElementById('hvSavingsText');if(st2)st2.textContent=s.savingsLine;dl2.className='hv-dollar '+(s.savingsCls||'hv-dneu');dl2.style.cssText='padding:.65rem 1rem';}
-    }
-  }
+  // Sync hero illustration to this example's real computed numbers
+  updateHeroVis(name);
   // Show banner
   var banner=document.getElementById('exBanner');
   var bannerText=document.getElementById('exBannerText');
@@ -3429,12 +3427,9 @@ function clearExample(){
   if(banner) banner.style.display='none';
   // Keep in sync with clearAllInputs()'s equivalent reset -- without this,
   // clicking "Clear example" left the illustration showing whatever example
-  // was last loaded. setVisState() re-highlights ITS OWN matching example
-  // button (via VIS_STATES.roth.exKey='couple') as a side effect, so the
-  // active-class removal below must run AFTER it, not before, or the button
-  // for whichever example that resolves to is left looking selected even
-  // though no real data was loaded for it.
-  setVisState('roth');
+  // was last loaded. updateHeroVis() has no .ex-btn side effect, so unlike
+  // before, this can run in any order relative to the active-class removal.
+  updateHeroVis('couple');
   document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
     b.classList.remove('active');
   });
@@ -4829,6 +4824,9 @@ document.addEventListener('DOMContentLoaded', function(){
   var _taxDetailsEl = document.getElementById('taxDetails');
   if(_taxDetailsEl && window.innerWidth > 740) _taxDetailsEl.open = true;
   calc();
+  // Deliberately curated real first impression for the hero illustration --
+  // see updateHeroVis()'s own comment for why this can't run any earlier.
+  updateHeroVis('couple');
   // Returning visitors with saved inputs skip the wizard and see their answer
   // immediately; first-time visitors start at step 1.
   if(_hadSavedInputs) revealResults(true); else renderStep();
