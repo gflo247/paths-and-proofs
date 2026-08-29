@@ -52,12 +52,12 @@
     [data-theme="dark"] .alert.ared{color:var(--danger);}
     [data-theme="dark"] .ex-btn[data-ex="single"]{background:var(--amber-pale)!important;color:var(--ink-amber)!important;border-color:var(--amber)!important;}
     [data-theme="dark"] .ex-btn[data-ex="borderline"]{background:var(--blight)!important;color:var(--text)!important;border-color:#6A7080!important;}
+    [data-theme="dark"] .ex-btn[data-ex="medicare"]{background:var(--blight)!important;color:var(--text)!important;border-color:#6A7080!important;}
     [data-theme="dark"] .ex-btn[data-ex="couple"]{background:var(--sbg)!important;color:var(--ink-green)!important;border-color:var(--success)!important;}
-    [data-theme="dark"] .ex-btn[data-ex="michigan"]{background:var(--navy-pale)!important;color:var(--navy-mid)!important;border-color:var(--navy-mid)!important;}
+    [data-theme="dark"] .ex-btn[data-ex="michigan"]{background:var(--sbg)!important;color:var(--ink-green)!important;border-color:var(--success)!important;}
     [data-theme="dark"] .ex-btn[data-ex="michSingle"]{background:var(--amber-pale)!important;color:var(--ink-amber)!important;border-color:var(--amber)!important;}
     [data-theme="dark"] .sb,[data-theme="dark"] .sc,[data-theme="dark"] .ph-num,[data-theme="dark"] .ex-pill,[data-theme="dark"] .tb:hover,[data-theme="dark"] .tb.open{background:#2C4A72;}
     [data-theme="dark"] .be-wait{background:#3A414C;}
-    [data-theme="dark"] .vt-neu{color:var(--muted);border-color:#6A7080;}
     .theme-btn{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9);border-radius:8px;padding:5px 7px;cursor:pointer;transition:background .15s,color .15s;}
     .theme-btn:hover{background:rgba(255,255,255,.22);color:#fff;}
     .theme-btn svg{display:block;width:17px;height:17px;}
@@ -97,12 +97,6 @@
     .hv-gseg.hv-win{background:linear-gradient(180deg,#40CF78,#1E8040);box-shadow:inset 0 4px 0 rgba(255,255,255,.28);}
     .hv-seg-pct{color:white;font-size:.88rem;font-weight:700;opacity:.9;text-align:center;line-height:1;letter-spacing:.01em;}
     .hv-aseg{background:linear-gradient(180deg,#D4860A,#A35500);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 6px;animation:hvPulse .55s ease-in-out 1.1s both;transition:height .55s cubic-bezier(.22,1,.36,1);}
-    .vis-toggle{display:flex;gap:.5rem;justify-content:center;margin-bottom:.9rem;flex-wrap:wrap;}
-    .vt-btn{border-radius:40px;padding:5px 15px;font-size:.76rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;border:1.5px solid transparent;opacity:.65;}
-    .vt-btn.active{opacity:1;box-shadow:0 0 0 2px currentColor;}
-    .vt-btn.vt-amb{background:var(--amber-pale);border-color:#B06000;color:var(--ink-amber);}
-    .vt-btn.vt-neu{background:#F5F1EB;border-color:#8A7A60;color:#4A3F2F;}
-    .vt-btn.vt-grn{background:var(--sbg);border-color:var(--success);color:var(--ink-green);}
     .hv-pct{color:white;font-size:1.45rem;font-weight:800;line-height:1;}
     .hv-slbl{color:white;font-size:.66rem;font-weight:500;opacity:.88;text-align:center;line-height:1.3;}
     .hv-chip{background:rgba(255,255,255,.22);border-radius:20px;padding:2px 8px;font-size:.61rem;color:white;font-weight:700;letter-spacing:.01em;text-align:center;line-height:1.35;}
@@ -123,15 +117,6 @@
     .faq-expand summary{font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:.5rem;}
     .faq-expand summary::-webkit-details-marker{display:none;}
     .faq-expand[open] summary{margin-bottom:.6rem;}
-    /* Illustrative hero example: open by default (it's the page's main "show, don't
-       tell" hook for a first-time visitor) but collapsible for anyone who's already
-       seen it and wants it out of the way on a re-visit. */
-    .hero-ex-summary{cursor:pointer;list-style:none;display:flex;justify-content:center;align-items:center;gap:.6ch;margin-bottom:.5rem;}
-    .hero-ex-summary::-webkit-details-marker{display:none;}
-    .hero-ex-toggle{font-size:.72rem;font-weight:700;color:var(--navy-mid);white-space:nowrap;border:1px solid var(--border);border-radius:40px;padding:3px 11px;background:var(--card);}
-    .hero-ex-summary:hover .hero-ex-toggle{color:var(--navy);border-color:var(--navy-mid);background:var(--navy-pale);}
-    .hero-ex-details:not([open]) .hero-ex-label-open{display:none;}
-    .hero-ex-details[open] .hero-ex-label-closed{display:none;}
     .faq-body{font-size:.81rem;color:var(--muted);line-height:1.65;padding-top:.1rem;}
     .faq-body strong{color:var(--ink-pale);}
     .ph-title{font-size:1.05rem;font-weight:700;color:var(--navy);margin:.5rem 0 .85rem;}
@@ -548,8 +533,83 @@
 <div class="hero">
   <h1>Should you do a Roth conversion, and how much?</h1>
   <p class="hero-lead">Enter your numbers and I'll work out how much to convert and when — including what it costs with federal <em>and</em> state taxes, a hidden tax effect on Social Security benefits, Medicare exposure, and the odds you'll live long enough to benefit.</p>
-  <!-- Toggle -->
   <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. After 73, annual withdrawals become required, adding taxable income each year. A Roth conversion pays that tax now, at a known rate — typically spread over several years — so future qualified withdrawals can be tax-free, and you, as the original owner, are never required to take distributions. This tool estimates which path costs you less, based on the assumptions you enter.</p>
+  <div style="text-align:center;margin-bottom:.5rem">
+    <span class="ex-pill" style="font-size:.72rem;padding:3px 13px">EXAMPLE — NOT YOUR NUMBERS</span>
+  </div>
+  <p style="font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);text-align:center;margin:.6rem 0 .6rem;opacity:.75">$300K IRA Converted Gradually</p>
+  <p style="font-size:.78rem;color:var(--muted);text-align:center;line-height:1.5;max-width:440px;margin:0 auto .9rem;font-style:italic">Totals over a full retirement, not a single year — these assume the conversion is spread across several years to stay in lower brackets, the approach this tool recommends.</p>
+  <div class="ex-bar" id="examplesSection">
+    <span class="ex-label" style="width:100%;text-align:center;margin-bottom:.2rem">Six example scenarios across the spectrum — click any to explore:</span>
+    <button class="ex-btn" data-ex="single" onclick="loadExample('single')"
+      style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
+      ↓ Illinois · Keep traditional
+    </button>
+    <button class="ex-btn" data-ex="borderline" onclick="loadExample('borderline')"
+      style="border-color:#8A7A60;color:#4A3F2F;background:#F5F1EB">
+      ⚖ Texas · Close call
+    </button>
+    <button class="ex-btn" data-ex="medicare" onclick="loadExample('medicare')"
+      style="border-color:#8A7A60;color:#4A3F2F;background:#F5F1EB">
+      ⚖ North Carolina · Close call (IRMAA)
+    </button>
+    <button class="ex-btn" data-ex="couple" onclick="loadExample('couple')"
+      style="border-color:#1B6B3A;color:#0E3B20;background:#E4F3EB">
+      ↑ Ohio couple · Convert to Roth
+    </button>
+    <button class="ex-btn" data-ex="michigan" onclick="loadExample('michigan')"
+      style="border-color:#1B6B3A;color:#0E3B20;background:#E4F3EB">
+      ↑ Michigan couple · Convert to Roth
+    </button>
+    <button class="ex-btn" data-ex="michSingle" onclick="loadExample('michSingle')"
+      style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
+      ↓ Michigan single · Keep traditional
+    </button>
+  </div>
+
+  <!-- Illustration — updated by the example buttons above -->
+  <div class="hero-vis" id="heroVis">
+    <div class="hv-col">
+      <div class="hv-bar">
+        <div class="hv-gseg" id="hvTradGreen" style="height:194px">
+          <div class="hv-damt" id="hvTradGreenAmt">$198K</div>
+          <div class="hv-seg-pct" id="hvTradPct">~66%</div>
+          <div class="hv-slbl">estimated net</div>
+          <div class="hv-chip">⚠️ annual withdrawals required</div>
+        </div>
+        <div class="hv-aseg" id="hvTradAmber" style="height:106px">
+          <div class="hv-damt" id="hvTradAmberAmt">$102K</div>
+          <div class="hv-seg-pct" id="hvTradAmberPct">~34%</div>
+          <div class="hv-slbl" id="hvTradAmberLbl">to IRS</div>
+        </div>
+      </div>
+      <div class="hv-col-lbl">Traditional IRA</div>
+      <div class="hv-col-sub" id="hvTradSub">Large tax owed on every withdrawal — and it compounds too</div>
+    </div>
+
+    <div class="hv-vs">VS</div>
+
+    <div class="hv-col">
+      <div class="hv-bar" style="animation-delay:.3s">
+        <div class="hv-gseg hv-win" id="hvRothGreen" style="height:212px">
+          <div class="hv-damt" id="hvRothGreenAmt">$234K</div>
+          <div class="hv-seg-pct" id="hvRothGreenPct">~78%</div>
+          <div class="hv-slbl">tax-free · by law</div>
+          <div class="hv-chip">✓ no withdrawals required</div>
+        </div>
+        <div class="hv-aseg" id="hvRothAmber" style="height:88px;animation:none">
+          <div class="hv-damt" id="hvRothAmberAmt">$66K</div>
+          <div class="hv-seg-pct" id="hvRothAmberPct">~22%</div>
+          <div class="hv-slbl">total tax to convert</div>
+        </div>
+      </div>
+      <div class="hv-col-lbl">After Converting</div>
+      <div class="hv-col-sub" id="hvRothSub">More take-home — grows tax-free from here</div>
+    </div>
+  </div>
+  <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$36K in total taxes vs keeping traditional</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in a known rate — more take-home, no forced withdrawals</div></div>
+  <p style="font-size:.72rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.6rem auto 0;font-style:italic">Real tax paid today either way — the payoff above only holds if future rates, returns, and lifespan land as assumed.</p>
+  <p class="hv-note" style="margin-top:.6rem;font-style:normal;font-weight:500;color:var(--navy-mid)">Want more detail? Scroll down to plug in your own numbers ↓</p>
   <details class="faq-expand">
     <summary>Have a 401(k) instead of an IRA? <span style="font-size:.8rem;opacity:.7">click to expand</span></summary>
     <div class="faq-body">
@@ -558,64 +618,6 @@
       <p style="margin-bottom:.5rem"><strong>Option 2:</strong> Some 401(k) plans let you convert to Roth directly inside the plan — check with your HR department or 401(k) company.</p>
       <p><strong>Have an old 401(k) from a previous job?</strong> You can roll it into a traditional IRA at any time — no deadline, no penalty. This calculator applies to that money too.</p>
     </div>
-  </details>
-  <details class="hero-ex-details" open>
-    <summary class="hero-ex-summary">
-      <span class="ex-pill" style="font-size:.72rem;padding:3px 13px">EXAMPLE — NOT YOUR NUMBERS</span>
-      <span class="hero-ex-toggle"><span class="hero-ex-label-open">hide example ↑</span><span class="hero-ex-label-closed">show example ↓</span></span>
-    </summary>
-    <p style="font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);text-align:center;margin:.6rem 0 .6rem;opacity:.75">$300K IRA Converted Gradually</p>
-    <p style="font-size:.78rem;color:var(--muted);text-align:center;line-height:1.5;max-width:440px;margin:0 auto .9rem;font-style:italic">Totals over a full retirement, not a single year — these assume the conversion is spread across several years to stay in lower brackets, the approach this tool recommends.</p>
-    <div class="vis-toggle">
-      <button class="vt-btn vt-amb" data-vis="traditional" onclick="setVisState('traditional')">↓ Keep traditional</button>
-      <button class="vt-btn vt-neu" data-vis="borderline" onclick="setVisState('borderline')">⚖ Too close to call</button>
-      <button class="vt-btn vt-grn active" data-vis="roth" onclick="setVisState('roth')">↑ Convert to Roth</button>
-    </div>
-    <p style="font-size:.68rem;color:var(--muted);text-align:center;margin:.3rem 0 0;opacity:.75">Preview only — switches the illustration below, doesn't load data. For a working example, use the cards further down.</p>
-
-    <!-- Toggleable visual -->
-    <div class="hero-vis" id="heroVis">
-      <div class="hv-col">
-        <div class="hv-bar">
-          <div class="hv-gseg" id="hvTradGreen" style="height:194px">
-            <div class="hv-damt" id="hvTradGreenAmt">$198K</div>
-            <div class="hv-seg-pct" id="hvTradPct">~66%</div>
-            <div class="hv-slbl">estimated net</div>
-            <div class="hv-chip">⚠️ annual withdrawals required</div>
-          </div>
-          <div class="hv-aseg" id="hvTradAmber" style="height:106px">
-            <div class="hv-damt" id="hvTradAmberAmt">$102K</div>
-            <div class="hv-seg-pct" id="hvTradAmberPct">~34%</div>
-            <div class="hv-slbl" id="hvTradAmberLbl">to IRS</div>
-          </div>
-        </div>
-        <div class="hv-col-lbl">Traditional IRA</div>
-        <div class="hv-col-sub" id="hvTradSub">Large tax owed on every withdrawal — and it compounds too</div>
-      </div>
-
-      <div class="hv-vs">VS</div>
-
-      <div class="hv-col">
-        <div class="hv-bar" style="animation-delay:.3s">
-          <div class="hv-gseg hv-win" id="hvRothGreen" style="height:212px">
-            <div class="hv-damt" id="hvRothGreenAmt">$234K</div>
-            <div class="hv-seg-pct" id="hvRothGreenPct">~78%</div>
-            <div class="hv-slbl">tax-free · by law</div>
-            <div class="hv-chip">✓ no withdrawals required</div>
-          </div>
-          <div class="hv-aseg" id="hvRothAmber" style="height:88px;animation:none">
-            <div class="hv-damt" id="hvRothAmberAmt">$66K</div>
-            <div class="hv-seg-pct" id="hvRothAmberPct">~22%</div>
-            <div class="hv-slbl">total tax to convert</div>
-          </div>
-        </div>
-        <div class="hv-col-lbl">After Converting</div>
-        <div class="hv-col-sub" id="hvRothSub">More take-home — grows tax-free from here</div>
-      </div>
-    </div>
-    <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$36K in total taxes vs keeping traditional</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in a known rate — more take-home, no forced withdrawals</div></div>
-    <p style="font-size:.72rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.6rem auto 0;font-style:italic">Real tax paid today either way — the payoff above only holds if future rates, returns, and lifespan land as assumed.</p>
-    <p class="hv-note" style="margin-top:.6rem;font-style:normal;font-weight:500;color:var(--navy-mid)">Want more detail? Scroll down to plug in your own numbers ↓</p>
   </details>
   <div class="how-to" style="margin-top:1.25rem;">
     <div class="how-to-step"><div class="sc">1</div><div>Fill in your details — approximate is fine</div></div>
@@ -651,29 +653,6 @@
       <summary>What does this tool model — and what does it simplify?</summary>
       <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), long-term capital gains and qualified dividend brackets (same source) stacked correctly on top of ordinary income, the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare IRMAA premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase, including the assumption that today's investment income continues unchanged. Survival modeling ends at age 100. State-rate accuracy and capital-gains treatment have their own caveats — see "What This Calculator Doesn't Model" further down the results. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
     </details>
-  </div>
-  <div class="ex-bar" id="examplesSection">
-    <span class="ex-label" style="width:100%;text-align:center;margin-bottom:.2rem">Five example scenarios across the spectrum — click any to explore:</span>
-    <button class="ex-btn" data-ex="single" onclick="loadExample('single')"
-      style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
-      ↓ Illinois · Keep traditional
-    </button>
-    <button class="ex-btn" data-ex="borderline" onclick="loadExample('borderline')"
-      style="border-color:#8A7A60;color:#4A3F2F;background:#F5F1EB">
-      ⚖ Texas · Close call
-    </button>
-    <button class="ex-btn" data-ex="couple" onclick="loadExample('couple')"
-      style="border-color:#1B6B3A;color:#0E3B20;background:#E4F3EB">
-      ↑ Ohio couple · Convert to Roth
-    </button>
-    <button class="ex-btn" data-ex="michigan" onclick="loadExample('michigan')"
-      style="border-color:#1C3A5E;color:#1C3A5E;background:#EAF0F7">
-      ↑ Michigan couple · Convert to Roth
-    </button>
-    <button class="ex-btn" data-ex="michSingle" onclick="loadExample('michSingle')"
-      style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
-      ↓ Michigan single · Keep traditional
-    </button>
   </div>
 </div>
 <div class="page-wrap">
@@ -3202,9 +3181,6 @@ function setVisState(name){
   var rothG=document.getElementById('hvRothGreen');
   if(tradG) tradG.classList.toggle('hv-win', s.winSide==='trad');
   if(rothG) rothG.classList.toggle('hv-win', s.winSide==='roth');
-  document.querySelectorAll('.vt-btn').forEach(function(b){
-    b.classList.toggle('active', b.dataset.vis===name);
-  });
   // Pre-select the matching example button (no data load, no scroll)
   document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
     b.classList.toggle('active', b.dataset.ex===s.exKey);
@@ -3238,15 +3214,19 @@ function clearAllInputs(){
   if(gd) gd.textContent='7%'; if(gv) gv.textContent='7%';
   // Clear localStorage
   if(_canStore) try{ localStorage.removeItem('rg_v1'); localStorage.removeItem('rg_v1_skip'); }catch(e){}
+  // Hide example banner
+  var banner=document.getElementById('exBanner');
+  if(banner) banner.style.display='none';
+  // Reset visual toggle to default (roth wins state). setVisState() re-
+  // highlights ITS OWN matching example button as a side effect (via
+  // VIS_STATES.roth.exKey='couple'), so the active-class removal below must
+  // run AFTER it, not before, or that button is left looking selected even
+  // though no real data was loaded for it.
+  setVisState('roth');
   // Clear example active states
   document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
     b.classList.remove('active');
   });
-  // Hide example banner
-  var banner=document.getElementById('exBanner');
-  if(banner) banner.style.display='none';
-  // Reset visual toggle to default (roth wins state)
-  setVisState('roth');
   // Reset wizard state too — otherwise "Clear" leaves the user staring at
   // an emptied-out results view instead of actually starting over. Flip
   // _wizardCompleted BEFORE calc() so the now-default values don't get
@@ -3341,6 +3321,20 @@ var PROFILES = {
       growthRate:7, retRate:12,
       taxSource:'outside', medicareStatus:'one', partD:'yes'
     }
+  },
+  medicare: {
+    label: 'Still-working 65-year-old in North Carolina — Medicare tier edge case',
+    stats: 'Age 65 · Single · Still working · $340K IRA · converting $25K · North Carolina',
+    context: 'This $25,000 conversion pushes Medicare MAGI from $125,000 to $150,000 — crossing the $137,000 IRMAA Tier 1→2 threshold and adding about $1,736/year in extra Part B and Part D premiums for the rest of retirement. Judged by tax rate alone (29.4% today vs. an expected 31.0% later) this is already a near-toss-up — the Medicare surcharge is one more real cost stacked on an already-close call.',
+    f: {
+      currentAge:65, retirementAge:68, filingStatus:'single',
+      sex:'female', spouseAge:null, spouseSex:null,
+      seniorDeduction:1, stateCode:'NC',
+      income:125000, pensionIncome:0, ssIncome:0, niiIncome:0, ltcgIncome:0,
+      convertAmt:25000, tradBal:340000, rothBal:0, iraBasis:0,
+      growthRate:7, retRate:27,
+      taxSource:'outside', medicareStatus:'one', partD:'yes'
+    }
   }
 };
 
@@ -3374,7 +3368,7 @@ function loadExample(name){
     b.classList.toggle('active', b.dataset.ex===name);
   });
   // Sync hero visual toggle (without triggering loadExample again)
-  var visMap={couple:'roth',borderline:'borderline',single:'traditional',michigan:'roth',michSingle:'traditional'};
+  var visMap={couple:'roth',borderline:'borderline',single:'traditional',michigan:'roth',michSingle:'traditional',medicare:'borderline'};
   var visName=visMap[name];
   if(visName){
     var s=VIS_STATES[visName];
@@ -3392,7 +3386,6 @@ function loadExample(name){
       upd2('hvRothGreenPct',s.rothGreenPct); upd2('hvRothAmberPct',s.rothAmberPct);
       upd2('hvTradAmberLbl',s.tradAmberLbl); upd2('hvTradSub',s.tradSub);
       upd2('hvRothSub',s.rothSub); upd2('hvCaption',s.caption);
-      document.querySelectorAll('.vt-btn').forEach(function(b){b.classList.toggle('active',b.dataset.vis===visName);});
       var tG2=document.getElementById('hvTradGreen'),rG2=document.getElementById('hvRothGreen');
       if(tG2)tG2.classList.toggle('hv-win',s.winSide==='trad');
       if(rG2)rG2.classList.toggle('hv-win',s.winSide==='roth');
@@ -3432,11 +3425,19 @@ function clearExample(){
   clearConvertAmtSkipFlag();
   var gd=document.getElementById('gDisp'),gv=document.getElementById('gValDisp');
   if(gd) gd.textContent='7%'; if(gv) gv.textContent='7%';
+  var banner=document.getElementById('exBanner');
+  if(banner) banner.style.display='none';
+  // Keep in sync with clearAllInputs()'s equivalent reset -- without this,
+  // clicking "Clear example" left the illustration showing whatever example
+  // was last loaded. setVisState() re-highlights ITS OWN matching example
+  // button (via VIS_STATES.roth.exKey='couple') as a side effect, so the
+  // active-class removal below must run AFTER it, not before, or the button
+  // for whichever example that resolves to is left looking selected even
+  // though no real data was loaded for it.
+  setVisState('roth');
   document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
     b.classList.remove('active');
   });
-  var banner=document.getElementById('exBanner');
-  if(banner) banner.style.display='none';
   calc();
   revealResults(true);
 }
