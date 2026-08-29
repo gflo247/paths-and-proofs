@@ -96,7 +96,7 @@
     .hv-gseg{background:linear-gradient(180deg,#2D8A52,var(--success));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 6px;transition:height .55s cubic-bezier(.22,1,.36,1),background .4s,box-shadow .4s;}
     .hv-gseg.hv-win{background:linear-gradient(180deg,#40CF78,#1E8040);box-shadow:inset 0 4px 0 rgba(255,255,255,.28);}
     .hv-seg-pct{color:white;font-size:.88rem;font-weight:700;opacity:.9;text-align:center;line-height:1;letter-spacing:.01em;}
-    .hv-aseg{background:linear-gradient(180deg,#D4860A,#A35500);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 6px;animation:hvPulse .55s ease-in-out 1.1s both;transition:height .55s cubic-bezier(.22,1,.36,1);}
+    .hv-aseg{background:linear-gradient(180deg,#D4860A,#A35500);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 6px;animation:hvPulse .55s ease-in-out 1.1s both;transition:height .55s cubic-bezier(.22,1,.36,1);}
     .hv-pct{color:white;font-size:1.45rem;font-weight:800;line-height:1;}
     .hv-slbl{color:white;font-size:.66rem;font-weight:500;opacity:.88;text-align:center;line-height:1.3;}
     .hv-chip{background:rgba(255,255,255,.22);border-radius:20px;padding:2px 8px;font-size:.61rem;color:white;font-weight:700;letter-spacing:.01em;text-align:center;line-height:1.35;}
@@ -562,7 +562,7 @@
       style="border-color:#8A7A60;color:#4A3F2F;background:#F5F1EB">
       ⚖ North Carolina · Close call (IRMAA)
     </button>
-    <button class="ex-btn" data-ex="couple" onclick="loadExample('couple')"
+    <button class="ex-btn active" data-ex="couple" onclick="loadExample('couple')"
       style="border-color:#1B6B3A;color:#0E3B20;background:#E4F3EB">
       ↑ Ohio couple · Convert to Roth
     </button>
@@ -576,13 +576,13 @@
   <div class="hero-vis" id="heroVis">
     <div class="hv-col">
       <div class="hv-bar">
-        <div class="hv-gseg" id="hvTradGreen" style="height:449px">
+        <div class="hv-gseg" id="hvTradGreen" style="height:384px">
           <div class="hv-damt" id="hvTradGreenAmt">$286K</div>
           <div class="hv-seg-pct" id="hvTradPct">~75%</div>
           <div class="hv-slbl">estimated net</div>
           <div class="hv-chip">⚠️ annual withdrawals required</div>
         </div>
-        <div class="hv-aseg" id="hvTradAmber" style="height:148px">
+        <div class="hv-aseg" id="hvTradAmber" style="height:126px">
           <div class="hv-damt" id="hvTradAmberAmt">$94K</div>
           <div class="hv-seg-pct" id="hvTradAmberPct">~25%</div>
           <div class="hv-slbl" id="hvTradAmberLbl">to IRS</div>
@@ -596,13 +596,13 @@
 
     <div class="hv-col">
       <div class="hv-bar" style="animation-delay:.3s">
-        <div class="hv-gseg hv-win" id="hvRothGreen" style="height:509px">
+        <div class="hv-gseg hv-win" id="hvRothGreen" style="height:435px">
           <div class="hv-damt" id="hvRothGreenAmt">$324K</div>
           <div class="hv-seg-pct" id="hvRothGreenPct">~85%</div>
           <div class="hv-slbl">tax-free · by law</div>
           <div class="hv-chip">✓ no withdrawals required</div>
         </div>
-        <div class="hv-aseg" id="hvRothAmber" style="height:88px;animation:none">
+        <div class="hv-aseg" id="hvRothAmber" style="height:75px;animation:none">
           <div class="hv-damt" id="hvRothAmberAmt">$56K</div>
           <div class="hv-seg-pct" id="hvRothAmberPct">~15%</div>
           <div class="hv-slbl">total tax to convert</div>
@@ -3132,10 +3132,15 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
 // from inside/after the DOMContentLoaded handler -- never at bare top-level
 // script scope -- exactly like calc()'s own one eager call already is.
 var HV_BAR_TOTAL_PX = 300;  // matches the historical hand-tuned bar heights
-var HV_SEG_MIN_PX   = 88;   // empirical floor -- below this, a segment's two lines of text don't fit
-var HV_SCALE_CAP    = 2.5;  // guard against a pathological future example (e.g. every rate near 0%)
-                             // scaling the whole bar to an unreasonable height -- none of the current
-                             // 6 examples come close to this; a safety rail, not a live case
+var HV_SEG_MIN_PX   = 78;   // empirical floor -- below this, a segment's two lines of text don't fit
+                             // (tightened alongside .hv-aseg's own padding/gap, which used to need ~88px)
+var HV_SCALE_CAP    = 1.7;  // when a segment is small enough that reaching the floor would require
+                             // scaling the whole bar past this, cap it here instead and let that one
+                             // segment sit a bit under the ideal floor -- a real, deliberate tradeoff
+                             // (e.g. Ohio couple's Roth "tax to convert" segment, only 14.75% of the
+                             // total, previously forced BOTH bars to ~597px tall to reach exactly 78px;
+                             // capped, they land around 480px, with that one segment landing a little
+                             // under target rather than the whole illustration ballooning to fit it)
 
 // Both bars represent the SAME total dollar figure (tradBal) split two
 // different ways, so their total heights need to match. Flooring each of the
@@ -3267,13 +3272,12 @@ function clearAllInputs(){
   var banner=document.getElementById('exBanner');
   if(banner) banner.style.display='none';
   // Reset the hero illustration to the same curated real default shown at
-  // page load. updateHeroVis() has no .ex-btn side effect (unlike the old
-  // setVisState()), so unlike before, this can run in any order relative to
-  // the active-class removal below.
+  // page load -- and re-highlight that default's own button (Ohio couple),
+  // matching what DOMContentLoaded does, so it stays clear the illustration
+  // is showing a specific real example, not generic placeholder numbers.
   updateHeroVis('couple');
-  // Clear example active states
   document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
-    b.classList.remove('active');
+    b.classList.toggle('active', b.dataset.ex==='couple');
   });
   // Reset wizard state too — otherwise "Clear" leaves the user staring at
   // an emptied-out results view instead of actually starting over. Flip
@@ -3453,11 +3457,11 @@ function clearExample(){
   if(banner) banner.style.display='none';
   // Keep in sync with clearAllInputs()'s equivalent reset -- without this,
   // clicking "Clear example" left the illustration showing whatever example
-  // was last loaded. updateHeroVis() has no .ex-btn side effect, so unlike
-  // before, this can run in any order relative to the active-class removal.
+  // was last loaded, and re-highlight that default's own button (Ohio
+  // couple), matching what DOMContentLoaded does.
   updateHeroVis('couple');
   document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
-    b.classList.remove('active');
+    b.classList.toggle('active', b.dataset.ex==='couple');
   });
   calc();
   revealResults(true);
@@ -4852,7 +4856,13 @@ document.addEventListener('DOMContentLoaded', function(){
   calc();
   // Deliberately curated real first impression for the hero illustration --
   // see updateHeroVis()'s own comment for why this can't run any earlier.
+  // Highlight the matching button too, so it's clear the illustration is
+  // showing a specific real example (Ohio couple), not generic placeholder
+  // numbers, before the visitor has clicked anything themselves.
   updateHeroVis('couple');
+  document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
+    b.classList.toggle('active', b.dataset.ex==='couple');
+  });
   // Returning visitors with saved inputs skip the wizard and see their answer
   // immediately; first-time visitors start at step 1.
   if(_hadSavedInputs) revealResults(true); else renderStep();
