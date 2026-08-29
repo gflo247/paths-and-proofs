@@ -419,7 +419,12 @@
     .footer-nav{display:block;margin:1.15rem 0;font-size:.82rem;}
     .footer-legal{display:block;font-size:.76rem;color:rgba(255,255,255,.5);max-width:min(94vw,1800px);margin-left:auto;margin-right:auto;line-height:1.6;}
     /* ── Example profiles ── */
-    .ex-bar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:center;margin-top:1.2rem;}
+    /* Grid, not flex-wrap: a fixed 2-column grid keeps the same-outcome-color
+       pairs on the same row regardless of viewport width or how long each
+       button's own text happens to be -- flex-wrap let the row count drift
+       between 3+2+1 and 2+2+2 depending on exactly how much width was left
+       over, breaking the color-pair grouping this layout exists to show. */
+    .ex-bar{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;justify-items:center;align-items:center;margin-top:1.2rem;}
     .ex-label{font-size:.82rem;color:var(--muted);}
     .ex-btn{background:var(--card);border:1.5px solid var(--blight);border-radius:40px;padding:6px 16px;font-size:.83rem;font-weight:600;color:var(--navy);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .15s,background .15s,box-shadow .15s;box-shadow:var(--sh-sm);}
     .ex-btn:hover{border-color:var(--navy-mid);background:var(--navy-pale);box-shadow:var(--sh);}
@@ -458,7 +463,7 @@
     @media(max-width:480px){
       html{font-size:15px;}
       .frow{grid-template-columns:1fr 1fr;}
-      .ex-bar{flex-direction:column;align-items:stretch;}
+      .ex-bar{grid-template-columns:1fr;}
       .ex-btn{text-align:center;justify-content:center;}
       .sval{font-size:1.65rem;}
       .bl-txt{font-size:.95rem;}
@@ -540,7 +545,7 @@
   <p id="heroVisAmtHd" style="font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);text-align:center;margin:.6rem 0 .6rem;opacity:.75">$380K IRA Converted Gradually</p>
   <p style="font-size:.78rem;color:var(--muted);text-align:center;line-height:1.5;max-width:440px;margin:0 auto .9rem;font-style:italic">Totals over a full retirement, not a single year — these assume the conversion is spread across several years to stay in lower brackets, the approach this tool recommends.</p>
   <div class="ex-bar" id="examplesSection">
-    <span class="ex-label" style="width:100%;text-align:center;margin-bottom:.2rem">Six example scenarios across the spectrum — click any to explore:</span>
+    <span class="ex-label" style="grid-column:1/-1;text-align:center;margin-bottom:.2rem">Six example scenarios across the spectrum — click any to explore:</span>
     <button class="ex-btn" data-ex="single" onclick="loadExample('single')"
       style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
       ↓ Illinois · Keep traditional
@@ -571,13 +576,13 @@
   <div class="hero-vis" id="heroVis">
     <div class="hv-col">
       <div class="hv-bar">
-        <div class="hv-gseg" id="hvTradGreen" style="height:226px">
+        <div class="hv-gseg" id="hvTradGreen" style="height:449px">
           <div class="hv-damt" id="hvTradGreenAmt">$286K</div>
           <div class="hv-seg-pct" id="hvTradPct">~75%</div>
           <div class="hv-slbl">estimated net</div>
           <div class="hv-chip">⚠️ annual withdrawals required</div>
         </div>
-        <div class="hv-aseg" id="hvTradAmber" style="height:88px">
+        <div class="hv-aseg" id="hvTradAmber" style="height:148px">
           <div class="hv-damt" id="hvTradAmberAmt">$94K</div>
           <div class="hv-seg-pct" id="hvTradAmberPct">~25%</div>
           <div class="hv-slbl" id="hvTradAmberLbl">to IRS</div>
@@ -591,7 +596,7 @@
 
     <div class="hv-col">
       <div class="hv-bar" style="animation-delay:.3s">
-        <div class="hv-gseg hv-win" id="hvRothGreen" style="height:256px">
+        <div class="hv-gseg hv-win" id="hvRothGreen" style="height:509px">
           <div class="hv-damt" id="hvRothGreenAmt">$324K</div>
           <div class="hv-seg-pct" id="hvRothGreenPct">~85%</div>
           <div class="hv-slbl">tax-free · by law</div>
@@ -3128,9 +3133,28 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
 // script scope -- exactly like calc()'s own one eager call already is.
 var HV_BAR_TOTAL_PX = 300;  // matches the historical hand-tuned bar heights
 var HV_SEG_MIN_PX   = 88;   // empirical floor -- below this, a segment's two lines of text don't fit
+var HV_SCALE_CAP    = 2.5;  // guard against a pathological future example (e.g. every rate near 0%)
+                             // scaling the whole bar to an unreasonable height -- none of the current
+                             // 6 examples come close to this; a safety rail, not a live case
 
-function heroVisSegPx(frac){
-  return Math.max(HV_SEG_MIN_PX, Math.round(frac*HV_BAR_TOTAL_PX));
+// Both bars represent the SAME total dollar figure (tradBal) split two
+// different ways, so their total heights need to match. Flooring each of the
+// 4 segments independently (Math.max(88, frac*300) per segment) broke that:
+// whichever bar's amber segment happened to floor up more ended up taller
+// overall, even though the underlying dollar total was identical -- a real
+// bug a user caught by eye on the Michigan-couple example. Fixed by scaling
+// the WHOLE bar (all 4 segments, both bars, one shared factor) up just
+// enough that the smallest of the 4 hits the text-fit floor: this preserves
+// each segment's true proportion (no artificial equalizing between bars,
+// the earlier failure mode this replaced) while keeping both bars' totals
+// equal (this fix's own reason for existing).
+function heroVisBarPx(tradGreenFrac, tradAmberFrac, rothGreenFrac, rothAmberFrac){
+  var raw = [tradGreenFrac, tradAmberFrac, rothGreenFrac, rothAmberFrac].map(function(f){
+    return f*HV_BAR_TOTAL_PX;
+  });
+  var minRaw = Math.min.apply(null, raw);
+  var scale = minRaw>0 ? Math.min(HV_SCALE_CAP, Math.max(1, HV_SEG_MIN_PX/minRaw)) : 1;
+  return raw.map(function(px){ return Math.round(px*scale); });
 }
 
 function updateHeroVis(name){
@@ -3170,11 +3194,13 @@ function updateHeroVis(name){
     if(prop) el.style[prop]=val+'px'; else el.textContent=val;
   }
 
+  var barPx = heroVisBarPx(tradGreenFrac, tradAmberFrac, rothGreenFrac, rothAmberFrac);
+
   upd('heroVisAmtHd', fmtK(tradBal)+' IRA Converted Gradually');
-  upd('hvTradGreen', heroVisSegPx(tradGreenFrac), 'height');
-  upd('hvTradAmber', heroVisSegPx(tradAmberFrac), 'height');
-  upd('hvRothGreen', heroVisSegPx(rothGreenFrac), 'height');
-  upd('hvRothAmber', heroVisSegPx(rothAmberFrac), 'height');
+  upd('hvTradGreen', barPx[0], 'height');
+  upd('hvTradAmber', barPx[1], 'height');
+  upd('hvRothGreen', barPx[2], 'height');
+  upd('hvRothAmber', barPx[3], 'height');
   upd('hvTradGreenAmt', fmtK(tradBal*tradGreenFrac));
   upd('hvTradAmberAmt', fmtK(tradBal*tradAmberFrac));
   upd('hvRothGreenAmt', fmtK(tradBal*rothGreenFrac));
