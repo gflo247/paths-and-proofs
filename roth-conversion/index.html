@@ -3134,13 +3134,24 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
 var HV_BAR_TOTAL_PX = 300;  // matches the historical hand-tuned bar heights
 var HV_SEG_MIN_PX   = 78;   // empirical floor -- below this, a segment's two lines of text don't fit
                              // (tightened alongside .hv-aseg's own padding/gap, which used to need ~88px)
-var HV_SCALE_CAP    = 1.7;  // when a segment is small enough that reaching the floor would require
+var HV_LEGIBILITY_CAP = 1.7;  // when a segment is small enough that reaching the floor would require
                              // scaling the whole bar past this, cap it here instead and let that one
                              // segment sit a bit under the ideal floor -- a real, deliberate tradeoff
                              // (e.g. Ohio couple's Roth "tax to convert" segment, only 14.75% of the
                              // total, previously forced BOTH bars to ~597px tall to reach exactly 78px;
                              // capped, they land around 480px, with that one segment landing a little
                              // under target rather than the whole illustration ballooning to fit it)
+var HV_DOLLAR_REF_BAL   = 380000;      // Ohio couple's own balance -- the largest of the 6 real
+                                        // examples, and the one HV_LEGIBILITY_CAP above was tuned
+                                        // against
+var HV_DOLLAR_REF_SCALE = HV_LEGIBILITY_CAP;  // tie the dollar-scale reference to couple's own
+                                        // already-capped value, so couple's bar (already shrunk
+                                        // once for being too tall) doesn't grow again just because
+                                        // it also happens to be the largest-balance example
+var HV_OVERALL_SCALE_CAP = 2.2;        // guards a hypothetical future example with a much larger
+                                        // balance from producing a runaway-tall bar; none of the
+                                        // current 6 examples get anywhere near this (today's largest
+                                        // combined scale, Ohio couple's, is 1.7)
 
 // Both bars represent the SAME total dollar figure (tradBal) split two
 // different ways, so their total heights need to match. Flooring each of the
@@ -3153,12 +3164,26 @@ var HV_SCALE_CAP    = 1.7;  // when a segment is small enough that reaching the 
 // each segment's true proportion (no artificial equalizing between bars,
 // the earlier failure mode this replaced) while keeping both bars' totals
 // equal (this fix's own reason for existing).
-function heroVisBarPx(tradGreenFrac, tradAmberFrac, rothGreenFrac, rothAmberFrac){
+//
+// That legibility-only scale also turned out to have zero relationship to
+// the actual dollar amount -- a user caught North Carolina ($340K) rendering
+// visibly SHORTER than Texas ($175K), since Texas's more lopsided split
+// needed more legibility scaling than North Carolina's fairly even one did,
+// and dollar size was never a factor at all. Fixed by computing a SECOND,
+// dollar-proportional scale (relative to Ohio couple's own $380K balance,
+// the current largest) and using whichever of the two -- legibility or
+// dollar-size -- asks for more height. Bar height now trends with balance
+// size without fighting legibility: nothing ever shrinks below what its own
+// text needs to fit, and nothing needed to reach the earlier "too tall"
+// height either.
+function heroVisBarPx(tradBal, tradGreenFrac, tradAmberFrac, rothGreenFrac, rothAmberFrac){
   var raw = [tradGreenFrac, tradAmberFrac, rothGreenFrac, rothAmberFrac].map(function(f){
     return f*HV_BAR_TOTAL_PX;
   });
   var minRaw = Math.min.apply(null, raw);
-  var scale = minRaw>0 ? Math.min(HV_SCALE_CAP, Math.max(1, HV_SEG_MIN_PX/minRaw)) : 1;
+  var legibilityScale = minRaw>0 ? Math.min(HV_LEGIBILITY_CAP, Math.max(1, HV_SEG_MIN_PX/minRaw)) : 1;
+  var dollarScale = HV_DOLLAR_REF_SCALE * (tradBal/HV_DOLLAR_REF_BAL);
+  var scale = Math.min(HV_OVERALL_SCALE_CAP, Math.max(legibilityScale, dollarScale));
   return raw.map(function(px){ return Math.round(px*scale); });
 }
 
@@ -3199,7 +3224,7 @@ function updateHeroVis(name){
     if(prop) el.style[prop]=val+'px'; else el.textContent=val;
   }
 
-  var barPx = heroVisBarPx(tradGreenFrac, tradAmberFrac, rothGreenFrac, rothAmberFrac);
+  var barPx = heroVisBarPx(tradBal, tradGreenFrac, tradAmberFrac, rothGreenFrac, rothAmberFrac);
 
   upd('heroVisAmtHd', fmtK(tradBal)+' IRA Converted Gradually');
   upd('hvTradGreen', barPx[0], 'height');
