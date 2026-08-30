@@ -538,12 +538,11 @@
 <div class="hero">
   <h1>Should you do a Roth conversion, and how much?</h1>
   <p class="hero-lead">Enter your numbers and I'll work out how much to convert and when — including what it costs with federal <em>and</em> state taxes, a hidden tax effect on Social Security benefits, Medicare exposure, and the odds you'll live long enough to benefit.</p>
-  <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. After 73, annual withdrawals become required, adding taxable income each year. A Roth conversion pays that tax now, at a known rate — typically spread over several years — so future qualified withdrawals can be tax-free, and you, as the original owner, are never required to take distributions. This tool estimates which path costs you less, based on the assumptions you enter.</p>
+  <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. Withdrawals become required and taxable starting at age 73.</p>
   <div style="text-align:center;margin-bottom:.5rem">
     <span class="ex-pill" style="font-size:.72rem;padding:3px 13px">EXAMPLE — NOT YOUR NUMBERS</span>
   </div>
   <p id="heroVisAmtHd" style="font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);text-align:center;margin:.6rem 0 .6rem;opacity:.75">$380K IRA Converted Gradually</p>
-  <p style="font-size:.78rem;color:var(--muted);text-align:center;line-height:1.5;max-width:440px;margin:0 auto .9rem;font-style:italic">Totals over a full retirement, not a single year — these assume the conversion is spread across several years to stay in lower brackets, the approach this tool recommends.</p>
   <div class="ex-bar" id="examplesSection">
     <span class="ex-label" style="grid-column:1/-1;text-align:center;margin-bottom:.2rem">Six example scenarios across the spectrum — click any to explore:</span>
     <button class="ex-btn" data-ex="single" onclick="loadExample('single')"
@@ -613,8 +612,7 @@
     </div>
   </div>
   <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$38K in total taxes vs keeping traditional (on this $380K IRA)</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in a known rate today — more take-home, no forced withdrawals ever</div></div>
-  <p style="font-size:.72rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.6rem auto 0;font-style:italic">Real tax paid today either way — the payoff above only holds if future rates, returns, and lifespan land as assumed.</p>
-  <p class="hv-note" style="margin-top:.6rem;font-style:normal;font-weight:500;color:var(--navy-mid)">Want more detail? Scroll down to plug in your own numbers ↓</p>
+  <p style="font-size:.72rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.6rem auto 0;font-style:italic">Full-retirement totals from a multi-year conversion — the real payoff depends on future rates, returns, and lifespan matching these assumptions.</p>
   <details class="faq-expand">
     <summary>Have a 401(k) instead of an IRA? <span style="font-size:.8rem;opacity:.7">click to expand</span></summary>
     <div class="faq-body">
@@ -656,7 +654,7 @@
     </details>
     <details class="faq-item">
       <summary>What does this tool model — and what does it simplify?</summary>
-      <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), long-term capital gains and qualified dividend brackets (same source) stacked correctly on top of ordinary income, the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare IRMAA premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase, including the assumption that today's investment income continues unchanged. Survival modeling ends at age 100. State-rate accuracy and capital-gains treatment have their own caveats — see "What This Calculator Doesn't Model" further down the results. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
+      <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), long-term capital gains and qualified dividend brackets (same source) stacked correctly on top of ordinary income, the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare IRMAA premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase, including the assumption that today's investment income continues unchanged. Survival modeling ends at age 100. See "What This Calculator Doesn't Model" below for state and capital-gains caveats. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
     </details>
   </div>
 </div>
