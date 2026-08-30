@@ -548,7 +548,7 @@
     <span class="ex-label" style="grid-column:1/-1;text-align:center;margin-bottom:.2rem">Six example scenarios across the spectrum — click any to explore:</span>
     <button class="ex-btn" data-ex="single" onclick="loadExample('single')"
       style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
-      ↓ Illinois · Keep traditional
+      ↓ Mississippi · Keep traditional
     </button>
     <button class="ex-btn" data-ex="michSingle" onclick="loadExample('michSingle')"
       style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
@@ -3344,13 +3344,13 @@ var PROFILES = {
     }
   },
   single: {
-    label: 'Single professional in Illinois',
-    stats: 'Age 57 · Single · $320K IRA · converting $18K · Illinois',
-    context: 'Illinois doesn\'t tax IRA withdrawals in retirement — a nuance I flag automatically in your results.',
+    label: 'Single professional in Mississippi',
+    stats: 'Age 57 · Single · $320K IRA · converting $18K · Mississippi',
+    context: 'Mississippi exempts IRA withdrawals in retirement — but only once you\'ve met the plan\'s retirement requirements (age 59.5). At 57, this conversion doesn\'t qualify yet, so it pays Mississippi\'s 4.4% state tax today on money a withdrawal two and a half years from now would owe nothing on — a nuance I flag automatically in your results.',
     f: {
       currentAge:57, retirementAge:65, filingStatus:'single',
       sex:'female', spouseAge:null, spouseSex:null,
-      seniorDeduction:0, stateCode:'IL',
+      seniorDeduction:0, stateCode:'MS',
       income:110000, pensionIncome:0, ssIncome:0, niiIncome:0, ltcgIncome:0,
       convertAmt:18000, tradBal:320000, rothBal:45000, iraBasis:0,
       growthRate:7, retRate:24,
@@ -3360,14 +3360,14 @@ var PROFILES = {
   borderline: {
     label: 'Late converter in Texas — borderline case',
     stats: 'Age 68 · Single · $175K IRA · converting $22K',
-    context: 'Converting at 23.5% but expecting 18% in retirement — check the sensitivity chart for the close-call boundary.',
+    context: 'Converting at 23.5% but expecting 23.0% in retirement — close enough that it\'s a genuine toss-up, not a lopsided call; check the sensitivity chart for how easily this could tip either way.',
     f: {
       currentAge:68, retirementAge:72, filingStatus:'single',
       sex:'male', spouseAge:null, spouseSex:null,
       seniorDeduction:1, stateCode:'TX',
       income:105000, pensionIncome:0, ssIncome:0, niiIncome:0, ltcgIncome:0,
       convertAmt:22000, tradBal:175000, rothBal:0, iraBasis:0,
-      growthRate:6, retRate:18,
+      growthRate:6, retRate:23,
       taxSource:'inside', medicareStatus:'one', partD:'yes'
     }
   },
