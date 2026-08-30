@@ -50,12 +50,9 @@
     [data-theme="dark"] footer{background:#16203A;}
     [data-theme="dark"] .btip,[data-theme="dark"] .disclaimer,[data-theme="dark"] .alert.aamb{color:var(--ink-amber);}
     [data-theme="dark"] .alert.ared{color:var(--danger);}
-    [data-theme="dark"] .ex-btn[data-ex="single"]{background:var(--amber-pale)!important;color:var(--ink-amber)!important;border-color:var(--amber)!important;}
-    [data-theme="dark"] .ex-btn[data-ex="borderline"]{background:var(--blight)!important;color:var(--text)!important;border-color:#6A7080!important;}
-    [data-theme="dark"] .ex-btn[data-ex="medicare"]{background:var(--blight)!important;color:var(--text)!important;border-color:#6A7080!important;}
-    [data-theme="dark"] .ex-btn[data-ex="couple"]{background:var(--sbg)!important;color:var(--ink-green)!important;border-color:var(--success)!important;}
-    [data-theme="dark"] .ex-btn[data-ex="michigan"]{background:var(--sbg)!important;color:var(--ink-green)!important;border-color:var(--success)!important;}
-    [data-theme="dark"] .ex-btn[data-ex="michSingle"]{background:var(--amber-pale)!important;color:var(--ink-amber)!important;border-color:var(--amber)!important;}
+    [data-theme="dark"] .ex-btn.vcls-bad{background:var(--amber-pale)!important;color:var(--ink-amber)!important;border-color:var(--amber)!important;}
+    [data-theme="dark"] .ex-btn.vcls-neutral{background:var(--blight)!important;color:var(--text)!important;border-color:#6A7080!important;}
+    [data-theme="dark"] .ex-btn.vcls-good{background:var(--sbg)!important;color:var(--ink-green)!important;border-color:var(--success)!important;}
     [data-theme="dark"] .sb,[data-theme="dark"] .sc,[data-theme="dark"] .ph-num,[data-theme="dark"] .ex-pill,[data-theme="dark"] .tb:hover,[data-theme="dark"] .tb.open{background:#2C4A72;}
     [data-theme="dark"] .be-wait{background:#3A414C;}
     .theme-btn{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9);border-radius:8px;padding:5px 7px;cursor:pointer;transition:background .15s,color .15s;}
@@ -133,7 +130,7 @@
     .ph-num{background:var(--navy);color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:1px;}
     .ph-try{color:var(--amber);font-weight:700;cursor:pointer;text-decoration:underline;background:none;border:none;font-family:inherit;font-size:inherit;padding:0;}
     .concept-note{font-size:.9rem;color:var(--navy-mid);text-align:center;line-height:1.7;max-width:480px;margin:.25rem auto 1.1rem;font-weight:500;}
-    .hero-ex-tag{display:inline-flex;flex-direction:column;align-items:center;gap:.2rem;background:var(--card);border:1px solid var(--blight);border-radius:var(--rsm);padding:.45rem 1.1rem .55rem;margin:0 auto .9rem;box-shadow:var(--sh-sm);max-width:min(94vw,440px);box-sizing:border-box;}
+    .hero-ex-tag{display:inline-flex;flex-direction:column;align-items:center;gap:.2rem;background:var(--card);border:1px solid var(--blight);border-radius:var(--rsm);padding:.45rem 1.1rem .55rem;margin:0 auto;box-shadow:var(--sh-sm);max-width:min(94vw,440px);box-sizing:border-box;}
     .hero-ex-tag-lbl{background:var(--navy);color:white;border-radius:40px;padding:2px 10px;font-size:.68rem;font-weight:700;letter-spacing:.03em;}
     .hero-ex-tag-amt{font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);margin:0;opacity:.85;}
     .hv-rmd-note{font-size:.76rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.1rem auto .85rem;font-style:italic;}
@@ -440,6 +437,9 @@
     .ex-btn{background:var(--card);border:1.5px solid var(--blight);border-radius:40px;padding:6px 16px;font-size:.83rem;font-weight:600;color:var(--navy);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .15s,background .15s,box-shadow .15s;box-shadow:var(--sh-sm);}
     .ex-btn:hover{border-color:var(--navy-mid);background:var(--navy-pale);box-shadow:var(--sh);}
     .ex-btn.active{box-shadow:0 0 0 2.5px currentColor,var(--sh-sm);font-weight:700;filter:brightness(.94);}
+    .ex-btn.vcls-bad{border-color:#B06000;color:#7A4200;background:#FFF3E0;}
+    .ex-btn.vcls-neutral{border-color:#8A7A60;color:#4A3F2F;background:#F5F1EB;}
+    .ex-btn.vcls-good{border-color:#1B6B3A;color:#0E3B20;background:#E4F3EB;}
     .ex-banner{background:var(--navy-pale);border:1px solid var(--tip-bdr);border-radius:var(--rsm);padding:.6rem 1rem;font-size:.84rem;color:var(--ink-pale);display:none;align-items:flex-start;gap:.65rem;flex-wrap:wrap;margin-bottom:1rem;line-height:1.5;}
     .ex-stats{display:block;font-weight:700;font-size:.86rem;color:var(--navy);margin-bottom:.2rem;letter-spacing:.01em;}
     .ex-context{display:block;font-size:.79rem;color:var(--muted);line-height:1.55;}
@@ -556,28 +556,22 @@
   </div>
   <div class="ex-bar" id="examplesSection">
     <span class="ex-label" style="grid-column:1/-1;text-align:center;margin-bottom:.2rem">Six example scenarios across the spectrum — click any to explore:</span>
-    <button class="ex-btn" data-ex="single" onclick="loadExample('single')"
-      style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
+    <button class="ex-btn vcls-bad" data-ex="single" onclick="loadExample('single')">
       ↓ Mississippi · Keep traditional
     </button>
-    <button class="ex-btn" data-ex="michSingle" onclick="loadExample('michSingle')"
-      style="border-color:#B06000;color:#7A4200;background:#FFF3E0">
+    <button class="ex-btn vcls-bad" data-ex="michSingle" onclick="loadExample('michSingle')">
       ↓ Michigan single · Keep traditional
     </button>
-    <button class="ex-btn" data-ex="borderline" onclick="loadExample('borderline')"
-      style="border-color:#8A7A60;color:#4A3F2F;background:#F5F1EB">
+    <button class="ex-btn vcls-neutral" data-ex="borderline" onclick="loadExample('borderline')">
       ⚖ Texas · Close call
     </button>
-    <button class="ex-btn" data-ex="medicare" onclick="loadExample('medicare')"
-      style="border-color:#8A7A60;color:#4A3F2F;background:#F5F1EB">
+    <button class="ex-btn vcls-neutral" data-ex="medicare" onclick="loadExample('medicare')">
       ⚖ North Carolina · Close call (IRMAA)
     </button>
-    <button class="ex-btn active" data-ex="couple" onclick="loadExample('couple')"
-      style="border-color:#1B6B3A;color:#0E3B20;background:#E4F3EB">
-      ↑ Ohio couple · Convert to Roth
+    <button class="ex-btn vcls-good active" data-ex="couple" onclick="loadExample('couple')">
+      ↑ Ohio · Convert to Roth
     </button>
-    <button class="ex-btn" data-ex="michigan" onclick="loadExample('michigan')"
-      style="border-color:#1B6B3A;color:#0E3B20;background:#E4F3EB">
+    <button class="ex-btn vcls-good" data-ex="michigan" onclick="loadExample('michigan')">
       ↑ Michigan couple · Convert to Roth
     </button>
   </div>
@@ -3196,8 +3190,13 @@ function heroVisBarPx(tradBal, tradGreenFrac, tradAmberFrac, rothGreenFrac, roth
   return raw.map(function(px){ return Math.round(px*scale); });
 }
 
-function updateHeroVis(name){
-  var p = PROFILES[name]; if(!p) return;
+// Shared by updateHeroVis() (the illustration) and renderExampleButtons()
+// (the six buttons' icon/verb/color) so both always agree with each other
+// and with computeConversionCost() itself -- a hand-typed button label or
+// color can never again claim a verdict the real math doesn't back (the
+// exact bug class the Texas/Illinois mismatch turned out to be).
+function exampleVerdict(name){
+  var p = PROFILES[name]; if(!p) return null;
   var f = p.f;
 
   // Same ctx computeConversionCost() needs, derived directly from the
@@ -3220,9 +3219,47 @@ function updateHeroVis(name){
   var stRetR    = stD.ex ? 0 : stD.cr;
   var totalRetR = f.retRate/100 + stRetR;
   var rateDiff  = totalRetR - effR;
-  var tradBal   = f.tradBal;
-
   var vCls = rateDiff>=.03 ? 'good' : (rateDiff>=-0.02 ? 'neutral' : 'bad');
+  return {vCls:vCls, effR:effR, totalRetR:totalRetR, rateDiff:rateDiff, tradBal:f.tradBal, stD:stD};
+}
+
+var EX_VCLS_META = {
+  good:    {icon:'↑', verb:'Convert to Roth'},
+  neutral: {icon:'⚖', verb:'Close call'},
+  bad:     {icon:'↓', verb:'Keep traditional'}
+};
+
+// Renders all six example buttons' text and outcome color from real computed
+// data. State name comes from ST (already the canonical source, so it can't
+// drift from what the state dropdown itself says); the single/couple
+// qualifier is authored on each profile via f.filingStatus, but only shown
+// when another profile shares the same stateCode -- Michigan's two examples
+// need it to tell them apart, Ohio's one example doesn't. Only labelNote
+// (e.g. medicare's " (IRMAA)") stays hand-authored, since it's a curation
+// call about what to highlight, not something derivable from vCls.
+function renderExampleButtons(){
+  var stateCounts = {};
+  Object.keys(PROFILES).forEach(function(name){
+    var code = PROFILES[name].f.stateCode;
+    stateCounts[code] = (stateCounts[code]||0)+1;
+  });
+  Object.keys(PROFILES).forEach(function(name){
+    var btn = document.querySelector('.ex-btn[data-ex="'+name+'"]'); if(!btn) return;
+    var p = PROFILES[name], f = p.f;
+    var v = exampleVerdict(name); if(!v) return;
+    var meta = EX_VCLS_META[v.vCls];
+    var stateName = (ST[f.stateCode] && ST[f.stateCode].n) || f.stateCode;
+    var isCouple = (f.filingStatus==='mfj' || f.filingStatus==='mfs');
+    var qualifier = stateCounts[f.stateCode] > 1 ? (' '+(isCouple ? 'couple' : 'single')) : '';
+    btn.textContent = meta.icon+' '+stateName+qualifier+' · '+meta.verb+(p.labelNote||'');
+    btn.classList.remove('vcls-good','vcls-neutral','vcls-bad');
+    btn.classList.add('vcls-'+v.vCls);
+  });
+}
+
+function updateHeroVis(name){
+  var v = exampleVerdict(name); if(!v) return;
+  var vCls = v.vCls, effR = v.effR, totalRetR = v.totalRetR, tradBal = v.tradBal;
 
   var tradGreenFrac = 1-totalRetR, tradAmberFrac = totalRetR;
   var rothGreenFrac = 1-effR,      rothAmberFrac = effR;
@@ -3409,6 +3446,7 @@ var PROFILES = {
     }
   },
   medicare: {
+    labelNote: ' (IRMAA)',
     label: 'Still-working 65-year-old in North Carolina — Medicare tier edge case',
     stats: 'Age 65 · Single · Still working · $340K IRA · converting $25K · North Carolina',
     context: 'This $25,000 conversion pushes Medicare MAGI from $125,000 to $150,000 — crossing the $137,000 IRMAA Tier 1→2 threshold and adding about $1,736/year in extra Part B and Part D premiums for the rest of retirement. Judged by tax rate alone (29.4% today vs. an expected 31.0% later) this is already a near-toss-up — the Medicare surcharge is one more real cost stacked on an already-close call.',
@@ -4888,6 +4926,10 @@ document.addEventListener('DOMContentLoaded', function(){
   var _taxDetailsEl = document.getElementById('taxDetails');
   if(_taxDetailsEl && window.innerWidth > 740) _taxDetailsEl.open = true;
   calc();
+  // Render the six example buttons' text/color from real computed data --
+  // see renderExampleButtons()'s own comment. Static data, so this only
+  // needs to run once here, not from clearAllInputs()/clearExample() too.
+  renderExampleButtons();
   // Deliberately curated real first impression for the hero illustration --
   // see updateHeroVis()'s own comment for why this can't run any earlier.
   // Highlight the matching button too, so it's clear the illustration is
