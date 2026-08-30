@@ -111,6 +111,14 @@
     .faq-item summary{cursor:pointer;font-weight:600;color:var(--navy);list-style:none;line-height:1.4;}
     .faq-item summary::-webkit-details-marker{display:none;}
     .faq-item[open] summary{margin-bottom:.45rem;}
+    /* This one answer runs 3-4x longer than its neighbors and lands alone in
+       the last row (7 items in a 2-column grid) with the second column empty
+       next to it -- spanning both columns lets it wrap at a readable width
+       instead of being squeezed into a narrow, tall single column. A named
+       class rather than :last-child, so this stays tied to which item is
+       actually long, not to whatever position it happens to land in if the
+       FAQ list is ever reordered or added to. */
+    .faq-item-wide{grid-column:1/-1;}
     .faq-ans{color:var(--muted);line-height:1.6;font-size:.79rem;margin-top:.1rem;}
     @media(max-width:480px){.faq-section{grid-template-columns:1fr;}}
     .faq-expand{background:var(--navy-pale);border:1px solid var(--tip-bdr);border-radius:var(--rsm);padding:.65rem 1rem;font-size:.83rem;color:var(--ink-pale);max-width:480px;margin:0 auto .9rem;cursor:pointer;}
@@ -652,7 +660,7 @@
       <summary>When do I pay the tax?</summary>
       <div class="faq-ans">When you file your return — not immediately. For smaller conversions, your regular withholding may already cover the bill. The larger the conversion, the more likely estimated taxes are due by January 15th to avoid an underpayment penalty. Your tax software will calculate exactly what you owe and when.</div>
     </details>
-    <details class="faq-item">
+    <details class="faq-item faq-item-wide">
       <summary>What does this tool model — and what does it simplify?</summary>
       <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), long-term capital gains and qualified dividend brackets (same source) stacked correctly on top of ordinary income, the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare IRMAA premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase, including the assumption that today's investment income continues unchanged. Survival modeling ends at age 100. See "What This Calculator Doesn't Model" below for state and capital-gains caveats. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
     </details>
