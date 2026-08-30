@@ -2984,7 +2984,7 @@ function buildBeTimeline(curAge,beAge,leAge,survBE,isCouple,costTxt){
   } else {
     var wPct=(beAge-curAge)/span*100;
     var gPct=(leAge-beAge)/span*100;
-    var winYrs=leAge-beAge;
+    var winYrs=(leAge-beAge).toFixed(1);
     track='<div class="be-track">'+costMark
       +'<div class="be-wait" style="width:'+wPct+'%"></div>'
       +'<div class="be-win" style="width:'+gPct+'%"></div>'
