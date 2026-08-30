@@ -546,7 +546,7 @@
 <div class="hero">
   <h1>Should you do a Roth conversion, and how much?</h1>
   <p class="hero-lead">Enter your numbers and I'll work out how much to convert and when — including what it costs with federal <em>and</em> state taxes, a hidden tax effect on Social Security benefits, Medicare exposure, and the odds you'll live long enough to benefit.</p>
-  <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. Withdrawals become required and taxable starting at age 73.</p>
+  <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. Withdrawals generally become required and taxable starting at age 73.</p>
   <div style="text-align:center;margin-bottom:.5rem">
     <span class="ex-pill" style="font-size:.72rem;padding:3px 13px">EXAMPLE — NOT YOUR NUMBERS</span>
   </div>
@@ -650,7 +650,7 @@
     </details>
     <details class="faq-item">
       <summary>Is there a penalty for converting?</summary>
-      <div class="faq-ans">No early withdrawal penalty on conversions, even before age 59½. You only owe regular income tax on the converted amount.</div>
+      <div class="faq-ans">No early withdrawal penalty on conversions, even before age 59½. You owe regular income tax on the converted amount — and depending on your situation, that can also mean higher Social Security taxability, Medicare premiums, or net investment income tax. Your breakdown below shows exactly what applies to you.</div>
     </details>
     <details class="faq-item">
       <summary>Is there a deadline each year?</summary>
@@ -699,13 +699,13 @@
     <div class="field">
       <div class="flr"><label>Amount You'd Like to Convert</label><button class="tb" onclick="toggleTip('convert')">ⓘ</button></div>
       <div class="idollar"><input type="number" id="convertAmt" value="20000" min="0" step="1000" oninput="if(document.getElementById('skipConfirmed').style.display!=='none')clearConvertAmtSkipFlag();calc()"></div>
-        <div class="ttip" id="tip-convert"><strong>How much is right?</strong> Common strategies: convert just enough to fill up your current tax bracket, or stay below a Medicare income threshold. This calculator shows both sweet spots. There's no income limit on conversions — anyone can do it in any year.</div>
+        <div class="ttip" id="tip-convert"><strong>How much is right?</strong> Common strategies: convert just enough to fill up your current tax bracket, or stay below a Medicare income threshold. This calculator shows both thresholds. There's no income limit on conversions — anyone can do it in any year.</div>
       <div class="skip-row" id="skipRow">
         <span>Not sure how much to convert yet?</span>
-        <button type="button" class="skip-btn" onclick="skipConvertAmt()">Skip this — I'll pick from suggested amounts later</button>
+        <button type="button" class="skip-btn" onclick="skipConvertAmt()">Skip this — I'll pick a threshold later</button>
       </div>
       <div class="skip-confirmed" id="skipConfirmed" style="display:none">
-        ✓ Skipped. We'll suggest a few smart starting points once we know your bracket and Medicare situation. <button type="button" class="skip-undo" onclick="undoSkipConvertAmt()">Undo</button>
+        ✓ Skipped. We'll show your planning thresholds once we know your bracket and Medicare situation. <button type="button" class="skip-undo" onclick="undoSkipConvertAmt()">Undo</button>
       </div>
     </div>
     <div class="step-nav">
@@ -1070,7 +1070,7 @@
   </div>
   <div id="optimizerPanel" style="padding:0 0 0 0"></div>
   <div id="resultsWrap">
-    <div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Pick one of the reference points above — or <button class="ph-try" onclick="tryDefaultConvertAmt()">try $20,000</button> to see a full example</span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>
+    <div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Pick one of the thresholds above — or <button class="ph-try" onclick="tryDefaultConvertAmt()">try $20,000</button> to see a full example</span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>
   </div>
 </div>
 </div>
@@ -1821,11 +1821,11 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
     return arr.slice(0,-1).join(', ')+', or '+arr[arr.length-1];
   }
   var introText = activeLabels.length>=2
-    ? '<strong>Each card targets a different priority, not a ranked list</strong> — pick whichever matches what matters most to you this year: '
-      +joinOr(activeLabels)+'. They\'re independent constraints; the amount that satisfies one won\'t necessarily satisfy another.'
+    ? '<strong>Each threshold targets a different priority, not a ranked list</strong> — pick whichever matches what matters most to you this year: '
+      +joinOr(activeLabels)+'. They\'re landmarks to test, not recommendations; the amount that satisfies one won\'t necessarily satisfy another.'
     : activeLabels.length===1
-      ? 'A commonly used reference point for '+activeLabels[0]+', based on your inputs — not a definitive recommendation.'
-      : 'Where your numbers currently stand on the usual conversion checkpoints — nothing actionable to target from these right now.';
+      ? 'A commonly used threshold for '+activeLabels[0]+', based on your inputs — a landmark to test, not a recommendation.'
+      : 'Where your numbers currently stand on the usual thresholds — nothing actionable to target from these right now.';
 
   // Title and footer both assumed 3 (or at least several) cards, same
   // mismatch class as the intro text above — found live: with just one
@@ -4300,7 +4300,7 @@ function calc(){
   })();
 
   if(cvtAmt<=0){
-    $('resultsWrap').innerHTML='<div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Pick one of the reference points above — or <button class="ph-try" onclick="tryDefaultConvertAmt()">try $20,000</button> to see a full example</span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>';
+    $('resultsWrap').innerHTML='<div class="ph fade-up" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:2rem;margin-bottom:.4rem">💡</div><div class="ph-title">Ready to see your numbers?</div><div class="ph-steps"><div class="ph-step"><span class="ph-num">1</span><span>Pick one of the thresholds above — or <button class="ph-try" onclick="tryDefaultConvertAmt()">try $20,000</button> to see a full example</span></div><div class="ph-step"><span class="ph-num">2</span><span>Your personalized analysis appears here instantly</span></div></div></div>';
     updateWayfindBar();
     return;
   }
