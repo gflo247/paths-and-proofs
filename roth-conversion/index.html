@@ -133,6 +133,9 @@
     .ph-num{background:var(--navy);color:white;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;margin-top:1px;}
     .ph-try{color:var(--amber);font-weight:700;cursor:pointer;text-decoration:underline;background:none;border:none;font-family:inherit;font-size:inherit;padding:0;}
     .concept-note{font-size:.9rem;color:var(--navy-mid);text-align:center;line-height:1.7;max-width:480px;margin:.25rem auto 1.1rem;font-weight:500;}
+    .hero-ex-tag{display:inline-flex;flex-direction:column;align-items:center;gap:.2rem;background:var(--card);border:1px solid var(--blight);border-radius:var(--rsm);padding:.45rem 1.1rem .55rem;margin:0 auto .9rem;box-shadow:var(--sh-sm);max-width:min(94vw,440px);box-sizing:border-box;}
+    .hero-ex-tag-lbl{background:var(--navy);color:white;border-radius:40px;padding:2px 10px;font-size:.68rem;font-weight:700;letter-spacing:.03em;}
+    .hero-ex-tag-amt{font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);margin:0;opacity:.85;}
     .hv-rmd-note{font-size:.76rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.1rem auto .85rem;font-style:italic;}
     .hv-damt{color:white;font-size:1.3rem;font-weight:800;line-height:1;letter-spacing:-.01em;text-align:center;}
     .hv-dollar{font-size:.8rem;text-align:center;padding:.45rem .85rem;border-radius:var(--rsm);margin:.6rem auto 0;max-width:440px;font-weight:600;line-height:1.45;}
@@ -547,10 +550,10 @@
   <h1>Should you do a Roth conversion, and how much?</h1>
   <p class="hero-lead">Enter your numbers and I'll work out how much to convert and when — including what it costs with federal <em>and</em> state taxes, a hidden tax effect on Social Security benefits, Medicare exposure, and the odds you'll live long enough to benefit.</p>
   <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. Withdrawals generally become required and taxable starting at age 73.</p>
-  <div style="text-align:center;margin-bottom:.5rem">
-    <span class="ex-pill" style="font-size:.72rem;padding:3px 13px">EXAMPLE — NOT YOUR NUMBERS</span>
+  <div class="hero-ex-tag">
+    <span class="hero-ex-tag-lbl">EXAMPLE</span>
+    <p id="heroVisAmtHd" class="hero-ex-tag-amt">$380K IRA Converted Gradually</p>
   </div>
-  <p id="heroVisAmtHd" style="font-size:.7rem;font-weight:700;letter-spacing:.05em;color:var(--muted);text-align:center;margin:.6rem 0 .6rem;opacity:.75">$380K IRA Converted Gradually</p>
   <div class="ex-bar" id="examplesSection">
     <span class="ex-label" style="grid-column:1/-1;text-align:center;margin-bottom:.2rem">Six example scenarios across the spectrum — click any to explore:</span>
     <button class="ex-btn" data-ex="single" onclick="loadExample('single')"
