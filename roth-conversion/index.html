@@ -217,6 +217,10 @@
     .rest summary{padding:8px 12px;cursor:pointer;color:var(--navy);font-weight:600;font-size:.85rem;background:var(--navy-pale);list-style:none;display:flex;align-items:center;justify-content:space-between;}
     .rest summary::-webkit-details-marker{display:none;}
     .restb{padding:10px 12px;background:var(--card);}
+    .share-link-row{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:.2rem;}
+    .share-link-box{flex:1;min-width:180px;font-family:'DM Sans',sans-serif;font-size:.82rem;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--rsm);background:var(--cream);color:var(--text);}
+    .share-copy-btn{background:none;border:1px solid var(--tip-bdr);border-radius:20px;padding:5px 14px;font-size:.82rem;font-weight:600;color:var(--navy);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+    .share-note{font-size:.76rem;color:var(--muted);margin-top:.5rem;line-height:1.5;}
     /* ── Stepped input flow ── */
     .stepper{max-width:760px;margin:0 auto 1.25rem;}
     .step-progress{display:flex;gap:.5rem;margin-bottom:1.4rem;}
@@ -1057,6 +1061,16 @@
     <button type="button" class="edit-link" onclick="jumpToStep(3)">Income &amp; accounts</button>
     <button type="button" class="edit-link" onclick="jumpToStep(4)">Medicare &amp; assumptions</button>
   </div>
+  <details class="rest" id="shareDetails" style="margin-bottom:1.25rem" ontoggle="if(this.open)refreshShareLink(true)">
+    <summary>🔗 Share this scenario</summary>
+    <div class="restb">
+      <div class="share-link-row">
+        <input type="text" id="shareLinkBox" class="share-link-box" readonly onclick="this.select()">
+        <button type="button" id="shareCopyBtn" class="share-copy-btn" onclick="copyShareLink()">Copy link</button>
+      </div>
+      <div class="share-note">This link contains your numbers — only share it somewhere you're comfortable with that (e.g. your spouse or advisor). It never touches this site's servers, but it becomes plain text the moment you paste it into a text, email, or chat message.</div>
+    </div>
+  </details>
   <div class="card" style="margin-bottom:1.25rem">
       <div class="stitle">📊 <span id="taxYearTitle">2026</span> Tax Analysis</div>
       <div class="tax-amount-line" id="taxAmountLine" style="display:none">Converting <strong id="taxAmountVal">$0</strong> this year</div>
@@ -3545,22 +3559,69 @@ var INPUT_FIELDS = ['currentAge','retirementAge','filingStatus','sex',
   'spouseAge','spouseSex','seniorDeduction','stateCode','reloStateCode',
   'income','pensionIncome','ssIncome','niiIncome','ltcgIncome','convertAmt','tradBal',
   'rothBal','iraBasis','growthRate','retRate',
-  'taxSource','medicareStatus','partD'];
+  'taxSource','medicareStatus','partD',
+  // nyLocalTax/orLocalTax (the NYC/Yonkers and OR Metro/Multnomah selectors)
+  // were never added here when either was built -- a real gap, not a
+  // deliberate exclusion -- so neither autosave nor a shared link carried a
+  // NY/OR filer's local-tax choice. Fixed alongside the share-link feature.
+  'nyLocalTax','orLocalTax'];
+
+// Shared by the localStorage autosave (saveInputs/loadSavedInputs) AND the
+// shareable-link feature (encodeShareState/loadFromShareHash) below, so
+// those two persistence mechanisms can never quietly drift from each other
+// or from the real INPUT_FIELDS list.
+function collectInputs(){
+  var vals={};
+  INPUT_FIELDS.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) vals[id]=el.value;
+  });
+  return vals;
+}
+// applyInputs() clamps any numeric/range field to its own existing HTML
+// min/max before writing it -- localStorage data is self-authored so this is
+// a no-op for that caller, but a shareable link's payload is untrusted input
+// (anyone can hand-edit the hash), so a crafted value like currentAge=-99999
+// must not reach the DOM unclamped. <select> fields are already safe on
+// their own -- assigning an unrecognized .value is a no-op. convertAmt's
+// empty string is a legitimate state (the "skip this" affordance blanks it,
+// see skipConvertAmt()) and must pass through unclamped, not get rejected as
+// garbage.
+function applyInputs(obj){
+  INPUT_FIELDS.forEach(function(id){
+    var el=document.getElementById(id); if(!el || obj[id]===undefined) return;
+    var v=obj[id];
+    if((el.type==='number'||el.type==='range') && v!==''){
+      var n=parseFloat(v);
+      if(isNaN(n)) return;
+      if(el.min!=='' && n<+el.min) n=+el.min;
+      if(el.max!=='' && n>+el.max) n=+el.max;
+      v=n;
+    }
+    el.value=v;
+  });
+  // Sync growth rate slider display to whatever actually landed in the
+  // field (post-clamping), not the raw incoming value.
+  var gEl=document.getElementById('growthRate');
+  if(gEl && obj.growthRate!==undefined){
+    var gd=document.getElementById('gDisp'), gv=document.getElementById('gValDisp');
+    if(gd) gd.textContent=gEl.value+'%';
+    if(gv) gv.textContent=gEl.value+'%';
+  }
+}
 
 function saveInputs(){
   // calc() runs unconditionally on every page load (including the very
   // first, before the user has touched anything), so saving on every call
   // would persist untouched defaults immediately — making every later
   // reload look like a "returning visitor" and skip the wizard for good.
-  // Only persist once the wizard has actually been completed once.
-  if(!_wizardCompleted) return;
+  // Only persist once the wizard has actually been completed once. Also
+  // skipped for exactly one calc() right after loading a shared link (see
+  // _suppressSaveOnce's own comment) -- opening someone else's link must
+  // never silently overwrite the visitor's own already-saved scenario.
+  if(!_wizardCompleted || _suppressSaveOnce) return;
   try{
-    var saved={};
-    INPUT_FIELDS.forEach(function(id){
-      var el=document.getElementById(id);
-      if(el) saved[id]=el.value;
-    });
-    if(_canStore) localStorage.setItem('rg_v1', JSON.stringify(saved));
+    if(_canStore) localStorage.setItem('rg_v1', JSON.stringify(collectInputs()));
   }catch(e){}
 }
 
@@ -3568,19 +3629,124 @@ function loadSavedInputs(){
   try{
     var saved=_canStore?JSON.parse(localStorage.getItem('rg_v1')||'{}'):{};
     if(!saved || Object.keys(saved).length===0) return false;
-    INPUT_FIELDS.forEach(function(id){
-      var el=document.getElementById(id);
-      if(el && saved[id]!==undefined) el.value=saved[id];
-    });
-    // Sync growth rate slider display
-    var g=saved.growthRate;
-    if(g){
-      var gd=document.getElementById('gDisp'), gv=document.getElementById('gValDisp');
-      if(gd) gd.textContent=g+'%';
-      if(gv) gv.textContent=g+'%';
-    }
+    applyInputs(saved);
     return true;
   }catch(e){ return false; }
+}
+
+// ── SHAREABLE LINK ──
+// Encodes the same fields collectInputs()/applyInputs() already use for
+// localStorage autosave into a URL hash fragment instead. A hash fragment is
+// never sent in the actual HTTP request (unlike a query string), so sharing
+// a link never puts a recipient's income/balance/age into Cloudflare's own
+// access logs -- preserving the .privacy-note claim ("input numbers never
+// leave your device") for the network-transmission slice of that concern.
+// The residual gap -- the link itself is plaintext once pasted into a text/
+// email/Slack message, and that channel's own servers see it -- isn't
+// something any client-side trick closes; shareLinkBox's own on-page note
+// discloses this rather than implying the link is fully private.
+var SHARE_VERSION = 'v1';
+function encodeShareState(){
+  var vals = collectInputs();
+  vals.skip = (document.getElementById('convertAmt').value === '');
+  // Every current INPUT_FIELDS member is a bounded number or a fixed-enum
+  // <select>, so plain btoa (Latin1-only) never actually hits a non-Latin1
+  // character today -- but btoa THROWS outright on one rather than mangling
+  // it, so a future free-text field would break this hard. The
+  // encodeURIComponent/unescape pairing is the standard UTF-8-safe btoa
+  // wrapper; cheap insurance against that one day being someone's confusing
+  // first bug report.
+  var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(vals)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  return SHARE_VERSION+'.'+b64;
+}
+// The version prefix only guards a future ENCODING-scheme change, not
+// INPUT_FIELDS growing a new field -- applyInputs()'s existing
+// obj[id]!==undefined check already makes an older v1 link forward-
+// compatible with a new field for free, same as rg_v1 autosave today.
+// Don't bump SHARE_VERSION just because a field was added.
+function decodeShareState(str){
+  if(typeof str!=='string') return null;
+  var dot=str.indexOf('.'); if(dot<0) return null;
+  if(str.slice(0,dot)!==SHARE_VERSION) return null;
+  try{
+    var b64=str.slice(dot+1).replace(/-/g,'+').replace(/_/g,'/');
+    while(b64.length%4) b64+='=';
+    var obj=JSON.parse(decodeURIComponent(escape(atob(b64))));
+    return (obj && typeof obj==='object') ? obj : null;
+  }catch(e){ return null; }
+}
+// One-shot guard: true only for the remainder of the page-load tick right
+// after a valid share link was decoded. Prevents the calc() call inside
+// revealResults(true) (see its own comment on why _wizardCompleted flips
+// BEFORE that call) from immediately persisting the shared scenario over
+// top of the visitor's own saved rg_v1 data. Reset at the end of the
+// DOMContentLoaded handler -- calc() fires at most twice in this tick (the
+// eager call and the one inside revealResults), both before that reset, and
+// nothing else in this file can reach saveInputs() in between (no
+// Mutation/Resize/IntersectionObserver exists anywhere here, and a plain
+// .value= assignment never fires input/change on its own). Any real edit
+// the visitor makes afterward saves normally, same as always.
+var _suppressSaveOnce = false;
+function loadFromShareHash(){
+  var h=location.hash;
+  if(!h || h.indexOf('#s=')!==0) return false;
+  var payload=decodeShareState(h.slice(3));
+  if(!payload) return false;
+  applyInputs(payload);
+  applyConvertAmtSkipUI(!!payload.skip);
+  // A recipient's own leftover skip-flag from an earlier, unrelated session
+  // must not silently blank the SENDER's real convertAmt value back out --
+  // this key isn't gated by _wizardCompleted at all, so it's read back
+  // unconditionally a few lines below in DOMContentLoaded regardless of
+  // where the inputs actually came from.
+  if(_canStore){ try{ localStorage.removeItem('rg_v1_skip'); }catch(e){} }
+  // Strip the hash immediately, before anything else in this path could
+  // throw, so a decoded scenario's numbers don't linger in the visible
+  // address bar / history entry any longer than necessary.
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  _suppressSaveOnce = true;
+  return true;
+}
+function refreshShareLink(selectAfter){
+  var box=document.getElementById('shareLinkBox'); if(!box) return;
+  box.value = location.origin+location.pathname+'#s='+encodeShareState();
+  // Only select (and thus focus) the box when explicitly opening the panel.
+  // calc() also calls this, unselected, to keep an already-open link in sync
+  // with live edits -- selecting on every keystroke would yank focus away
+  // from whatever field the visitor is actually typing in.
+  if(selectAfter) box.select();
+}
+function copyShareLink(){
+  var box=document.getElementById('shareLinkBox'); if(!box) return;
+  var btn=document.getElementById('shareCopyBtn');
+  function showCopied(){
+    if(!btn) return;
+    var orig=btn.textContent;
+    btn.textContent='Copied!';
+    setTimeout(function(){ btn.textContent=orig; }, 1500);
+  }
+  function fallback(){
+    box.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    showCopied();
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    // navigator.clipboard.writeText() can hang indefinitely rather than ever
+    // resolving or rejecting -- observed live, waiting on a permission state
+    // that never settles rather than actually failing. Neither .then() nor
+    // .catch() fires in that case, which would otherwise leave the button
+    // silently stuck forever with zero feedback. Race it against a short
+    // timeout so a real click always gets a real result -- the box itself
+    // stays selected and manually copyable (Cmd/Ctrl+C) the whole time
+    // regardless, this only affects the button's own feedback.
+    var settled=false;
+    var timer=setTimeout(function(){ settled=true; fallback(); }, 800);
+    navigator.clipboard.writeText(box.value).then(function(){
+      if(settled) return; clearTimeout(timer); showCopied();
+    }).catch(function(){
+      if(settled) return; clearTimeout(timer); fallback();
+    });
+  } else fallback();
 }
 
 // ── Per-point conversion-cost computation ──
@@ -4832,6 +4998,13 @@ function calc(){
 
   // ── Persist inputs ──
   saveInputs();
+  // Keep an already-open share link in sync with live edits -- it's only
+  // otherwise regenerated on the <details> element's own toggle event, so
+  // editing a field after opening it once would leave the visible (and
+  // copyable) link silently showing the PRE-edit scenario. calc() runs on
+  // every field edit, so this is the one place that actually catches that.
+  var _shareDetailsEl = document.getElementById('shareDetails');
+  if(_shareDetailsEl && _shareDetailsEl.open) refreshShareLink();
   // Update active-example label on sensitivity chart
   var _lbl=document.getElementById('sensExLabel');
   if(_lbl){
@@ -4904,7 +5077,10 @@ window.addEventListener('scroll', function(){
 // first render for EVERY state, not just RIX states (calcTaxableSS is used broadly).
 document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('taxYearTitle').textContent=new Date().getFullYear();
-  var _hadSavedInputs = loadSavedInputs();
+  // A valid shared link takes priority over whatever's already saved
+  // locally -- loadFromShareHash() also clears any stale rg_v1_skip key on
+  // success, before the unconditional read of it just below.
+  var _hadSavedInputs = loadFromShareHash() || loadSavedInputs();
   // Separate from the main rg_v1 blob above -- see skipConvertAmt()'s own
   // comment for why this needs its own always-on key, independent of
   // _wizardCompleted/_hadSavedInputs (restoring it must not change whether
@@ -4942,6 +5118,9 @@ document.addEventListener('DOMContentLoaded', function(){
   // Returning visitors with saved inputs skip the wizard and see their answer
   // immediately; first-time visitors start at step 1.
   if(_hadSavedInputs) revealResults(true); else renderStep();
+  // calc() can't fire again after this point in the same tick -- safe to
+  // lift the one-shot save suppression now (see its own comment above).
+  _suppressSaveOnce = false;
 });
 </script>
 <script type="module">
