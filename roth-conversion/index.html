@@ -759,8 +759,8 @@
     <div class="field">
       <div class="flr"><label>Your Sex</label></div>
       <select id="sex" onchange="calc()">
-        <option value="male">Male</option>
-        <option value="female" selected>Female</option>
+        <option value="male" selected>Male</option>
+        <option value="female">Female</option>
       </select>
       <div class="hint">Optional, but affects your own numbers — used only for the survival-probability estimate (skip it and you get a reasonable default; answer it and your own odds are accurate)</div>
     </div>
@@ -4171,7 +4171,7 @@ function calc(){
   const curAge   = _ae ? +_ae.currentAge      : (parseInt(_rv('currentAge'))||60);
   const retAge   = _ae ? +_ae.retirementAge   : (parseInt(_rv('retirementAge'))||67);
   const status   = _ae ? _ae.filingStatus     : (_rv('filingStatus')||'single');
-  const sex      = _ae ? _ae.sex              : (_rv('sex')||'female');
+  const sex      = _ae ? _ae.sex              : (_rv('sex')||'male');
   const income   = _ae ? +_ae.income          : _rf('income');
   const pensionIncome = _ae ? +(_ae.pensionIncome||0) : _rf('pensionIncome');
   const ss       = _ae ? +_ae.ssIncome        : _rf('ssIncome');
