@@ -931,7 +931,8 @@
     <div class="field">
       <div class="flr"><label>Your 2026 Wages &amp; Other Income (before conversion, excluding SS)</label><button class="tb" onclick="toggleTip('income')">ⓘ</button></div>
       <div class="idollar"><input type="number" id="income" value="72000" min="0" step="1000" oninput="calc()"></div>
-        <div class="ttip" id="tip-income">Your most recent <strong>federal</strong> return is a good starting point: add lines <strong>1z</strong> (wages), <strong>2b</strong> (taxable interest), <strong>3b</strong> (ordinary dividends), <strong>7a</strong> (capital gains), and <strong>8</strong> (other income from Schedule 1). Enter pension/IRA income (lines 4b/5b) in the field below instead — some states shelter it differently than wages. <strong>Do NOT include Social Security (line 6b) here</strong> — it goes in its own field below so the tool can model how converting makes more of it taxable.</div>
+        <div class="ttip" id="tip-income"><strong>Quick:</strong> Add lines <strong>1z</strong> (wages), <strong>2b</strong> (taxable interest), <strong>3b</strong> (dividends), <strong>7a</strong> (capital gains), and <strong>8</strong> (other income from Schedule 1) from your most recent federal return — rough estimates are fine. <strong>For more precision:</strong> use 3b minus 3a here and move line <strong>3a</strong> (qualified dividends) and any long-term gains from Schedule D to the capital gains field below, since those are taxed at lower preferential rates. Enter pension/IRA income (lines 4b/5b) in the field below — some states shelter it differently. <strong>Do NOT include Social Security (line 6b) here</strong> — it goes in its own field so the tool can model how converting makes more of it taxable.</div>
+        <div class="hint" id="niitHint" style="display:none">Your total income is approaching the NIIT threshold — if any of the amount above includes investment income, open the section below to model the 3.8% surcharge on it separately.</div>
     </div>
     <div class="field">
       <div class="flr"><label>Pension / Other Retirement-Account Income (optional)</label><button class="tb" onclick="toggleTip('pension')">ⓘ</button></div>
@@ -951,7 +952,7 @@
       <div class="hint">Enter $0 if you do not have one yet</div>
     </div>
     <details class="rest">
-      <summary>More income sources (optional)</summary>
+      <summary>Investment income, NIIT &amp; IRA basis (optional)</summary>
       <div class="restb">
         <div class="field">
           <div class="flr"><label>Other Investment Income (optional)</label><button class="tb" onclick="toggleTip('nii')">ⓘ</button></div>
@@ -962,7 +963,7 @@
         <div class="field">
           <div class="flr"><label>Qualified Dividends &amp; Long-Term Capital Gains (optional)</label><button class="tb" onclick="toggleTip('ltcg')">ⓘ</button></div>
           <div class="idollar"><input type="number" id="ltcgIncome" value="0" min="0" step="500" oninput="calc()"></div>
-        <div class="ttip" id="tip-ltcg"><strong>What is this field?</strong> Qualified dividends (1099-DIV box 1b) and net long-term capital gains — these get the federal preferential rate (0%, 15%, or 20%) instead of your ordinary bracket rate, and this tool models that correctly, stacking them on top of your other income the way the IRS actually calculates it. A Roth conversion is ordinary income that stacks underneath this, so converting can push some of this income into a higher preferential-rate bracket — this tool accounts for that too. This income still counts toward Medicare IRMAA, Social Security taxation, and the 3.8% NIIT surcharge, just not your ordinary federal bracket. Enter $0 if this doesn't apply to you.</div>
+        <div class="ttip" id="tip-ltcg"><strong>What is this field?</strong> Qualified dividends (1099-DIV box 1b, or line 3a on your return) and net long-term capital gains — these get the federal preferential rate (0%, 15%, or 20%) instead of your ordinary bracket rate, and this tool models that correctly, stacking them on top of your other income the way the IRS actually calculates it. A Roth conversion is ordinary income that stacks underneath this, so converting can push some of this income into a higher preferential-rate bracket — this tool accounts for that too. This income still counts toward Medicare IRMAA, Social Security taxation, and the 3.8% NIIT surcharge, just not your ordinary federal bracket. Enter $0 if this doesn't apply to you.</div>
         <div class="hint">Not sure? Enter $0 — this means investments held over a year. (Shorter-term, or other investment income? Use the field above instead.)</div>
         </div>
         <div class="field">
@@ -4504,6 +4505,16 @@ function calc(){
     var optTargets=computeOptTargets(income+pensionIncome+nii,ltcg,ss,status,STDD[status],nSr,nMed,taxableFrac);
     var optEl=document.getElementById('optimizerPanel');
     if(optEl)optEl.innerHTML=buildOptimizerPanel(optTargets,fmt,pct,nMed,ss,cvtAmt);
+  })();
+
+  // NIIT proximity hint — show when total income approaches the threshold and
+  // the user hasn't already entered anything in the NII field.
+  (function(){
+    var hintEl=document.getElementById('niitHint');
+    if(!hintEl) return;
+    // agiBase is pre-conversion AGI with taxable SS already computed correctly —
+    // better than a manual reconstruction that would use gross SS and include cvtAmt.
+    hintEl.style.display = (nii===0 && agiBase >= niitThr*0.85) ? '' : 'none';
   })();
 
   if(cvtAmt<=0){
