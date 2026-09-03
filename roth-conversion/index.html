@@ -699,7 +699,7 @@
     </div>
     <div class="field">
       <div class="flr"><label>Amount You'd Like to Convert</label><button class="tb" onclick="toggleTip('convert')">ⓘ</button></div>
-      <div class="idollar"><input type="number" id="convertAmt" value="20000" min="0" step="1000" oninput="if(document.getElementById('skipConfirmed').style.display!=='none')clearConvertAmtSkipFlag();calc()"></div>
+      <div class="idollar"><input type="number" id="convertAmt" value="0" min="0" step="1000" oninput="if(document.getElementById('skipConfirmed').style.display!=='none')clearConvertAmtSkipFlag();calc()"></div>
         <div class="ttip" id="tip-convert"><strong>How much is right?</strong> It depends on your bracket, Medicare thresholds, and how much of your Social Security is currently taxable. Your results show all three common stopping points. There's no income limit on conversions — anyone can convert in any year.</div>
       <div class="skip-row" id="skipRow">
         <span>Not sure how much to convert yet?</span>
@@ -1592,7 +1592,7 @@ function skipConvertAmt(){
 }
 function undoSkipConvertAmt(){
   var el = document.getElementById('convertAmt');
-  if(el) el.value = (_lastConvertAmt !== null && _lastConvertAmt !== '') ? _lastConvertAmt : 20000;
+  if(el) el.value = (_lastConvertAmt !== null && _lastConvertAmt !== '') ? _lastConvertAmt : 0;
   applyConvertAmtSkipUI(false);
   calc();
   if(_canStore){ try{ localStorage.removeItem('rg_v1_skip'); }catch(e){} }
@@ -3530,7 +3530,7 @@ function clearExample(){
   sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
   sv('sex','male'); sv('seniorDeduction',0); sv('stateCode',''); sv('reloStateCode','');
   sv('income',72000); sv('pensionIncome',0); sv('ssIncome',24000); sv('niiIncome',0); sv('ltcgIncome',0);
-  sv('convertAmt',20000); sv('tradBal',280000); sv('rothBal',40000); sv('iraBasis',0);
+  sv('convertAmt',0); sv('tradBal',280000); sv('rothBal',40000); sv('iraBasis',0);
   sv('growthRate',7); sv('retRate',22);
   sv('taxSource','outside'); sv('medicareStatus','one'); sv('partD','yes');
   // Resets convertAmt to a real value -- clear any stale skip state left
