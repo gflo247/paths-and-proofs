@@ -4602,16 +4602,16 @@ function calc(){
         + ' Extra federal tax from the torpedo: ~<strong>'+fmt(Math.round(torpedoTax))+'</strong>.'
         + ' I\'ve already included that in the federal conversion tax cost below.</div>';
     }
-    const ssDeltaSpan = torpedoInc > 0
-      ? ' <span style="color:var(--danger);font-size:.8rem">(+'+fmt(torpedoInc)+' more)</span>'
-      : '';
+    // When the torpedo is active, color the "with conversion" Taxable SS value
+    // red — same color as the alert box below — so the visual link is immediate
+    // without redundant "(+$X more)" text the alert already covers.
+    const ssWithStyle = torpedoInc > 0 ? ' style="color:var(--danger)"' : '';
     ssSectionHtml =
       '<div class="tsubhead" id="ssTaxSection">Social Security Taxation</div>'
       +'<div class="src-note">Source: <a href="https://www.irs.gov/publications/p915" target="_blank" rel="noopener">IRS Pub 915 taxability worksheet</a></div>'
       +'<div class="trow"><span class="tl">Annual SS benefit</span><span class="tv">'+fmt(ss)+'</span></div>'
-      +'<div style="text-align:right;font-size:.75rem;color:var(--muted);padding:.2rem 0 .05rem;line-height:1">w/o conversion → with</div>'
-      +'<div class="trow"><span class="tl">Combined income</span><span class="tv tv-pair"><span class="tv-wo">'+fmt(piBase)+'</span><span class="tv-arr">→</span><span class="tv-wi">'+fmt(piWith)+'</span></span></div>'
-      +'<div class="trow"><span class="tl">Taxable Social Security</span><span class="tv tv-pair"><span class="tv-wo">'+fmt(ssBase)+'</span><span class="tv-arr">→</span><span class="tv-wi">'+fmt(ssWith)+ssDeltaSpan+'</span></span></div>'
+      +'<div class="trow"><span class="tl">Combined income <span style="font-size:.75rem;color:var(--muted);font-weight:400">(w/o → with conversion)</span></span><span class="tv tv-pair"><span class="tv-wo">'+fmt(piBase)+'</span><span class="tv-arr">→</span><span class="tv-wi">'+fmt(piWith)+'</span></span></div>'
+      +'<div class="trow"><span class="tl">Taxable Social Security</span><span class="tv tv-pair"><span class="tv-wo">'+fmt(ssBase)+'</span><span class="tv-arr">→</span><span class="tv-wi"'+ssWithStyle+'>'+fmt(ssWith)+'</span></span></div>'
       + torpedoAlert
       +'<div class="tsep"></div>';
   }
