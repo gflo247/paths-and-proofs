@@ -294,6 +294,7 @@
        edge, which is exactly where the header covers it, so the section
        title lands hidden behind the header instead of visible below it. */
     #federalTaxSection,#stateTaxSection,#ssTaxSection,#irmaaCard,#survivalCard,#rmdCfCard,#rateClimbCard{scroll-margin-top:76px;}
+    a{color:var(--navy-mid);}
     .src-note{font-size:.72rem;color:var(--muted);margin:-2px 0 6px;}
     .src-note a{color:var(--navy-mid);text-decoration:underline;text-underline-offset:2px;}
     .src-note a:hover{color:var(--navy);}
@@ -4685,8 +4686,7 @@ function calc(){
       const sy=survFrom(sex,curAge,a), ss2=survFrom(spouseSex,spouseAge,spouseAge+(a-curAge));
       survCell=symOf(sex)+' '+pct(sy,0)+' '+symOf(spouseSex)+' '+pct(ss2,0);
     } else {
-      const sm=survFrom('male',curAge,a),sf=survFrom('female',curAge,a);
-      survCell='&#9794; '+pct(sm,0)+' &#9792; '+pct(sf,0);
+      survCell=symOf(sex)+' '+pct(survFrom(sex,curAge,a),0);
     }
     return '<tr class="'+(a===beAge?'hl':'')+'"><td><strong>'+a+'</strong>'+(a===beAge?' 🎯':'')+'</td><td>'+fmtK(va)+'</td><td>'+fmtK(vb)+'</td><td class="'+(diff>=0?'bet':'wor')+'">'+(diff>=0?'▲ +':'▼ ')+fmtK(Math.abs(diff))+'</td><td style="font-size:.82rem;color:var(--muted)">'+survCell+'</td></tr>';
   }).join('');
@@ -4714,16 +4714,17 @@ function calc(){
         +'</div>';
     }).join('');
   } else {
-    survLegend = '<span class="ldot" style="background:var(--navy)"></span>Male &nbsp;<span class="ldot" style="background:var(--amber)"></span>Female';
+    const sFillCls = sex==='male' ? 'm' : 'f';
+    const sDotClr  = sex==='male' ? 'var(--navy)' : 'var(--amber)';
+    survLegend = '<span class="ldot" style="background:'+sDotClr+'"></span>'+(sex==='male'?'Male':'Female');
     sBars = sAges.map(a=>{
-      const sm=survFrom('male',curAge,a), sf=survFrom('female',curAge,a);
+      const s = survFrom(sex, curAge, a);
       return '<div class="srow">'
         +'<div class="sage">Age '+a+'</div>'
         +'<div class="stracks">'
-        +'<div class="strack"><div class="sfill m" style="width:'+(sm*100).toFixed(1)+'%"></div></div>'
-        +'<div class="strack"><div class="sfill f" style="width:'+(sf*100).toFixed(1)+'%"></div></div>'
+        +'<div class="strack"><div class="sfill '+sFillCls+'" style="width:'+(s*100).toFixed(1)+'%"></div></div>'
         +'</div>'
-        +'<div class="spct">'+pct(sm,0)+' / '+pct(sf,0)+'</div>'
+        +'<div class="spct">'+pct(s,0)+'</div>'
         +'</div>';
     }).join('');
   }
@@ -4986,7 +4987,7 @@ function calc(){
     +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55"><strong>Solid:</strong> after-tax wealth with the conversion. <strong>Dashed:</strong> without. After age '+rmdStartAge+', Required Minimum Distributions from traditional accounts accelerate taxes — this is what drives the lines apart. Combined '+pct(simRetR)+' effective retirement rate applied'+(basis>0&&taxableFrac<0.9999?' ('+Math.round(taxableFrac*1000)/10+'% taxable fraction applied to retirement withdrawals)':' (federal'+(stRetR>0?' + state':'')+')')+'.</p>'
     +'<div class="cwrap"><canvas id="myChart"></canvas></div></div>'
     +'<div class="card"><div class="stitle">📋 At Key Ages</div>'
-    +'<div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Age</th><th>With Conv.</th><th>Without</th><th>Difference</th><th>Odds M/F</th></tr></thead><tbody>'+tRows+'</tbody></table></div>'
+    +'<div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Age</th><th>With Conv.</th><th>Without</th><th>Difference</th><th>'+(isCouple?'Odds (you / spouse)':'Survival odds')+'</th></tr></thead><tbody>'+tRows+'</tbody></table></div>'
     +'<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">🎯 = breakeven age. After-tax uses '+pct(simRetR)+' combined retirement rate. Survival odds from age '+curAge+'.</p>'
     +'</div></div>'
     +rmdCfHTML
@@ -5178,6 +5179,17 @@ document.addEventListener('DOMContentLoaded', function(){
   // calc() can't fire again after this point in the same tick -- safe to
   // lift the one-shot save suppression now (see its own comment above).
   _suppressSaveOnce = false;
+  // Clear the active example button highlight the moment the user edits any
+  // field themselves. Programmatic .value assignments (loadExample,
+  // clearExample, clearAllInputs) don't fire 'input' events, so they keep
+  // the highlight as intended; only real user interaction reaches this handler.
+  document.addEventListener('input', function(e){
+    if(e.target.matches('input, select')){
+      document.querySelectorAll('.ex-btn.active').forEach(function(b){
+        b.classList.remove('active');
+      });
+    }
+  });
 });
 </script>
 <script type="module">
