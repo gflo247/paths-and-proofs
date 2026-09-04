@@ -543,7 +543,7 @@
     </button>
   </div>
 </header>
-<div class="hero">
+<div class="hero" id="heroSection">
   <h1>Should you do a Roth conversion, and how much?</h1>
   <p class="hero-lead">Enter your numbers and I'll work out how much to convert and when — including what it costs with federal <em>and</em> state taxes, a hidden tax effect on Social Security benefits, Medicare exposure, and the odds you'll live long enough to benefit.</p>
   <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. Withdrawals generally become required and taxable starting at age 73 (75 if you were born in 1960 or later).</p>
@@ -659,6 +659,9 @@
       <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), long-term capital gains and qualified dividend brackets (same source) stacked correctly on top of ordinary income, the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare IRMAA premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase, including the assumption that today's investment income continues unchanged. Survival modeling ends at age 100. See "What This Calculator Doesn't Model" below for state and capital-gains caveats. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
     </details>
   </div>
+</div>
+<div id="showHeroBtn" style="display:none;text-align:center;padding:.45rem 0;background:var(--blight);font-size:.82rem;border-bottom:1px solid var(--blight)">
+  <button onclick="showHero()" style="background:none;border:none;color:var(--navy);cursor:pointer;font-size:.82rem;font-family:inherit;text-decoration:underline;text-underline-offset:2px;padding:0">↑ Show example again</button>
 </div>
 <div class="page-wrap">
 <div style="text-align:center;padding:1.5rem 0 .5rem;border-top:1px solid var(--blight);margin-bottom:1rem">
@@ -2126,20 +2129,20 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn,taxSrc){
   var ctx='';
   if(plan.preRows.length>0)ctx+='<strong>'+plan.preRows.length+' working '+(plan.preRows.length===1?'year':'years')+'</strong> before retirement at '+retAge+'. ';
   if(plan.goldRows.length>0)
-    ctx+='The <strong>golden window</strong> — retirement to age '+rmdStartAge+', when income drops and bracket room expands — adds <strong>'+plan.goldRows.length+' more years</strong> of larger conversions.';
+    ctx+='The <strong>golden window</strong> — retirement to age '+rmdStartAge+', when income drops and bracket room expands — adds <strong>'+plan.goldRows.length+' more years</strong> of conversions at a lower effective rate.';
   else if(goldenYears>0)
     ctx+='Enter expected retirement SS and pension in the rate estimator above to also see the golden window (age '+goldStartAge+' to '+rmdStartAge+').';
   else if(goldStartAge>=rmdStartAge)
     ctx+='RMDs start at or before retirement — consider converting more aggressively now while income is predictable.';
   var fundingNote = taxSrc==='inside'
-    ? 'taxes are withheld from each conversion, so less than the recommended amount reaches your Roth'
-    : 'taxes are paid from outside savings, so the full recommended amount reaches your Roth';
+    ? 'taxes are withheld from each conversion, so less than the conversion amount reaches your Roth'
+    : 'taxes are paid from outside savings, so the full conversion amount reaches your Roth';
   html+='<p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;line-height:1.55">'+ctx+' Income assumed flat within each phase; '+fundingNote+'.</p>';
 
   // Table
   html+='<div style="overflow-x:auto;margin-bottom:1rem">';
   html+='<table class="ptbl">';
-  html+='<thead><tr><th>Year</th><th>Age</th><th>Phase</th><th>Recommended</th><th>Tax Cost</th><th>Rate</th><th>Trad. IRA</th><th>Roth IRA</th></tr></thead>';
+  html+='<thead><tr><th>Year</th><th>Age</th><th>Phase</th><th>Per year</th><th>Tax Cost</th><th>Rate</th><th>Trad. IRA</th><th>Roth IRA</th></tr></thead>';
   html+='<tbody>';
 
   allRows.forEach(function(r){
@@ -3528,6 +3531,21 @@ function updateHeroVis(name){
 }
 
 
+// ── HERO VISIBILITY ──
+// The hero (example illustration + FAQs) hides after the user runs a real
+// calc so results aren't competing with the example for attention. Restored
+// on Clear so they can compare back to the example if they want.
+function hideHero(){
+  var h=document.getElementById('heroSection'), b=document.getElementById('showHeroBtn');
+  if(h) h.style.display='none';
+  if(b) b.style.display='';
+}
+function showHero(){
+  var h=document.getElementById('heroSection'), b=document.getElementById('showHeroBtn');
+  if(h) h.style.display='';
+  if(b) b.style.display='none';
+}
+
 // ── CLEAR ALL INPUTS ──
 function clearAllInputs(){
   if(!confirm('Clear all inputs and start fresh? This also removes your saved data from this browser.')) return;
@@ -3575,6 +3593,7 @@ function clearAllInputs(){
   if(skipRowEl) skipRowEl.style.display = 'flex';
   if(skipConfEl) skipConfEl.style.display = 'none';
   renderStep();
+  showHero();
   // Recalculate
   calc();
   // Scroll to top
@@ -3745,6 +3764,7 @@ function clearExample(){
   document.querySelectorAll('.ex-btn[data-ex]').forEach(function(b){
     b.classList.toggle('active', b.dataset.ex==='couple');
   });
+  showHero();
   calc();
   revealResults(true);
 }
@@ -4874,18 +4894,15 @@ function calc(){
   }
 
   // ── MULTI-YEAR PLAN ──
+  // Uses the user's entered conversion amount as the annual conversion rate —
+  // "if I convert this much every year, how does the drawdown play out?"
+  // The optimizer's bracket-room/IRMAA amounts are shown separately above as
+  // the three threshold cards; repeating them here would disconnect the plan
+  // from the user's actual choice.
   var multiYearHTML = '';
-  {
-    var myOpts = computeOptTargets(income+pensionIncome+nii,ltcg,ss,status,STDD[status],nSr,nMed,taxableFrac);
-    // Bracket room can legitimately round to $0 (already at the top of the
-    // current bracket) while Medicare-safe room is still real — fall back to
-    // it instead of silently giving up on the whole multi-year plan.
-    var myConv = myOpts.bracketAmt > 0 ? myOpts.bracketAmt : 0;
-    if(myOpts.irmaaAmt!==null && myOpts.irmaaAmt>0 && (myConv===0 || myOpts.irmaaAmt<myConv)) myConv=myOpts.irmaaAmt;
-    if(myConv > 500 && tradBal > 0){
-      var myPlan = computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,myConv,spouseAge,isCouple,pensionIncome,localTax,taxSrc);
-      multiYearHTML = buildMultiYearHTML(myPlan,curAge,retAge,fmt,pct,fmtK,taxSrc);
-    }
+  if(cvtAmt > 500 && tradBal > 0){
+    var myPlan = computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,stD,stateCode,nMed,curAge,retAge,taxableFrac,cvtAmt,spouseAge,isCouple,pensionIncome,localTax,taxSrc);
+    multiYearHTML = buildMultiYearHTML(myPlan,curAge,retAge,fmt,pct,fmtK,taxSrc);
   }
 
   // ── MARGINAL-RATE CURVE ──
@@ -5226,6 +5243,11 @@ function calc(){
   // ── D3 SURVIVAL CURVE ──
   try{ renderSurvivalChart({curAge:curAge, sex:sex, spouseAge:spouseAge, spouseSex:spouseSex, isCouple:isCouple, beAge:beAge}); }
   catch(e){ console.warn("Survival chart error:", e); }
+
+  // Hide the hero once the user runs a real calc with their own numbers.
+  // _activeExample is set during example loads — skip the hide so clicking
+  // an example button doesn't collapse the hero section that contains them.
+  if(cvtAmt > 0 && !_activeExample) hideHero();
 
   updateWayfindBar();
 }
