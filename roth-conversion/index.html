@@ -1086,7 +1086,7 @@
       <div class="tax-amount-line" id="taxAmountLine" style="display:none">Converting <strong id="taxAmountVal">$0</strong> this year</div>
       <details class="rest" id="taxDetails">
         <summary>See the full number-by-number breakdown</summary>
-        <div class="restb" id="taxPanel"><div style="font-size:.9rem;color:var(--muted)">Pick a reference point above to see the full breakdown.</div></div>
+        <div class="restb" id="taxPanel"><div style="font-size:.9rem;color:var(--muted)"><strong style="color:var(--text);font-weight:600">No conversion amount selected.</strong> Pick a planning threshold above to see the full breakdown.</div></div>
       </details>
   </div>
   <div id="optimizerPanel" style="padding:0 0 0 0"></div>
@@ -4752,7 +4752,7 @@ function calc(){
       + exemptTip;
   } else {
     if(taxAmtLineEl) taxAmtLineEl.style.display = 'none';
-    $('taxPanel').innerHTML = '<div style="font-size:.9rem;color:var(--muted)">Pick a reference point above to see the full breakdown.</div>';
+    $('taxPanel').innerHTML = '<div style="font-size:.9rem;color:var(--muted)"><strong style="color:var(--text);font-weight:600">No conversion amount selected.</strong> Pick a planning threshold above to see the full breakdown.</div>';
   }
 
   // ── OPTIMIZER PANEL (needs all SS/IRMAA vars) ──
