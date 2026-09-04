@@ -4032,11 +4032,13 @@ function computeConversionCost(cvtAmt, ctx){
   const income = wagesInc + pensionIncome;
 
   // ── SS TORPEDO ──
-  // Investment income (nii) counts toward provisional income for SS taxability,
-  // same as wages/pension — it's ordinary income to the SS worksheet regardless
-  // of whether the underlying dividends/gains get a preferential federal rate.
-  const ssBase    = calcTaxableSS(ss, income+nii,        status);
-  const ssWith    = calcTaxableSS(ss, income+nii+taxableCvt, status);
+  // Both nii and ltcg count toward provisional income for SS taxability (IRS Pub 915):
+  // provisional income = other income + tax-exempt interest + ½ SS, where "other income"
+  // = AGI — and AGI includes qualified dividends/LTCG even though they're taxed at
+  // preferential rates. A filer with $50k in qualified dividends who omits ltcg from
+  // provisional income silently understates the torpedo.
+  const ssBase    = calcTaxableSS(ss, income+nii+ltcg,             status);
+  const ssWith    = calcTaxableSS(ss, income+nii+ltcg+taxableCvt,  status);
   const torpedoInc= Math.max(0, ssWith - ssBase);
 
   // ── AGI / TAXABLE INCOME ──
@@ -4600,8 +4602,8 @@ function calc(){
   // ── BUILD TAX PANEL HTML (precomputed fragments to avoid nested template issues) ──
   let ssSectionHtml = '';
   if(ss > 0){
-    const piBase  = income + pensionIncome + nii + ss*0.5;
-    const piWith  = income + pensionIncome + nii + taxableCvt + ss*0.5;
+    const piBase  = income + pensionIncome + nii + ltcg + ss*0.5;
+    const piWith  = income + pensionIncome + nii + ltcg + taxableCvt + ss*0.5;
     let torpedoAlert = '';
     if(torpedoInc > 0){
       torpedoAlert =
@@ -4659,6 +4661,14 @@ function calc(){
         +(exAge!==undefined?' — waiting until you qualify would avoid this state tax entirely':'')+'.</div>';
     } else {
       stateNote = '<div style="font-size:.82rem;color:var(--muted);margin-top:4px">See the note under "Your State" above for how '+stD.n+' treats this.</div>';
+    }
+    // Half-year age-gate disclosure: when a state's retirement-income deduction requires
+    // a half-year age (e.g. Michigan's 59½), integer age 59 is treated as not qualifying
+    // because the tool has no birthdate — but the filer might already be past the gate.
+    const _rdCalc = RETDED[stateCode];
+    if(_rdCalc && _rdCalc.conversionAgeGate != null && curAge < _rdCalc.conversionAgeGate && curAge >= Math.floor(_rdCalc.conversionAgeGate)){
+      const _gDisp = Math.floor(_rdCalc.conversionAgeGate)+'½';
+      stateNote += '<div style="font-size:.82rem;color:var(--muted);margin-top:4px">'+stD.n+' requires age '+_gDisp+' for its pension/IRA deduction. This tool uses whole ages and treats you as not yet qualifying. If you\'ve already passed your '+_gDisp+' birthday, your actual tax cost may be lower.</div>';
     }
     stateSectionHtml =
       '<div class="tsep"></div>'
