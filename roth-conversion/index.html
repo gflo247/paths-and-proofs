@@ -545,8 +545,14 @@
 </header>
 <div class="hero" id="heroSection">
   <h1>Should you do a Roth conversion, and how much?</h1>
-  <p class="hero-lead">Enter your numbers and I'll work out how much to convert and when — including what it costs with federal <em>and</em> state taxes, a hidden tax effect on Social Security benefits, Medicare exposure, and the odds you'll live long enough to benefit.</p>
+  <p class="hero-lead">Enter your numbers and I’ll work out how much to convert and when — including what it costs with federal <em>and</em> state taxes, a hidden tax effect on Social Security benefits, Medicare exposure, and the odds you’ll live long enough to benefit.</p>
   <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. Withdrawals generally become required and taxable starting at age 73 (75 if you were born in 1960 or later).</p>
+  <!-- heroExample wraps only the illustration + buttons — the collapsible "example" zone.
+       The always-useful content (401k note, how-to, FAQs) lives outside this div. -->
+  <div id="heroExample">
+  <div style="text-align:right;margin-bottom:.25rem">
+    <button onclick="hideHero()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;font-family:inherit;padding:0;text-decoration:underline;text-underline-offset:2px">✕ Hide example</button>
+  </div>
   <div class="hero-ex-tag">
     <span class="hero-ex-tag-lbl">EXAMPLE</span>
     <p id="heroVisAmtHd" class="hero-ex-tag-amt">$380K IRA Converted Gradually</p>
@@ -615,6 +621,7 @@
   </div>
   <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$38K in total taxes vs keeping traditional (on this $380K IRA)</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in a known rate today — more take-home, no forced withdrawals ever</div></div>
   <p style="font-size:.72rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.6rem auto .9rem;font-style:italic">Full-retirement totals from a multi-year conversion — the real payoff depends on future rates, returns, and lifespan matching these assumptions.</p>
+  </div><!-- /heroExample -->
   <details class="faq-expand">
     <summary>Have a 401(k) instead of an IRA? <span style="font-size:.8rem;opacity:.7">click to expand</span></summary>
     <div class="faq-body">
@@ -3539,22 +3546,25 @@ function updateHeroVis(name){
 
 
 // ── HERO VISIBILITY ──
-// The hero (example illustration + FAQs) hides after the user runs a real
-// calc so results aren't competing with the example for attention. Restored
-// on Clear so they can compare back to the example if they want.
+// The example zone (heroExample: illustration + buttons) hides after the user
+// runs a real calc so results aren't competing with the example for attention.
+// The title, description, 401k note, how-to steps, and FAQs always stay visible.
+// Restored on Clear so the user can compare back to the example if they want.
 function hideHero(){
-  var h=document.getElementById('heroSection'), b=document.getElementById('showHeroBtn');
+  // Only collapses the example illustration+buttons zone — the title, description,
+  // 401k note, how-to steps, and FAQs remain visible as permanent reference content.
+  var ex=document.getElementById('heroExample'), b=document.getElementById('showHeroBtn');
   var intro=document.getElementById('calcIntro');
-  if(h) h.style.display='none';
+  if(ex) ex.style.display='none';
   if(b) b.style.display='';
   // "Ready to see your own numbers?" is first-visit framing — stale once the user
-  // has entered real data, so hide it along with the hero.
+  // has entered real data, so hide it along with the example zone.
   if(intro) intro.style.display='none';
 }
 function showHero(){
-  var h=document.getElementById('heroSection'), b=document.getElementById('showHeroBtn');
+  var ex=document.getElementById('heroExample'), b=document.getElementById('showHeroBtn');
   var intro=document.getElementById('calcIntro');
-  if(h) h.style.display='';
+  if(ex) ex.style.display='';
   if(b) b.style.display='none';
   if(intro) intro.style.display='';
 }
