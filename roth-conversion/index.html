@@ -2348,10 +2348,14 @@ function renderSurvivalChart(p){
     .attr('stroke', DARK?'#666':'#bbb').attr('stroke-width',1)
     .attr('pointer-events','none').style('display','none');
 
-  svg.on('mousemove', function(event){
-    var chartPt = d3.pointer(event, g.node());
-    var mx = chartPt[0];
-    // Only show tooltip when cursor is within chart area
+  // mousemove on the container div — mousemove events from SVG children bubble
+  // up through the DOM to the parent HTML element, so this fires regardless of
+  // which SVG path (area fill, line, axis) the cursor is over. Coordinates are
+  // computed directly from getBoundingClientRect() to avoid SVG coordinate
+  // system issues that affected the earlier SVG-level approach for couples.
+  container.addEventListener('mousemove', function(event){
+    var rect = container.getBoundingClientRect();
+    var mx = event.clientX - rect.left - margin.left;
     if(mx < 0 || mx > W) { hoverLine.style('display','none'); tooltip.style('display','none'); return; }
     var hAge = Math.max(ageMin, Math.min(ageMax, Math.round(xScale.invert(mx))));
     hoverLine.attr('x1', xScale(hAge)).attr('x2', xScale(hAge)).style('display','');
@@ -2371,15 +2375,16 @@ function renderSurvivalChart(p){
     var anchorV = p.isCouple
       ? survJoint(p.sex,p.curAge,p.spouseSex,p.spouseAge,hAge)
       : survFrom(p.sex,p.curAge,hAge);
-    var ttLeft = xScale(hAge) + margin.left + 14;
-    if(ttLeft + 170 > totalW) ttLeft = xScale(hAge) + margin.left - 175;
+    var ttLeft = mx + margin.left + 14;
+    if(ttLeft + 170 > totalW) ttLeft = mx + margin.left - 175;
     ttLeft = Math.max(0, ttLeft);
     var ttTop = Math.max(0, yScale(anchorV) + margin.top - 20);
     tooltip.html(lines)
       .style('left', ttLeft+'px')
       .style('top', ttTop+'px')
       .style('display','block');
-  }).on('mouseleave', function(){
+  });
+  container.addEventListener('mouseleave', function(){
     hoverLine.style('display','none');
     tooltip.style('display','none');
   });
@@ -3268,7 +3273,7 @@ function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName,ltcgCo
   seg(cvtTxFed/cvtTxTot*100,'#1C3A5E','Federal tax'+(torpedoInc>0?' <em style=\'font-style:normal;opacity:.8\'>(incl. SS hidden tax)</em>':''),cvtTxFed);
   seg(cvtTxSt/cvtTxTot*100,'#B06000',(stName||'State')+' tax',cvtTxSt);
   seg((ltcgCost||0)/cvtTxTot*100,'#2E7D5B','LTCG tax',ltcgCost||0);
-  seg(niitCost/cvtTxTot*100,'#7B5EA7','NIIT',niitCost);
+  seg(niitCost/cvtTxTot*100,'#7B5EA7','Net Investment Income Tax (NIIT)',niitCost);
   return '<div class="viz-hd">🧾 What makes up your '+fmt(cvtTxTot)+' tax bill</div>'
     +'<div class="tx-wrap"><div class="tx-bar">'+segs+'</div><div class="tx-lbls">'+lbls+'</div></div>';
 }
@@ -4606,7 +4611,7 @@ function calc(){
       + stateNote
       +'<div class="tsep"></div>'
       +(cvtTxLtcg>0?'<div class="trow"><span class="tl">Qualified div./LTCG bumped to a higher bracket</span><span class="tv">'+fmt(cvtTxLtcg)+'</span></div>':'')
-      +(niitCost>0?'<div class="trow"><span class="tl">NIIT (3.8% on investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')+'<div class="trow tgrand"><span class="tl">Total tax cost (all components)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'
+      +(niitCost>0?'<div class="trow"><span class="tl">Net Investment Income Tax (NIIT, 3.8% on investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')+'<div class="trow tgrand"><span class="tl">Total tax cost (all components)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'
       +'<div class="trow"><span class="tl">True effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>';
   } else if(!stateCode){
     stateSectionHtml =
@@ -4614,14 +4619,14 @@ function calc(){
       +'<div class="tsubhead">State Tax</div>'
       +'<div class="alert aamb" style="padding:.7rem .9rem;font-size:.84rem;margin-top:2px"><strong>Not included:</strong> No state selected above, so this is a federal-only estimate. State tax can add 0–13% depending on where you live — select your state for a complete number.</div>'
       +(cvtTxLtcg>0?'<div class="trow"><span class="tl">Qualified div./LTCG bumped to a higher bracket</span><span class="tv">'+fmt(cvtTxLtcg)+'</span></div>':'')
-      +(niitCost>0?'<div class="trow"><span class="tl">NIIT (3.8% on investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')
+      +(niitCost>0?'<div class="trow"><span class="tl">Net Investment Income Tax (NIIT, 3.8% on investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')
       +'<div class="trow tgrand"><span class="tl">Total tax cost (federal only)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'
       +'<div class="trow"><span class="tl">Effective rate on conversion (federal only)</span><span class="tv">'+pct(effR)+'</span></div>';
   } else {
     stateSectionHtml =
       (cvtTxLtcg>0||niitCost>0?'<div class="tsep"></div>'+'<div class="tsubhead">Federal Surcharge</div>'
         +(cvtTxLtcg>0?'<div class="trow"><span class="tl">Qualified div./LTCG bumped to a higher bracket</span><span class="tv">'+fmt(cvtTxLtcg)+'</span></div>':'')
-        +(niitCost>0?'<div class="trow"><span class="tl">NIIT (3.8% on net investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')
+        +(niitCost>0?'<div class="trow"><span class="tl">Net Investment Income Tax (NIIT, 3.8% on net investment income)</span><span class="tv">'+fmt(niitCost)+'</span></div>':'')
         +'<div class="trow tgrand"><span class="tl">Total tax cost (federal + surcharges)</span><span class="tv">'+fmt(cvtTxTot)+'</span></div>'+'<div class="trow"><span class="tl">True effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>':'')
       +'<div class="trow"><span class="tl">Effective rate on conversion</span><span class="tv">'+pct(effR)+'</span></div>';
   }
@@ -5090,7 +5095,7 @@ function calc(){
     +'<div class="bottom-line"><div class="bl-eye">YOUR BOTTOM LINE · CONVERTING '+fmt(cvtAmt)+'</div><div class="bl-txt" id="blTxt">'+blTxt+'</div><div class="bl-cav">Estimates only — rough numbers are fine for planning. Scroll down for the full breakdown.</div></div>'
     +whyPanelHTML
     +'<div class="rgrid">'
-    +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(!stateCode?'<br>Federal only — no state selected':(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):'')))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + NIIT: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')+'</div></div>'
+    +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(!stateCode?'<br>Federal only — no state selected':(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):'')))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + Net Investment Income Tax: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')+'</div></div>'
     +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Not in range')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
     +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'<br><span style="font-size:.76rem">Full age-by-age odds below ↓</span></div></div>'
     +'</div>'
