@@ -2239,7 +2239,7 @@ function renderSurvivalChart(p){
 
   var DARK = document.documentElement.getAttribute('data-theme')==='dark';
 
-  var totalW = Math.min(container.offsetWidth || 560, 720);
+  var totalW = container.offsetWidth || 560;
   var margin = {top:14, right:22, bottom:38, left:46};
   var W = totalW - margin.left - margin.right;
   var H = 210;
@@ -2247,7 +2247,8 @@ function renderSurvivalChart(p){
   var svg = d3.select(container).append('svg')
     .attr('width', totalW)
     .attr('height', H + margin.top + margin.bottom)
-    .style('overflow', 'visible');
+    .style('overflow', 'visible')
+    .style('cursor', 'crosshair');
   var g = svg.append('g').attr('transform', 'translate('+margin.left+','+margin.top+')');
 
   var ageMin = p.curAge, ageMax = 100;
@@ -2331,7 +2332,9 @@ function renderSurvivalChart(p){
       .text('Breakeven '+p.beAge+': '+Math.round(bv*100)+'% odds');
   }
 
-  // Hover tooltip
+  // Hover tooltip — attached to the SVG element so it fires regardless of
+  // which SVG child (area fill, line, axes) the cursor lands on.
+  // d3.pointer(event, g.node()) returns coordinates in chart space (0..W, 0..H).
   var tooltip = d3.select(container).append('div')
     .style('position','absolute').style('pointer-events','none')
     .style('background', DARK ? 'rgba(22,28,36,.96)' : 'rgba(255,255,255,.97)')
@@ -2345,42 +2348,41 @@ function renderSurvivalChart(p){
     .attr('stroke', DARK?'#666':'#bbb').attr('stroke-width',1)
     .attr('pointer-events','none').style('display','none');
 
-  g.append('rect')
-    .attr('width', W).attr('height', H)
-    .attr('fill','transparent').style('cursor','crosshair')
-    .on('mousemove', function(event){
-      var mx = d3.pointer(event)[0];
-      var hAge = Math.max(ageMin, Math.min(ageMax, Math.round(xScale.invert(mx))));
-      hoverLine.attr('x1', xScale(hAge)).attr('x2', xScale(hAge)).style('display','');
-      var lines;
-      if(p.isCouple){
-        var sv  = survFrom(p.sex, p.curAge, hAge);
-        var ss2 = survFrom(p.spouseSex, p.spouseAge, p.spouseAge+(hAge-p.curAge));
-        var sj  = survJoint(p.sex, p.curAge, p.spouseSex, p.spouseAge, hAge);
-        lines = '<strong>Age '+hAge+'</strong><br>'
-          +symOf(p.sex)+' You: '+Math.round(sv*100)+'%<br>'
-          +symOf(p.spouseSex)+' Spouse: '+Math.round(ss2*100)+'%<br>'
-          +'<strong>At least one: '+Math.round(sj*100)+'%</strong>';
-      } else {
-        var sv = survFrom(p.sex, p.curAge, hAge);
-        lines = '<strong>Age '+hAge+'</strong><br>Survival: '+Math.round(sv*100)+'%';
-      }
-      var anchorV = p.isCouple
-        ? survJoint(p.sex,p.curAge,p.spouseSex,p.spouseAge,hAge)
-        : survFrom(p.sex,p.curAge,hAge);
-      var ttLeft = xScale(hAge) + margin.left + 14;
-      if(ttLeft + 170 > totalW) ttLeft = xScale(hAge) + margin.left - 175;
-      ttLeft = Math.max(0, ttLeft);
-      var ttTop = Math.max(0, yScale(anchorV) + margin.top - 20);
-      tooltip.html(lines)
-        .style('left', ttLeft+'px')
-        .style('top', ttTop+'px')
-        .style('display','block');
-    })
-    .on('mouseleave', function(){
-      hoverLine.style('display','none');
-      tooltip.style('display','none');
-    });
+  svg.on('mousemove', function(event){
+    var chartPt = d3.pointer(event, g.node());
+    var mx = chartPt[0];
+    // Only show tooltip when cursor is within chart area
+    if(mx < 0 || mx > W) { hoverLine.style('display','none'); tooltip.style('display','none'); return; }
+    var hAge = Math.max(ageMin, Math.min(ageMax, Math.round(xScale.invert(mx))));
+    hoverLine.attr('x1', xScale(hAge)).attr('x2', xScale(hAge)).style('display','');
+    var lines;
+    if(p.isCouple){
+      var sv  = survFrom(p.sex, p.curAge, hAge);
+      var ss2 = survFrom(p.spouseSex, p.spouseAge, p.spouseAge+(hAge-p.curAge));
+      var sj  = survJoint(p.sex, p.curAge, p.spouseSex, p.spouseAge, hAge);
+      lines = '<strong>Age '+hAge+'</strong><br>'
+        +symOf(p.sex)+' You: '+Math.round(sv*100)+'%<br>'
+        +symOf(p.spouseSex)+' Spouse: '+Math.round(ss2*100)+'%<br>'
+        +'<strong>At least one: '+Math.round(sj*100)+'%</strong>';
+    } else {
+      var sv = survFrom(p.sex, p.curAge, hAge);
+      lines = '<strong>Age '+hAge+'</strong><br>Survival: '+Math.round(sv*100)+'%';
+    }
+    var anchorV = p.isCouple
+      ? survJoint(p.sex,p.curAge,p.spouseSex,p.spouseAge,hAge)
+      : survFrom(p.sex,p.curAge,hAge);
+    var ttLeft = xScale(hAge) + margin.left + 14;
+    if(ttLeft + 170 > totalW) ttLeft = xScale(hAge) + margin.left - 175;
+    ttLeft = Math.max(0, ttLeft);
+    var ttTop = Math.max(0, yScale(anchorV) + margin.top - 20);
+    tooltip.html(lines)
+      .style('left', ttLeft+'px')
+      .style('top', ttTop+'px')
+      .style('display','block');
+  }).on('mouseleave', function(){
+    hoverLine.style('display','none');
+    tooltip.style('display','none');
+  });
 }
 
 // D3 render — called after innerHTML is set. p: {ctx, tradBal, totalRetR, cvtAmt, stName}
@@ -3257,15 +3259,16 @@ function buildGapSpark(agesArr,vAArr,vBArr,curAge,leAge){
 function buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stName,ltcgCost){
   if(!cvtTxTot) return '';
   var segs='',lbls='';
-  function seg(w,bg,label,dotClr){
+  function seg(w,bg,label,amt){
     if(w<0.5) return;
-    segs+='<div style="width:'+w+'%;background:'+bg+'"></div>';
-    lbls+='<span class="tx-lbl"><span class="tx-dot" style="background:'+bg+'"></span>'+label+'</span>';
+    var plainLabel = label.replace(/<[^>]+>/g,''); // strip HTML for title attr
+    segs+='<div style="width:'+w+'%;background:'+bg+'" title="'+plainLabel+': '+fmt(amt)+'"></div>';
+    lbls+='<span class="tx-lbl"><span class="tx-dot" style="background:'+bg+'"></span>'+label+' <span style="color:var(--text);font-weight:600">'+fmt(amt)+'</span></span>';
   }
-  seg(cvtTxFed/cvtTxTot*100,'#1C3A5E','Federal tax'+(torpedoInc>0?' <em style=\'font-style:normal;opacity:.8\'>(incl. SS hidden tax)</em>':''));
-  seg(cvtTxSt/cvtTxTot*100,'#B06000',(stName||'State')+' tax');
-  seg((ltcgCost||0)/cvtTxTot*100,'#2E7D5B','LTCG tax');
-  seg(niitCost/cvtTxTot*100,'#7B5EA7','NIIT');
+  seg(cvtTxFed/cvtTxTot*100,'#1C3A5E','Federal tax'+(torpedoInc>0?' <em style=\'font-style:normal;opacity:.8\'>(incl. SS hidden tax)</em>':''),cvtTxFed);
+  seg(cvtTxSt/cvtTxTot*100,'#B06000',(stName||'State')+' tax',cvtTxSt);
+  seg((ltcgCost||0)/cvtTxTot*100,'#2E7D5B','LTCG tax',ltcgCost||0);
+  seg(niitCost/cvtTxTot*100,'#7B5EA7','NIIT',niitCost);
   return '<div class="viz-hd">🧾 What makes up your '+fmt(cvtTxTot)+' tax bill</div>'
     +'<div class="tx-wrap"><div class="tx-bar">'+segs+'</div><div class="tx-lbls">'+lbls+'</div></div>';
 }
