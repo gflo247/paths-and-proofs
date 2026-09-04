@@ -4733,6 +4733,7 @@ function calc(){
       +'<div class="src-note">Source: <a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf" target="_blank" rel="noopener">IRS Rev. Proc. 2025-32</a>'+(srDW>0?' · senior deduction: <a href="https://www.congress.gov/bill/119th-congress/house-bill/1" target="_blank" rel="noopener">One Big Beautiful Bill Act</a>':'')+'</div>'
       +'<div class="trow"><span class="tl">Wages/other income</span><span class="tv">'+fmt(income)+'</span></div>'
       +(pensionIncome>0?'<div class="trow"><span class="tl">Pension/retirement-account income</span><span class="tv">'+fmt(pensionIncome)+'</span></div>':'')
+      +(nii>0?'<div class="trow"><span class="tl">Other investment income (interest, short-term)</span><span class="tv">'+fmt(nii)+'</span></div>':'')
       + ssRow
       // Folded into the taxable-income row's own label when the standard
       // deduction is the only subtraction happening (no senior deduction) —
