@@ -553,7 +553,7 @@
 <div class="hero">
   <h1>Should you do a Roth conversion, and how much?</h1>
   <p class="hero-lead">Enter your numbers and I'll work out how much to convert and when — including what it costs with federal <em>and</em> state taxes, a hidden tax effect on Social Security benefits, Medicare exposure, and the odds you'll live long enough to benefit.</p>
-  <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. Withdrawals generally become required and taxable starting at age 73.</p>
+  <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. Withdrawals generally become required and taxable starting at age 73 (75 if you were born in 1960 or later).</p>
   <div class="hero-ex-tag">
     <span class="hero-ex-tag-lbl">EXAMPLE</span>
     <p id="heroVisAmtHd" class="hero-ex-tag-amt">$380K IRA Converted Gradually</p>
@@ -1033,7 +1033,8 @@
             <p style="font-size:.76rem;color:var(--muted);margin:-2px 0 8px;line-height:1.4">SS and pension start filled in from what you entered above — change them here only if you expect different amounts by the time you retire. Keep continued work or consulting income in "Wages or other" — a few states, including Michigan, shelter pension income differently than wages.</p>
             <div style="margin-bottom:8px">
               <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Annual IRA / 401(k) withdrawal</label>
-              <div class="idollar"><input type="number" id="retWd" value="30000" min="0" step="500" oninput="updateRetRate()" style="font-size:.93rem"></div>
+              <div id="retWdHint" style="display:none;font-size:.76rem;color:var(--muted);margin-bottom:4px;line-height:1.4"></div>
+              <div class="idollar"><input type="number" id="retWd" value="0" min="0" step="500" oninput="_retWdUserSet=true;updateRetRate()" style="font-size:.93rem"></div>
             </div>
             <div id="retRateResult" style="min-height:1.5rem"></div>
           </div>
@@ -1145,12 +1146,46 @@ var _activeExample = null;
 // period, so defaulting it to today's full salary would overstate it far more
 // than defaulting to $0 (no continued work assumed unless the user says so).
 var _retFieldsTouched = false;
+var _retWdUserSet = false;
+function computeEstimatedRMD(){
+  var tradBal = parseFloat((document.getElementById('tradBal')||{}).value)||0;
+  var curAge  = parseInt((document.getElementById('currentAge')||{}).value)||0;
+  var g       = (parseFloat((document.getElementById('growthRate')||{}).value)||7)/100;
+  if(tradBal<=0||curAge<=0) return null;
+  var birthYear    = new Date().getFullYear()-curAge;
+  var rmdStartAge  = birthYear>=1960 ? 75 : 73;
+  var effectiveAge = Math.max(curAge, rmdStartAge);
+  var balAtRMD     = tradBal*Math.pow(1+g, Math.max(0, effectiveAge-curAge));
+  var div          = RMDD[Math.min(effectiveAge,100)]||6.4;
+  return {rmd:Math.round(balAtRMD/div/500)*500, rmdStartAge:effectiveAge, alreadyInRMD:curAge>=rmdStartAge};
+}
+function updateRetWdHint(){
+  var el = document.getElementById('retWdHint');
+  if(!el) return;
+  var est = computeEstimatedRMD();
+  if(!est){el.style.display='none'; return;}
+  var fmtAmt = '$'+Math.round(est.rmd).toLocaleString();
+  var label  = est.alreadyInRMD
+    ? 'Estimated current-year RMD: ~'+fmtAmt+' (no-conversion baseline)'
+    : 'Estimated first-year RMD at age '+est.rmdStartAge+': ~'+fmtAmt+' (no-conversion baseline)';
+  el.innerHTML = _retWdUserSet
+    ? label+' \u2014 <button onclick="_retWdUserSet=false;syncRetFieldsFromMain();updateRetRate()" style="background:none;border:none;color:var(--navy);font-size:inherit;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline">reset to estimate</button>'
+    : label+' (edit to override)';
+  el.style.display = '';
+}
 function syncRetFieldsFromMain(){
-  if(_retFieldsTouched) return;
-  var retSSEl=document.getElementById('retSS'), retPenEl=document.getElementById('retPen');
-  var ssEl=document.getElementById('ssIncome'), penEl=document.getElementById('pensionIncome');
-  if(retSSEl && ssEl) retSSEl.value = ssEl.value;
-  if(retPenEl && penEl) retPenEl.value = penEl.value;
+  if(!_retFieldsTouched){
+    var retSSEl=document.getElementById('retSS'), retPenEl=document.getElementById('retPen');
+    var ssEl=document.getElementById('ssIncome'), penEl=document.getElementById('pensionIncome');
+    if(retSSEl && ssEl) retSSEl.value = ssEl.value;
+    if(retPenEl && penEl) retPenEl.value = penEl.value;
+  }
+  if(!_retWdUserSet){
+    var est=computeEstimatedRMD();
+    var retWdEl=document.getElementById('retWd');
+    if(retWdEl) retWdEl.value = est ? est.rmd : 0;
+  }
+  updateRetWdHint();
 }
 
 // ═══ 2026 TAX BRACKETS (IRS Rev. Proc. 2025-32 + OBBBA) ═══
@@ -1912,6 +1947,7 @@ function updateRetRate(){
   out += '<button onclick="useRetRate('+fedPct+')" style="margin-top:6px;background:var(--navy);color:white;border:none;border-radius:var(--rsm);padding:6px 14px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;display:block">Use '+fedPct+'% as federal rate &uarr;</button>';
 
   el.innerHTML = out;
+  updateRetWdHint();
 }
 
 function useRetRate(rate){
@@ -1989,15 +2025,16 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
   }
   var tBalRet=tBal, rBalRet=rBal;
 
-  // Golden window: retirement to age 73
+  // Golden window: retirement to RMD start age (73 for born ≤1959, 75 for born ≥1960)
+  var rmdStartAge = (new Date().getFullYear()-curAge) >= 1960 ? 75 : 73;
   var goldRows=[], tBalRMD=tBal, rBalRMD=rBal;
   // goldStartAge anchors the window on whichever is later, retirement or today —
   // someone already retired (curAge>retAge) starts counting from curAge, not from
   // a retirement date already in the past, which used to produce past calendar
   // years/ages in the table for that case.
   var goldStartAge=Math.max(retAge,curAge);
-  if(goldStartAge<73){
-    var gYears=Math.min(73-goldStartAge,10);
+  if(goldStartAge<rmdStartAge){
+    var gYears=Math.min(rmdStartAge-goldStartAge,10);
     var retSSEl=document.getElementById('retSS');
     var retPenEl=document.getElementById('retPen');
     var retOtherEl=document.getElementById('retOther');
@@ -2068,15 +2105,15 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn,taxSrc){
   if(!plan)return'';
   var allRows=plan.preRows.concat(plan.goldRows);
   var goldStartAge=Math.max(retAge,curAge);
-  // Already-retired filers at or past 73 have no working phase (retAge<=curAge)
-  // and no golden window (goldStartAge>=73) left to plan — allRows is empty for
-  // a real reason, not a missing-input one, so say so instead of hiding the
-  // card silently.
+  var rmdStartAge = (new Date().getFullYear()-curAge) >= 1960 ? 75 : 73;
+  // Already-retired filers at or past RMD start age have no working phase (retAge<=curAge)
+  // and no golden window left to plan — allRows is empty for a real reason, not a
+  // missing-input one, so say so instead of hiding the card silently.
   if(allRows.length===0){
-    if(goldStartAge>=73){
+    if(goldStartAge>=rmdStartAge){
       return '<div class="card" style="margin-top:1.25rem">'
         +'<div class="stitle">📅 Multi-Year Conversion Plan</div>'
-        +'<p style="font-size:.88rem;color:var(--muted);line-height:1.55">You\'re already at or past 73, past when Required Minimum Distributions begin — the window for spreading conversions across lower-income retirement years has closed. The single-year comparison above still applies to any conversion you consider from here.</p>'
+        +'<p style="font-size:.88rem;color:var(--muted);line-height:1.55">You\'re already at or past '+rmdStartAge+', past when Required Minimum Distributions begin — the window for spreading conversions across lower-income retirement years has closed. The single-year comparison above still applies to any conversion you consider from here.</p>'
         +'</div>';
     }
     return '';
@@ -2087,7 +2124,7 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn,taxSrc){
   var avgRate=totalConvert>0?totalTax/totalConvert:0;
 
   var yearsToRet=Math.max(0,retAge-curAge);
-  var goldenYears=Math.max(0,73-goldStartAge);
+  var goldenYears=Math.max(0,rmdStartAge-goldStartAge);
 
   var html='<div class="card" style="margin-top:1.25rem">';
   html+='<div class="stitle">📅 Multi-Year Conversion Plan</div>';
@@ -2096,10 +2133,10 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn,taxSrc){
   var ctx='';
   if(plan.preRows.length>0)ctx+='<strong>'+plan.preRows.length+' working '+(plan.preRows.length===1?'year':'years')+'</strong> before retirement at '+retAge+'. ';
   if(plan.goldRows.length>0)
-    ctx+='The <strong>golden window</strong> — retirement to age 73, when income drops and bracket room expands — adds <strong>'+plan.goldRows.length+' more years</strong> of larger conversions.';
+    ctx+='The <strong>golden window</strong> — retirement to age '+rmdStartAge+', when income drops and bracket room expands — adds <strong>'+plan.goldRows.length+' more years</strong> of larger conversions.';
   else if(goldenYears>0)
-    ctx+='Enter expected retirement SS and pension in the rate estimator above to also see the golden window (age '+goldStartAge+' to 73).';
-  else if(goldStartAge>=73)
+    ctx+='Enter expected retirement SS and pension in the rate estimator above to also see the golden window (age '+goldStartAge+' to '+rmdStartAge+').';
+  else if(goldStartAge>=rmdStartAge)
     ctx+='RMDs start at or before retirement — consider converting more aggressively now while income is predictable.';
   var fundingNote = taxSrc==='inside'
     ? 'taxes are withheld from each conversion, so less than the recommended amount reaches your Roth'
@@ -2146,7 +2183,7 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn,taxSrc){
   html+='<div class="alert agrn" style="font-size:.87rem">';
   html+='<strong>The full picture:</strong> Following this plan moves <strong>'+fmtKFn(totalConvert)+'</strong> to tax-free Roth at an average rate of <strong>'+pctFn(avgRate,1)+'</strong>. ';
   if(goldTotal>0)html+='The golden window accounts for <strong>'+fmtKFn(goldTotal)+'</strong> of that at a lower rate — often the most efficient conversions because retirement income is lower and bracket room is wider. ';
-  html+='Without conversions, the IRS forces withdrawals as Required Minimum Distributions starting at 73, taxed at your then-current rate plus whatever SS taxation and state taxes apply.';
+  html+='Without conversions, the IRS forces withdrawals as Required Minimum Distributions starting at '+rmdStartAge+', taxed at your then-current rate plus whatever SS taxation and state taxes apply.';
   html+='</div>';
 
   // Fine print
@@ -2164,13 +2201,15 @@ function simAdvantageForGrid(gv, totalRetR_v, tradBal, rothBal, rothIn, cvtAmt, 
   var rA = rothBal + rothIn, tA = Math.max(0, tradBal - cvtAmt);
   var rB = rothBal, tB = tradBal;
   var rmdA = 0, rmdB = 0;
+  // RMD start age: 75 for born ≥1960 (SECURE 2.0), 73 otherwise.
+  var rmdStartAge = (new Date().getFullYear()-curAge) >= 1960 ? 75 : 73;
   // Opportunity cost of outside-funded taxes, same reasoning as the main
   // projection loop in calc() — grows at THIS cell's own DRAG (gv*0.72),
   // since every grid cell tests its own growth-rate hypothesis.
   var oppCost = oppCost0 || 0;
   var target = Math.min(leAge, 98);
   for(var age = curAge; age < target; age++){
-    if(age >= 73){
+    if(age >= rmdStartAge){
       var div = RMDD[Math.min(age,100)] || 6.4;
       if(tA > 0){ var ra = tA/div; tA -= ra; rmdA += ra*(1-sr); }
       if(tB > 0){ var rb = tB/div; tB -= rb; rmdB += rb*(1-sr); }
@@ -3340,10 +3379,11 @@ function updateHeroVis(name){
 function clearAllInputs(){
   if(!confirm('Clear all inputs and start fresh? This also removes your saved data from this browser.')) return;
   _retFieldsTouched = false;
+  _retWdUserSet = false;
   // Reset fields to defaults
   function sv(id,v){var el=document.getElementById(id);if(el)el.value=v;}
   sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
-  sv('sex','female'); sv('spouseAge',58); sv('spouseSex','male');
+  sv('sex','male'); sv('spouseAge',58); sv('spouseSex','male');
   sv('seniorDeduction',0); sv('stateCode',''); sv('reloStateCode','');
   sv('income',72000); sv('pensionIncome',0); sv('ssIncome',24000); sv('niiIncome',0); sv('ltcgIncome',0);
   sv('convertAmt',0); sv('tradBal',280000); sv('rothBal',40000); sv('iraBasis',0);
@@ -3481,6 +3521,7 @@ function loadExample(name){
   var p=PROFILES[name]; if(!p) return;
   var f=p.f;
   _retFieldsTouched = false;
+  _retWdUserSet = false;
   function setVal(id,v){ var el=$(id); if(el&&v!==null&&v!==undefined) el.value=v; }
   setVal('currentAge',f.currentAge); setVal('retirementAge',f.retirementAge);
   setVal('filingStatus',f.filingStatus); setVal('sex',f.sex);
@@ -3527,6 +3568,7 @@ function loadExample(name){
 function clearExample(){
   // Reset to original defaults
   _retFieldsTouched = false;
+  _retWdUserSet = false;
   function sv(id,v){ var el=document.getElementById(id); if(el) el.value=v; }
   sv('currentAge',60); sv('retirementAge',67); sv('filingStatus','mfj');
   sv('sex','male'); sv('seniorDeduction',0); sv('stateCode',''); sv('reloStateCode','');
@@ -4171,6 +4213,10 @@ function calc(){
   function _rf(id){ return parseFloat(_rv(id))||0; }
   const curAge   = _ae ? +_ae.currentAge      : (parseInt(_rv('currentAge'))||60);
   const retAge   = _ae ? +_ae.retirementAge   : (parseInt(_rv('retirementAge'))||67);
+  // SECURE 2.0: RMD start age is 73 for born ≤1959, 75 for born ≥1960. Birth
+  // year is approximated as current year minus current age (±1 year), which is
+  // sufficient since the threshold is a whole birth year, not a birth date.
+  const rmdStartAge = (new Date().getFullYear()-curAge) >= 1960 ? 75 : 73;
   const status   = _ae ? _ae.filingStatus     : (_rv('filingStatus')||'single');
   const sex      = _ae ? _ae.sex              : (_rv('sex')||'male');
   const income   = _ae ? +_ae.income          : _rf('income');
@@ -4546,7 +4592,7 @@ function calc(){
     vA.push(rA+tA*(1-simRetR)+rmdA-oppCost);
     vB.push(rB+tB*(1-simRetR)+rmdB);
     ages.push(age);
-    if(age>=73){
+    if(age>=rmdStartAge){
       const div=RMDD[Math.min(age,100)]??6.4;
       let ra=0,rb=0;
       if(tA>0){ra=tA/div;tA-=ra;rmdA+=ra*(1-simRetR);}
@@ -4595,7 +4641,7 @@ function calc(){
         ? ' Your combined retirement rate ('+pct(totalRetR)+stRetNote+') is higher than today\'s, so <strong>the Roth starts winning around age '+beAge+'</strong>'+chanceNote
         : '';
   } else if(rateDiff>=-0.02){
-    blTxt += ' The rates are close, so the pure numbers don\'t strongly favor either direction. But the Roth still has real advantages: <strong>no Required Minimum Distributions starting at 73</strong>, tax-free compounding, and income that won\'t affect Medicare premiums.';
+    blTxt += ' The rates are close, so the pure numbers don\'t strongly favor either direction. But the Roth still has real advantages: <strong>no Required Minimum Distributions starting at '+rmdStartAge+'</strong>, tax-free compounding, and income that won\'t affect Medicare premiums.';
     if(beAge && beAge>curAge) blTxt += ' On the numbers alone, the Roth starts winning around age '+beAge+(survBE?' — '+pct(survBE,0)+' chance '+youOrOneOfYou+' is there.':'.');
   } else {
     blTxt += ' Your combined retirement rate ('+pct(totalRetR)+stRetNote+') is lower than today\'s conversion cost ('+pct(effR)+'). <strong>Keeping the money in traditional and paying the lower rate later looks like the better move.</strong>';
@@ -4617,7 +4663,7 @@ function calc(){
   } else if(rateDiff>=-0.02){
     vCls='neutral';vIco='⚖️';
     vHd='This is genuinely close — the Roth still has meaningful advantages worth considering.';
-    vBd='Your effective conversion rate ('+pct(effR)+') and expected retirement rate ('+pct(totalRetR)+') are close enough that the pure math doesn\'t clearly favor either side. That said, the Roth still brings real benefits: <strong>no forced withdrawals at 73</strong>, tax-free growth, and more flexibility for your heirs and future income planning.';
+    vBd='Your effective conversion rate ('+pct(effR)+') and expected retirement rate ('+pct(totalRetR)+') are close enough that the pure math doesn\'t clearly favor either side. That said, the Roth still brings real benefits: <strong>no forced withdrawals at '+rmdStartAge+'</strong>, tax-free growth, and more flexibility for your heirs and future income planning.';
   } else {
     vCls='bad';vIco='⚠️';
     vHd='Right now, the numbers slightly favor keeping traditional.';
@@ -4756,7 +4802,7 @@ function calc(){
       +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">Contact your IRA provider.</strong> That\'s the company holding your IRA \u2014 Fidelity, Vanguard, Schwab, TIAA, or similar. Ask them about a Roth conversion. Most have an online form or a short phone call.</li>'
       +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">Choose how much to convert.</strong> You don\'t have to convert everything. The optimizer above shows how to stay within your current tax bracket. Start there.</li>'
       +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">The tax bill arrives at filing time</strong> \u2014 not immediately, and not as a penalty. You\'ll owe income tax on the converted amount when you file your return for this year. No early withdrawal penalty applies.</li>'
-      +'<li><strong style="color:var(--text)">Consider spreading it over several years.</strong> The multi-year plan above shows how gradual conversions before age 73 can minimize your total tax bill.</li>'
+      +'<li><strong style="color:var(--text)">Consider spreading it over several years.</strong> The multi-year plan above shows how gradual conversions before age '+rmdStartAge+' can minimize your total tax bill.</li>'
       +'</ol>'
       +'<div class="alert anvy" style="font-size:.85rem">'
       +'<div style="margin-top:.85rem"><p style="font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.4rem">Questions to bring to your advisor:</p>'
@@ -4771,7 +4817,7 @@ function calc(){
     nextBody='<p style="font-size:.88rem;color:var(--muted);margin-bottom:.75rem;line-height:1.65">Under your current assumptions, keeping the money in traditional comes out ahead. A few things worth knowing before you close this tab:</p>'
       +'<ul style="font-size:.87rem;color:var(--muted);line-height:1.7;padding-left:1.25rem;margin-bottom:.85rem">'
       +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">This result can change.</strong> A drop in income, a move to a different state, or a change in tax law can flip the verdict. Bookmark this and check back when circumstances shift.</li>'
-      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">RMDs start at 73.</strong> At 73 the IRS will require you to take taxable withdrawals from your traditional IRA every year whether you need the money or not. That income pushes you into higher tax brackets and raises your Medicare premiums. Run the numbers again as you approach that age.</li>'
+      +'<li style="margin-bottom:.5rem"><strong style="color:var(--text)">RMDs start at '+rmdStartAge+'.</strong> At '+rmdStartAge+' the IRS will require you to take taxable withdrawals from your traditional IRA every year whether you need the money or not. That income pushes you into higher tax brackets and raises your Medicare premiums. Run the numbers again as you approach that age.</li>'
       +'<li><strong style="color:var(--text)">A small partial conversion still helps.</strong> Even when the full conversion doesn\'t pay off, converting a modest amount reduces future RMDs and their downstream effects. A CPA can model this.</li>'
       +'</ul>'
       +'<div class="alert anvy" style="font-size:.85rem">'
@@ -4779,7 +4825,7 @@ function calc(){
       +'<ul style="font-size:.84rem;color:var(--muted);line-height:1.65;padding-left:1.25rem;margin-bottom:.5rem">'
       +'<li style="margin-bottom:.3rem">“Is there a smaller conversion amount that would help reduce my future required withdrawals?”</li>'
       +'<li style="margin-bottom:.3rem">“What would need to change for converting to make sense?”</li>'
-      +'<li>“How should I plan for the required withdrawals that start at age 73?”</li>'
+      +'<li>”How should I plan for the required withdrawals that start at age '+rmdStartAge+'?”</li>'
       +'</ul></div>'
       +'<strong>Who to talk to:</strong> A fee-only financial advisor can model your full retirement picture \u2014 Social Security timing, Medicare, and estate goals \u2014 to confirm this result holds for your situation.'
       +'</div>';
@@ -4804,7 +4850,7 @@ function calc(){
   // ── RMD COUNTERFACTUAL — the forced-withdrawal path without converting ──
   let rmdCfHTML='';
   {
-    const cfAges=[73,75,80,85].filter(a=>a>=curAge&&a<=maxAge&&rmdYrB[a]!==undefined);
+    const cfAges=[rmdStartAge,rmdStartAge+5,rmdStartAge+10,rmdStartAge+15].filter(a=>a>=curAge&&a<=maxAge&&rmdYrB[a]!==undefined);
     if(tradBal>0&&cfAges.length>0&&(rmdYrB[cfAges[0]]??0)>500){
       const firstB=rmdYrB[cfAges[0]];
       let cfRows='';
@@ -4815,9 +4861,9 @@ function calc(){
       rmdCfHTML='<div class="card" id="rmdCfCard" style="margin-top:1.25rem;margin-bottom:1.25rem">'
       +'<div class="stitle">\u23f3 The Forced Withdrawals You\'d Be Reducing</div>'
       +'<p style="font-size:.9rem;line-height:1.6;margin-bottom:.85rem">'
-      +(curAge>=73
+      +(curAge>=rmdStartAge
         ? 'Your Required Minimum Distributions have already begun. Without converting, at age '+cfAges[0]+' you\'d be required to withdraw about <strong>'+fmt(firstB)+'</strong> from your traditional account \u2014 taxable income whether you need it or not \u2014 and the required share grows each year as the IRS divisor shrinks.'
-        : 'Without converting, at age 73 you\'d be required to withdraw about <strong>'+fmt(firstB)+'</strong> from your traditional account \u2014 taxable income whether you need it or not \u2014 and the required share grows each year as the IRS divisor shrinks.')
+        : 'Without converting, at age '+rmdStartAge+' you\'d be required to withdraw about <strong>'+fmt(firstB)+'</strong> from your traditional account \u2014 taxable income whether you need it or not \u2014 and the required share grows each year as the IRS divisor shrinks.')
       +' Converting doesn\'t make withdrawals free; it moves the tax to today and shrinks the account those forced withdrawals are calculated from.</p>'
       +'<div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Age</th><th>Forced withdrawal, no conversion</th><th>With this conversion</th><th>Yearly gap</th></tr></thead><tbody>'+cfRows+'</tbody></table></div>'
       +'<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">Projected balances at your '+pct(g,0)+' growth assumption; required amounts per the <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener">IRS Uniform Lifetime Table (Publication 590-B)</a>. Each dollar withdrawn is taxed at your combined '+pct(simRetR)+' retirement rate \u2014 roughly '+fmt(firstB*simRetR)+' of tax in that first year alone without converting.</p>'
@@ -4899,7 +4945,7 @@ function calc(){
   }
 
   if(rmdCfHTML){
-    whyItems.push(whyItem('Forced withdrawals', 'Traditional forces Required Minimum Distributions (RMDs) starting at 73, whether you need the income or not.', 'rmdCfCard'));
+    whyItems.push(whyItem('Forced withdrawals', 'Traditional forces Required Minimum Distributions (RMDs) starting at '+rmdStartAge+', whether you need the income or not.', 'rmdCfCard'));
   }
 
   const whyPanelHTML = '<div class="card why-panel" style="margin-top:1.25rem;margin-bottom:1.25rem">'
@@ -4937,7 +4983,7 @@ function calc(){
     +widowCliffHTML
     +'<div style="display:grid;grid-template-columns:1.55fr 1fr;gap:1.25rem;margin-top:1.25rem;margin-bottom:1.25rem" class="pcols">'
     +'<div class="card"><div class="stitle">📈 Roth vs. Traditional Over Time</div>'
-    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55"><strong>Solid:</strong> after-tax wealth with the conversion. <strong>Dashed:</strong> without. After age 73, Required Minimum Distributions from traditional accounts accelerate taxes — this is what drives the lines apart. Combined '+pct(simRetR)+' effective retirement rate applied'+(basis>0&&taxableFrac<0.9999?' ('+Math.round(taxableFrac*1000)/10+'% taxable fraction applied to retirement withdrawals)':' (federal'+(stRetR>0?' + state':'')+')')+'.</p>'
+    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55"><strong>Solid:</strong> after-tax wealth with the conversion. <strong>Dashed:</strong> without. After age '+rmdStartAge+', Required Minimum Distributions from traditional accounts accelerate taxes — this is what drives the lines apart. Combined '+pct(simRetR)+' effective retirement rate applied'+(basis>0&&taxableFrac<0.9999?' ('+Math.round(taxableFrac*1000)/10+'% taxable fraction applied to retirement withdrawals)':' (federal'+(stRetR>0?' + state':'')+')')+'.</p>'
     +'<div class="cwrap"><canvas id="myChart"></canvas></div></div>'
     +'<div class="card"><div class="stitle">📋 At Key Ages</div>'
     +'<div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Age</th><th>With Conv.</th><th>Without</th><th>Difference</th><th>Odds M/F</th></tr></thead><tbody>'+tRows+'</tbody></table></div>'
