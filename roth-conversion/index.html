@@ -664,7 +664,7 @@
   <button onclick="showHero()" style="background:none;border:none;color:var(--navy);cursor:pointer;font-size:.82rem;font-family:inherit;text-decoration:underline;text-underline-offset:2px;padding:0">↑ Show example again</button>
 </div>
 <div class="page-wrap">
-<div style="text-align:center;padding:1.5rem 0 .5rem;border-top:1px solid var(--blight);margin-bottom:1rem">
+<div id="calcIntro" style="text-align:center;padding:1.5rem 0 .5rem;border-top:1px solid var(--blight);margin-bottom:1rem">
   <p style="font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:.2rem">Ready to see your own numbers?</p>
   <p style="font-size:.86rem;color:var(--muted)">Fill in what you know below — rough estimates are fine. Results update instantly.</p>
 </div>
@@ -2058,10 +2058,17 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
       // Bracket room can legitimately round to $0 (already at the top of the
       // current bracket) while Medicare-safe room is still real — fall back to
       // it instead of silently giving up on the whole golden-window plan.
+      // gConv is the optimizer's suggested amount — used only when the caller
+      // hasn't supplied a real planConvert (i.e. planConvert is 0 or missing).
+      // When the user has already picked a specific conversion amount, honor it
+      // for BOTH the pre-retirement and golden-window phases so the plan table
+      // is internally consistent. (The optimizer amounts are still computed and
+      // shown in the "Common Planning Thresholds" cards above, separately.)
       var gConv=gOpts.bracketAmt>0?gOpts.bracketAmt:0;
       if(gOpts.irmaaAmt!==null&&gOpts.irmaaAmt>0&&(gConv===0||gOpts.irmaaAmt<gConv))gConv=gOpts.irmaaAmt;
+      var effectiveGConv = planConvert>0 ? planConvert : gConv;
 
-      if(gConv>500){
+      if(effectiveGConv>500){
         // otherInc=retOtherV (not 0): wages/continued-work income feeds the federal
         // total the same as pension does, but — unlike retPenV — never competes for
         // a state's retirement-income deduction cap. See computeConversionCost's own
@@ -2074,7 +2081,7 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
         // threshold -- including the WHOLE window for someone not yet 59.5 today
         // whose golden window starts well past it.
         for(var j=0;j<gYears;j++){
-          var gcv=Math.min(gConv,tBal);
+          var gcv=Math.min(effectiveGConv,tBal);
           if(gcv<500){tBal*=(1+g);rBal*=(1+g);continue;}
           var rowAge=goldStartAge+j;
           var rowSpouseAge=spouseAge!=null?spouseAge+(rowAge-curAge):spouseAge;
@@ -3537,13 +3544,19 @@ function updateHeroVis(name){
 // on Clear so they can compare back to the example if they want.
 function hideHero(){
   var h=document.getElementById('heroSection'), b=document.getElementById('showHeroBtn');
+  var intro=document.getElementById('calcIntro');
   if(h) h.style.display='none';
   if(b) b.style.display='';
+  // "Ready to see your own numbers?" is first-visit framing — stale once the user
+  // has entered real data, so hide it along with the hero.
+  if(intro) intro.style.display='none';
 }
 function showHero(){
   var h=document.getElementById('heroSection'), b=document.getElementById('showHeroBtn');
+  var intro=document.getElementById('calcIntro');
   if(h) h.style.display='';
   if(b) b.style.display='none';
+  if(intro) intro.style.display='';
 }
 
 // ── CLEAR ALL INPUTS ──
