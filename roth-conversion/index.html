@@ -2354,9 +2354,17 @@ function renderSurvivalChart(p){
       .text('Breakeven '+p.beAge+': '+Math.round(bv*100)+'% odds');
   }
 
-  // Hover tooltip — attached to the SVG element so it fires regardless of
-  // which SVG child (area fill, line, axes) the cursor lands on.
-  // d3.pointer(event, g.node()) returns coordinates in chart space (0..W, 0..H).
+  // Hover tooltip — on the container div so it fires regardless of which SVG
+  // child the cursor lands on (area fill, line, axes all bubble up correctly).
+  // Coordinates via getBoundingClientRect() — avoids SVG coordinate-system
+  // quirks that broke the earlier SVG-level approach for couples.
+  //
+  // symOf is intentionally defined here — the only other copy lives inside
+  // calc() as a local const and is out of scope for this function. Without
+  // this definition the couple branch silently throws ReferenceError and the
+  // tooltip never renders.
+  var symOf = function(s){ return s==='male' ? '&#9794;' : '&#9792;'; };
+
   var tooltip = d3.select(container).append('div')
     .style('position','absolute').style('pointer-events','none')
     .style('background', DARK ? 'rgba(22,28,36,.96)' : 'rgba(255,255,255,.97)')
@@ -2370,12 +2378,12 @@ function renderSurvivalChart(p){
     .attr('stroke', DARK?'#666':'#bbb').attr('stroke-width',1)
     .attr('pointer-events','none').style('display','none');
 
-  // mousemove on the container div — mousemove events from SVG children bubble
-  // up through the DOM to the parent HTML element, so this fires regardless of
-  // which SVG path (area fill, line, axis) the cursor is over. Coordinates are
-  // computed directly from getBoundingClientRect() to avoid SVG coordinate
-  // system issues that affected the earlier SVG-level approach for couples.
-  container.addEventListener('mousemove', function(event){
+  // Remove any prior listeners from a previous render so they don't pile up
+  // across repeated calc() calls.
+  if(container._survMove) container.removeEventListener('mousemove', container._survMove);
+  if(container._survLeave) container.removeEventListener('mouseleave', container._survLeave);
+
+  container._survMove = function(event){
     var rect = container.getBoundingClientRect();
     var mx = event.clientX - rect.left - margin.left;
     if(mx < 0 || mx > W) { hoverLine.style('display','none'); tooltip.style('display','none'); return; }
@@ -2405,11 +2413,13 @@ function renderSurvivalChart(p){
       .style('left', ttLeft+'px')
       .style('top', ttTop+'px')
       .style('display','block');
-  });
-  container.addEventListener('mouseleave', function(){
+  };
+  container._survLeave = function(){
     hoverLine.style('display','none');
     tooltip.style('display','none');
-  });
+  };
+  container.addEventListener('mousemove', container._survMove);
+  container.addEventListener('mouseleave', container._survLeave);
 }
 
 // D3 render — called after innerHTML is set. p: {ctx, tradBal, totalRetR, cvtAmt, stName}
