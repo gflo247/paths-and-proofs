@@ -379,12 +379,6 @@
     .ptbl .hl{background:var(--navy-pale);}
     .ptbl .hl td:first-child{font-weight:700;}
     .bet{color:var(--success);font-weight:700;} .wor{color:var(--danger);font-weight:700;}
-    .srow{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
-    .sage{font-size:.88rem;font-weight:600;width:58px;flex-shrink:0;}
-    .stracks{flex:1;display:flex;flex-direction:column;gap:4px;}
-    .strack{height:10px;background:var(--blight);border-radius:5px;overflow:hidden;}
-    .sfill{height:100%;border-radius:5px;transition:width .6s ease;}
-    .sfill.m{background:var(--navy);} .sfill.f{background:var(--amber);} .sfill.j{background:var(--success);}
     .optwrap{display:grid;gap:1rem;margin-bottom:1.25rem;}
     @media(max-width:600px){.optwrap{grid-template-columns:1fr!important;}}
     .optcard{background:var(--card);border:1.5px solid var(--blight);border-radius:var(--r);padding:1.2rem 1.3rem;cursor:pointer;display:flex;flex-direction:column;gap:.45rem;box-shadow:var(--sh-sm);transition:border-color .15s,box-shadow .15s,background .15s,transform .15s;position:relative;overflow:hidden;}
@@ -410,8 +404,6 @@
     .optover{font-size:.82rem;color:var(--amber);font-weight:600;margin:-2px 0 6px;}
     .optbtn{font-size:.82rem;font-weight:700;color:var(--amber);margin-top:.3rem;}
     .optna{font-size:.95rem;color:var(--muted);font-style:italic;}
-    .strack.jt{height:13px;border-radius:5px;overflow:hidden;background:var(--blight);}
-    .spct{font-size:.82rem;color:var(--muted);min-width:76px;text-align:right;font-weight:500;}
     .ldot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
     .disclaimer{background:var(--amber-pale);border:1px solid #E8C97A;border-radius:var(--r);padding:.9rem 1.25rem;font-size:.85rem;color:#5A3500;margin-bottom:1.25rem;line-height:1.6;}
     .ph{text-align:center;padding:2.5rem 2rem;color:var(--muted);font-size:.95rem;}
@@ -2237,6 +2229,158 @@ function buildMarginalChartHTML(){
     + 'conclusion, since it also accounts for compounding and Required Minimum Distributions.</p>'
     + '<div class="mchart-row"><div id="marginalChartWrap"></div><div id="marginalChartList"></div></div>'
     + '</div>';
+}
+
+// D3 render — called after innerHTML is set. p: {curAge, sex, spouseAge, spouseSex, isCouple, beAge}
+function renderSurvivalChart(p){
+  var container = document.getElementById('survChartWrap');
+  if(!container || typeof d3 === 'undefined') return;
+  container.innerHTML = '';
+
+  var DARK = document.documentElement.getAttribute('data-theme')==='dark';
+
+  var totalW = Math.min(container.offsetWidth || 560, 720);
+  var margin = {top:14, right:22, bottom:38, left:46};
+  var W = totalW - margin.left - margin.right;
+  var H = 210;
+
+  var svg = d3.select(container).append('svg')
+    .attr('width', totalW)
+    .attr('height', H + margin.top + margin.bottom)
+    .style('overflow', 'visible');
+  var g = svg.append('g').attr('transform', 'translate('+margin.left+','+margin.top+')');
+
+  var ageMin = p.curAge, ageMax = 100;
+  var ages = d3.range(ageMin, ageMax + 1);
+
+  var seriesYou = ages.map(function(a){ return {a:a, v:survFrom(p.sex, p.curAge, a)}; });
+  var seriesSpouse = p.isCouple
+    ? ages.map(function(a){ return {a:a, v:survFrom(p.spouseSex, p.spouseAge, p.spouseAge+(a-p.curAge))}; })
+    : null;
+  var seriesJoint = p.isCouple
+    ? ages.map(function(a){ return {a:a, v:survJoint(p.sex, p.curAge, p.spouseSex, p.spouseAge, a)}; })
+    : null;
+
+  var xScale = d3.scaleLinear().domain([ageMin, ageMax]).range([0, W]);
+  var yScale = d3.scaleLinear().domain([0, 1]).range([H, 0]);
+
+  var colYou   = DARK ? '#6B9BC8' : 'var(--navy)';
+  var colSpouse = 'var(--amber)';
+  var colJoint  = 'var(--success)';
+  var mutedClr  = DARK ? '#999' : '#666';
+
+  var lineGen = d3.line().x(function(d){ return xScale(d.a); }).y(function(d){ return yScale(d.v); }).curve(d3.curveCatmullRom.alpha(0.5));
+  var areaGen = d3.area().x(function(d){ return xScale(d.a); }).y0(H).y1(function(d){ return yScale(d.v); }).curve(d3.curveCatmullRom.alpha(0.5));
+
+  if(p.isCouple){
+    g.append('path').datum(seriesJoint)
+      .attr('fill', DARK ? 'rgba(91,163,114,.14)' : 'rgba(91,163,114,.13)')
+      .attr('d', areaGen);
+    g.append('path').datum(seriesJoint)
+      .attr('fill','none').attr('stroke', colJoint).attr('stroke-width', 2.5).attr('d', lineGen);
+    g.append('path').datum(seriesYou)
+      .attr('fill','none').attr('stroke', colYou).attr('stroke-width', 1.5)
+      .attr('stroke-dasharray','5,3').attr('d', lineGen);
+    g.append('path').datum(seriesSpouse)
+      .attr('fill','none').attr('stroke', colSpouse).attr('stroke-width', 1.5)
+      .attr('stroke-dasharray','5,3').attr('d', lineGen);
+  } else {
+    var col1    = p.sex === 'male' ? colYou : colSpouse;
+    var fillClr = p.sex === 'male'
+      ? (DARK ? 'rgba(28,58,94,.22)' : 'rgba(28,58,94,.10)')
+      : (DARK ? 'rgba(176,96,0,.22)'  : 'rgba(176,96,0,.10)');
+    g.append('path').datum(seriesYou).attr('fill', fillClr).attr('d', areaGen);
+    g.append('path').datum(seriesYou)
+      .attr('fill','none').attr('stroke', col1).attr('stroke-width', 2.5).attr('d', lineGen);
+  }
+
+  // Axes
+  var xAxis = d3.axisBottom(xScale).ticks(6).tickFormat(function(d){ return 'Age '+d; });
+  var yAxis = d3.axisLeft(yScale).ticks(5).tickFormat(function(d){ return Math.round(d*100)+'%'; });
+  var axisGrp = g.append('g').attr('transform','translate(0,'+H+')').call(xAxis);
+  axisGrp.selectAll('text').style('font-size','11px').style('fill', mutedClr);
+  axisGrp.select('.domain').style('stroke', DARK?'#555':'#ccc');
+  axisGrp.selectAll('.tick line').style('stroke', DARK?'#555':'#ccc');
+  var yGrp = g.append('g').call(yAxis);
+  yGrp.selectAll('text').style('font-size','11px').style('fill', mutedClr);
+  yGrp.select('.domain').style('stroke', DARK?'#555':'#ccc');
+  yGrp.selectAll('.tick line').style('stroke', DARK?'#555':'#ccc');
+
+  // Breakeven marker
+  if(p.beAge && p.beAge > p.curAge && p.beAge <= ageMax){
+    var bx = xScale(p.beAge);
+    var bv = p.isCouple
+      ? survJoint(p.sex, p.curAge, p.spouseSex, p.spouseAge, p.beAge)
+      : survFrom(p.sex, p.curAge, p.beAge);
+    var by = yScale(bv);
+    var dotCol = p.isCouple ? colJoint : (p.sex==='male' ? colYou : colSpouse);
+
+    g.append('line')
+      .attr('x1',bx).attr('x2',bx).attr('y1',0).attr('y2',H)
+      .attr('stroke', mutedClr).attr('stroke-width',1.5).attr('stroke-dasharray','4,4');
+    g.append('circle').attr('cx',bx).attr('cy',by).attr('r',5)
+      .attr('fill', dotCol).attr('stroke', DARK?'#1e2830':'white').attr('stroke-width',2);
+
+    var onRight = bx < W * 0.72;
+    g.append('text')
+      .attr('x', onRight ? bx+8 : bx-8)
+      .attr('y', by - 10)
+      .attr('text-anchor', onRight ? 'start' : 'end')
+      .attr('font-size','11px')
+      .attr('fill', DARK?'#bbb':'#444')
+      .text('Breakeven '+p.beAge+': '+Math.round(bv*100)+'% odds');
+  }
+
+  // Hover tooltip
+  var tooltip = d3.select(container).append('div')
+    .style('position','absolute').style('pointer-events','none')
+    .style('background', DARK ? 'rgba(22,28,36,.96)' : 'rgba(255,255,255,.97)')
+    .style('border', DARK ? '1px solid #444' : '1px solid #ddd')
+    .style('border-radius','6px').style('padding','7px 11px')
+    .style('font-size','12px').style('line-height','1.6')
+    .style('color', DARK?'#ddd':'#222').style('display','none')
+    .style('white-space','nowrap').style('z-index','10');
+
+  var hoverLine = g.append('line').attr('y1',0).attr('y2',H)
+    .attr('stroke', DARK?'#666':'#bbb').attr('stroke-width',1)
+    .attr('pointer-events','none').style('display','none');
+
+  g.append('rect')
+    .attr('width', W).attr('height', H)
+    .attr('fill','transparent').style('cursor','crosshair')
+    .on('mousemove', function(event){
+      var mx = d3.pointer(event)[0];
+      var hAge = Math.max(ageMin, Math.min(ageMax, Math.round(xScale.invert(mx))));
+      hoverLine.attr('x1', xScale(hAge)).attr('x2', xScale(hAge)).style('display','');
+      var lines;
+      if(p.isCouple){
+        var sv  = survFrom(p.sex, p.curAge, hAge);
+        var ss2 = survFrom(p.spouseSex, p.spouseAge, p.spouseAge+(hAge-p.curAge));
+        var sj  = survJoint(p.sex, p.curAge, p.spouseSex, p.spouseAge, hAge);
+        lines = '<strong>Age '+hAge+'</strong><br>'
+          +symOf(p.sex)+' You: '+Math.round(sv*100)+'%<br>'
+          +symOf(p.spouseSex)+' Spouse: '+Math.round(ss2*100)+'%<br>'
+          +'<strong>At least one: '+Math.round(sj*100)+'%</strong>';
+      } else {
+        var sv = survFrom(p.sex, p.curAge, hAge);
+        lines = '<strong>Age '+hAge+'</strong><br>Survival: '+Math.round(sv*100)+'%';
+      }
+      var anchorV = p.isCouple
+        ? survJoint(p.sex,p.curAge,p.spouseSex,p.spouseAge,hAge)
+        : survFrom(p.sex,p.curAge,hAge);
+      var ttLeft = xScale(hAge) + margin.left + 14;
+      if(ttLeft + 170 > totalW) ttLeft = xScale(hAge) + margin.left - 175;
+      ttLeft = Math.max(0, ttLeft);
+      var ttTop = Math.max(0, yScale(anchorV) + margin.top - 20);
+      tooltip.html(lines)
+        .style('left', ttLeft+'px')
+        .style('top', ttTop+'px')
+        .style('display','block');
+    })
+    .on('mouseleave', function(){
+      hoverLine.style('display','none');
+      tooltip.style('display','none');
+    });
 }
 
 // D3 render — called after innerHTML is set. p: {ctx, tradBal, totalRetR, cvtAmt, stName}
@@ -4691,42 +4835,16 @@ function calc(){
     return '<tr class="'+(a===beAge?'hl':'')+'"><td><strong>'+a+'</strong>'+(a===beAge?' 🎯':'')+'</td><td>'+fmtK(va)+'</td><td>'+fmtK(vb)+'</td><td class="'+(diff>=0?'bet':'wor')+'">'+(diff>=0?'▲ +':'▼ ')+fmtK(Math.abs(diff))+'</td><td style="font-size:.82rem;color:var(--muted)">'+survCell+'</td></tr>';
   }).join('');
 
-  // ── SURVIVAL BARS ──
-  const sAges=[];for(let a=Math.max(curAge+3,55);a<=95;a+=5)sAges.push(a);
-  let survLegend, sBars;
+  // ── SURVIVAL CHART LEGEND ──
+  let survLegend;
   if(isCouple){
     survLegend =
       '<span class="ldot" style="background:var(--navy)"></span>You ('+(sex==='male'?'M':'F')+') &nbsp;'
       +'<span class="ldot" style="background:var(--amber)"></span>Spouse ('+(spouseSex==='male'?'M':'F')+') &nbsp;'
       +'<span class="ldot" style="background:var(--success)"></span><strong>At least one of you</strong>';
-    sBars = sAges.map(a=>{
-      const sy = survFrom(sex,      curAge,   a);
-      const ss2= survFrom(spouseSex,spouseAge,spouseAge+(a-curAge));
-      const sj = survJoint(sex,curAge,spouseSex,spouseAge,a);
-      return '<div class="srow">'
-        +'<div class="sage">Age '+a+'</div>'
-        +'<div class="stracks">'
-        +'<div class="strack"><div class="sfill m" style="width:'+(sy*100).toFixed(1)+'%"></div></div>'
-        +'<div class="strack"><div class="sfill f" style="width:'+(ss2*100).toFixed(1)+'%"></div></div>'
-        +'<div class="strack jt"><div class="sfill j" style="width:'+(sj*100).toFixed(1)+'%"></div></div>'
-        +'</div>'
-        +'<div class="spct" style="min-width:88px">'+pct(sy,0)+' / '+pct(ss2,0)+'<br><strong style="color:var(--success)">'+pct(sj,0)+'</strong></div>'
-        +'</div>';
-    }).join('');
   } else {
-    const sFillCls = sex==='male' ? 'm' : 'f';
-    const sDotClr  = sex==='male' ? 'var(--navy)' : 'var(--amber)';
+    const sDotClr = sex==='male' ? 'var(--navy)' : 'var(--amber)';
     survLegend = '<span class="ldot" style="background:'+sDotClr+'"></span>'+(sex==='male'?'Male':'Female');
-    sBars = sAges.map(a=>{
-      const s = survFrom(sex, curAge, a);
-      return '<div class="srow">'
-        +'<div class="sage">Age '+a+'</div>'
-        +'<div class="stracks">'
-        +'<div class="strack"><div class="sfill '+sFillCls+'" style="width:'+(s*100).toFixed(1)+'%"></div></div>'
-        +'</div>'
-        +'<div class="spct">'+pct(s,0)+'</div>'
-        +'</div>';
-    }).join('');
   }
 
   // ── IRMAA HTML ──
@@ -4994,12 +5112,13 @@ function calc(){
     +'<div class="card" id="survivalCard"><div class="stitle">❤️ '+(isCouple?'Will At Least One of You Be Around to Benefit?':'Will You Be Around to Benefit?')+'</div>'
     +'<p style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">'
     +(isCouple
-      ? 'For married couples, the key question isn\'t just your individual odds — it\'s whether <strong>at least one of you</strong> will live to benefit from the Roth\'s tax-free compounding. The joint odds (green bars) are substantially higher than either individual figure, often by 15–25 percentage points.'
+      ? 'For married couples, the key question isn\'t just your individual odds — it\'s whether <strong>at least one of you</strong> will live to benefit from the Roth\'s tax-free compounding. The joint probability (green line) is substantially higher than either individual figure, often by 15–25 percentage points.'
       : 'The honest question behind every Roth conversion: <strong>will you live long enough for the tax-free growth to outweigh the taxes you pay today?</strong>')
     +'</p>'
-    +'<p style="font-size:.84rem;color:var(--muted);margin-bottom:.85rem">Chances of still being alive at each age, from age '+curAge+': '+survLegend+'</p>'
-    + sBars
-    +'<p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;line-height:1.45">'+'These bars show population-level averages from <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener">Social Security Administration life expectancy statistics</a> — not personalized medical predictions. Your individual odds depend on your health, genetics, and lifestyle.</p>'+'<div class="alert anvy" style="margin-top:.5rem;font-size:.87rem"><strong>Worth keeping in mind:</strong> A plan built around the average life expectancy leaves half of all people underprepared. Many people live 10–20 years longer than they expect — and the longer you live, the more the Roth compounds.</div>'
+    +'<p style="font-size:.84rem;color:var(--muted);margin-bottom:.6rem">Survival probability from age '+curAge+': '+survLegend+'</p>'
+    +'<div id="survChartWrap" style="position:relative"></div>'
+    +'<p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;margin-bottom:.6rem;line-height:1.45">These figures show population-level averages from <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener">Social Security Administration life expectancy statistics</a> — not personalized medical predictions. Your individual odds depend on your health, genetics, and lifestyle.</p>'
+    +'<div class="alert anvy" style="margin-top:.5rem;font-size:.87rem"><strong>Worth keeping in mind:</strong> A plan built around the average life expectancy leaves half of all people underprepared. Many people live 10–20 years longer than they expect — and the longer you live, the more the Roth compounds.</div>'
     +'</div>'
     +multiYearHTML
     +'<div class="card" style="margin-top:1.25rem;border-left:4px solid var(--amber)">'
@@ -5095,6 +5214,11 @@ function calc(){
       stEx:stD.ex, oppCost0: taxSrc==='outside' ? cvtTxTot : 0
     }); }catch(e){ console.warn("Sensitivity chart error:", e); }
   }
+
+  // ── D3 SURVIVAL CURVE ──
+  try{ renderSurvivalChart({curAge:curAge, sex:sex, spouseAge:spouseAge, spouseSex:spouseSex, isCouple:isCouple, beAge:beAge}); }
+  catch(e){ console.warn("Survival chart error:", e); }
+
   updateWayfindBar();
 }
 
