@@ -281,6 +281,11 @@
     .trow{display:flex;justify-content:space-between;align-items:baseline;font-size:.9rem;padding:5px 0;border-bottom:1px solid var(--blight);}
     .trow:last-child{border-bottom:none;}
     .trow .tl{color:var(--muted);} .trow .tv{font-weight:700;}
+    /* Paired before→after values in the breakdown (Combined income, Taxable SS, Federal tax) */
+    .tv-pair{display:flex;align-items:center;justify-content:flex-end;gap:.3rem;flex-shrink:0;}
+    .tv-wo{color:var(--muted);font-weight:400;}
+    .tv-arr{color:var(--muted);font-size:.8rem;}
+    .tv-wi{font-weight:600;}
     .trow.ttotal{padding-top:8px;}
     .trow.ttotal .tl{color:var(--text);font-weight:700;font-size:.95rem;}
     .trow.ttotal .tv{color:var(--amber);font-size:1.05rem;}
@@ -4604,10 +4609,9 @@ function calc(){
       '<div class="tsubhead" id="ssTaxSection">Social Security Taxation</div>'
       +'<div class="src-note">Source: <a href="https://www.irs.gov/publications/p915" target="_blank" rel="noopener">IRS Pub 915 taxability worksheet</a></div>'
       +'<div class="trow"><span class="tl">Annual SS benefit</span><span class="tv">'+fmt(ss)+'</span></div>'
-      +'<div class="trow"><span class="tl">Combined income (without conversion)</span><span class="tv">'+fmt(piBase)+'</span></div>'
-      +'<div class="trow"><span class="tl">Combined income (with conversion)</span><span class="tv">'+fmt(piWith)+'</span></div>'
-      +'<div class="trow"><span class="tl">Taxable SS (w/o conversion)</span><span class="tv">'+fmt(ssBase)+'</span></div>'
-      +'<div class="trow"><span class="tl">Taxable SS (with conversion)</span><span class="tv">'+fmt(ssWith)+ssDeltaSpan+'</span></div>'
+      +'<div style="text-align:right;font-size:.75rem;color:var(--muted);padding:.2rem 0 .05rem;line-height:1">w/o conversion → with</div>'
+      +'<div class="trow"><span class="tl">Combined income</span><span class="tv tv-pair"><span class="tv-wo">'+fmt(piBase)+'</span><span class="tv-arr">→</span><span class="tv-wi">'+fmt(piWith)+'</span></span></div>'
+      +'<div class="trow"><span class="tl">Taxable Social Security</span><span class="tv tv-pair"><span class="tv-wo">'+fmt(ssBase)+'</span><span class="tv-arr">→</span><span class="tv-wi">'+fmt(ssWith)+ssDeltaSpan+'</span></span></div>'
       + torpedoAlert
       +'<div class="tsep"></div>';
   }
@@ -4724,8 +4728,7 @@ function calc(){
           +'<div class="trow"><span class="tl"><strong>Taxable income (before conversion)</strong></span><span class="tv"><strong>'+fmt(tiBase)+'</strong></span></div>'
         : '<div class="trow"><span class="tl"><strong>Taxable income (before conversion)</strong> − 2026 Standard Deduction ('+fmt(std)+')</span><span class="tv"><strong>'+fmt(tiBase)+'</strong></span></div>'
       )
-      +'<div class="trow"><span class="tl">Federal tax without conversion</span><span class="tv">'+fmt(txOut)+'</span></div>'
-      +'<div class="trow"><span class="tl">Federal tax with conversion</span><span class="tv">'+fmt(txIn)+'</span></div>'
+      +'<div class="trow"><span class="tl">Federal income tax</span><span class="tv tv-pair"><span class="tv-wo">'+fmt(txOut)+'</span><span class="tv-arr">→</span><span class="tv-wi">'+fmt(txIn)+'</span></span></div>'
       +'<div class="trow ttotal"><span class="tl">Federal conversion tax cost</span><span class="tv">'+fmt(cvtTxFed)+'</span></div>'
       +'<div class="bracket-box"><div class="tsubhead" style="margin-top:0">2026 Federal Brackets — '+(status==='mfj'?'Married Filing Jointly':status==='mfs'?'Married Filing Separately':status==='hoh'?'Head of Household':'Single')+'</div>'
       +buildBracketTable(status,margR(tiBase,status))
