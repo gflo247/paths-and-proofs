@@ -555,9 +555,6 @@
   <!-- heroExample wraps only the illustration + buttons — the collapsible "example" zone.
        The always-useful content (401k note, how-to, FAQs) lives outside this div. -->
   <div id="heroExample">
-  <div style="text-align:right;margin-bottom:.25rem">
-    <button onclick="hideHero()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;font-family:inherit;padding:0;text-decoration:underline;text-underline-offset:2px">✕ Hide example</button>
-  </div>
   <div class="hero-ex-tag">
     <span class="hero-ex-tag-lbl">EXAMPLE</span>
     <p id="heroVisAmtHd" class="hero-ex-tag-amt">$380K IRA Converted Gradually</p>
@@ -672,8 +669,8 @@
     </details>
   </div>
 </div>
-<div id="showHeroBtn" style="display:none;text-align:center;padding:.45rem 0;background:var(--blight);font-size:.82rem;border-bottom:1px solid var(--blight)">
-  <button onclick="showHero()" style="background:none;border:none;color:var(--navy);cursor:pointer;font-size:.82rem;font-family:inherit;text-decoration:underline;text-underline-offset:2px;padding:0">↑ Show example again</button>
+<div id="heroToggleWrap" style="text-align:center;padding:.4rem 0;font-size:.82rem">
+  <button id="heroToggleBtn" onclick="toggleHero()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.82rem;font-family:inherit;padding:0;text-decoration:underline;text-underline-offset:2px">Hide example ↑</button>
 </div>
 <div class="page-wrap">
 <div id="calcIntro" style="text-align:center;padding:1.5rem 0 .5rem;border-top:1px solid var(--blight);margin-bottom:1rem">
@@ -3568,20 +3565,24 @@ function updateHeroVis(name){
 function hideHero(){
   // Only collapses the example illustration+buttons zone — the title, description,
   // 401k note, how-to steps, and FAQs remain visible as permanent reference content.
-  var ex=document.getElementById('heroExample'), b=document.getElementById('showHeroBtn');
+  var ex=document.getElementById('heroExample'), btn=document.getElementById('heroToggleBtn');
   var intro=document.getElementById('calcIntro');
   if(ex) ex.style.display='none';
-  if(b) b.style.display='';
+  if(btn) btn.textContent='Show example \u2193';
   // "Ready to see your own numbers?" is first-visit framing — stale once the user
   // has entered real data, so hide it along with the example zone.
   if(intro) intro.style.display='none';
 }
 function showHero(){
-  var ex=document.getElementById('heroExample'), b=document.getElementById('showHeroBtn');
+  var ex=document.getElementById('heroExample'), btn=document.getElementById('heroToggleBtn');
   var intro=document.getElementById('calcIntro');
   if(ex) ex.style.display='';
-  if(b) b.style.display='none';
+  if(btn) btn.textContent='Hide example \u2191';
   if(intro) intro.style.display='';
+}
+function toggleHero(){
+  var ex=document.getElementById('heroExample');
+  if(ex && ex.style.display==='none') showHero(); else hideHero();
 }
 
 // ── CLEAR ALL INPUTS ──
@@ -4608,11 +4609,9 @@ function calc(){
     if(torpedoInc > 0){
       torpedoAlert =
         '<div class="alert ared" style="padding:.7rem .9rem;font-size:.84rem">'
-        + '<strong>Hidden tax zone!</strong> The conversion pulls <strong>'+fmt(torpedoInc)+'</strong> more'
-        + ' of your Social Security into taxable income'
-        + ' (your income plus half your Social Security — the IRS calls this "provisional income" — crosses the '+( status==='mfj'?'$44,000':'$34,000')+'+ threshold).'
-        + ' Extra federal tax from the torpedo: ~<strong>'+fmt(Math.round(torpedoTax))+'</strong>.'
-        + ' I\'ve already included that in the federal conversion tax cost below.</div>';
+        + '<strong>Hidden tax zone!</strong> This conversion raises your combined income past the IRS threshold,'
+        + ' pulling <strong>'+fmt(torpedoInc)+'</strong> more of your Social Security into taxable income.'
+        + ' Extra federal tax: ~<strong>'+fmt(Math.round(torpedoTax))+'</strong> — already included in the cost below.</div>';
     }
     // When the torpedo is active, color the "with conversion" Taxable SS value
     // red — same color as the alert box below — so the visual link is immediate
