@@ -1803,7 +1803,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
         +'<div class="optamt">'+fmt(opts.irmaaAmt)+'</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.irmaaAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe limit: '+fmt(opts.irmaaAmt)+'</span></div></div>'
         +overshootNote(opts.irmaaAmt,'you\'ve likely crossed into the next Medicare premium tier')
-        +'<div class="optnote">Keeps your 2026 total income just below $'+(opts.irmaaNext/1000).toFixed(0)+'K — avoids the Medicare surcharge that hits your 2028 premiums</div>'
+        +'<div class="optnote">Your existing income plus this conversion lands just below the $'+(opts.irmaaNext/1000).toFixed(0)+'K Medicare threshold. Going over by even $1 triggers a higher premium tier for all of 2028 — Medicare prices premiums using income from two years prior.</div>'
         +'<div class="optbtn">Explore this →</div>'
         +'</div>'
       );
@@ -1812,7 +1812,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
         '<div class="optcard irm optdim">'
         +'<div class="optlbl">'+ICO_IRM+'Medicare Surcharge Limit</div>'
         +'<div class="optna">Already at threshold</div>'
-        +'<div class="optnote">Your income already hits a Medicare surcharge tier — even a small conversion crosses the next threshold</div>'
+        +'<div class="optnote">Your current income is already at a Medicare surcharge boundary — any conversion, even a small one, triggers the next tier.</div>'
         +'</div>'
       );
     } else if(opts.irmaaState==='maxtier'){
@@ -1820,7 +1820,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
         '<div class="optcard irm optdim">'
         +'<div class="optlbl">'+ICO_IRM+'Medicare Surcharge Limit</div>'
         +'<div class="optna">Max tier reached</div>'
-        +'<div class="optnote">You are already in Medicare highest income tier — additional income does not increase premiums further</div>'
+        +'<div class="optnote">You\'re already in the highest Medicare premium tier — converting more won\'t push premiums higher.</div>'
         +'</div>'
       );
     }
