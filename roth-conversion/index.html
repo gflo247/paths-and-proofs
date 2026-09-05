@@ -1803,7 +1803,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
         +'<div class="optamt">'+fmt(opts.irmaaAmt)+'</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.irmaaAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe limit: '+fmt(opts.irmaaAmt)+'</span></div></div>'
         +overshootNote(opts.irmaaAmt,'you\'ve likely crossed into the next Medicare premium tier')
-        +'<div class="optnote">Converting this amount puts your total income just under the $'+(opts.irmaaNext/1000).toFixed(0)+'K Medicare threshold. Going over by even $1 triggers a higher premium tier for all of 2028 — Medicare prices premiums using income from two years prior.</div>'
+        +'<div class="optnote">$'+Math.round(opts.irmaaAmt/1000)+'K is the most you can convert — your other income (~$'+Math.round((opts.irmaaNext-opts.irmaaAmt)/1000)+'K) plus this conversion stays just under the $'+(opts.irmaaNext/1000).toFixed(0)+'K Medicare threshold. Medicare charges higher Part B premiums above that line, using income from two years prior.</div>'
         +'<div class="optbtn">Explore this →</div>'
         +'</div>'
       );
