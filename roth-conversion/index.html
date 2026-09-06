@@ -2632,7 +2632,7 @@ function renderMarginalChart(p){
     }
     var refTextY = refAbove ? refY-9 : refY+15;
     g.append('rect').attr('x',refCx-refW/2).attr('y',refRectY0).attr('width',refW).attr('height',14).attr('rx',3)
-      .attr('fill',tc('rgba(245,241,235,0.8)','rgba(34,39,48,0.85)'));
+      .attr('fill',tc('rgb(245,241,235)','rgb(34,39,48)'));
     g.append('text').attr('x',refCx).attr('y',refTextY).attr('text-anchor','middle')
       .style('font-size','10.5px').style('font-weight','600').style('font-family','DM Sans, sans-serif')
       .style('fill',tc('#3D4451','#A6ABB5'))
