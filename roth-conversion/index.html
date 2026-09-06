@@ -714,6 +714,7 @@
       <div class="skip-confirmed" id="skipConfirmed" style="display:none">
         ✓ Skipped. We'll show your planning thresholds once we know your bracket and Medicare situation. <button type="button" class="skip-undo" onclick="undoSkipConvertAmt()">Undo</button>
       </div>
+      <div id="rmdCvtHint" style="display:none;font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.5"></div>
     </div>
     <div class="step-nav">
       <span></span>
@@ -1167,6 +1168,15 @@ function computeEstimatedRMD(){
   var balAtRMD     = tradBal*Math.pow(1+g, Math.max(0, effectiveAge-curAge));
   var div          = RMDD[Math.min(effectiveAge,100)]||6.4;
   return {rmd:Math.round(balAtRMD/div/500)*500, rmdStartAge:effectiveAge, alreadyInRMD:curAge>=rmdStartAge};
+}
+function updateRMDCvtHint(curAge, tradBal, rmdStartAge){
+  var el = document.getElementById('rmdCvtHint');
+  if(!el) return;
+  if(curAge < rmdStartAge || tradBal <= 0){ el.style.display='none'; return; }
+  var div = RMDD[Math.min(curAge,100)] || 6.4;
+  var rmd = Math.round(tradBal / div / 500) * 500;
+  el.style.display = '';
+  el.innerHTML = '<strong>RMD required:</strong> At age '+curAge+', the IRS requires you to withdraw ~'+fmt(rmd)+' this year before converting. That amount can\'t be converted — only what you withdraw above your RMD is eligible. Confirm the exact figure with your custodian.';
 }
 function updateRetWdHint(){
   var el = document.getElementById('retWdHint');
@@ -4446,6 +4456,7 @@ function calc(){
   const cvtAmt   = _ae ? +_ae.convertAmt      : _rf('convertAmt');
   const tradBal  = _ae ? +_ae.tradBal         : _rf('tradBal');
   const rothBal  = _ae ? +_ae.rothBal         : _rf('rothBal');
+  if(!_ae) updateRMDCvtHint(curAge, tradBal, rmdStartAge);
 
   // ── PRO-RATA / IRA BASIS ──
   const basis       = Math.min(_ae?+_ae.iraBasis:_rf('iraBasis'), tradBal);
@@ -5157,8 +5168,13 @@ function calc(){
   // than relying on that later declaration.
   const betLifespan = isCouple && leJoint ? leJoint : le;
 
+  const rmdAtCur = curAge >= rmdStartAge ? Math.round(tradBal / (RMDD[Math.min(curAge,100)]||6.4) / 500) * 500 : 0;
+  const rmdResultNote = rmdAtCur > 0
+    ? '<div class="alert" style="background:var(--blight);border-left:3px solid var(--muted);padding:.6rem .9rem;font-size:.83rem;margin-bottom:1rem;border-radius:4px"><strong>RMD reminder:</strong> You\'re required to take ~'+fmt(rmdAtCur)+' as a minimum withdrawal this year before converting. This analysis shows the cost of the conversion above that — the RMD itself is a separate taxable event, not included here.</div>'
+    : '';
   $('resultsWrap').innerHTML =
     '<div class="fade-up">'
+    +rmdResultNote
     +'<div class="disclaimer">📌 <strong>Planning tool, not financial advice.</strong> This calculator models common tax rules but cannot see your full picture — estate goals, healthcare subsidies, future moves, charitable plans, and income changes all matter. State rates are approximate. Use this to understand the landscape and size the conversation with your CPA or financial advisor, not to make the decision alone.</div>'
     +'<div class="bottom-line"><div class="bl-eye">YOUR BOTTOM LINE · CONVERTING '+fmt(cvtAmt)+'</div><div class="bl-txt" id="blTxt">'+blTxt+'</div><div class="bl-cav">Estimates only — rough numbers are fine for planning. Scroll down for the full breakdown.</div></div>'
     +whyPanelHTML
