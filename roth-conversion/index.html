@@ -554,8 +554,10 @@
   <p class="concept-note">Your traditional IRA holds money the IRS hasn’t taxed yet — deferred, not exempt. Withdrawals generally become required and taxable starting at age 73 (75 if you were born in 1960 or later).</p>
   <!-- heroExample wraps only the illustration + buttons — the collapsible "example" zone.
        The always-useful content (401k note, how-to, FAQs) lives outside this div. -->
-  <div id="heroExample" style="position:relative">
-  <button onclick="hideHero()" style="position:absolute;top:.5rem;right:.5rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;font-family:inherit;padding:2px 4px;text-decoration:underline;text-underline-offset:2px;z-index:1">Hide example ↑</button>
+  <div id="heroExample">
+  <div style="text-align:right;padding:.2rem .4rem 0">
+    <button onclick="hideHero()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;font-family:inherit;padding:2px 4px;text-decoration:underline;text-underline-offset:2px">Hide example ↑</button>
+  </div>
   <div class="hero-ex-tag">
     <span class="hero-ex-tag-lbl">EXAMPLE</span>
     <p id="heroVisAmtHd" class="hero-ex-tag-amt">$380K IRA Converted Gradually</p>
@@ -3793,8 +3795,10 @@ function loadExample(name){
   // the reader, so moving the viewport would only pull them away from it.
   _activeExample = f;  // Pass data directly to calc(), bypassing DOM reads
   calc();
-  _activeExample = null;
   revealResults(true);  // examples show their full answer instantly, no wizard
+  _activeExample = null;  // clear AFTER revealResults — revealResults calls calc() internally,
+  // and calc()'s hideHero() guard checks _activeExample; clearing before revealResults caused
+  // the example section to collapse when switching between examples.
 }
 
 function clearExample(){
