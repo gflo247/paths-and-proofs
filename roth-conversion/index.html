@@ -2158,9 +2158,16 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn,taxSrc){
   // Context paragraph
   var ctx='';
   if(plan.preRows.length>0)ctx+='<strong>'+plan.preRows.length+' working '+(plan.preRows.length===1?'year':'years')+'</strong> before retirement at '+retAge+'. ';
-  if(plan.goldRows.length>0)
+  if(plan.goldRows.length>0){
     ctx+='The <strong>golden window</strong> — retirement to age '+rmdStartAge+', when income drops and bracket room expands — adds <strong>'+plan.goldRows.length+' more years</strong> of conversions at a lower effective rate.';
-  else if(goldenYears>0)
+    if(plan.preRows.length>0){
+      var preTot=plan.preRows.reduce(function(s,r){return s+r.convert;},0);
+      var goldTot=plan.goldRows.reduce(function(s,r){return s+r.convert;},0);
+      var preRate=plan.preRows.reduce(function(s,r){return s+r.tax;},0)/preTot;
+      var goldRate=plan.goldRows.reduce(function(s,r){return s+r.tax;},0)/goldTot;
+      ctx+=' Converting now runs ~'+pctFn(preRate,1)+' per dollar; the golden window brings that to ~'+pctFn(goldRate,1)+'.';
+    }
+  } else if(goldenYears>0)
     ctx+='Enter expected retirement SS and pension in the rate estimator above to also see the golden window (age '+goldStartAge+' to '+rmdStartAge+').';
   else if(goldStartAge>=rmdStartAge)
     ctx+='RMDs start at or before retirement — consider converting more aggressively now while income is predictable.';
