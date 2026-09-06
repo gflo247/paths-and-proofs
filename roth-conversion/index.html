@@ -2631,13 +2631,6 @@ function renderMarginalChart(p){
       refCx = refCxShort!==null ? refCxShort : Math.min(W-refW/2, Math.max(refW/2, W-refW/2));
     }
     var refTextY = refAbove ? refY-9 : refY+15;
-    g.append('rect').attr('x',refCx-refW/2).attr('y',refRectY0).attr('width',refW).attr('height',14).attr('rx',3)
-      .attr('fill',tc('rgb(245,241,235)','rgb(34,39,48)'));
-    g.append('text').attr('x',refCx).attr('y',refTextY).attr('text-anchor','middle')
-      .style('font-size','10.5px').style('font-weight','600').style('font-family','DM Sans, sans-serif')
-      .style('fill',tc('#3D4451','#A6ABB5'))
-      .text(refText);
-    labelRects.push({x0:refCx-refW/2,x1:refCx+refW/2,y0:refRectY0,y1:refRectY0+14});
   }
 
   // The curve
@@ -2746,6 +2739,17 @@ function renderMarginalChart(p){
     g.append('line').attr('x1',lx).attr('x2',lx).attr('y1',0).attr('y2',H)
       .attr('stroke',color).attr('stroke-width',1.75).attr('stroke-dasharray','5,3');
   });
+
+  // Pill drawn after named marker lines so it paints on top of them in SVG order.
+  if(refDrawn){
+    g.append('rect').attr('x',refCx-refW/2).attr('y',refRectY0).attr('width',refW).attr('height',14).attr('rx',3)
+      .attr('fill',tc('rgb(245,241,235)','rgb(34,39,48)'));
+    g.append('text').attr('x',refCx).attr('y',refTextY).attr('text-anchor','middle')
+      .style('font-size','10.5px').style('font-weight','600').style('font-family','DM Sans, sans-serif')
+      .style('fill',tc('#3D4451','#A6ABB5'))
+      .text(refText);
+    labelRects.push({x0:refCx-refW/2,x1:refCx+refW/2,y0:refRectY0,y1:refRectY0+14});
+  }
 
   // "Your pick" — the one point on the curve that answers "where do I
   // actually land," always drawn (unlike named markers, which only appear
