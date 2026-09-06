@@ -1788,6 +1788,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
       '<div class="optcard brkt" onclick="setConvert('+opts.bracketAmt+',\'federalTaxSection\',true)">'
       +'<div class="optlbl">'+ICO_BRKT+'Fill your '+pct(opts.curBR,0)+' bracket</div>'
       +'<div class="optamt">'+fmt(opts.bracketAmt)+'</div>'
+      +'<div style="font-size:.72rem;color:var(--muted);text-align:center;margin:-4px 0 4px;letter-spacing:.03em;text-transform:uppercase">suggested conversion</div>'
       +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.bracketAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>up to: '+fmt(opts.bracketAmt)+'</span></div></div>'
       +overshootNote(opts.bracketAmt,'that portion is taxed at your next bracket\'s higher rate, not '+pct(opts.curBR,0))
       +'<div class="optnote">The total conversion amount that exactly fills the rest of your '+pct(opts.curBR,0)+' bracket — converting up to this stays at '+pct(opts.curBR,0)+'; converting past it pushes the extra into the next bracket'+
@@ -1817,6 +1818,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
         '<div class="optcard irm" onclick="setConvert('+opts.irmaaAmt+',\'irmaaCard\',false)">'
         +'<div class="optlbl">'+ICO_IRM+'Medicare income limit</div>'
         +'<div class="optamt">'+fmt(opts.irmaaAmt)+'</div>'
+        +'<div style="font-size:.72rem;color:var(--muted);text-align:center;margin:-4px 0 4px;letter-spacing:.03em;text-transform:uppercase">suggested conversion</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/opts.irmaaAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>safe limit: '+fmt(opts.irmaaAmt)+'</span></div></div>'
         +overshootNote(opts.irmaaAmt,'you\'ve likely crossed into the next Medicare premium tier')
         +'<div class="optnote">Converting this amount brings your total income to just under the $'+(opts.irmaaNext/1000).toFixed(0)+'K Medicare threshold. Going over triggers higher Part B premiums for all of 2028 — Medicare uses income from two years prior.</div>'
@@ -1859,6 +1861,7 @@ function buildOptimizerPanel(opts,fmt,pct,nMed,ss,curCvt){
         '<div class="optcard trp" onclick="setConvert('+t.clearAmt+',\'ssTaxSection\',true)">'
         +'<div class="optlbl">'+ICO_TRP+'Clear the SS Hidden Tax Zone</div>'
         +'<div class="optamt">'+fmt(t.clearAmt)+'</div>'
+        +'<div style="font-size:.72rem;color:var(--muted);text-align:center;margin:-4px 0 4px;letter-spacing:.03em;text-transform:uppercase">suggested conversion</div>'
         +'<div class="opt-hd"><div class="opt-hd-track"><div class="opt-hd-fill" style="width:'+Math.min(100,Math.round((curCvt||0)/t.clearAmt*100))+'%"></div></div><div class="opt-hd-lbl"><span>current: '+fmt(curCvt||0)+'</span><span>to clear: '+fmt(t.clearAmt)+'</span></div></div>'
         +'<div class="optnote">You\'re already in the zone where each dollar converted also makes more of your Social Security taxable, raising your effective rate above your stated bracket. Converting up to this amount pushes fully past it — extra income beyond here faces only your normal bracket rate.</div>'
         +'<div class="optbtn">Explore this →</div>'
