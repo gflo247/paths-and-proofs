@@ -957,27 +957,30 @@
       <div class="idollar"><input type="number" id="rothBal" value="40000" min="0" step="1000" oninput="calc()"></div>
       <div class="hint">Enter $0 if you do not have one yet</div>
     </div>
-    <details class="rest">
-      <summary>Investment income &amp; IRA basis (optional)</summary>
+    <details class="rest" open>
+      <summary>Brokerage &amp; investment income</summary>
       <div class="restb">
         <div class="field">
-          <div class="flr"><label>Other Investment Income (optional)</label><button class="tb" onclick="toggleTip('nii')">ⓘ</button></div>
-          <div class="idollar"><input type="number" id="niiIncome" value="0" min="0" step="500" oninput="calc()"></div>
-        <div class="ttip" id="tip-nii"><strong>What is this field?</strong> Interest, non-qualified dividends, short-term capital gains, and rental income — enter your annual total here. This tool taxes it at your ordinary income rate and includes it in the income that determines your tax bracket, Social Security taxation, and Medicare IRMAA tier, the same as wages or pension income. It also adds the 3.8% federal Net Investment Income Tax (NIIT) surcharge once your total income tops $200,000 (single) or $250,000 (married) — a Roth conversion counts as income and can push you over that threshold. <strong>Have qualified dividends or long-term capital gains?</strong> Those get a lower preferential rate (0/15/20%) — enter them in the field below instead, not here. If you filed Form 8960 last year, that's the cleanest starting point — it already categorizes each type of NII. Otherwise, on a 1099-DIV, box 1a (ordinary dividends) already includes box 1b (qualified dividends) as a subset — put only the non-qualified portion (1a minus 1b) here to avoid double-counting. Enter $0 if this doesn't apply to you.</div>
-        <div class="hint">Not sure? Enter $0 — this means interest, rent, or investments held under a year. (Held longer? Use the field below instead.)</div>
-        </div>
-        <div class="field">
-          <div class="flr"><label>Qualified Dividends &amp; Long-Term Capital Gains (optional)</label><button class="tb" onclick="toggleTip('ltcg')">ⓘ</button></div>
+          <div class="flr"><label>Qualified Dividends &amp; Long-Term Capital Gains</label><button class="tb" onclick="toggleTip(‘ltcg’)">ⓘ</button></div>
           <div class="idollar"><input type="number" id="ltcgIncome" value="0" min="0" step="500" oninput="calc()"></div>
-        <div class="ttip" id="tip-ltcg"><strong>What is this field?</strong> Qualified dividends (1099-DIV box 1b, or line 3a on your return) and net long-term capital gains (Schedule D, line 15) — these get the federal preferential rate (0%, 15%, or 20%) instead of your ordinary bracket rate, and this tool models that correctly, stacking them on top of your other income the way the IRS actually calculates it. A Roth conversion is ordinary income that stacks underneath this, so converting can push some of this income into a higher preferential-rate bracket — this tool accounts for that too. This income still counts toward Medicare IRMAA, Social Security taxation, and the 3.8% Net Investment Income Tax (NIIT) surcharge, just not your ordinary federal bracket. Enter $0 if this doesn't apply to you.</div>
-        <div class="hint">Not sure? Enter $0 — this means investments held over a year. (Shorter-term, or other investment income? Use the field above instead.)</div>
+        <div class="ttip" id="tip-ltcg"><strong>What is this field?</strong> Qualified dividends (1099-DIV box 1b, or line 3a on your return) and net long-term capital gains (Schedule D, line 15) — these get the federal preferential rate (0%, 15%, or 20%) instead of your ordinary bracket rate, and this tool models that correctly, stacking them on top of your other income the way the IRS actually calculates it. A Roth conversion is ordinary income that stacks underneath this, so converting can push some of this income into a higher preferential-rate bracket — this tool accounts for that too. This income still counts toward Medicare IRMAA, Social Security taxation, and the 3.8% Net Investment Income Tax (NIIT) surcharge, just not your ordinary federal bracket. Enter $0 if this doesn’t apply to you.</div>
+        <div class="hint">Mutual funds, ETFs, and index funds report this on your 1099-DIV, Box 1b. Enter $0 if you don’t have a taxable brokerage account. This affects your Social Security taxability calculation.</div>
         </div>
         <div class="field">
-          <div class="flr"><label>After-Tax Contributions (optional)</label><button class="tb" onclick="toggleTip('basis')">ⓘ</button></div>
-          <div class="idollar"><input type="number" id="iraBasis" value="0" min="0" step="500" oninput="calc()"></div>
-        <div class="ttip" id="tip-basis"><strong>Have you ever contributed already-taxed money to a traditional IRA?</strong> If so, that amount is called your "basis." It matters because the IRS requires every conversion to be a proportional mix of taxed and untaxed money — you can't cherry-pick just the pre-tax portion. The already-taxed share converts tax-free. If this applies to you, the number lives on IRS Form 8606, line 14. Most people enter $0 — the vast majority of IRA money is pre-tax.</div>
-        <div class="hint">Don’t know this? Enter $0 — it only applies if you’ve made after-tax IRA contributions, and most people haven’t</div>
+          <div class="flr"><label>Other Investment Income</label><button class="tb" onclick="toggleTip(‘nii’)">ⓘ</button></div>
+          <div class="idollar"><input type="number" id="niiIncome" value="0" min="0" step="500" oninput="calc()"></div>
+        <div class="ttip" id="tip-nii"><strong>What is this field?</strong> Interest, non-qualified dividends, short-term capital gains, and rental income — enter your annual total here. This tool taxes it at your ordinary income rate and includes it in the income that determines your tax bracket, Social Security taxation, and Medicare IRMAA tier, the same as wages or pension income. It also adds the 3.8% federal Net Investment Income Tax (NIIT) surcharge once your total income tops $200,000 (single) or $250,000 (married) — a Roth conversion counts as income and can push you over that threshold. <strong>Have qualified dividends or long-term capital gains?</strong> Those get a lower preferential rate (0/15/20%) — enter them in the field above instead, not here. If you filed Form 8960 last year, that’s the cleanest starting point — it already categorizes each type of NII. Otherwise, on a 1099-DIV, box 1a (ordinary dividends) already includes box 1b (qualified dividends) as a subset — put only the non-qualified portion (1a minus 1b) here to avoid double-counting. Enter $0 if this doesn’t apply to you.</div>
+        <div class="hint">Interest (savings, bonds, CDs), rent, or short-term gains. Enter $0 if none of these apply.</div>
         </div>
+        <details style="margin-top:.75rem">
+          <summary style="font-size:.82rem;color:var(--muted);cursor:pointer">IRA basis (most people: $0)</summary>
+          <div class="field" style="margin-top:.5rem">
+            <div class="flr"><label>After-Tax Contributions</label><button class="tb" onclick="toggleTip(‘basis’)">ⓘ</button></div>
+            <div class="idollar"><input type="number" id="iraBasis" value="0" min="0" step="500" oninput="calc()"></div>
+          <div class="ttip" id="tip-basis"><strong>Have you ever contributed already-taxed money to a traditional IRA?</strong> If so, that amount is called your "basis." It matters because the IRS requires every conversion to be a proportional mix of taxed and untaxed money — you can’t cherry-pick just the pre-tax portion. The already-taxed share converts tax-free. If this applies to you, the number lives on IRS Form 8606, line 14. Most people enter $0 — the vast majority of IRA money is pre-tax.</div>
+          <div class="hint">Only applies if you’ve made non-deductible IRA contributions. Check IRS Form 8606, line 14.</div>
+          </div>
+        </details>
       </div>
     </details>
     <div class="step-nav">
