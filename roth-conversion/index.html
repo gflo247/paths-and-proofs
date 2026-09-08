@@ -236,7 +236,6 @@
     .step-progress.clickable .seg{cursor:pointer;}
     .step-progress.clickable .seg:hover .lbl{color:var(--navy);text-decoration:underline;text-underline-offset:3px;}
     .step-progress.clickable .seg:focus-visible{outline:2px solid var(--navy-mid);outline-offset:3px;border-radius:4px;}
-    .step-count{text-align:center;color:var(--muted);font-size:.8rem;margin:0 0 1rem;}
     .step-card{display:none;}
     .step-card.current{display:block;}
     .step-nav{display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;flex-wrap:wrap;gap:.75rem;}
@@ -676,7 +675,7 @@
   </div>
 </div>
 <div class="page-wrap">
-<div id="calcIntro" style="text-align:center;padding:1.5rem 0 .5rem;border-top:1px solid var(--blight);margin-bottom:1rem">
+<div id="calcIntro" style="text-align:center;padding:2.5rem 0 .5rem;border-top:1px solid var(--blight);margin-bottom:1rem">
   <p style="font-size:1.55rem;font-weight:640;font-family:'Fraunces','Playfair Display',serif;color:var(--navy);margin-bottom:.3rem;line-height:1.2">Ready to see your own numbers?</p>
   <p style="font-size:.86rem;color:var(--muted)">Fill in what you know below — results update instantly.</p>
 </div>
@@ -692,7 +691,6 @@
     <div class="seg" data-step="3" onclick="jumpToStep(3)"><div class="bar"></div><div class="lbl">Income &amp; accounts</div></div>
     <div class="seg" data-step="4" onclick="jumpToStep(4)"><div class="bar"></div><div class="lbl">Medicare &amp; assumptions</div></div>
   </div>
-  <p class="step-count" id="stepCount">Step 1 of 4</p>
 
   <div class="card step-card current" data-step="1" id="stepCard1">
     <div class="ch"><div class="sb">1</div><h2>How much are you converting?</h2></div>
