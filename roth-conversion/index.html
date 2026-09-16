@@ -1974,9 +1974,27 @@ function updateRetRate(){
       + (nextPct !== null ? ' — '+roomFmt+' below the '+nextPct+'% bracket' : '');
   }
 
+  // Income waterfall rows
+  var dedTotal  = std + srD0;
+  var dedDetail = srD0 > 0
+    ? 'standard '+fmt(std)+' + '+fmt(srD0)+' senior deduction (65+)'
+    : 'standard deduction';
+  var nonSSInc  = othInc; // retPen + retOther + retWd
+  var waterfallRows = '';
+  if(retSS > 0){
+    var ssTaxPct = retSS > 0 ? Math.round(ssT0/retSS*100) : 0;
+    waterfallRows += '<tr><td style="color:var(--muted);padding-right:.75rem">Social Security ('+ssTaxPct+'% taxable)</td><td style="text-align:right">'+fmt(ssT0)+'<span style="color:var(--muted);font-size:.77rem"> of '+fmt(retSS)+'</span></td></tr>';
+  }
+  if(nonSSInc > 0){
+    waterfallRows += '<tr><td style="color:var(--muted);padding-right:.75rem">Pension + other income</td><td style="text-align:right">'+fmt(nonSSInc)+'</td></tr>';
+  }
+  waterfallRows += '<tr><td style="color:var(--muted);padding-right:.75rem">Less deductions</td><td style="text-align:right">−'+fmt(dedTotal)+'<span style="color:var(--muted);font-size:.77rem"> ('+dedDetail+')</span></td></tr>';
+  waterfallRows += '<tr style="border-top:1px solid var(--tip-bdr)"><td style="color:var(--navy);font-weight:700;padding-right:.75rem;padding-top:.25rem">Taxable income</td><td style="text-align:right;font-weight:700;padding-top:.25rem">'+fmt(ti0)+'</td></tr>';
+
   var out = '<div style="background:var(--navy-pale);border:1px solid var(--tip-bdr);border-radius:var(--rsm);padding:.65rem .8rem;font-size:.84rem;line-height:1.6">';
   out += '<strong style="color:var(--navy)">Marginal federal rate on IRA withdrawals: '+fedPct+'%</strong>';
-  out += '<br><span style="font-size:.8rem;color:var(--muted)">'+bktLabel+'</span>';
+  out += '<table style="width:100%;border-collapse:collapse;margin:.45rem 0 .2rem;font-size:.79rem;line-height:1.55">'+waterfallRows+'</table>';
+  out += '<span style="font-size:.8rem;color:var(--muted)">'+bktLabel+'</span>';
   if(torpExtra > 0.002){
     out += '<br><span style="color:var(--danger);font-size:.8rem">Includes +'+Math.round(torpExtra*1000)/10+'% hidden Social Security tax (income in the SS-taxable zone)</span>';
   }
