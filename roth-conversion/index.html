@@ -1933,7 +1933,7 @@ function updateRetRate(){
   if(retSS+retPen+retOther+retWd<=0){ el.innerHTML=''; return; }
 
   var std     = STDD[status];
-  var nSr     = parseInt(_rv('seniorDeduction'))||0;
+  var nSr     = parseInt((document.getElementById('seniorDeduction')||{}).value)||0;
   var othInc  = retPen + retOther + retWd;
 
   // Marginal rate: tax difference from adding $1000 more IRA withdrawal.
