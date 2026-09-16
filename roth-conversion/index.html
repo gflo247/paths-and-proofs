@@ -1932,13 +1932,20 @@ function updateRetRate(){
   if(retSS+retPen+retOther+retWd<=0){ el.innerHTML=''; return; }
 
   var std     = STDD[status];
+  var nSr     = parseInt(_rv('seniorDeduction'))||0;
   var othInc  = retPen + retOther + retWd;
 
-  // Marginal rate: tax difference from adding $1000 more IRA withdrawal
+  // Marginal rate: tax difference from adding $1000 more IRA withdrawal.
+  // Senior deduction phases out above $75k AGI (single) / $150k (joint) at $0.06/$1,
+  // so recompute it at both income points to capture any phase-out movement.
   var ssT0 = calcTaxableSS(retSS, othInc,      status);
   var ssT1 = calcTaxableSS(retSS, othInc+1000, status);
-  var ti0  = Math.max(0, othInc     + ssT0 - std);
-  var ti1  = Math.max(0, othInc+1000 + ssT1 - std);
+  var agi0 = othInc     + ssT0;
+  var agi1 = othInc+1000 + ssT1;
+  var srD0  = seniorDed(agi0, status, nSr);
+  var srD1  = seniorDed(agi1, status, nSr);
+  var ti0  = Math.max(0, agi0 - std - srD0);
+  var ti1  = Math.max(0, agi1 - std - srD1);
   var margFed   = (calcTax(ti1,status) - calcTax(ti0,status)) / 1000;
   var bracketR  = margR(ti0, status);
   var torpExtra = Math.max(0, Math.round((margFed - bracketR)*1000)/1000);
@@ -1952,8 +1959,24 @@ function updateRetRate(){
   var stPct  = Math.round(stRetR*1000)/10;
   var totPct = Math.round(totalR*1000)/10;
 
+  // Bracket position context
+  var bktCtx = roomTo(ti0, status);
+  var bktLabel = '';
+  if(bktCtx.room === 0){
+    bktLabel = 'Taxable income: '+fmt(ti0)+' (top bracket)';
+  } else {
+    // Find the next bracket's rate (the one above ti0's current bracket)
+    var nextBrkt = null;
+    for(var _i=0;_i<BRAX[status].length;_i++){if(BRAX[status][_i].r > bktCtx.cur){nextBrkt=BRAX[status][_i];break;}}
+    var nextPct = nextBrkt ? Math.round(nextBrkt.r*1000)/10 : null;
+    var roomFmt = '$'+Math.round(bktCtx.room).toLocaleString();
+    bktLabel = 'Estimated taxable income: '+fmt(ti0)
+      + (nextPct !== null ? ' — '+roomFmt+' below the '+nextPct+'% bracket' : '');
+  }
+
   var out = '<div style="background:var(--navy-pale);border:1px solid var(--tip-bdr);border-radius:var(--rsm);padding:.65rem .8rem;font-size:.84rem;line-height:1.6">';
   out += '<strong style="color:var(--navy)">Marginal federal rate on IRA withdrawals: '+fedPct+'%</strong>';
+  out += '<br><span style="font-size:.8rem;color:var(--muted)">'+bktLabel+'</span>';
   if(torpExtra > 0.002){
     out += '<br><span style="color:var(--danger);font-size:.8rem">Includes +'+Math.round(torpExtra*1000)/10+'% hidden Social Security tax (income in the SS-taxable zone)</span>';
   }
