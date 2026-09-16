@@ -1960,16 +1960,15 @@ function updateRetRate(){
   var stPct  = Math.round(stRetR*1000)/10;
   var totPct = Math.round(totalR*1000)/10;
 
-  // Bracket position context
-  var bktCtx = roomTo(ti0, status);
+  // Bracket position context — compute nextPct outside if/else so it's available for torpedo stack
+  var bktCtx  = roomTo(ti0, status);
+  var nextBrkt = null;
+  for(var _i=0;_i<BRAX[status].length;_i++){if(BRAX[status][_i].r > bktCtx.cur){nextBrkt=BRAX[status][_i];break;}}
+  var nextPct  = nextBrkt ? Math.round(nextBrkt.r*1000)/10 : null;
   var bktLabel = '';
   if(bktCtx.room === 0){
     bktLabel = 'Taxable income: '+fmt(ti0)+' (top bracket)';
   } else {
-    // Find the next bracket's rate (the one above ti0's current bracket)
-    var nextBrkt = null;
-    for(var _i=0;_i<BRAX[status].length;_i++){if(BRAX[status][_i].r > bktCtx.cur){nextBrkt=BRAX[status][_i];break;}}
-    var nextPct = nextBrkt ? Math.round(nextBrkt.r*1000)/10 : null;
     var roomFmt = '$'+Math.round(bktCtx.room).toLocaleString();
     bktLabel = 'Estimated taxable income: '+fmt(ti0)
       + (nextPct !== null ? ' — '+roomFmt+' below the '+nextPct+'% bracket' : '');
@@ -1995,9 +1994,19 @@ function updateRetRate(){
   var out = '<div style="background:var(--navy-pale);border:1px solid var(--tip-bdr);border-radius:var(--rsm);padding:.65rem .8rem;font-size:.84rem;line-height:1.6">';
   out += '<strong style="color:var(--navy)">Marginal federal rate on IRA withdrawals: '+fedPct+'%</strong>';
   out += '<table style="width:100%;border-collapse:collapse;margin:.45rem 0 .2rem;font-size:.79rem;line-height:1.55">'+waterfallRows+'</table>';
-  out += '<span style="font-size:.8rem;color:var(--muted)">'+bktLabel+'</span>';
   if(torpExtra > 0.002){
-    out += '<br><span style="color:var(--danger);font-size:.8rem">Includes +'+Math.round(torpExtra*1000)/10+'% hidden Social Security tax (income in the SS-taxable zone)</span>';
+    // Rate stack: makes the torpedo arithmetic explicit
+    var ssDeltaPer1k = Math.round(ssT1 - ssT0);
+    var bracketPct   = Math.round(bracketR*1000)/10;
+    var torpPct      = Math.round(torpExtra*1000)/10;
+    var bktNote      = nextPct !== null ? 'taxable income '+fmt(ti0)+', '+fmt(bktCtx.room)+' below '+nextPct+'%' : 'taxable income '+fmt(ti0);
+    out += '<div style="font-size:.79rem;line-height:1.65;border-top:1px solid var(--tip-bdr);margin-top:.35rem;padding-top:.35rem">';
+    out += '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">'+bracketPct+'% bracket rate <span style="font-size:.75rem">('+bktNote+')</span></span><span style="color:var(--muted)">'+bracketPct+'%</span></div>';
+    out += '<div style="display:flex;justify-content:space-between;color:var(--danger)"><span>+&thinsp;SS torpedo &thinsp;<span style="font-size:.75rem">each $1,000 withdrawn makes $'+ssDeltaPer1k+' more SS taxable &times;&thinsp;'+bracketPct+'%</span></span><span>+'+torpPct+'%</span></div>';
+    out += '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--tip-bdr);padding-top:.2rem;margin-top:.1rem;font-weight:700"><span>True marginal rate</span><span>'+fedPct+'%</span></div>';
+    out += '</div>';
+  } else {
+    out += '<span style="font-size:.8rem;color:var(--muted)">'+bktLabel+'</span>';
   }
   if(stRetR > 0 && stD.n){
     out += '<br>+ '+stPct+'% '+stD.n+' state = <strong>'+totPct+'% combined</strong>';
