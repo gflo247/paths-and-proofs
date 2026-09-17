@@ -2317,8 +2317,7 @@ function buildMarginalChartHTML(){
     + 'The <strong style="color:var(--text)">marginal income tax rate</strong> (cost of the next dollar) is the actual stopping signal — it spikes sharply inside the Social Security torpedo zone, where each extra dollar of conversion also makes more Social Security taxable. '
     + 'Converting less always looks cheaper in aggregate; this shows why the next dollar can cost far more than the headline rate suggests. '
     + 'The full breakeven-age simulation below can reach a different conclusion, since it also accounts for compounding and Required Minimum Distributions.</p>'
-    + '<div id="marginalChartAbove"></div>'
-    + '<div id="marginalChartMain" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-top:.35rem"><div id="marginalChartWrap" style="flex:1;min-width:240px"></div></div>'
+    + '<div id="marginalChartMain" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-top:.35rem"><div id="marginalChartWrap" style="flex:1;min-width:240px"><div id="marginalChartAbove"></div></div></div>'
     + '<div id="marginalChartBelow" style="margin-top:.5rem"></div>'
     + '</div>';
 }
@@ -2760,6 +2759,11 @@ function renderMarginalChart(p){
   }
   if(crossPt){
     var ccx=xSc(crossPt.x), ccy=ySc(Math.min(crossPt.y,yMax));
+    // When the crossover and "your pick" are nearly coincident (within 4% of
+    // the chart domain), their labels stack on top of each other. In that case
+    // suppress the crossover label — the dot still marks the marginal-rate
+    // threshold on the curve, and "Your pick" already labels that x position.
+    var crossNearPick = Math.abs(crossPt.x - cvtX) < maxAmt * 0.04;
     // Static soft halo behind the dot — no pulse animation, since this
     // redraws on every keystroke and a looping animation would visibly
     // restart mid-cycle each time rather than read as ambient motion.
@@ -2780,55 +2784,57 @@ function renderMarginalChart(p){
     }
     var below = chosen.below, lblY = chosen.lblY;
     var sameSide = overlapsRef(chosen);
-    // Horizontal: steer clear of the named markers, plus the reference
-    // label's actual footprint when its band still overlaps this label's —
-    // a hairline margin isn't enough clearance for a label that wide, and
-    // when the bands don't overlap there's nothing to avoid here at all.
-    var crossObstacles = sameSide ? markerObstacles.concat([{x:refCx, half:refW/2+6}]) : markerObstacles;
-    // Try the full sentence first; if no spot near the dot is clear of every
-    // obstacle at this width, fall back to just the dollar amount, which
-    // needs far less room — only kicks in on narrow charts with an obstacle
-    // that happens to land right where the full label would (see
-    // _dev/test-marginal-chart-labels.mjs, which is what found this needed
-    // a fallback at all instead of a fixed width breakpoint).
-    var lblTextFull = 'Marginal rate crosses — '+fmt(crossPt.x);
-    var lblWFull = lblTextFull.length*5.7+12;
-    var cxFull = clearCx(ccx+lblWFull/2+10, lblWFull, crossObstacles);
-    var lblText, lblW, lblCx;
-    if(cxFull!==null){
-      lblText=lblTextFull; lblW=lblWFull; lblCx=cxFull;
-    } else {
-      lblText = fmt(crossPt.x);
-      lblW = lblText.length*5.7+12;
-      var cxShort = clearCx(ccx+lblW/2+10, lblW, crossObstacles);
-      lblCx = cxShort!==null ? cxShort : Math.min(W-lblW/2, Math.max(lblW/2, ccx+lblW/2+10));
+    if(!crossNearPick){
+      // Horizontal: steer clear of the named markers, plus the reference
+      // label's actual footprint when its band still overlaps this label's —
+      // a hairline margin isn't enough clearance for a label that wide, and
+      // when the bands don't overlap there's nothing to avoid here at all.
+      var crossObstacles = sameSide ? markerObstacles.concat([{x:refCx, half:refW/2+6}]) : markerObstacles;
+      // Try the full sentence first; if no spot near the dot is clear of every
+      // obstacle at this width, fall back to just the dollar amount, which
+      // needs far less room — only kicks in on narrow charts with an obstacle
+      // that happens to land right where the full label would (see
+      // _dev/test-marginal-chart-labels.mjs, which is what found this needed
+      // a fallback at all instead of a fixed width breakpoint).
+      var lblTextFull = 'Marginal rate crosses — '+fmt(crossPt.x);
+      var lblWFull = lblTextFull.length*5.7+12;
+      var cxFull = clearCx(ccx+lblWFull/2+10, lblWFull, crossObstacles);
+      var lblText, lblW, lblCx;
+      if(cxFull!==null){
+        lblText=lblTextFull; lblW=lblWFull; lblCx=cxFull;
+      } else {
+        lblText = fmt(crossPt.x);
+        lblW = lblText.length*5.7+12;
+        var cxShort = clearCx(ccx+lblW/2+10, lblW, crossObstacles);
+        lblCx = cxShort!==null ? cxShort : Math.min(W-lblW/2, Math.max(lblW/2, ccx+lblW/2+10));
+      }
+      // If clearCx had to push this label far from its own dot to find room
+      // (found live: near $663 — basically at $0 — this label can land past
+      // $150K once the SS-torpedo line and "Your pick" crowd the space right
+      // next to the dot), draw a thin connector to the label's near edge so
+      // it still reads as labeling THIS point, not wherever it visually
+      // landed. Solid, not dashed — every OTHER dashed line on this chart
+      // (bracket ticks, torpedo, Medicare, the reference line) means "a
+      // threshold crossing," so a dashed connector here would read as one
+      // more of those instead of the pointer it actually is. A small dot at
+      // the label end acts as the "pin", same convention as a map callout.
+      // Drawn before the pill so the pill's own background covers the
+      // connector's end rather than the line drawing over the pill's edge.
+      if(Math.abs(lblCx-ccx) > 40){
+        var leaderX = lblCx > ccx ? lblCx-lblW/2 : lblCx+lblW/2;
+        g.append('line').attr('x1',ccx).attr('x2',leaderX).attr('y1',ccy).attr('y2',lblY-3)
+          .attr('stroke',margColor).attr('stroke-width',1).attr('opacity',0.5);
+        g.append('circle').attr('cx',leaderX).attr('cy',lblY-3).attr('r',2)
+          .attr('fill',margColor).attr('opacity',0.5);
+      }
+      g.append('rect').attr('x',lblCx-lblW/2).attr('y',lblY-11).attr('width',lblW).attr('height',16).attr('rx',3)
+        .attr('fill',tc('rgba(245,241,235,0.85)','rgba(34,39,48,0.9)'));
+      g.append('text').attr('x',lblCx).attr('y',lblY).attr('text-anchor','middle')
+        .style('font-size','10.5px').style('font-weight',700).style('font-family','DM Sans, sans-serif')
+        .style('fill',margColor)
+        .text(lblText);
+      labelRects.push({x0:lblCx-lblW/2,x1:lblCx+lblW/2,y0:lblY-11,y1:lblY-11+16});
     }
-    // If clearCx had to push this label far from its own dot to find room
-    // (found live: near $663 — basically at $0 — this label can land past
-    // $150K once the SS-torpedo line and "Your pick" crowd the space right
-    // next to the dot), draw a thin connector to the label's near edge so
-    // it still reads as labeling THIS point, not wherever it visually
-    // landed. Solid, not dashed — every OTHER dashed line on this chart
-    // (bracket ticks, torpedo, Medicare, the reference line) means "a
-    // threshold crossing," so a dashed connector here would read as one
-    // more of those instead of the pointer it actually is. A small dot at
-    // the label end acts as the "pin", same convention as a map callout.
-    // Drawn before the pill so the pill's own background covers the
-    // connector's end rather than the line drawing over the pill's edge.
-    if(Math.abs(lblCx-ccx) > 40){
-      var leaderX = lblCx > ccx ? lblCx-lblW/2 : lblCx+lblW/2;
-      g.append('line').attr('x1',ccx).attr('x2',leaderX).attr('y1',ccy).attr('y2',lblY-3)
-        .attr('stroke',margColor).attr('stroke-width',1).attr('opacity',0.5);
-      g.append('circle').attr('cx',leaderX).attr('cy',lblY-3).attr('r',2)
-        .attr('fill',margColor).attr('opacity',0.5);
-    }
-    g.append('rect').attr('x',lblCx-lblW/2).attr('y',lblY-11).attr('width',lblW).attr('height',16).attr('rx',3)
-      .attr('fill',tc('rgba(245,241,235,0.85)','rgba(34,39,48,0.9)'));
-    g.append('text').attr('x',lblCx).attr('y',lblY).attr('text-anchor','middle')
-      .style('font-size','10.5px').style('font-weight',700).style('font-family','DM Sans, sans-serif')
-      .style('fill',margColor)
-      .text(lblText);
-    labelRects.push({x0:lblCx-lblW/2,x1:lblCx+lblW/2,y0:lblY-11,y1:lblY-11+16});
     // The dot itself (halo + ring, r=10) is also an obstacle, not just its
     // text label — found live: "Your pick"'s pill background rendered right
     // on top of this circle when the two markers landed close together on
