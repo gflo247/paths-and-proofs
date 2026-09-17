@@ -3047,7 +3047,10 @@ function renderMarginalChart(p){
     var panelsWrap = d3.select('#marginalChartMain').append('div')
       .attr('id','marginalChartPanels')
       .style('display','flex').style('flex-shrink','0').style('align-items','flex-start')
-      .style('gap','8px');
+      .style('gap','8px')
+      // Offset by the SVG top margin so the boxes align with the chart data
+      // area rather than the y-axis label space above it.
+      .style('padding-top', margin.top+'px');
     if(isWide){
       // Desktop: narrow column so boxes stack vertically beside the chart.
       panelsWrap.style('flex-direction','column').style('width','165px');
