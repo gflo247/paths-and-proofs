@@ -2951,17 +2951,13 @@ function renderMarginalChart(p){
 
   var bracketRows = sweep.crossings.filter(function(c){ return c.type==='bracket' && c.rate!==undefined; });
   var irmaaRows   = sweep.crossings.filter(function(c){ return c.type==='irmaa'; });
-  // Non-bracket, non-IRMAA named events (torpedo start, torpedo end, ltcg)
-  // go below the chart.
-  var belowRows   = named.filter(function(c){ return c.type!=='irmaa'; });
+  // SS torpedo events go above the chart; only ltcg (if present) stays below.
+  var ssAboveRows = named.filter(function(c){ return c.type==='torpedo' || c.type==='torpedoStart'; });
+  var belowRows   = named.filter(function(c){ return c.type==='ltcg'; });
 
   // Shared helpers
   var PANEL_FONT = 'DM Sans, sans-serif';
-  function panelContainer(sel){
-    return d3.select(sel).append('div')
-      .style('display','flex').style('flex-direction','column').style('gap','4px')
-      .style('font-family',PANEL_FONT).style('font-size','.76rem');
-  }
+  // Full row with "details →" link — used in the above section and below section.
   function mkListRow(container, color, text, target){
     var r = container.append('div').style('display','flex').style('align-items','center').style('gap','7px');
     if(target) r.style('cursor','pointer').on('click',function(){ jumpToLever(target.id,target.details); });
@@ -2971,8 +2967,28 @@ function renderMarginalChart(p){
     if(target) r.append('span').style('color',tc('#1C3A5E','#7DB2EC')).style('font-weight','600')
       .style('margin-left','auto').style('white-space','nowrap').text('details →');
   }
+  // Compact row without "details →" — used inside the right-side panel boxes
+  // where the header already identifies the category and horizontal space is tight.
+  function mkPanelRow(container, color, text, target){
+    var r = container.append('div').style('display','flex').style('align-items','center').style('gap','7px');
+    if(target) r.style('cursor','pointer').on('click',function(){ jumpToLever(target.id,target.details); });
+    r.append('span').style('width','9px').style('height','9px').style('border-radius','50%')
+      .style('flex-shrink','0').style('background',color);
+    r.append('span').style('color',tc('#3D4451','#A6ABB5')).style('white-space','nowrap').text(text);
+  }
+  function mkPanelBox(parentSel, header){
+    var box = parentSel.append('div')
+      .style('min-width','140px').style('max-width','210px').style('flex','1')
+      .style('display','flex').style('flex-direction','column').style('gap','4px')
+      .style('padding','6px 8px')
+      .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
+      .style('font-family',PANEL_FONT).style('font-size','.76rem');
+    box.append('div').style('color',tc('#5C5348','#8B919D')).style('font-size','.7rem')
+      .style('font-weight','600').style('margin-bottom','2px').text(header);
+    return box;
+  }
 
-  // ── ABOVE chart: legend + expected retirement rate ──
+  // ── ABOVE chart: legend + SS torpedo events ──
   var aboveEl = document.getElementById('marginalChartAbove');
   if(aboveEl){
     d3.select(aboveEl).selectAll('*').remove();
@@ -3002,44 +3018,55 @@ function renderMarginalChart(p){
       aboveRow.append('div').style('color',tc('#7A2E00','#D97A3A')).style('font-size','.73rem')
         .text('⚠ SS already fully in torpedo zone at $0');
     }
+    // SS torpedo events — sit above the chart so they read as an introduction
+    // to the amber zone visible in the SVG, rather than as a footer.
+    if(ssAboveRows.length > 0 && !torpedoAtZero){
+      var ssRow = d3.select(aboveEl).append('div')
+        .style('display','flex').style('flex-wrap','wrap').style('gap','4px 16px')
+        .style('font-family',PANEL_FONT).style('font-size','.76rem')
+        .style('margin-bottom','4px');
+      ssAboveRows.forEach(function(c){
+        mkListRow(ssRow, markerColor[c.type], shortLabel[c.type](c)+' — '+fmt(c.x), markerTarget[c.type]);
+      });
+    }
   }
 
-  // ── RIGHT of chart: Medicare tiers (only if present) ──
-  // Remove any existing right panel, then rebuild only if there are IRMAA rows.
-  d3.select('#marginalChartRight').remove();
-  if(irmaaRows.length > 0){
-    var rightPanel = d3.select('#marginalChartMain').append('div')
-      .attr('id','marginalChartRight')
-      .style('width','178px').style('flex-shrink','0');
-    var rightList = rightPanel.append('div')
-      .style('display','flex').style('flex-direction','column').style('gap','4px')
-      .style('padding','6px 8px')
-      .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
-      .style('font-family',PANEL_FONT).style('font-size','.76rem');
-    rightList.append('div').style('color',tc('#5C5348','#8B919D')).style('font-size','.7rem')
-      .style('font-weight','600').style('margin-bottom','2px').text('Medicare (IRMAA)');
-    irmaaRows.forEach(function(c){
-      mkListRow(rightList, markerColor.irmaa, c.label.split('Tier ')[1]+' \u00b7 '+fmt(c.x), {id:'irmaaCard'});
-    });
+  // ── RIGHT of chart: Medicare + Brackets panels ──
+  // Both panels live in a shared flex-wrap container so they sit side-by-side
+  // on mobile (when the container wraps below the chart at full card width) yet
+  // stack vertically on desktop (container is narrower than two min-widths).
+  d3.select('#marginalChartPanels').remove();
+  var hasPanels = irmaaRows.length > 0 || bracketRows.length > 0;
+  if(hasPanels){
+    var panelsWrap = d3.select('#marginalChartMain').append('div')
+      .attr('id','marginalChartPanels')
+      .style('display','flex').style('flex-wrap','wrap').style('gap','8px')
+      .style('flex-shrink','0').style('align-items','flex-start');
+    if(irmaaRows.length > 0){
+      var miBox = mkPanelBox(panelsWrap, 'Medicare (IRMAA)');
+      irmaaRows.forEach(function(c){
+        mkPanelRow(miBox, markerColor.irmaa, c.label.split('Tier ')[1]+' \u00b7 '+fmt(c.x), {id:'irmaaCard'});
+      });
+    }
+    if(bracketRows.length > 0){
+      var brBox = mkPanelBox(panelsWrap, 'Federal brackets');
+      bracketRows.forEach(function(c){
+        mkPanelRow(brBox, tc('#3D4451','#A6ABB5'), Math.round(c.rate*100)+'% \u00b7 '+fmt(c.x), {id:'federalTaxSection',details:true});
+      });
+    }
   }
 
-  // ── BELOW chart: SS torpedo events + bracket crossings ──
+  // ── BELOW chart: LTCG only (SS events moved above; brackets moved to right panel) ──
   var belowEl = document.getElementById('marginalChartBelow');
-  if(belowEl && (belowRows.length > 0 || bracketRows.length > 0)){
+  if(belowEl && belowRows.length > 0){
     d3.select(belowEl).selectAll('*').remove();
     var belowWrap = d3.select(belowEl).append('div')
       .style('display','flex').style('flex-wrap','wrap').style('gap','4px 28px')
       .style('padding','6px 10px')
       .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
       .style('font-family',PANEL_FONT).style('font-size','.76rem');
-    // SS torpedo events first (most surprising; what the chart's description
-    // is explicitly about)
     belowRows.forEach(function(c){
       mkListRow(belowWrap, markerColor[c.type], shortLabel[c.type](c)+' — crosses at '+fmt(c.x), markerTarget[c.type]);
-    });
-    // Bracket crossings
-    bracketRows.forEach(function(c){
-      mkListRow(belowWrap, tc('#3D4451','#A6ABB5'), 'Enters the '+Math.round(c.rate*100)+'% bracket — crosses at '+fmt(c.x), {id:'federalTaxSection',details:true});
     });
   } else if(belowEl){
     d3.select(belowEl).selectAll('*').remove();
