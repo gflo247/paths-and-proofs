@@ -2638,7 +2638,7 @@ function renderMarginalChart(p){
   // their own inline pill.
   var markerColor = {
     irmaa:tc('#8B1A1A','#EA7070'), ltcg:tc('#5B4A9E','#A08FE8'),
-    torpedo:tc('#8B3A00','#E89A50'), torpedoStart:tc('#8B3A00','#E89A50')
+    torpedo:tc('#9E2800','#FF6B35'), torpedoStart:tc('#9E2800','#FF6B35')
   };
   var shortLabel = {
     irmaa:function(c){ return 'Medicare '+c.label.split('Tier ')[1]; },
@@ -3018,30 +3018,34 @@ function renderMarginalChart(p){
       aboveRow.append('div').style('color',tc('#7A2E00','#D97A3A')).style('font-size','.73rem')
         .text('⚠ SS already fully in torpedo zone at $0');
     }
-    // SS torpedo events — sit above the chart so they read as an introduction
-    // to the amber zone visible in the SVG, rather than as a footer.
+    // SS torpedo events inline with the legend row — same flex-wrap parent,
+    // so they share the line when there is room and wrap naturally when not.
     if(ssAboveRows.length > 0 && !torpedoAtZero){
-      var ssRow = d3.select(aboveEl).append('div')
-        .style('display','flex').style('flex-wrap','wrap').style('gap','4px 16px')
-        .style('font-family',PANEL_FONT).style('font-size','.76rem')
-        .style('margin-bottom','4px');
       ssAboveRows.forEach(function(c){
-        mkListRow(ssRow, markerColor[c.type], shortLabel[c.type](c)+' — '+fmt(c.x), markerTarget[c.type]);
+        mkListRow(aboveRow, markerColor[c.type], shortLabel[c.type](c)+' — '+fmt(c.x), markerTarget[c.type]);
       });
     }
   }
 
   // ── RIGHT of chart: Medicare + Brackets panels ──
-  // Both panels live in a shared flex-wrap container so they sit side-by-side
-  // on mobile (when the container wraps below the chart at full card width) yet
-  // stack vertically on desktop (container is narrower than two min-widths).
+  // Desktop: column (stacked), giving the chart more room.
+  // Mobile: when the panels wrap below the chart they sit side-by-side
+  //   because the container reverts to row direction with flex-wrap.
   d3.select('#marginalChartPanels').remove();
   var hasPanels = irmaaRows.length > 0 || bracketRows.length > 0;
   if(hasPanels){
+    var isWide = window.innerWidth >= 640;
     var panelsWrap = d3.select('#marginalChartMain').append('div')
       .attr('id','marginalChartPanels')
-      .style('display','flex').style('flex-wrap','wrap').style('gap','8px')
-      .style('flex-shrink','0').style('align-items','flex-start');
+      .style('display','flex').style('flex-shrink','0').style('align-items','flex-start')
+      .style('gap','8px');
+    if(isWide){
+      // Desktop: narrow column so boxes stack vertically beside the chart.
+      panelsWrap.style('flex-direction','column').style('width','165px');
+    } else {
+      // Mobile: row with wrap so the two boxes sit side-by-side below the chart.
+      panelsWrap.style('flex-direction','row').style('flex-wrap','wrap');
+    }
     if(irmaaRows.length > 0){
       var miBox = mkPanelBox(panelsWrap, 'Medicare (IRMAA)');
       irmaaRows.forEach(function(c){
