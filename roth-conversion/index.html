@@ -5534,11 +5534,18 @@ function calc(){
   // every field edit, so this is the one place that actually catches that.
   var _shareDetailsEl = document.getElementById('shareDetails');
   if(_shareDetailsEl && _shareDetailsEl.open) refreshShareLink();
-  // Update active-example label on sensitivity chart
+  // Update active-example label on sensitivity chart.
+  // Gate on exBanner visibility: the Ohio button has .active in static HTML,
+  // so .active alone is stale for returning visitors whose saved inputs differ
+  // from that example. The banner is the reliable signal that the user is
+  // actually in example mode (loadExample shows it; clearExample hides it;
+  // it's never shown by the autosave/restore path).
   var _lbl=document.getElementById('sensExLabel');
   if(_lbl){
     var _ab=document.querySelector('.ex-btn.active');
-    _lbl.textContent=_ab?'Showing: '+_ab.textContent.trim():'';
+    var _bnr=document.getElementById('exBanner');
+    var _exActive=_ab && _bnr && _bnr.style.display!=='' && _bnr.style.display!=='none';
+    _lbl.textContent=_exActive?'Showing: '+_ab.textContent.trim():'';
   }
 
   // ── Populate print header ──
