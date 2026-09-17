@@ -3010,16 +3010,16 @@ function renderMarginalChart(p){
   if(irmaaRows.length > 0){
     var rightPanel = d3.select('#marginalChartMain').append('div')
       .attr('id','marginalChartRight')
-      .style('width','164px').style('flex-shrink','0');
+      .style('width','178px').style('flex-shrink','0');
     var rightList = rightPanel.append('div')
       .style('display','flex').style('flex-direction','column').style('gap','4px')
       .style('padding','6px 8px')
       .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
       .style('font-family',PANEL_FONT).style('font-size','.76rem');
     rightList.append('div').style('color',tc('#5C5348','#8B919D')).style('font-size','.7rem')
-      .style('font-weight','600').style('margin-bottom','2px').text('Medicare thresholds');
+      .style('font-weight','600').style('margin-bottom','2px').text('Medicare (IRMAA)');
     irmaaRows.forEach(function(c){
-      mkListRow(rightList, markerColor.irmaa, shortLabel.irmaa(c)+' at '+fmt(c.x), {id:'irmaaCard'});
+      mkListRow(rightList, markerColor.irmaa, c.label.split('Tier ')[1]+' \u00b7 '+fmt(c.x), {id:'irmaaCard'});
     });
   }
 
