@@ -623,7 +623,7 @@
       <div class="hv-col-sub" id="hvRothSub">More take-home — grows tax-free from here on</div>
     </div>
   </div>
-  <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$38K in total taxes vs keeping traditional (on this $380K IRA)</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in a known rate today — more take-home, no forced withdrawals ever</div></div>
+  <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$38K in total taxes vs keeping traditional (on this $380K IRA)</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Pays today's known rate — more take-home, no required withdrawals in your lifetime</div></div>
   <p style="font-size:.72rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.6rem auto .9rem;font-style:italic">Full-retirement totals from a multi-year conversion — the real payoff depends on future rates, returns, and lifespan matching these assumptions.</p>
   </div><!-- /heroExample -->
 <div id="heroToggleWrap" style="text-align:center;padding:.4rem 0;font-size:.82rem">
@@ -705,7 +705,7 @@
         <div class="ttip" id="tip-convert"><strong>How much is right?</strong> It depends on your bracket, Medicare thresholds, and how much of your Social Security is currently taxable. Your results show all three common stopping points. There's no income limit on conversions — anyone can convert in any year.</div>
       <div class="skip-row" id="skipRow">
         <span>Not sure how much to convert yet?</span>
-        <button type="button" class="skip-btn" onclick="skipConvertAmt()">Skip this — I'll pick a threshold later</button>
+        <button type="button" class="skip-btn" onclick="skipConvertAmt()">Show me the thresholds first →</button>
       </div>
       <div class="skip-confirmed" id="skipConfirmed" style="display:none">
         ✓ Skipped. We'll show your planning thresholds once we know your bracket and Medicare situation. <button type="button" class="skip-undo" onclick="undoSkipConvertAmt()">Undo</button>
@@ -835,7 +835,7 @@
           <option value="WY">Wyoming — no income tax ✓</option>
           <option value="DC">Washington D.C.</option>
       </select>
-        <div class="ttip" id="tip-state"><strong>Why this matters:</strong> State income taxes can add 3–13% to the cost of a Roth conversion. Some states also exempt IRA withdrawals in retirement — meaning you'd pay state tax on the conversion today but nothing when you withdraw later, which affects the comparison. Selecting your state adds these numbers automatically.</div>
+        <div class="ttip" id="tip-state"><strong>Why this matters:</strong> State income taxes typically add 4–9% in states that tax IRA income. Some states also exempt IRA withdrawals in retirement — meaning you'd pay state tax on the conversion today but nothing when you withdraw later, which affects the comparison. Selecting your state adds these numbers automatically.</div>
         <div id="stateRetNote" style="margin-top:6px;"></div>
 
         <div id="nyLocalTaxField" style="display:none">
@@ -2003,7 +2003,7 @@ function updateRetRate(){
     out += '<div style="font-size:.79rem;line-height:1.65;border-top:1px solid var(--tip-bdr);margin-top:.35rem;padding-top:.35rem">';
     out += '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">'+bracketPct+'% bracket rate <span style="font-size:.75rem">('+bktNote+')</span></span><span style="color:var(--muted)">'+bracketPct+'%</span></div>';
     out += '<div style="display:flex;justify-content:space-between;color:var(--danger)"><span>+&thinsp;SS torpedo &thinsp;<span style="font-size:.75rem">each $1,000 withdrawn makes $'+ssDeltaPer1k+' more SS taxable &times;&thinsp;'+bracketPct+'%</span></span><span>+'+torpPct+'%</span></div>';
-    out += '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--tip-bdr);padding-top:.2rem;margin-top:.1rem;font-weight:700"><span>True marginal rate</span><span>'+fedPct+'%</span></div>';
+    out += '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--tip-bdr);padding-top:.2rem;margin-top:.1rem;font-weight:700"><span>Marginal federal tax cost</span><span>'+fedPct+'%</span></div>';
     out += '</div>';
   } else {
     out += '<span style="font-size:.8rem;color:var(--muted)">'+bktLabel+'</span>';
@@ -3769,7 +3769,7 @@ function updateHeroVis(name){
   if(vCls==='good'){
     tradSub     = 'Tax owed on every withdrawal in retirement — and it compounds over time';
     rothSub     = 'More take-home — grows tax-free from here on';
-    caption     = 'Locks in a known rate today — more take-home, no forced withdrawals ever';
+    caption     = 'Pays today\'s known rate — more take-home, no required withdrawals in your lifetime';
     savingsText = 'Converting saves ~'+fmtK(savingsAmt)+' in total taxes vs keeping traditional (on this '+fmtK(tradBal)+' IRA)';
     savingsCls  = 'hv-dgrn';
   } else if(vCls==='neutral'){
