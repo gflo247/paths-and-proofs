@@ -2313,11 +2313,10 @@ function buildMarginalChartHTML(){
   return '<div class="card" id="rateClimbCard" style="margin-top:1.25rem">'
     + '<div class="stitle">📈 Why The Rate Climbs As You Convert More</div>'
     + '<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55">'
-    + 'The effective cost on each additional dollar converted isn\'t one number to minimize — '
-    + 'it climbs as you cross real thresholds. Converting less always looks cheaper today; '
-    + 'that\'s not the same as it being the better decision. This shows today\'s quick-rate '
-    + 'comparison only — the full breakeven-age simulation below can reach a different '
-    + 'conclusion, since it also accounts for compounding and Required Minimum Distributions.</p>'
+    + 'Two curves, two questions. The <strong style="color:var(--text)">average effective rate</strong> (total tax ÷ total conversion) shows the blended cost across the full amount. '
+    + 'The <strong style="color:var(--text)">marginal income tax rate</strong> (cost of the next dollar) is the actual stopping signal — it spikes sharply inside the Social Security torpedo zone, where each extra dollar of conversion also makes more Social Security taxable. '
+    + 'Converting less always looks cheaper in aggregate; this shows why the next dollar can cost far more than the headline rate suggests. '
+    + 'The full breakeven-age simulation below can reach a different conclusion, since it also accounts for compounding and Required Minimum Distributions.</p>'
     + '<div class="mchart-row"><div id="marginalChartWrap"></div><div id="marginalChartList"></div></div>'
     + '</div>';
 }
@@ -2502,6 +2501,11 @@ function renderMarginalChart(p){
   var maxAmt = Math.min(p.tradBal, 600000);
   var sweep = sweepMarginalCurve(p.ctx, maxAmt);
   if(sweep.points.length < 2) return;
+  var margPoints = sweep.margPoints;
+  var torpedoAtZero = sweep.torpedoAtZero;
+  // Marginal curve color — distinct from the average curve's navy→amber→red
+  // gradient, the green "Your pick" dot, and the named-marker colors.
+  var margColor = tc('#6A3DB5','#B899EE');
 
   // Earliest point (by conversion amount) where any named cliff kicks in —
   // used only for a soft background tint marking "elevated-rate territory."
@@ -2540,8 +2544,9 @@ function renderMarginalChart(p){
     .attr('preserveAspectRatio','xMidYMid meet');
   var g = svg.append('g').attr('transform','translate('+margin.left+','+margin.top+')');
 
-  var dataMax = Math.max.apply(null, sweep.points.map(function(pt){ return pt.y; }));
-  var yMax = Math.max(15, Math.ceil((dataMax+2)/5)*5);
+  var dataMaxAvg = Math.max.apply(null, sweep.points.map(function(pt){ return pt.y; }));
+  var dataMaxMarg = margPoints.length ? Math.max.apply(null, margPoints.map(function(pt){ return pt.y; })) : 0;
+  var yMax = Math.max(15, Math.ceil((Math.max(dataMaxAvg, dataMaxMarg)+2)/5)*5);
   var xSc = d3.scaleLinear().domain([0, maxAmt]).range([0, W]);
   var ySc = d3.scaleLinear().domain([0, yMax]).range([H, 0]);
 
@@ -2682,7 +2687,8 @@ function renderMarginalChart(p){
     var refTextY = refAbove ? refY-9 : refY+15;
   }
 
-  // The curve
+  // The curves — average effective rate (primary, with area fill) + marginal
+  // income tax rate (thinner, distinct color, no fill).
   var line = d3.line().x(function(d){ return xSc(d.x); }).y(function(d){ return ySc(Math.min(d.y,yMax)); });
   var area = d3.area().x(function(d){ return xSc(d.x); }).y0(H).y1(function(d){ return ySc(Math.min(d.y,yMax)); });
   g.append('path').datum(sweep.points).attr('fill','url(#mchart-area-grad)').attr('d',area);
@@ -2690,8 +2696,18 @@ function renderMarginalChart(p){
     .attr('stroke','url(#mchart-line-grad)').attr('stroke-width',2.75)
     .attr('stroke-linejoin','round').attr('stroke-linecap','round')
     .attr('d',line);
+  // Marginal curve drawn after (on top of) the average curve.
+  if(margPoints.length>=2){
+    g.append('path').datum(margPoints).attr('fill','none')
+      .attr('stroke',margColor).attr('stroke-width',1.75)
+      .attr('stroke-linejoin','round').attr('stroke-linecap','round')
+      .attr('d',line);
+  }
 
-  // Crossover: where the curve meets the expected-retirement-rate line.
+  // Crossover: where the MARGINAL rate curve first meets the expected-retirement-
+  // rate line. This is the actual stopping signal — the marginal curve answers
+  // "what does the next dollar cost?", so the crossover marks where each
+  // additional converted dollar starts costing more than retirement-rate taxes.
   // Its y-pixel (ccy) is NOT reliably close to the reference line's own
   // (refY) — sweepMarginalCurve samples in discrete steps, so wherever the
   // curve is steep, the first sample past retPct can overshoot it by a lot
@@ -2702,8 +2718,8 @@ function renderMarginalChart(p){
   // labels' sides are picked by checking their actual rendered bands
   // against each other, not by assuming they share a y-position.
   var crossPt=null;
-  for(var i=1;i<sweep.points.length;i++){
-    if(sweep.points[i-1].y<retPct && sweep.points[i].y>=retPct){ crossPt=sweep.points[i]; break; }
+  for(var i=1;i<margPoints.length;i++){
+    if(margPoints[i-1].y<retPct && margPoints[i].y>=retPct){ crossPt=margPoints[i]; break; }
   }
   if(crossPt){
     var ccx=xSc(crossPt.x), ccy=ySc(Math.min(crossPt.y,yMax));
@@ -2711,9 +2727,9 @@ function renderMarginalChart(p){
     // redraws on every keystroke and a looping animation would visibly
     // restart mid-cycle each time rather than read as ambient motion.
     g.append('circle').attr('cx',ccx).attr('cy',ccy).attr('r',10)
-      .attr('fill',tc('#1C3A5E','#7DB2EC')).attr('opacity',0.16);
+      .attr('fill',margColor).attr('opacity',0.16);
     g.append('circle').attr('cx',ccx).attr('cy',ccy).attr('r',5)
-      .attr('fill',tc('#F5F1EB','#222730')).attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',2);
+      .attr('fill',tc('#F5F1EB','#222730')).attr('stroke',margColor).attr('stroke-width',2);
     var band = function(isBelow){
       var y = isBelow ? ccy+24 : ccy-16;
       return {below:isBelow, lblY:y, y0:y-11, y1:y+5, fits:(y-11>=0 && y+5<=H)};
@@ -2738,7 +2754,7 @@ function renderMarginalChart(p){
     // that happens to land right where the full label would (see
     // _dev/test-marginal-chart-labels.mjs, which is what found this needed
     // a fallback at all instead of a fixed width breakpoint).
-    var lblTextFull = 'Crosses your rate — '+fmt(crossPt.x);
+    var lblTextFull = 'Marginal rate crosses — '+fmt(crossPt.x);
     var lblWFull = lblTextFull.length*5.7+12;
     var cxFull = clearCx(ccx+lblWFull/2+10, lblWFull, crossObstacles);
     var lblText, lblW, lblCx;
@@ -2765,15 +2781,15 @@ function renderMarginalChart(p){
     if(Math.abs(lblCx-ccx) > 40){
       var leaderX = lblCx > ccx ? lblCx-lblW/2 : lblCx+lblW/2;
       g.append('line').attr('x1',ccx).attr('x2',leaderX).attr('y1',ccy).attr('y2',lblY-3)
-        .attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',1).attr('opacity',0.5);
+        .attr('stroke',margColor).attr('stroke-width',1).attr('opacity',0.5);
       g.append('circle').attr('cx',leaderX).attr('cy',lblY-3).attr('r',2)
-        .attr('fill',tc('#1C3A5E','#7DB2EC')).attr('opacity',0.5);
+        .attr('fill',margColor).attr('opacity',0.5);
     }
     g.append('rect').attr('x',lblCx-lblW/2).attr('y',lblY-11).attr('width',lblW).attr('height',16).attr('rx',3)
       .attr('fill',tc('rgba(245,241,235,0.85)','rgba(34,39,48,0.9)'));
     g.append('text').attr('x',lblCx).attr('y',lblY).attr('text-anchor','middle')
       .style('font-size','10.5px').style('font-weight',700).style('font-family','DM Sans, sans-serif')
-      .style('fill',tc('#1C3A5E','#7DB2EC'))
+      .style('fill',margColor)
       .text(lblText);
     labelRects.push({x0:lblCx-lblW/2,x1:lblCx+lblW/2,y0:lblY-11,y1:lblY-11+16});
     // The dot itself (halo + ring, r=10) is also an obstacle, not just its
@@ -2903,39 +2919,66 @@ function renderMarginalChart(p){
   if(listEl){
     d3.select(listEl).selectAll('*').remove();
     var bracketRows = sweep.crossings.filter(function(c){ return c.type==='bracket' && c.rate!==undefined; });
-    if(refDrawn || named.length>0 || bracketRows.length>0){
-      var list = d3.select(listEl).append('div')
-        .style('display','flex').style('flex-direction','column').style('gap','4px')
-        .style('padding','8px 10px')
-        .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
-        .style('font-family','DM Sans, sans-serif').style('font-size','.76rem');
-      function listRow(color, text, target){
-        var r = list.append('div').style('display','flex').style('align-items','center').style('gap','7px');
-        if(target) r.style('cursor','pointer').on('click',function(){ jumpToLever(target.id,target.details); });
-        r.append('span').style('width','9px').style('height','9px').style('border-radius','50%')
-          .style('flex-shrink','0').style('background',color);
-        r.append('span').style('color',tc('#3D4451','#A6ABB5')).text(text);
-        if(target) r.append('span').style('color',tc('#1C3A5E','#7DB2EC')).style('font-weight','600')
-          .style('margin-left','auto').style('white-space','nowrap').text('details →');
-      }
-      // Reference rate first, as the fixed context every crossing below is
-      // measured against — and the one guaranteed way to read it at all on
-      // a narrow chart, where the inline pill falls back to a bare "16.3%"
-      // with no words once "Your expected retirement rate · 16.3%" no
-      // longer fits (found live: read as "unlabeled" on a real phone). Dot
-      // color matches the actual dashed line's gray stroke, not the pill
-      // text's blue — the pill text is styled to match the crossover pill
-      // next to it, but the dot here needs to match what's ON the chart.
-      if(refDrawn){
-        listRow(tc('#3D4451','#A6ABB5'), 'Your expected retirement rate — '+retPct.toFixed(1)+'%', null);
-      }
-      named.forEach(function(c){
-        listRow(markerColor[c.type], shortLabel[c.type](c)+' — crosses at '+fmt(c.x), markerTarget[c.type]);
-      });
-      bracketRows.forEach(function(c){
-        listRow(tc('#3D4451','#A6ABB5'), 'Enters the '+Math.round(c.rate*100)+'% bracket — crosses at '+fmt(c.x), {id:'federalTaxSection',details:true});
-      });
+    var list = d3.select(listEl).append('div')
+      .style('display','flex').style('flex-direction','column').style('gap','4px')
+      .style('padding','8px 10px')
+      .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
+      .style('font-family','DM Sans, sans-serif').style('font-size','.76rem');
+
+    // Legend: two small horizontal-line swatches explaining which curve is which.
+    // Uses inline-block divs (not SVG) so it's as simple as possible.
+    var legRow = list.append('div')
+      .style('display','flex').style('gap','12px').style('flex-wrap','wrap')
+      .style('padding-bottom','6px')
+      .style('border-bottom','1px solid '+tc('rgba(0,0,0,.08)','rgba(255,255,255,.08)'))
+      .style('margin-bottom','2px');
+    function legItem(color, weight, label){
+      var item = legRow.append('div').style('display','flex').style('align-items','center').style('gap','5px');
+      item.append('div')
+        .style('width','16px').style('height',Math.max(1,Math.round(weight))+'px')
+        .style('background',color).style('border-radius','1px').style('flex-shrink','0');
+      item.append('span').style('color',tc('#3D4451','#A6ABB5')).style('font-size','.73rem')
+        .style('white-space','nowrap').text(label);
     }
+    // Average effective rate swatch uses the midpoint of the gradient
+    legItem(tc('#B06000','#E89A38'), 2.75, 'Avg. effective rate');
+    legItem(margColor, 1.75, 'Marginal income tax rate');
+
+    function listRow(color, text, target){
+      var r = list.append('div').style('display','flex').style('align-items','center').style('gap','7px');
+      if(target) r.style('cursor','pointer').on('click',function(){ jumpToLever(target.id,target.details); });
+      r.append('span').style('width','9px').style('height','9px').style('border-radius','50%')
+        .style('flex-shrink','0').style('background',color);
+      r.append('span').style('color',tc('#3D4451','#A6ABB5')).text(text);
+      if(target) r.append('span').style('color',tc('#1C3A5E','#7DB2EC')).style('font-weight','600')
+        .style('margin-left','auto').style('white-space','nowrap').text('details →');
+    }
+
+    // torpedoAtZero annotation — when the baseline already puts SS fully into
+    // torpedo territory, the marginal curve starts elevated with no visible
+    // "start" marker; call that out explicitly so the reader isn't left
+    // wondering why the curve begins high.
+    if(torpedoAtZero){
+      listRow(markerColor.torpedo, 'Social Security already fully taxable — torpedo zone active at $0', null);
+    }
+
+    // Reference rate first, as the fixed context every crossing below is
+    // measured against — and the one guaranteed way to read it at all on
+    // a narrow chart, where the inline pill falls back to a bare "16.3%"
+    // with no words once "Your expected retirement rate · 16.3%" no
+    // longer fits (found live: read as "unlabeled" on a real phone). Dot
+    // color matches the actual dashed line's gray stroke, not the pill
+    // text's blue — the pill text is styled to match the crossover pill
+    // next to it, but the dot here needs to match what's ON the chart.
+    if(refDrawn){
+      listRow(tc('#3D4451','#A6ABB5'), 'Your expected retirement rate — '+retPct.toFixed(1)+'%', null);
+    }
+    named.forEach(function(c){
+      listRow(markerColor[c.type], shortLabel[c.type](c)+' — crosses at '+fmt(c.x), markerTarget[c.type]);
+    });
+    bracketRows.forEach(function(c){
+      listRow(tc('#3D4451','#A6ABB5'), 'Enters the '+Math.round(c.rate*100)+'% bracket — crosses at '+fmt(c.x), {id:'federalTaxSection',details:true});
+    });
   }
 
   // Hover crosshair + tooltip
@@ -2951,6 +2994,7 @@ function renderMarginalChart(p){
   var hoverLine = g.append('line').attr('y1',0).attr('y2',H)
     .attr('stroke',tc('#1C3A5E','#7DB2EC')).attr('stroke-width',1).attr('opacity',0.35).style('display','none');
   var hoverDot = g.append('circle').attr('r',4).attr('fill',tc('#1C3A5E','#7DB2EC')).style('display','none');
+  var hoverDotMarg = g.append('circle').attr('r',3.5).attr('fill',margColor).style('display','none');
 
   svg.append('rect').attr('x',margin.left).attr('y',margin.top).attr('width',W).attr('height',H)
     .attr('fill','transparent').style('cursor','crosshair')
@@ -2960,22 +3004,32 @@ function renderMarginalChart(p){
       var idx = Math.round(amt/(sweep.points[1].x-sweep.points[0].x));
       idx = Math.max(0, Math.min(sweep.points.length-1, idx));
       var pt = sweep.points[idx];
+      var mpt = margPoints[idx];
       var px = xSc(pt.x), py = ySc(Math.min(pt.y,yMax));
+      var mpy = mpt ? ySc(Math.min(mpt.y,yMax)) : py;
       hoverLine.attr('x1',px).attr('x2',px).style('display','block');
       hoverDot.attr('cx',px).attr('cy',py).style('display','block');
+      hoverDotMarg.attr('cx',px).attr('cy',mpy).style('display',mpt?'block':'none');
       var nearCross = sweep.crossings.find(function(c){ return Math.abs(c.x-pt.x) < maxAmt*0.008; });
-      tip.html('<strong>'+fmt(pt.x)+'</strong> converted — '+pt.y.toFixed(1)+'% effective rate'
+      tip.html('<strong>'+fmt(pt.x)+'</strong> converted'
+        + '<br><span style="display:inline-block;width:8px;height:2px;background:linear-gradient(to right,'+tc('#1C3A5E','#7DB2EC')+','+tc('#B06000','#E89A38')+');vertical-align:middle;margin-right:4px;border-radius:1px"></span>'
+        + 'Avg. effective: '+pt.y.toFixed(1)+'%'
+        + (mpt ? '<br><span style="display:inline-block;width:8px;height:2px;background:'+margColor+';vertical-align:middle;margin-right:4px;border-radius:1px"></span>'
+               + 'Marginal: '+mpt.y.toFixed(1)+'%' : '')
         + (nearCross ? '<br><span style="opacity:.85;font-size:.7rem">'+nearCross.label+'</span>' : ''));
       var contRect = container.getBoundingClientRect();
       var svgRect = svg.node().getBoundingClientRect();
       var scale = svgRect.width/totalW;
       var tx = (px+margin.left)*scale, ty=(py+margin.top)*scale;
-      tip.style('left', Math.min(contRect.width-180, Math.max(4,tx+10))+'px')
-         .style('top', Math.max(0,ty-40)+'px')
+      tip.style('left', Math.min(contRect.width-200, Math.max(4,tx+10))+'px')
+         .style('top', Math.max(0,ty-50)+'px')
          .style('opacity',1);
     })
     .on('mouseleave', function(){
-      hoverLine.style('display','none'); hoverDot.style('display','none'); tip.style('opacity',0);
+      hoverLine.style('display','none');
+      hoverDot.style('display','none');
+      hoverDotMarg.style('display','none');
+      tip.style('opacity',0);
     });
 }
 
@@ -4448,15 +4502,21 @@ function computeConversionCost(cvtAmt, ctx){
 // series of independent points into named "something changed here" markers.
 // ctx is the same object calc() builds for its own single-point call.
 function sweepMarginalCurve(ctx, maxAmt){
-  const points=[], crossings=[];
-  if(maxAmt<=0) return {points, crossings};
+  const rawPoints=[], crossings=[];
+  if(maxAmt<=0) return {points:[], margPoints:[], crossings, torpedoAtZero:false};
   const nSteps=400;
   const step=Math.max(100, Math.round(maxAmt/nSteps));
   let prevTierWith=null, prevLtcgActive=false, prevBracketTop=null, prevSSCapped=null;
 
+  // torpedoAtZero: SS is already fully taxable before any conversion.
+  // When true the SS torpedo zone has no visible "start" inside the chart
+  // domain — it's firing from $0.
+  const ccBase = computeConversionCost(0, ctx);
+  const torpedoAtZero = ctx.ss>0 && ccBase.ssWith >= ctx.ss*0.85*0.999;
+
   for(let amt=0; amt<=maxAmt; amt+=step){
     const cc = computeConversionCost(amt, ctx);
-    points.push({x:amt, y:cc.effR*100});
+    rawPoints.push({x:amt, y:cc.effR*100, tot:cc.cvtTxTot});
 
     if(prevTierWith!==null && cc.tierWith!==prevTierWith){
       crossings.push({x:amt, type:'irmaa', label:'Medicare Tier '+prevTierWith+'→'+cc.tierWith});
@@ -4487,7 +4547,23 @@ function sweepMarginalCurve(ctx, maxAmt){
       prevSSCapped=ssCapped;
     }
   }
-  return {points, crossings};
+
+  // Derive per-step marginal rate from centered differences on cvtTxTot.
+  // Interior points use (tot[i+1] - tot[i-1]) / (2*step); endpoints use
+  // one-sided forward/backward differences. No extra computeConversionCost
+  // calls — reuses the totals already stored in rawPoints above.
+  const n = rawPoints.length;
+  const margPoints = rawPoints.map(function(p, i){
+    let marg;
+    if(n<2) marg=0;
+    else if(i===0) marg=(rawPoints[1].tot-rawPoints[0].tot)/(rawPoints[1].x-rawPoints[0].x);
+    else if(i===n-1) marg=(rawPoints[n-1].tot-rawPoints[n-2].tot)/(rawPoints[n-1].x-rawPoints[n-2].x);
+    else marg=(rawPoints[i+1].tot-rawPoints[i-1].tot)/(rawPoints[i+1].x-rawPoints[i-1].x);
+    return {x:p.x, y:Math.max(0, marg*100)};
+  });
+
+  const points = rawPoints.map(function(p){ return {x:p.x, y:p.y}; });
+  return {points, margPoints, crossings, torpedoAtZero};
 }
 
 let myChart=null;
