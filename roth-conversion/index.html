@@ -2313,10 +2313,9 @@ function buildMarginalChartHTML(){
   return '<div class="card" id="rateClimbCard" style="margin-top:1.25rem">'
     + '<div class="stitle">📈 Why The Rate Climbs As You Convert More</div>'
     + '<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55">'
-    + 'Two curves, two questions. The <strong style="color:var(--text)">average effective rate</strong> (total tax ÷ total conversion) shows the blended cost across the full amount. '
-    + 'The <strong style="color:var(--text)">marginal income tax rate</strong> (cost of the next dollar) is the actual stopping signal — it spikes sharply inside the Social Security torpedo zone, where each extra dollar of conversion also makes more Social Security taxable. '
-    + 'Converting less always looks cheaper in aggregate; this shows why the next dollar can cost far more than the headline rate suggests. '
-    + 'The full breakeven-age simulation below can reach a different conclusion, since it also accounts for compounding and Required Minimum Distributions.</p>'
+    + 'Two curves, two questions. The <strong style="color:var(--text)">average effective rate</strong> (total tax ÷ conversion) is the blended cost across the full amount. '
+    + 'The <strong style="color:var(--text)">marginal income tax rate</strong> (cost of the next dollar) is the actual stopping signal — it spikes sharply inside the Social Security torpedo zone, where each extra dollar of conversion makes more Social Security taxable. '
+    + 'The breakeven simulation below may reach a different conclusion, since it also accounts for compounding and Required Minimum Distributions.</p>'
     + '<div id="marginalChartAbove" style="margin-bottom:.5rem"></div>'
     + '<div id="marginalChartMain" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start"><div id="marginalChartWrap" style="flex:1;min-width:240px"></div></div>'
     + '<div id="marginalChartBelow" style="margin-top:.5rem"></div>'
@@ -2593,7 +2592,7 @@ function renderMarginalChart(p){
       g.append('rect').attr('x',tzX0).attr('y',0).attr('width',tzW).attr('height',H)
         .attr('fill',tc('#8B3A00','#E89A50')).attr('opacity',0.11);
       if(tzW > 50){
-        g.append('text').attr('x', tzX0 + Math.min(tzW/2, tzW - 6)).attr('y', H-5)
+        g.append('text').attr('x', tzX0 + Math.min(tzW/2, tzW - 6)).attr('y', H * 0.75)
           .attr('text-anchor','middle')
           .style('font-size','8.5px').style('font-family','DM Sans, sans-serif')
           .style('fill',tc('#7A2E00','#D97A3A')).style('font-weight','700').style('letter-spacing','.03em')
@@ -2742,6 +2741,32 @@ function renderMarginalChart(p){
       .attr('stroke',margColor).attr('stroke-width',1.75)
       .attr('stroke-linejoin','round').attr('stroke-linecap','round')
       .attr('d',line);
+  }
+
+  // Torpedo peak callout — labels the highest marginal rate inside the torpedo
+  // zone so the spike magnitude is self-contained without tracing the y-axis.
+  // Only fires when there is a real torpedo zone and the peak exceeds 15%.
+  if(margPoints.length >= 2 && (torpedoStartC || torpedoAtZero) && torpedoEndC){
+    var tzLoPeak = torpedoAtZero ? 0 : (torpedoStartC ? torpedoStartC.x : 0);
+    var tzHiPeak = torpedoEndC.x;
+    var peakPt = null;
+    margPoints.forEach(function(pt){
+      if(pt.x >= tzLoPeak && pt.x <= tzHiPeak && (!peakPt || pt.y > peakPt.y)) peakPt = pt;
+    });
+    if(peakPt && peakPt.y > 15){
+      var pkX = xSc(peakPt.x);
+      var pkY = ySc(Math.min(peakPt.y, yMax));
+      var pkLblY = pkY - 10;
+      if(pkLblY < 12) pkLblY = pkY + 16;
+      g.append('text').attr('x', pkX).attr('y', pkLblY)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '9px').style('font-family', 'DM Sans, sans-serif')
+        .style('fill', margColor).style('font-weight', '700')
+        .text(Math.round(peakPt.y) + '% marginal');
+      // Register so downstream "Your pick" and crossover labels can avoid it.
+      // Width estimate: ~12 chars × ~5.7px/char ≈ 68px → ±34px from center.
+      labelRects.push({x0:pkX-34, x1:pkX+34, y0:pkLblY-11, y1:pkLblY+4});
+    }
   }
 
   // Crossover: where the MARGINAL rate curve first meets the expected-retirement-
