@@ -2757,15 +2757,19 @@ function renderMarginalChart(p){
       var pkX = xSc(peakPt.x);
       var pkY = ySc(Math.min(peakPt.y, yMax));
       var pkLblY = pkY - 10;
-      if(pkLblY < 12) pkLblY = pkY + 16;
+      if(pkLblY < 14) pkLblY = pkY + 18;
+      // Background pill for contrast against the dark chart area.
+      g.append('rect')
+        .attr('x', pkX - 36).attr('y', pkLblY - 12)
+        .attr('width', 72).attr('height', 16).attr('rx', 3)
+        .attr('fill', tc('rgba(255,255,255,0.82)', 'rgba(30,34,42,0.82)'));
       g.append('text').attr('x', pkX).attr('y', pkLblY)
         .attr('text-anchor', 'middle')
-        .style('font-size', '9px').style('font-family', 'DM Sans, sans-serif')
+        .style('font-size', '10.5px').style('font-family', 'DM Sans, sans-serif')
         .style('fill', margColor).style('font-weight', '700')
         .text(Math.round(peakPt.y) + '% marginal');
       // Register so downstream "Your pick" and crossover labels can avoid it.
-      // Width estimate: ~12 chars × ~5.7px/char ≈ 68px → ±34px from center.
-      labelRects.push({x0:pkX-34, x1:pkX+34, y0:pkLblY-11, y1:pkLblY+4});
+      labelRects.push({x0:pkX-36, x1:pkX+36, y0:pkLblY-12, y1:pkLblY+4});
     }
   }
 
@@ -5181,7 +5185,7 @@ function calc(){
   } else if(rateDiff>=-0.02){
     vCls='neutral';vIco='⚖️';
     vHd='This is genuinely close — the Roth still has meaningful advantages worth considering.';
-    vBd='Your effective conversion rate ('+pct(effR)+') and expected retirement rate ('+pct(totalRetR)+') are close enough that the pure math doesn\'t clearly favor either side. That said, the Roth still brings real benefits: <span style="white-space:nowrap"><strong>no forced withdrawals at '+rmdStartAge+'</strong>,</span> tax-free growth, and more flexibility for your heirs and future income planning.';
+    vBd='Your effective conversion rate ('+pct(effR)+') and expected retirement rate ('+pct(totalRetR)+') are close enough that the pure math doesn\'t clearly favor either side. That said, the Roth still brings real benefits: <strong>no forced withdrawals at '+rmdStartAge+',</strong> tax-free growth, and more flexibility for your heirs and future income planning.';
   } else {
     vCls='bad';vIco='⚠️';
     vHd='Right now, the numbers slightly favor keeping traditional.';
