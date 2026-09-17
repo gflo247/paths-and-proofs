@@ -2317,7 +2317,9 @@ function buildMarginalChartHTML(){
     + 'The <strong style="color:var(--text)">marginal income tax rate</strong> (cost of the next dollar) is the actual stopping signal — it spikes sharply inside the Social Security torpedo zone, where each extra dollar of conversion also makes more Social Security taxable. '
     + 'Converting less always looks cheaper in aggregate; this shows why the next dollar can cost far more than the headline rate suggests. '
     + 'The full breakeven-age simulation below can reach a different conclusion, since it also accounts for compounding and Required Minimum Distributions.</p>'
-    + '<div class="mchart-row"><div id="marginalChartWrap"></div><div id="marginalChartList"></div></div>'
+    + '<div id="marginalChartAbove"></div>'
+    + '<div id="marginalChartMain" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-top:.35rem"><div id="marginalChartWrap" style="flex:1;min-width:240px"></div></div>'
+    + '<div id="marginalChartBelow" style="margin-top:.5rem"></div>'
     + '</div>';
 }
 
@@ -2506,6 +2508,9 @@ function renderMarginalChart(p){
   // Marginal curve color — distinct from the average curve's navy→amber→red
   // gradient, the green "Your pick" dot, and the named-marker colors.
   var margColor = tc('#6A3DB5','#B899EE');
+  // Torpedo zone boundaries (used for zone shading and the below-chart list).
+  var torpedoStartC = sweep.crossings.find(function(c){ return c.type==='torpedoStart'; })||null;
+  var torpedoEndC   = sweep.crossings.find(function(c){ return c.type==='torpedo';      })||null;
 
   // Earliest point (by conversion amount) where any named cliff kicks in —
   // used only for a soft background tint marking "elevated-rate territory."
@@ -2574,6 +2579,26 @@ function renderMarginalChart(p){
       .attr('fill',tc('#B06000','#E89A38')).attr('opacity',0.05);
   }
 
+  // Torpedo zone band — explicit amber shading between the zone's start and end.
+  // Makes the spike visually legible as a named zone, not just noise. Drawn
+  // before the gridlines and curves so it sits behind everything.
+  if(torpedoEndC || torpedoAtZero){
+    var tzX0 = torpedoAtZero ? 0 : (torpedoStartC ? xSc(torpedoStartC.x) : 0);
+    var tzX1 = torpedoEndC ? xSc(torpedoEndC.x) : W;
+    var tzW  = Math.max(0, tzX1 - tzX0);
+    if(tzW > 4){
+      g.append('rect').attr('x',tzX0).attr('y',0).attr('width',tzW).attr('height',H)
+        .attr('fill',tc('#8B3A00','#E89A50')).attr('opacity',0.11);
+      if(tzW > 50){
+        g.append('text').attr('x', tzX0 + Math.min(tzW/2, tzW - 6)).attr('y', H-5)
+          .attr('text-anchor','middle')
+          .style('font-size','8.5px').style('font-family','DM Sans, sans-serif')
+          .style('fill',tc('#7A2E00','#D97A3A')).style('font-weight','700').style('letter-spacing','.03em')
+          .text('SS TORPEDO ZONE');
+      }
+    }
+  }
+
   // Gridlines + y axis
   var yTicks = ySc.ticks(4);
   g.selectAll('line.mgrid').data(yTicks).enter().append('line')
@@ -2611,15 +2636,27 @@ function renderMarginalChart(p){
   // full-height vertical lines — those can't be dodged vertically. shortLabel
   // is still used for the list rows below, even though these no longer get
   // their own inline pill.
-  var markerColor = {irmaa:tc('#8B1A1A','#EA7070'), ltcg:tc('#5B4A9E','#A08FE8'), torpedo:tc('#8B3A00','#E89A50')};
-  var shortLabel = {irmaa:function(c){ return 'Medicare '+c.label.split('Tier ')[1]; }, ltcg:function(){ return 'Qual. div./LTCG bumped'; }, torpedo:function(){ return 'SS fully taxable'; }};
+  var markerColor = {
+    irmaa:tc('#8B1A1A','#EA7070'), ltcg:tc('#5B4A9E','#A08FE8'),
+    torpedo:tc('#8B3A00','#E89A50'), torpedoStart:tc('#8B3A00','#E89A50')
+  };
+  var shortLabel = {
+    irmaa:function(c){ return 'Medicare '+c.label.split('Tier ')[1]; },
+    ltcg:function(){ return 'Qual. div./LTCG bumped'; },
+    torpedo:function(){ return 'SS fully taxable (85% cap)'; },
+    torpedoStart:function(){ return 'SS torpedo starts'; }
+  };
   // Where each marker type's full explanation lives below — same targets the
   // "Why This Answer" panel already jumps to for these exact facts, reused
   // here via jumpToLever() so a marker on the curve and its detail card are
   // never explained twice with two different navigation systems. ltcg has no
   // dedicated card (same reason the LTCG-bumped why-item has no target),
   // stays non-clickable.
-  var markerTarget = {irmaa:{id:'irmaaCard'}, torpedo:{id:'ssTaxSection', details:true}};
+  var markerTarget = {
+    irmaa:{id:'irmaaCard'},
+    torpedo:{id:'ssTaxSection', details:true},
+    torpedoStart:{id:'ssTaxSection', details:true}
+  };
   var named = sweep.crossings.filter(function(c){ return c.type!=='bracket'; });
   var namedX = named.map(function(c){ return xSc(c.x); });
 
@@ -2905,80 +2942,107 @@ function renderMarginalChart(p){
   // the pattern consistent if that ever changes.
   labelRects.push({x0:mx-9,x1:mx+9,y0:my-9,y1:my+9});
 
-  // Threshold list — the reference rate, every named marker, AND every
-  // bracket-rate crossing, always shown now (not just <420px): the two
-  // marker types no longer get an inline pill at any width (see
-  // named.forEach above and the removed bracket-label pass), and the
-  // reference rate's own inline pill degrades to a bare percentage on
-  // narrow charts once its full text stops fitting — so the colored/gray
-  // line on the chart is only half the story for all three. This list
-  // beside/below the chart (#marginalChartList, a flex sibling of the chart
-  // itself — see .mchart-row) is where the actual numbers reliably live.
-  // Rebuilt on every calc(), same as the chart.
-  var listEl = document.getElementById('marginalChartList');
-  if(listEl){
-    d3.select(listEl).selectAll('*').remove();
-    var bracketRows = sweep.crossings.filter(function(c){ return c.type==='bracket' && c.rate!==undefined; });
-    var list = d3.select(listEl).append('div')
+  // ── Three-panel annotation layout ──────────────────────────────────────────
+  // Above the chart: legend (curve identification) + expected retirement rate.
+  // Right of chart:  Medicare/IRMAA tier crossings only (narrow fixed panel).
+  // Below chart:     SS torpedo events + bracket crossings.
+  // This distributes the list instead of concentrating everything to the
+  // right, which was squeezing the chart width.
+
+  var bracketRows = sweep.crossings.filter(function(c){ return c.type==='bracket' && c.rate!==undefined; });
+  var irmaaRows   = sweep.crossings.filter(function(c){ return c.type==='irmaa'; });
+  // Non-bracket, non-IRMAA named events (torpedo start, torpedo end, ltcg)
+  // go below the chart.
+  var belowRows   = named.filter(function(c){ return c.type!=='irmaa'; });
+
+  // Shared helpers
+  var PANEL_FONT = 'DM Sans, sans-serif';
+  function panelContainer(sel){
+    return d3.select(sel).append('div')
       .style('display','flex').style('flex-direction','column').style('gap','4px')
-      .style('padding','8px 10px')
-      .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
-      .style('font-family','DM Sans, sans-serif').style('font-size','.76rem');
+      .style('font-family',PANEL_FONT).style('font-size','.76rem');
+  }
+  function mkListRow(container, color, text, target){
+    var r = container.append('div').style('display','flex').style('align-items','center').style('gap','7px');
+    if(target) r.style('cursor','pointer').on('click',function(){ jumpToLever(target.id,target.details); });
+    r.append('span').style('width','9px').style('height','9px').style('border-radius','50%')
+      .style('flex-shrink','0').style('background',color);
+    r.append('span').style('color',tc('#3D4451','#A6ABB5')).text(text);
+    if(target) r.append('span').style('color',tc('#1C3A5E','#7DB2EC')).style('font-weight','600')
+      .style('margin-left','auto').style('white-space','nowrap').text('details →');
+  }
 
-    // Legend: two small horizontal-line swatches explaining which curve is which.
-    // Uses inline-block divs (not SVG) so it's as simple as possible.
-    var legRow = list.append('div')
-      .style('display','flex').style('gap','12px').style('flex-wrap','wrap')
-      .style('padding-bottom','6px')
-      .style('border-bottom','1px solid '+tc('rgba(0,0,0,.08)','rgba(255,255,255,.08)'))
-      .style('margin-bottom','2px');
-    function legItem(color, weight, label){
-      var item = legRow.append('div').style('display','flex').style('align-items','center').style('gap','5px');
-      item.append('div')
-        .style('width','16px').style('height',Math.max(1,Math.round(weight))+'px')
-        .style('background',color).style('border-radius','1px').style('flex-shrink','0');
-      item.append('span').style('color',tc('#3D4451','#A6ABB5')).style('font-size','.73rem')
-        .style('white-space','nowrap').text(label);
+  // ── ABOVE chart: legend + expected retirement rate ──
+  var aboveEl = document.getElementById('marginalChartAbove');
+  if(aboveEl){
+    d3.select(aboveEl).selectAll('*').remove();
+    var aboveRow = d3.select(aboveEl).append('div')
+      .style('display','flex').style('flex-wrap','wrap').style('gap','8px 20px')
+      .style('align-items','center').style('margin-bottom','6px')
+      .style('font-family',PANEL_FONT).style('font-size','.76rem');
+    function mkLegItem(color, weight, dashed, label){
+      var item = aboveRow.append('div').style('display','flex').style('align-items','center').style('gap','6px');
+      if(dashed){
+        item.append('div')
+          .style('width','18px').style('height','0').style('flex-shrink','0')
+          .style('border-top','1.5px dashed '+color);
+      } else {
+        item.append('div')
+          .style('width','18px').style('height',Math.max(1,Math.round(weight))+'px')
+          .style('background',color).style('border-radius','1px').style('flex-shrink','0');
+      }
+      item.append('span').style('color',tc('#3D4451','#A6ABB5')).text(label);
     }
-    // Average effective rate swatch uses the midpoint of the gradient
-    legItem(tc('#B06000','#E89A38'), 2.75, 'Avg. effective rate');
-    legItem(margColor, 1.75, 'Marginal income tax rate');
-
-    function listRow(color, text, target){
-      var r = list.append('div').style('display','flex').style('align-items','center').style('gap','7px');
-      if(target) r.style('cursor','pointer').on('click',function(){ jumpToLever(target.id,target.details); });
-      r.append('span').style('width','9px').style('height','9px').style('border-radius','50%')
-        .style('flex-shrink','0').style('background',color);
-      r.append('span').style('color',tc('#3D4451','#A6ABB5')).text(text);
-      if(target) r.append('span').style('color',tc('#1C3A5E','#7DB2EC')).style('font-weight','600')
-        .style('margin-left','auto').style('white-space','nowrap').text('details →');
-    }
-
-    // torpedoAtZero annotation — when the baseline already puts SS fully into
-    // torpedo territory, the marginal curve starts elevated with no visible
-    // "start" marker; call that out explicitly so the reader isn't left
-    // wondering why the curve begins high.
-    if(torpedoAtZero){
-      listRow(markerColor.torpedo, 'Social Security already fully taxable — torpedo zone active at $0', null);
-    }
-
-    // Reference rate first, as the fixed context every crossing below is
-    // measured against — and the one guaranteed way to read it at all on
-    // a narrow chart, where the inline pill falls back to a bare "16.3%"
-    // with no words once "Your expected retirement rate · 16.3%" no
-    // longer fits (found live: read as "unlabeled" on a real phone). Dot
-    // color matches the actual dashed line's gray stroke, not the pill
-    // text's blue — the pill text is styled to match the crossover pill
-    // next to it, but the dot here needs to match what's ON the chart.
+    mkLegItem(tc('#B06000','#E89A38'), 2.75, false, 'Avg. effective rate');
+    mkLegItem(margColor, 1.75, false, 'Marginal income tax rate');
     if(refDrawn){
-      listRow(tc('#3D4451','#A6ABB5'), 'Your expected retirement rate — '+retPct.toFixed(1)+'%', null);
+      mkLegItem(tc('#3D4451','#A6ABB5'), 0, true, 'Expected retirement rate — '+retPct.toFixed(1)+'%');
     }
-    named.forEach(function(c){
-      listRow(markerColor[c.type], shortLabel[c.type](c)+' — crosses at '+fmt(c.x), markerTarget[c.type]);
+    if(torpedoAtZero){
+      aboveRow.append('div').style('color',tc('#7A2E00','#D97A3A')).style('font-size','.73rem')
+        .text('⚠ SS already fully in torpedo zone at $0');
+    }
+  }
+
+  // ── RIGHT of chart: Medicare tiers (only if present) ──
+  // Remove any existing right panel, then rebuild only if there are IRMAA rows.
+  d3.select('#marginalChartRight').remove();
+  if(irmaaRows.length > 0){
+    var rightPanel = d3.select('#marginalChartMain').append('div')
+      .attr('id','marginalChartRight')
+      .style('width','164px').style('flex-shrink','0');
+    var rightList = rightPanel.append('div')
+      .style('display','flex').style('flex-direction','column').style('gap','4px')
+      .style('padding','6px 8px')
+      .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
+      .style('font-family',PANEL_FONT).style('font-size','.76rem');
+    rightList.append('div').style('color',tc('#5C5348','#8B919D')).style('font-size','.7rem')
+      .style('font-weight','600').style('margin-bottom','2px').text('Medicare thresholds');
+    irmaaRows.forEach(function(c){
+      mkListRow(rightList, markerColor.irmaa, shortLabel.irmaa(c)+' at '+fmt(c.x), {id:'irmaaCard'});
     });
+  }
+
+  // ── BELOW chart: SS torpedo events + bracket crossings ──
+  var belowEl = document.getElementById('marginalChartBelow');
+  if(belowEl && (belowRows.length > 0 || bracketRows.length > 0)){
+    d3.select(belowEl).selectAll('*').remove();
+    var belowWrap = d3.select(belowEl).append('div')
+      .style('display','flex').style('flex-wrap','wrap').style('gap','4px 28px')
+      .style('padding','6px 10px')
+      .style('background',tc('rgba(0,0,0,.03)','rgba(255,255,255,.04)')).style('border-radius','8px')
+      .style('font-family',PANEL_FONT).style('font-size','.76rem');
+    // SS torpedo events first (most surprising; what the chart's description
+    // is explicitly about)
+    belowRows.forEach(function(c){
+      mkListRow(belowWrap, markerColor[c.type], shortLabel[c.type](c)+' — crosses at '+fmt(c.x), markerTarget[c.type]);
+    });
+    // Bracket crossings
     bracketRows.forEach(function(c){
-      listRow(tc('#3D4451','#A6ABB5'), 'Enters the '+Math.round(c.rate*100)+'% bracket — crosses at '+fmt(c.x), {id:'federalTaxSection',details:true});
+      mkListRow(belowWrap, tc('#3D4451','#A6ABB5'), 'Enters the '+Math.round(c.rate*100)+'% bracket — crosses at '+fmt(c.x), {id:'federalTaxSection',details:true});
     });
+  } else if(belowEl){
+    d3.select(belowEl).selectAll('*').remove();
   }
 
   // Hover crosshair + tooltip
@@ -4513,6 +4577,11 @@ function sweepMarginalCurve(ctx, maxAmt){
   // domain — it's firing from $0.
   const ccBase = computeConversionCost(0, ctx);
   const torpedoAtZero = ctx.ss>0 && ccBase.ssWith >= ctx.ss*0.85*0.999;
+  // prevSSWith: tracks when SS first becomes taxable so we can mark the zone START.
+  // Initialized from the baseline (amt=0) so the loop picks up the first positive
+  // transition correctly; when torpedoAtZero is true ssWith is already positive so
+  // the start transition can never fire (correct — no start marker needed).
+  let prevSSWith = ccBase.ssWith;
 
   for(let amt=0; amt<=maxAmt; amt+=step){
     const cc = computeConversionCost(amt, ctx);
@@ -4536,14 +4605,20 @@ function sweepMarginalCurve(ctx, maxAmt){
     }
     if(bracketTop!==undefined) prevBracketTop=bracketTop;
 
-    // SS torpedo fully clearing (taxable SS reaches the 85% cap) — mfs status
-    // starts capped from amt=0 already (no torpedo range), so this correctly
-    // never fires for mfs.
+    // SS torpedo zone start and end — mfs status starts fully capped from
+    // amt=0 (no torpedo range), so neither crossing fires for mfs.
     if(ctx.ss>0){
       const ssCapped = cc.ssWith >= ctx.ss*0.85*0.999;
+      // Torpedo START: first point where SS becomes taxable at all.
+      // Only fires when torpedoAtZero is false (zone has a visible start).
+      if(!torpedoAtZero && cc.ssWith>0 && prevSSWith===0){
+        crossings.push({x:amt, type:'torpedoStart', label:'Social Security starts becoming taxable'});
+      }
+      // Torpedo END: SS reaches the 85% cap.
       if(ssCapped && prevSSCapped===false){
         crossings.push({x:amt, type:'torpedo', label:'Social Security fully taxable (85% cap reached)'});
       }
+      prevSSWith=cc.ssWith;
       prevSSCapped=ssCapped;
     }
   }
