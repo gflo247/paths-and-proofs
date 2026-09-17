@@ -2317,7 +2317,8 @@ function buildMarginalChartHTML(){
     + 'The <strong style="color:var(--text)">marginal income tax rate</strong> (cost of the next dollar) is the actual stopping signal — it spikes sharply inside the Social Security torpedo zone, where each extra dollar of conversion also makes more Social Security taxable. '
     + 'Converting less always looks cheaper in aggregate; this shows why the next dollar can cost far more than the headline rate suggests. '
     + 'The full breakeven-age simulation below can reach a different conclusion, since it also accounts for compounding and Required Minimum Distributions.</p>'
-    + '<div id="marginalChartMain" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-top:.35rem"><div id="marginalChartWrap" style="flex:1;min-width:240px"><div id="marginalChartAbove"></div></div></div>'
+    + '<div id="marginalChartAbove" style="margin-bottom:.5rem"></div>'
+    + '<div id="marginalChartMain" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start"><div id="marginalChartWrap" style="flex:1;min-width:240px"></div></div>'
     + '<div id="marginalChartBelow" style="margin-top:.5rem"></div>'
     + '</div>';
 }
@@ -2500,6 +2501,9 @@ function renderMarginalChart(p){
   function tc(l,d){ return DARK ? d : l; }
 
   var maxAmt = Math.min(p.tradBal, 600000);
+  // Defined here (not near its rendering block) so crossNearPick can reference
+  // it inside the crossover block, which runs before the "Your pick" section.
+  var cvtX = Math.min(Math.max(p.cvtAmt,0), maxAmt);
   var sweep = sweepMarginalCurve(p.ctx, maxAmt);
   if(sweep.points.length < 2) return;
   var margPoints = sweep.margPoints;
@@ -2869,7 +2873,6 @@ function renderMarginalChart(p){
   // real positions via labelRects/markerObstacles — and unlike a bracket
   // label, this never silently drops its text: hiding the one number a
   // reader most wants to find would be worse than an imperfect position.
-  var cvtX = Math.min(Math.max(p.cvtAmt,0), maxAmt);
   var cvtCc = computeConversionCost(cvtX, p.ctx);
   var cvtY = Math.min(cvtCc.effR*100, yMax);
   var mx = xSc(cvtX), my = ySc(cvtY);
