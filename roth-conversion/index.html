@@ -2746,8 +2746,14 @@ function renderMarginalChart(p){
   // Torpedo peak callout — labels the highest marginal rate inside the torpedo
   // zone so the spike magnitude is self-contained without tracing the y-axis.
   // Only fires when there is a real torpedo zone and the peak exceeds 15%.
-  if(margPoints.length >= 2 && (torpedoStartC || torpedoAtZero) && torpedoEndC){
-    var tzLoPeak = torpedoAtZero ? 0 : (torpedoStartC ? torpedoStartC.x : 0);
+  // Guard: torpedoEndC alone is the reliable signal — it fires whenever SS
+  // transitions to the 85% cap during the sweep, covering all three entry
+  // conditions: (a) normal zone with visible start, (b) SS already partially
+  // taxable at cvt=0 so torpedoStartC never fires, (c) torpedoAtZero=true
+  // (already at 85% cap from cvt=0) correctly produces no torpedoEndC and
+  // is excluded here — no spike to label.
+  if(margPoints.length >= 2 && torpedoEndC){
+    var tzLoPeak = torpedoStartC ? torpedoStartC.x : 0;
     var tzHiPeak = torpedoEndC.x;
     var peakPt = null;
     margPoints.forEach(function(pt){
