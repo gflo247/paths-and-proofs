@@ -2838,7 +2838,7 @@ function renderMarginalChart(p){
       // that happens to land right where the full label would (see
       // _dev/test-marginal-chart-labels.mjs, which is what found this needed
       // a fallback at all instead of a fixed width breakpoint).
-      var lblTextFull = 'Marginal rate crosses — '+fmt(crossPt.x);
+      var lblTextFull = 'Marginal rate crosses '+retPct.toFixed(1)+'% — '+fmt(crossPt.x);
       var lblWFull = lblTextFull.length*5.7+12;
       var cxFull = clearCx(ccx+lblWFull/2+10, lblWFull, crossObstacles);
       var lblText, lblW, lblCx;
@@ -2977,6 +2977,17 @@ function renderMarginalChart(p){
     var fbCx = Math.min(W-pW/2, Math.max(pW/2, mx));
     var fbY0 = aboveFirst ? Math.max(0,my-74-pH) : Math.min(H-pH,my+74);
     pBest = {x0:fbCx-pW/2, x1:fbCx+pW/2, y0:fbY0, y1:fbY0+pH};
+  }
+  // Connector from dot to pill — same style as the crossover label's leader.
+  // Drawn before the rect so the pin circle is covered by the pill background.
+  var pickPillCx = (pBest.x0 + pBest.x1) / 2;
+  var pickConnY  = pBest.y0 > my ? pBest.y0 : pBest.y1;
+  var pickConnD  = Math.sqrt((pickPillCx-mx)*(pickPillCx-mx)+(pickConnY-my)*(pickConnY-my));
+  if(pickConnD > 8){
+    g.append('line').attr('x1',mx).attr('x2',pickPillCx).attr('y1',my).attr('y2',pickConnY)
+      .attr('stroke',pickColor).attr('stroke-width',1).attr('opacity',0.5);
+    g.append('circle').attr('cx',pickPillCx).attr('cy',pickConnY).attr('r',2)
+      .attr('fill',pickColor).attr('opacity',0.5);
   }
   g.append('rect').attr('x',pBest.x0).attr('y',pBest.y0).attr('width',pW).attr('height',pH).attr('rx',3)
     .attr('fill',tc('rgba(245,241,235,0.9)','rgba(34,39,48,0.92)')).attr('stroke',pickColor).attr('stroke-width',1);
@@ -4682,7 +4693,17 @@ function sweepMarginalCurve(ctx, maxAmt){
     const bracketTop = BRAX[ctx.status].find(b=>cc.tiWith<b.m)?.m;
     if(prevBracketTop!==null && bracketTop!==undefined && bracketTop!==prevBracketTop){
       const rate = BRAX[ctx.status].find(b=>b.m===bracketTop)?.r;
-      crossings.push({x:amt, type:'bracket', rate:rate, label:'Enters the '+Math.round(rate*100)+'% ordinary bracket'});
+      // Bisect between the previous step and this one for an exact boundary —
+      // the coarse step size (up to $1,500 at maxAmt=$600k) otherwise causes
+      // the bracket marker to disagree with the optimizer card by one full step.
+      let blo = amt - step, bhi = amt;
+      const prevTop = prevBracketTop;
+      for(let k=0; k<20; k++){
+        const mid = Math.round((blo+bhi)/2);
+        const bt_mid = BRAX[ctx.status].find(b=>computeConversionCost(mid,ctx).tiWith<b.m)?.m;
+        if(bt_mid===prevTop) blo=mid; else bhi=mid;
+      }
+      crossings.push({x:bhi, type:'bracket', rate:rate, label:'Enters the '+Math.round(rate*100)+'% ordinary bracket'});
     }
     if(bracketTop!==undefined) prevBracketTop=bracketTop;
 
