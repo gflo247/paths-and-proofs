@@ -15,7 +15,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,560;0,9..144,640;1,9..144,560&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
   <style>
     :root {
@@ -3451,10 +3450,9 @@ function buildRmdChartHTML(firstB, rmdStartAge, curAge, growthRate, simRetR){
   return '<div class="card" id="rmdCfCard" style="margin-top:1.25rem;margin-bottom:1.25rem">'
     + '<div class="stitle">\u23f3 The Forced Withdrawals You\'d Be Reducing</div>'
     + '<p style="font-size:.9rem;line-height:1.6;margin-bottom:.85rem">'
-    + 'Each bar shows the annual forced withdrawal you\'d avoid by converting today. '
     + (curAge >= rmdStartAge
-        ? 'Your Required Minimum Distributions have already begun and grow each year as the IRS divisor shrinks.'
-        : 'Without converting, at age ' + rmdStartAge + ' that starts at about <strong>' + fmt(firstB) + '</strong> \u2014 taxable income whether you need it or not \u2014 and grows each year as the IRS divisor shrinks.')
+        ? 'Each bar is a portion of an RMD you\'d eliminate. RMDs grow each year as the IRS divisor shrinks \u2014 taxable income whether you need it or not.'
+        : 'Each bar is a portion of an RMD you\'d eliminate. Without converting, RMDs start at <strong>' + fmt(firstB) + '</strong> at age ' + rmdStartAge + ' and grow every year as the IRS divisor shrinks \u2014 taxable income whether you need it or not.')
     + '</p>'
     + '<div id="rmdChartWrap" style="width:100%;position:relative"></div>'
     + '<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">'
@@ -4965,7 +4963,6 @@ function sweepMarginalCurve(ctx, maxAmt){
   return {points, margPoints, crossings, torpedoAtZero};
 }
 
-let myChart=null;
 // Tracks the (curAge, spouseAge, filingStatus) combination the "Are you 65+"
 // select was last auto-synced against — lets calc() re-derive that select's
 // default only when one of those specific inputs actually changes, not on
@@ -5445,24 +5442,6 @@ function calc(){
     if(stD.ex && !exQualifies) vBd += ' Also: since '+stD.n+' exempts IRA withdrawals from state tax, converting now is especially costly — you\'d pay state tax today that you would never owe otherwise'+(exAge!==undefined?' once you qualify at age '+exAge+'+':'')+'.';
   }
 
-  // ── PROJECTION TABLE ──
-  const tAges=[retAge,retAge+5,retAge+10,retAge+15,retAge+20].filter(a=>a>curAge&&a<=maxAge);
-  const symOf = s => s==='male' ? '&#9794;' : '&#9792;';
-  const tRows=tAges.map(a=>{
-    const i=ages.indexOf(a);if(i<0)return'';
-    const va=vA[i],vb=vB[i],diff=va-vb;
-    let survCell;
-    if(isCouple){
-      // Actual entered sexes/ages, not a generic male/female illustration —
-      // and order (primary first, spouse second) rather than sex determines
-      // which number is which, so this reads correctly for same-sex couples too.
-      const sy=survFrom(sex,curAge,a), ss2=survFrom(spouseSex,spouseAge,spouseAge+(a-curAge));
-      survCell=symOf(sex)+' '+pct(sy,0)+' '+symOf(spouseSex)+' '+pct(ss2,0);
-    } else {
-      survCell=symOf(sex)+' '+pct(survFrom(sex,curAge,a),0);
-    }
-    return '<tr class="'+(a===beAge?'hl':'')+'"><td><strong>'+a+'</strong>'+(a===beAge?' 🎯':'')+'</td><td>'+fmtK(va)+'</td><td>'+fmtK(vb)+'</td><td class="'+(diff>=0?'bet':'wor')+'">'+(diff>=0?'▲ +':'▼ ')+fmtK(Math.abs(diff))+'</td><td style="font-size:.82rem;color:var(--muted)">'+survCell+'</td></tr>';
-  }).join('');
 
   // ── SURVIVAL CHART LEGEND ──
   let survLegend;
@@ -5732,14 +5711,6 @@ function calc(){
     +sensitivityHTML
     + irmaaHTML
     +widowCliffHTML
-    +'<div style="display:grid;grid-template-columns:1.55fr 1fr;gap:1.25rem;margin-top:1.25rem;margin-bottom:1.25rem" class="pcols">'
-    +'<div class="card"><div class="stitle">📈 Roth vs. Traditional Over Time</div>'
-    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55">How much further ahead converting leaves you at each age — negative while you\'re recouping the upfront tax cost, positive once you\'ve broken even. After age '+rmdStartAge+', Required Minimum Distributions from the uncovered traditional account accelerate the gap. Combined '+pct(simRetR)+' effective retirement rate applied'+(basis>0&&taxableFrac<0.9999?' ('+Math.round(taxableFrac*1000)/10+'% taxable fraction applied to retirement withdrawals)':' (federal'+(stRetR>0?' + state':'')+')')+'.</p>'
-    +'<div class="cwrap"><canvas id="myChart"></canvas></div></div>'
-    +'<div class="card"><div class="stitle">📋 At Key Ages</div>'
-    +'<div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Age</th><th>With Conv.</th><th>Without</th><th>Difference</th><th>'+(isCouple?'Odds (you / spouse)':'Survival odds')+'</th></tr></thead><tbody>'+tRows+'</tbody></table></div>'
-    +'<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">🎯 = breakeven age. After-tax uses '+pct(simRetR)+' combined retirement rate. Survival odds from age '+curAge+'.</p>'
-    +'</div></div>'
     +rmdCfHTML
     +'<div class="card" id="survivalCard"><div class="stitle">❤️ '+(isCouple?'Will At Least One of You Be Around to Benefit?':'Will You Be Around to Benefit?')+'</div>'
     +'<p style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">'
@@ -5775,45 +5746,6 @@ function calc(){
     +'</div>';
 
   // ── CHART ──
-  const mCA=Math.min(curAge+46,100);
-  const ci=ages.map((_,i)=>i).filter(i=>ages[i]<=mCA);
-  const ctx=$('myChart').getContext('2d');
-  if(myChart) myChart.destroy();
-  var CDARK=document.documentElement.getAttribute('data-theme')==='dark';
-  var axc=CDARK?'#A6ABB5':'#3D4451', grd=CDARK?'rgba(255,255,255,.08)':'rgba(0,0,0,.04)';
-  var lineA=CDARK?'#7DB2EC':'#1C3A5E';
-  // Difference series: how much further ahead (positive) or behind (negative)
-  // converting leaves you at each age. Negative = still recouping the upfront tax.
-  var _diffData = ci.map(function(i){ return Math.round(vA[i] - vB[i]); });
-  var _aboveClr = CDARK ? 'rgba(125,178,236,0.18)' : 'rgba(28,58,94,0.14)';
-  var _belowClr = CDARK ? 'rgba(232,154,56,0.18)'  : 'rgba(176,96,0,0.13)';
-  myChart=new Chart(ctx,{
-    type:'line',
-    data:{labels:ci.map(i=>ages[i]),datasets:[
-      {label:'Roth advantage',data:_diffData,borderColor:lineA,backgroundColor:_aboveClr,borderWidth:2.5,tension:.35,
-       fill:{target:'origin',above:_aboveClr,below:_belowClr},pointRadius:0,pointHoverRadius:5}
-    ]},
-    options:{
-      responsive:true,maintainAspectRatio:false,animation:{duration:950,easing:'easeInOutQuart'},
-      interaction:{intersect:false,mode:'index'},
-      plugins:{
-        legend:{display:false},
-        tooltip:{backgroundColor:'rgba(18,18,30,.92)',padding:10,titleFont:{family:'DM Sans, sans-serif',size:11},bodyFont:{family:'DM Sans, sans-serif',size:13},
-          callbacks:{
-            title:function(i){ return 'Age '+i[0].label; },
-            label:function(c){ var v=c.raw; return ' '+(v>=0?'Roth ahead: +':'Behind by: ')+fmt(Math.abs(v)); }
-          }
-        }
-      },
-      scales:{
-        x:{title:{display:true,text:'Your Age',color:axc,font:{family:'DM Sans, sans-serif',size:11}},grid:{display:false},ticks:{color:axc,font:{family:'DM Sans, sans-serif',size:11},maxTicksLimit:10}},
-        y:{title:{display:true,text:'Roth advantage ($)',color:axc,font:{family:'DM Sans, sans-serif',size:11}},
-           ticks:{color:axc,font:{family:'DM Sans, sans-serif',size:11},callback:function(v){ return (v>=0?'+':'')+fmtK(v); }},
-           grid:{color:function(ctx){ return ctx.tick.value===0 ? (CDARK?'rgba(255,255,255,0.35)':'rgba(0,0,0,0.25)') : grd; },
-                 lineWidth:function(ctx){ return ctx.tick.value===0 ? 1.5 : 1; }}}
-      }
-    }
-  });
 
   const taxEl=$('animTax');
   if(taxEl && cvtTxTot>0) animCount(taxEl, cvtTxTot, v=>'$'+Math.round(v).toLocaleString());
