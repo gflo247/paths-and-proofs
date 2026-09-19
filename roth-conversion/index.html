@@ -3510,7 +3510,7 @@ function renderRmdChart(p){
       var mid = (blo + bhi) / 2;
       if(computeConversionCost(mid, p.futureCtx).tiWith < bndry) blo = mid; else bhi = mid;
     }
-    if(bhi > 0 && bhi <= yMax * 1.05){
+    if(bhi > 0 && bhi < yTop){
       thresholds.push({
         y: bhi,
         label: Math.round(nextRate * 100) + '% bracket',
@@ -3526,7 +3526,7 @@ function renderRmdChart(p){
       var imid = (ilo + ihi) / 2;
       if(computeConversionCost(imid, p.futureCtx).tierWith === 0) ilo = imid; else ihi = imid;
     }
-    if(ihi > 0 && ihi <= yMax * 1.05){
+    if(ihi > 0 && ihi < yTop){
       thresholds.push({
         y: ihi,
         label: 'Medicare Tier\u00a01',
@@ -3551,7 +3551,18 @@ function renderRmdChart(p){
   var g = svg.append('g').attr('transform','translate('+margin.left+','+margin.top+')');
 
   var xSc = d3.scaleLinear().domain([xMin, xMax]).range([0, W]);
-  var ySc = d3.scaleLinear().domain([0, yMax * 1.1]).range([H, 0]);
+
+  // Zoom y-floor to data range so close lines are distinguishable.
+  // Start at 82% of the minimum RMD value, rounded down to nearest $5K.
+  // When lines are far apart (yFloor≈0) this collapses to the old domain;
+  // when lines are close together (yFloor≈$80K) it zooms in dramatically.
+  var yMinData = Math.min.apply(null, dataB.map(function(d){ return d.v; }));
+  if(showWithLine){
+    dataA.forEach(function(d){ if(d.v > 0.5 && d.v < yMinData) yMinData = d.v; });
+  }
+  var yFloor = Math.max(0, Math.floor(yMinData * 0.82 / 5000) * 5000);
+  var yTop = yMax + (yMax - yFloor) * 0.12;
+  var ySc = d3.scaleLinear().domain([yFloor, yTop]).range([H, 0]);
 
   // ── Gridlines ──
   var yTicks = ySc.ticks(4);
@@ -3594,10 +3605,10 @@ function renderRmdChart(p){
   // ── Gap area fill (light amber between the two curves) ──
   var gapArea = d3.area()
     .x(function(d){ return xSc(d.age); })
-    .y0(function(d, i){ return ySc(showWithLine ? (dataA[i].v || 0) : 0); })
+    .y0(function(d, i){ return ySc(showWithLine ? (dataA[i].v || yFloor) : yFloor); })
     .y1(function(d){ return ySc(d.v); });
   g.append('path').datum(dataB)
-    .attr('fill',tc('#B06000','#E89A38')).attr('opacity',0.10)
+    .attr('fill',tc('#B06000','#E89A38')).attr('opacity',0.28)
     .attr('d',gapArea);
 
   // ── Curves ──
@@ -3642,6 +3653,7 @@ function renderRmdChart(p){
 
   if(showWithLine){
     var lastA = dataA[dataA.length - 1];
+    var gapFinal = lastB.v - lastA.v;
     var lastAyPx = ySc(lastA.v);
     // Keep the two labels from overlapping if the lines converge at end
     var aLblY = Math.min(H - 16, lastAyPx + 4);
@@ -3659,6 +3671,15 @@ function renderRmdChart(p){
       .style('font-size','9.5px').style('font-family','DM Sans, sans-serif')
       .style('fill',greenClr)
       .text('conversion');
+    // Gap callout: annual RMD savings at life expectancy age
+    if(gapFinal > 100){
+      g.append('text')
+        .attr('x', W + 6).attr('y', Math.min(H - 2, aLblY + 22))
+        .attr('text-anchor','start').attr('dominant-baseline','middle')
+        .style('font-size','9px').style('font-family','DM Sans, sans-serif')
+        .style('fill',greenClr).style('opacity',0.8)
+        .text('\u2212' + fmtK(gapFinal) + '/yr');
+    }
   } else {
     // Conversion eliminates the traditional balance entirely
     g.append('text')
@@ -5833,6 +5854,11 @@ function calc(){
   var CDARK=document.documentElement.getAttribute('data-theme')==='dark';
   var axc=CDARK?'#A6ABB5':'#3D4451', grd=CDARK?'rgba(255,255,255,.08)':'rgba(0,0,0,.04)';
   var lineA=CDARK?'#7DB2EC':'#1C3A5E', lineB=CDARK?'#E89A38':'#B06000';
+  // Zoom y-floor to where the data actually starts so close lines are
+  // distinguishable. Round down to nearest $500K (or $100K for small balances).
+  var _wcMin = Math.min.apply(null, ci.map(function(i){ return Math.min(vA[i], vB[i]); }));
+  var _wcStep = _wcMin >= 500000 ? 500000 : 100000;
+  var _wcFloor = Math.max(0, Math.floor(_wcMin * 0.92 / _wcStep) * _wcStep);
   myChart=new Chart(ctx,{
     type:'line',
     data:{labels:ci.map(i=>ages[i]),datasets:[
@@ -5848,7 +5874,7 @@ function calc(){
       },
       scales:{
         x:{title:{display:true,text:'Your Age',color:axc,font:{family:'DM Sans, sans-serif',size:11}},grid:{display:false},ticks:{color:axc,font:{family:'DM Sans, sans-serif',size:11},maxTicksLimit:10}},
-        y:{title:{display:true,text:'After-Tax Value',color:axc,font:{family:'DM Sans, sans-serif',size:11}},ticks:{color:axc,font:{family:'DM Sans, sans-serif',size:11},callback:v=>fmtK(v)},grid:{color:grd}}
+        y:{min:_wcFloor,title:{display:true,text:'After-Tax Value',color:axc,font:{family:'DM Sans, sans-serif',size:11}},ticks:{color:axc,font:{family:'DM Sans, sans-serif',size:11},callback:v=>fmtK(v)},grid:{color:grd}}
       }
     }
   });
