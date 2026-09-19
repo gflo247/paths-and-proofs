@@ -3451,10 +3451,11 @@ function buildRmdChartHTML(firstB, rmdStartAge, curAge, growthRate, simRetR){
   return '<div class="card" id="rmdCfCard" style="margin-top:1.25rem;margin-bottom:1.25rem">'
     + '<div class="stitle">\u23f3 The Forced Withdrawals You\'d Be Reducing</div>'
     + '<p style="font-size:.9rem;line-height:1.6;margin-bottom:.85rem">'
+    + 'Each bar shows the annual forced withdrawal you\'d avoid by converting today. '
     + (curAge >= rmdStartAge
-        ? 'Your Required Minimum Distributions have already begun. Without converting, the required share grows each year as the IRS divisor shrinks.'
-        : 'Without converting, at age ' + rmdStartAge + ' you\'d be required to withdraw about <strong>' + fmt(firstB) + '</strong> from your traditional account \u2014 taxable income whether you need it or not \u2014 and the required share grows each year as the IRS divisor shrinks.')
-    + ' Each bar shows how much less you\'d be required to withdraw at that age by converting today. The gap grows over time as the IRS divisor shrinks and the unreduced account compounds.</p>'
+        ? 'Your Required Minimum Distributions have already begun and grow each year as the IRS divisor shrinks.'
+        : 'Without converting, at age ' + rmdStartAge + ' that starts at about <strong>' + fmt(firstB) + '</strong> \u2014 taxable income whether you need it or not \u2014 and grows each year as the IRS divisor shrinks.')
+    + '</p>'
     + '<div id="rmdChartWrap" style="width:100%;position:relative"></div>'
     + '<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">'
     + 'Projected at your ' + pct(growthRate, 0) + ' growth assumption per the '
@@ -5733,7 +5734,7 @@ function calc(){
     +widowCliffHTML
     +'<div style="display:grid;grid-template-columns:1.55fr 1fr;gap:1.25rem;margin-top:1.25rem;margin-bottom:1.25rem" class="pcols">'
     +'<div class="card"><div class="stitle">📈 Roth vs. Traditional Over Time</div>'
-    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55"><strong>Solid:</strong> after-tax wealth with the conversion. <strong>Dashed:</strong> without. After age '+rmdStartAge+', Required Minimum Distributions from traditional accounts accelerate taxes — this is what drives the lines apart. Combined '+pct(simRetR)+' effective retirement rate applied'+(basis>0&&taxableFrac<0.9999?' ('+Math.round(taxableFrac*1000)/10+'% taxable fraction applied to retirement withdrawals)':' (federal'+(stRetR>0?' + state':'')+')')+'.</p>'
+    +'<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55">How much further ahead converting leaves you at each age — negative while you\'re recouping the upfront tax cost, positive once you\'ve broken even. After age '+rmdStartAge+', Required Minimum Distributions from the uncovered traditional account accelerate the gap. Combined '+pct(simRetR)+' effective retirement rate applied'+(basis>0&&taxableFrac<0.9999?' ('+Math.round(taxableFrac*1000)/10+'% taxable fraction applied to retirement withdrawals)':' (federal'+(stRetR>0?' + state':'')+')')+'.</p>'
     +'<div class="cwrap"><canvas id="myChart"></canvas></div></div>'
     +'<div class="card"><div class="stitle">📋 At Key Ages</div>'
     +'<div style="overflow-x:auto"><table class="ptbl"><thead><tr><th>Age</th><th>With Conv.</th><th>Without</th><th>Difference</th><th>'+(isCouple?'Odds (you / spouse)':'Survival odds')+'</th></tr></thead><tbody>'+tRows+'</tbody></table></div>'
@@ -5780,30 +5781,36 @@ function calc(){
   if(myChart) myChart.destroy();
   var CDARK=document.documentElement.getAttribute('data-theme')==='dark';
   var axc=CDARK?'#A6ABB5':'#3D4451', grd=CDARK?'rgba(255,255,255,.08)':'rgba(0,0,0,.04)';
-  var lineA=CDARK?'#7DB2EC':'#1C3A5E', lineB=CDARK?'#E89A38':'#B06000';
-  // Zoom y-floor to where the data actually starts so close lines are
-  // distinguishable. Round down to nearest $500K (or $100K for small balances).
-  var _wcMin = Math.min.apply(null, ci.map(function(i){ return Math.min(vA[i], vB[i]); }));
-  var _wcStep = _wcMin >= 500000 ? 500000 : 100000;
-  var _wcFloor = Math.max(0, Math.floor(_wcMin * 0.92 / _wcStep) * _wcStep);
-  // Fill color for the gap band between the two wealth curves
-  var _fillClr = CDARK ? 'rgba(125,178,236,0.22)' : 'rgba(28,58,94,0.18)';
+  var lineA=CDARK?'#7DB2EC':'#1C3A5E';
+  // Difference series: how much further ahead (positive) or behind (negative)
+  // converting leaves you at each age. Negative = still recouping the upfront tax.
+  var _diffData = ci.map(function(i){ return Math.round(vA[i] - vB[i]); });
+  var _aboveClr = CDARK ? 'rgba(125,178,236,0.18)' : 'rgba(28,58,94,0.14)';
+  var _belowClr = CDARK ? 'rgba(232,154,56,0.18)'  : 'rgba(176,96,0,0.13)';
   myChart=new Chart(ctx,{
     type:'line',
     data:{labels:ci.map(i=>ages[i]),datasets:[
-      {label:'With Roth Conversion',data:ci.map(i=>Math.round(vA[i])),borderColor:lineA,backgroundColor:_fillClr,borderWidth:2.5,tension:.35,fill:{target:'+1',above:_fillClr,below:'transparent'},pointRadius:0,pointHoverRadius:5},
-      {label:'Without Converting',  data:ci.map(i=>Math.round(vB[i])),borderColor:lineB,backgroundColor:'transparent',                borderWidth:2.5,tension:.35,fill:false,borderDash:[7,4],pointRadius:0,pointHoverRadius:5}
+      {label:'Roth advantage',data:_diffData,borderColor:lineA,backgroundColor:_aboveClr,borderWidth:2.5,tension:.35,
+       fill:{target:'origin',above:_aboveClr,below:_belowClr},pointRadius:0,pointHoverRadius:5}
     ]},
     options:{
       responsive:true,maintainAspectRatio:false,animation:{duration:950,easing:'easeInOutQuart'},
       interaction:{intersect:false,mode:'index'},
       plugins:{
-        legend:{position:'top',labels:{color:axc,font:{family:'DM Sans, sans-serif',size:12},boxWidth:20,padding:14}},
-        tooltip:{backgroundColor:'rgba(18,18,30,.92)',padding:10,titleFont:{family:'DM Sans, sans-serif',size:11},bodyFont:{family:'DM Sans, sans-serif',size:13},callbacks:{title:i=>'Age '+i[0].label,label:c=>' '+c.dataset.label+': '+fmt(c.raw)}}
+        legend:{display:false},
+        tooltip:{backgroundColor:'rgba(18,18,30,.92)',padding:10,titleFont:{family:'DM Sans, sans-serif',size:11},bodyFont:{family:'DM Sans, sans-serif',size:13},
+          callbacks:{
+            title:function(i){ return 'Age '+i[0].label; },
+            label:function(c){ var v=c.raw; return ' '+(v>=0?'Roth ahead: +':'Behind by: ')+fmt(Math.abs(v)); }
+          }
+        }
       },
       scales:{
         x:{title:{display:true,text:'Your Age',color:axc,font:{family:'DM Sans, sans-serif',size:11}},grid:{display:false},ticks:{color:axc,font:{family:'DM Sans, sans-serif',size:11},maxTicksLimit:10}},
-        y:{min:_wcFloor,title:{display:true,text:'After-Tax Value',color:axc,font:{family:'DM Sans, sans-serif',size:11}},ticks:{color:axc,font:{family:'DM Sans, sans-serif',size:11},callback:v=>fmtK(v)},grid:{color:grd}}
+        y:{title:{display:true,text:'Roth advantage ($)',color:axc,font:{family:'DM Sans, sans-serif',size:11}},
+           ticks:{color:axc,font:{family:'DM Sans, sans-serif',size:11},callback:function(v){ return (v>=0?'+':'')+fmtK(v); }},
+           grid:{color:function(ctx){ return ctx.tick.value===0 ? (CDARK?'rgba(255,255,255,0.35)':'rgba(0,0,0,0.25)') : grd; },
+                 lineWidth:function(ctx){ return ctx.tick.value===0 ? 1.5 : 1; }}}
       }
     }
   });
