@@ -2802,7 +2802,8 @@ function renderMarginalChart(p){
       return {below:isBelow, lblY:y, y0:y-11, y1:y+5, fits:(y-11>=0 && y+5<=H)};
     };
     var overlapsRef = function(b){ return refDrawn && b.y0<refRectY1 && b.y1>refRectY0; };
-    var primary = band(ccy < H*0.75);
+    // Prefer above the dot — keeps it visually separate from "Your pick" below.
+    var primary = band(false);
     var chosen = primary;
     if(overlapsRef(primary)){
       var alt = band(!primary.below);
@@ -2817,7 +2818,7 @@ function renderMarginalChart(p){
       // that happens to land right where the full label would (see
       // _dev/test-marginal-chart-labels.mjs, which is what found this needed
       // a fallback at all instead of a fixed width breakpoint).
-      var lblTextFull = 'Marginal rate crosses '+retPct.toFixed(1)+'% — '+fmt(crossPt.x);
+      var lblTextFull = 'Marginal rate exceeds '+retPct.toFixed(1)+'% — '+fmt(crossPt.x);
       var lblWFull = lblTextFull.length*5.7+12;
       var cxFull = clearCx(ccx+lblWFull/2+10, lblWFull, crossObstacles);
       var lblText, lblW, lblCx;
@@ -2929,7 +2930,8 @@ function renderMarginalChart(p){
       || (refDrawn && rect.y0<refY+2 && rect.y1>refY-2);
     return blocked ? null : rect;
   }
-  var aboveFirst = my > H*0.4;
+  // Prefer below the dot — keeps it visually separate from "Marginal rate" above.
+  var aboveFirst = false;
   var pBest = null;
   // Growing vertical gaps from the dot, tried before growing horizontally —
   // needed now that a candidate can be rejected by the full-width reference
