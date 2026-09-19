@@ -2581,6 +2581,13 @@ function renderMarginalChart(p){
       .attr('fill',tc('#B06000','#E89A38')).attr('opacity',0.05);
   }
 
+  // "Your pick" vertical line — drawn before zone shading, gridlines, and curves
+  // so everything paints over it. The dot, connector, and pill render later.
+  var pickColor = tc('#1B6B3A','#54C285');
+  var mx = xSc(cvtX);
+  g.append('line').attr('x1',mx).attr('x2',mx).attr('y1',0).attr('y2',H)
+    .attr('stroke',pickColor).attr('stroke-width',1.75).attr('opacity',0.5);
+
   // Hidden tax zone band — explicit amber shading between the zone's start and end.
   // Makes the spike visually legible as a named zone, not just noise. Drawn
   // before the gridlines and curves so it sits behind everything.
@@ -2712,13 +2719,6 @@ function renderMarginalChart(p){
     // Label dropped — already in the legend above the chart; no need to
     // duplicate it on the line itself, and it cluttered the chart interior.
   }
-
-  // "Your pick" vertical line drawn here so the curves paint over it.
-  // The dot, connector, and pill label draw later (after curves) to stay on top.
-  var pickColor = tc('#1B6B3A','#54C285');
-  var mx = xSc(cvtX);
-  g.append('line').attr('x1',mx).attr('x2',mx).attr('y1',0).attr('y2',H)
-    .attr('stroke',pickColor).attr('stroke-width',1.75).attr('opacity',0.5);
 
   // The curves — average effective rate (primary, with area fill) + marginal
   // income tax rate (thinner, distinct color, no fill).
