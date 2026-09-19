@@ -2705,28 +2705,12 @@ function renderMarginalChart(p){
   var refRectY0 = refAbove ? refY-19 : refY+5;
   var refRectY1 = refRectY0+14;
 
-  var refCx = null, refW = 0;
   if(refDrawn){
     g.append('line').attr('x1',0).attr('x2',W).attr('y1',refY).attr('y2',refY)
       .attr('stroke',tc('#3D4451','#A6ABB5')).attr('stroke-width',1.5)
       .attr('stroke-dasharray','4,4').attr('opacity',0.75);
-    // Right-aligned by default, but the full sentence can be wider than the
-    // whole canvas at narrow widths and this line spans edge-to-edge, so it
-    // can land right under a named marker's label — same full-text/short-text
-    // fallback as the crossover label, steering clear of the same markers.
-    var refTextFull = 'Your expected retirement rate · '+retPct.toFixed(1)+'%';
-    var refWFull = refTextFull.length*5.7+12;
-    var refCxFull = clearCx(W-refWFull/2, refWFull, markerObstacles);
-    var refText;
-    if(refCxFull!==null){
-      refText=refTextFull; refW=refWFull; refCx=refCxFull;
-    } else {
-      refText = retPct.toFixed(1)+'%';
-      refW = refText.length*5.7+12;
-      var refCxShort = clearCx(W-refW/2, refW, markerObstacles);
-      refCx = refCxShort!==null ? refCxShort : Math.min(W-refW/2, Math.max(refW/2, W-refW/2));
-    }
-    var refTextY = refAbove ? refY-9 : refY+15;
+    // Label dropped — already in the legend above the chart; no need to
+    // duplicate it on the line itself, and it cluttered the chart interior.
   }
 
   // The curves — average effective rate (primary, with area fill) + marginal
@@ -2825,13 +2809,8 @@ function renderMarginalChart(p){
       if(alt.fits && !overlapsRef(alt)) chosen = alt;
     }
     var below = chosen.below, lblY = chosen.lblY;
-    var sameSide = overlapsRef(chosen);
     if(!crossNearPick){
-      // Horizontal: steer clear of the named markers, plus the reference
-      // label's actual footprint when its band still overlaps this label's —
-      // a hairline margin isn't enough clearance for a label that wide, and
-      // when the bands don't overlap there's nothing to avoid here at all.
-      var crossObstacles = sameSide ? markerObstacles.concat([{x:refCx, half:refW/2+6}]) : markerObstacles;
+      var crossObstacles = markerObstacles;
       // Try the full sentence first; if no spot near the dot is clear of every
       // obstacle at this width, fall back to just the dollar amount, which
       // needs far less room — only kicks in on narrow charts with an obstacle
@@ -2890,16 +2869,7 @@ function renderMarginalChart(p){
       .attr('stroke',color).attr('stroke-width',1.75).attr('stroke-dasharray','5,3');
   });
 
-  // Pill drawn after named marker lines so it paints on top of them in SVG order.
-  if(refDrawn){
-    g.append('rect').attr('x',refCx-refW/2).attr('y',refRectY0).attr('width',refW).attr('height',14).attr('rx',3)
-      .attr('fill',tc('rgb(245,241,235)','rgb(34,39,48)'));
-    g.append('text').attr('x',refCx).attr('y',refTextY).attr('text-anchor','middle')
-      .style('font-size','10.5px').style('font-weight','600').style('font-family','DM Sans, sans-serif')
-      .style('fill',tc('#3D4451','#A6ABB5'))
-      .text(refText);
-    labelRects.push({x0:refCx-refW/2,x1:refCx+refW/2,y0:refRectY0,y1:refRectY0+14});
-  }
+  // Reference line label intentionally omitted — rate is already in the legend.
 
   // "Your pick" — the one point on the curve that answers "where do I
   // actually land," always drawn (unlike named markers, which only appear
@@ -2965,16 +2935,21 @@ function renderMarginalChart(p){
   // needed now that a candidate can be rejected by the full-width reference
   // band regardless of x, so a pure horizontal search alone can no longer
   // guarantee an escape when the dot sits close to that band.
+  // Minimum horizontal offset so the pill never overlaps the vertical marker
+  // line at mx — the line should run fully visible with the connector bridging
+  // the gap. pW/2 + 8 guarantees the pill's near edge is at least 8px away.
+  var minDx = Math.ceil(pW/2) + 8;
   [false,true].some(function(ignoreMarkers){
     return [14,34,54,74].some(function(gap){
-      return [0,45,-45,90,-90,135,-135].some(function(dx){
+      return [minDx,-minDx,minDx+60,-(minDx+60),minDx+120,-(minDx+120)].some(function(dx){
         return (pBest = placeAt(mx+dx, aboveFirst ? my-gap-pH : my+gap, ignoreMarkers))
             || (pBest = placeAt(mx+dx, aboveFirst ? my+gap : my-gap-pH, ignoreMarkers));
       });
     });
   });
   if(!pBest){
-    var fbCx = Math.min(W-pW/2, Math.max(pW/2, mx));
+    // Fallback: also respect minDx so the pill still clears the marker line.
+    var fbCx = Math.min(W-pW/2, Math.max(pW/2, mx+minDx));
     var fbY0 = aboveFirst ? Math.max(0,my-74-pH) : Math.min(H-pH,my+74);
     pBest = {x0:fbCx-pW/2, x1:fbCx+pW/2, y0:fbY0, y1:fbY0+pH};
   }
@@ -4680,7 +4655,14 @@ function sweepMarginalCurve(ctx, maxAmt){
     rawPoints.push({x:amt, y:cc.effR*100, tot:cc.cvtTxTot});
 
     if(prevTierWith!==null && cc.tierWith!==prevTierWith){
-      crossings.push({x:amt, type:'irmaa', label:'Medicare Tier '+prevTierWith+'→'+cc.tierWith});
+      // Bisect for exact IRMAA boundary — same approach as bracket crossings.
+      let ilo = amt - step, ihi = amt;
+      const prevTier = prevTierWith;
+      for(let k=0; k<20; k++){
+        const mid = Math.round((ilo+ihi)/2);
+        if(computeConversionCost(mid,ctx).tierWith===prevTier) ilo=mid; else ihi=mid;
+      }
+      crossings.push({x:ihi, type:'irmaa', label:'Medicare Tier '+prevTierWith+'→'+cc.tierWith});
     }
     prevTierWith=cc.tierWith;
 
