@@ -2810,7 +2810,13 @@ function renderMarginalChart(p){
       if(alt.fits && !overlapsRef(alt)) chosen = alt;
     }
     var below = chosen.below, lblY = chosen.lblY;
-    if(!crossNearPick){
+    // Suppress the label (not the dot) when the crossover lands within $5k of
+    // a bracket boundary — in that case the bracket card already names the
+    // landmark; two nearby numbers in different places create doubt, not clarity.
+    var bktXs = sweep.crossings.filter(function(c){ return c.type==='bracket'; });
+    var nearestBkt = bktXs.reduce(function(b,c){ return b===null||Math.abs(c.x-crossPt.x)<Math.abs(b.x-crossPt.x)?c:b; }, null);
+    var crossNearBracket = nearestBkt!==null && Math.abs(nearestBkt.x-crossPt.x)<5000;
+    if(!crossNearPick && !crossNearBracket){
       var crossObstacles = markerObstacles;
       // Try the full sentence first; if no spot near the dot is clear of every
       // obstacle at this width, fall back to just the dollar amount, which
