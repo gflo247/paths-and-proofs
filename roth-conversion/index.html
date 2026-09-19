@@ -3454,12 +3454,12 @@ function buildRmdChartHTML(firstB, rmdStartAge, curAge, growthRate, simRetR){
     + (curAge >= rmdStartAge
         ? 'Your Required Minimum Distributions have already begun. Without converting, the required share grows each year as the IRS divisor shrinks.'
         : 'Without converting, at age ' + rmdStartAge + ' you\'d be required to withdraw about <strong>' + fmt(firstB) + '</strong> from your traditional account \u2014 taxable income whether you need it or not \u2014 and the required share grows each year as the IRS divisor shrinks.')
-    + ' Converting doesn\'t make withdrawals free; it moves the tax to today and shrinks the account those forced withdrawals are calculated from.</p>'
+    + ' Each bar shows how much less you\'d be required to withdraw at that age by converting today. The gap grows over time as the IRS divisor shrinks and the unreduced account compounds.</p>'
     + '<div id="rmdChartWrap" style="width:100%;position:relative"></div>'
     + '<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">'
     + 'Projected at your ' + pct(growthRate, 0) + ' growth assumption per the '
     + '<a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener">IRS Uniform Lifetime Table (Pub.\u00a0590-B)</a>. '
-    + 'Dashed lines show where RMD income crosses into a higher federal tax bracket or Medicare premium tier \u2014 computed at your income level, not generic thresholds.</p>'
+    + 'Dashed lines mark the age at which uncovered RMDs would first cross into a higher federal tax bracket or Medicare premium tier \u2014 computed at your income level, not generic thresholds.</p>'
     + '</div>';
 }
 
@@ -3479,43 +3479,52 @@ function renderRmdChart(p){
   var agesArr = [];
   for(var a = xMin; a <= xMax; a++) agesArr.push(a);
 
-  var dataB = agesArr.map(function(a){ return {age: a, v: p.rmdYrB[a] || 0}; });
-  var dataA = agesArr.map(function(a){ return {age: a, v: p.rmdYrA[a] || 0}; });
+  // Gap per age: annual RMD reduction from converting
+  var gapData = agesArr.map(function(a){
+    return { age: a, gap: (p.rmdYrB[a] || 0) - (p.rmdYrA[a] || 0) };
+  });
+  var gapMax = Math.max.apply(null, gapData.map(function(d){ return d.gap; }));
+  if(gapMax <= 0) return;
 
-  var yMax = Math.max.apply(null, dataB.map(function(d){ return d.v; }));
-  if(yMax <= 0) return;
+  // True when conversion fully depletes the traditional IRA (every rmdYrA ≈ 0)
+  var irasGone = !agesArr.some(function(a){ return (p.rmdYrA[a] || 0) > 0.5; });
 
-  // Whether the conversion meaningfully reduces the traditional balance enough
-  // to still have RMDs. A very large conversion can wipe the traditional balance.
-  var showWithLine = dataA.some(function(d){ return d.v > 0.5; });
+  // Pre-compute cumulative savings by age for hover tooltip
+  var cumul = {};
+  var running = 0;
+  agesArr.forEach(function(a){
+    running += (p.rmdYrB[a] || 0) - (p.rmdYrA[a] || 0);
+    cumul[a] = running;
+  });
 
-  // ── Horizontal threshold bisection ──
-  // Treat the RMD amount as additional ordinary income via computeConversionCost
-  // (valid: RMDs and conversions are both taxed as ordinary income, same brackets).
+  // ── Threshold crossings as vertical age markers ──
+  // Bisect the RMD-as-income space to find the dollar level where a bracket or
+  // IRMAA tier is crossed, then find the first age at which rmdYrB reaches that level.
   // p.futureCtx already has curAge = Math.max(curAge, rmdStartAge).
   var thresholds = [];
-  var bisectMax = yMax * 1.2;
+  var rmdMax = Math.max.apply(null, agesArr.map(function(a){ return p.rmdYrB[a] || 0; }));
+  var bisectMax = rmdMax * 1.2;
 
-  // Bracket crossings
   var brax = BRAX[p.status] || BRAX['single'];
   var ccBase = computeConversionCost(0, p.futureCtx);
   var ccTop  = computeConversionCost(bisectMax, p.futureCtx);
   for(var bi = 0; bi < brax.length - 1; bi++){
     var bndry = brax[bi].m;
     var nextRate = brax[bi + 1].r;
-    if(ccBase.tiWith >= bndry) continue;  // already past this boundary
-    if(ccTop.tiWith < bndry) continue;    // never reached in range
+    if(ccBase.tiWith >= bndry) continue;
+    if(ccTop.tiWith < bndry) continue;
     var blo = 0, bhi = bisectMax;
     for(var k = 0; k < 20; k++){
       var mid = (blo + bhi) / 2;
       if(computeConversionCost(mid, p.futureCtx).tiWith < bndry) blo = mid; else bhi = mid;
     }
-    if(bhi > 0 && bhi < yTop){
-      thresholds.push({
-        y: bhi,
-        label: Math.round(nextRate * 100) + '% bracket',
-        color: tc('#B06000','#E89A38')
-      });
+    // Find first age where uncovered RMD reaches this level
+    var crossAge = null;
+    for(var ai = 0; ai < agesArr.length; ai++){
+      if((p.rmdYrB[agesArr[ai]] || 0) >= bhi){ crossAge = agesArr[ai]; break; }
+    }
+    if(crossAge !== null){
+      thresholds.push({ age: crossAge, label: Math.round(nextRate * 100) + '% bracket', color: tc('#B06000','#E89A38') });
     }
   }
 
@@ -3526,18 +3535,18 @@ function renderRmdChart(p){
       var imid = (ilo + ihi) / 2;
       if(computeConversionCost(imid, p.futureCtx).tierWith === 0) ilo = imid; else ihi = imid;
     }
-    if(ihi > 0 && ihi < yTop){
-      thresholds.push({
-        y: ihi,
-        label: 'Medicare Tier\u00a01',
-        color: tc('#8B1A1A','#EA7070')
-      });
+    var iCrossAge = null;
+    for(var ai2 = 0; ai2 < agesArr.length; ai2++){
+      if((p.rmdYrB[agesArr[ai2]] || 0) >= ihi){ iCrossAge = agesArr[ai2]; break; }
+    }
+    if(iCrossAge !== null){
+      thresholds.push({ age: iCrossAge, label: 'Medicare Tier\u00a01', color: tc('#8B1A1A','#EA7070') });
     }
   }
 
   // ── SVG scaffold ──
   var totalW = Math.min(container.offsetWidth || 520, 680);
-  var margin = {top: 24, right: 100, bottom: 44, left: 62};
+  var margin = {top: 24, right: 24, bottom: 44, left: 62};
   var W = totalW - margin.left - margin.right;
   var H = Math.round(W * 0.42);
   var totalH = H + margin.top + margin.bottom;
@@ -3550,19 +3559,10 @@ function renderRmdChart(p){
 
   var g = svg.append('g').attr('transform','translate('+margin.left+','+margin.top+')');
 
-  var xSc = d3.scaleLinear().domain([xMin, xMax]).range([0, W]);
-
-  // Zoom y-floor to data range so close lines are distinguishable.
-  // Start at 82% of the minimum RMD value, rounded down to nearest $5K.
-  // When lines are far apart (yFloor≈0) this collapses to the old domain;
-  // when lines are close together (yFloor≈$80K) it zooms in dramatically.
-  var yMinData = Math.min.apply(null, dataB.map(function(d){ return d.v; }));
-  if(showWithLine){
-    dataA.forEach(function(d){ if(d.v > 0.5 && d.v < yMinData) yMinData = d.v; });
-  }
-  var yFloor = Math.max(0, Math.floor(yMinData * 0.82 / 5000) * 5000);
-  var yTop = yMax + (yMax - yFloor) * 0.12;
-  var ySc = d3.scaleLinear().domain([yFloor, yTop]).range([H, 0]);
+  // Center bars at integer ages; extend domain half a slot on each side
+  var xSc = d3.scaleLinear().domain([xMin - 0.5, xMax + 0.5]).range([0, W]);
+  var yTop = gapMax * 1.15;
+  var ySc = d3.scaleLinear().domain([0, yTop]).range([H, 0]);
 
   // ── Gridlines ──
   var yTicks = ySc.ticks(4);
@@ -3575,119 +3575,55 @@ function renderRmdChart(p){
     .style('fill',tc('#3D4451','#A6ABB5'))
     .text(function(d){ return fmtK(d); });
 
-  // x axis ticks
-  var xTicks = xSc.ticks(Math.min(8, xMax - xMin)).filter(function(t){ return t === Math.round(t); });
-  g.selectAll('text.rmxax').data(xTicks).enter().append('text')
-    .attr('x',xSc).attr('y',H+20).attr('text-anchor','middle')
+  // x-axis ticks at evenly-spaced integer ages
+  var nSlots = xMax - xMin + 1;
+  var xStep = Math.ceil(nSlots / Math.min(8, nSlots));
+  var xTickAges = [];
+  for(var ta = xMin; ta <= xMax; ta += xStep) xTickAges.push(ta);
+  g.selectAll('text.rmxax').data(xTickAges).enter().append('text')
+    .attr('x', function(d){ return xSc(d); }).attr('y',H+20).attr('text-anchor','middle')
     .style('font-size','10.5px').style('font-family','DM Sans, sans-serif')
     .style('fill',tc('#3D4451','#A6ABB5'))
     .text(function(d){ return 'Age '+d; });
   g.append('line').attr('x1',0).attr('x2',W).attr('y1',H).attr('y2',H)
     .attr('stroke',tc('#CEC6BA','#3A414C')).attr('stroke-width',1);
 
-  // ── Horizontal threshold lines (drawn before curves so curves paint over) ──
+  // ── Vertical threshold lines (drawn before bars) ──
   thresholds.forEach(function(thr){
-    var ty = ySc(thr.y);
-    if(ty < 0 || ty > H) return;
+    var tx = xSc(thr.age);
     g.append('line')
-      .attr('x1',0).attr('x2',W).attr('y1',ty).attr('y2',ty)
+      .attr('x1',tx).attr('x2',tx).attr('y1',0).attr('y2',H)
       .attr('stroke',thr.color).attr('stroke-width',1.5)
       .attr('stroke-dasharray','4,4').attr('opacity',0.75);
-    // Label pinned near the right edge, inside the plot area, above the line
     g.append('text')
-      .attr('x',W - 6).attr('y',ty - 4)
-      .attr('text-anchor','end')
-      .style('font-size','9.5px').style('font-family','DM Sans, sans-serif')
+      .attr('x', tx + 3).attr('y', 11)
+      .attr('text-anchor','start')
+      .style('font-size','9px').style('font-family','DM Sans, sans-serif')
       .style('fill',thr.color).style('font-weight','600')
-      .text(thr.label + ' (' + fmtK(thr.y) + ')');
+      .text(thr.label);
   });
 
-  // ── Gap area fill (light amber between the two curves) ──
-  var gapArea = d3.area()
-    .x(function(d){ return xSc(d.age); })
-    .y0(function(d, i){ return ySc(showWithLine ? (dataA[i].v || yFloor) : yFloor); })
-    .y1(function(d){ return ySc(d.v); });
-  g.append('path').datum(dataB)
-    .attr('fill',tc('#B06000','#E89A38')).attr('opacity',0.28)
-    .attr('d',gapArea);
-
-  // ── Curves ──
-  var lineGen = d3.line().x(function(d){ return xSc(d.age); }).y(function(d){ return ySc(d.v); })
-    .curve(d3.curveCatmullRom.alpha(0.5));
-
-  // "Without conversion" — amber
-  var amberClr = tc('#B06000','#E89A38');
-  g.append('path').datum(dataB)
-    .attr('fill','none').attr('stroke',amberClr).attr('stroke-width',2.75)
-    .attr('stroke-linejoin','round').attr('stroke-linecap','round')
-    .attr('d',lineGen);
-
-  // "With conversion" — green (or note if conversion wipes the balance)
+  // ── Bars ──
   var greenClr = tc('#1B6B3A','#54C285');
-  if(showWithLine){
-    g.append('path').datum(dataA)
-      .attr('fill','none').attr('stroke',greenClr).attr('stroke-width',2.25)
-      .attr('stroke-linejoin','round').attr('stroke-linecap','round')
-      .attr('stroke-dasharray','none')
-      .attr('d',lineGen);
-  }
+  var slotW = W / Math.max(1, nSlots);
+  var barW  = Math.max(2, slotW * 0.72);
 
-  // ── End-of-line labels (right margin) ──
-  var lastB = dataB[dataB.length - 1];
-  var lastByPx = ySc(lastB.v);
-  // Clamp so both two-line label rows stay on-chart and never overlap each other.
-  var bLbl1Y = Math.max(4, Math.min(H - 14, lastByPx + 4));
-  var bLbl2Y = bLbl1Y + 10;
-  g.append('text')
-    .attr('x', W + 6).attr('y', bLbl1Y)
-    .attr('text-anchor','start').attr('dominant-baseline','middle')
-    .style('font-size','9.5px').style('font-family','DM Sans, sans-serif')
-    .style('fill',amberClr).style('font-weight','600')
-    .text('Without');
-  g.append('text')
-    .attr('x', W + 6).attr('y', bLbl2Y)
-    .attr('text-anchor','start').attr('dominant-baseline','middle')
-    .style('font-size','9.5px').style('font-family','DM Sans, sans-serif')
-    .style('fill',amberClr)
-    .text('converting');
+  g.selectAll('rect.rmd-gap')
+    .data(gapData).enter().append('rect')
+      .attr('x',      function(d){ return xSc(d.age) - barW / 2; })
+      .attr('y',      function(d){ return ySc(d.gap); })
+      .attr('width',  barW)
+      .attr('height', function(d){ return Math.max(0, H - ySc(d.gap)); })
+      .attr('fill',   greenClr).attr('opacity', 0.82).attr('rx', 2);
 
-  if(showWithLine){
-    var lastA = dataA[dataA.length - 1];
-    var gapFinal = lastB.v - lastA.v;
-    var lastAyPx = ySc(lastA.v);
-    // Keep the two labels from overlapping if the lines converge at end
-    var aLblY = Math.min(H - 16, lastAyPx + 4);
-    if(Math.abs(aLblY - (lastByPx + 4)) < 22) aLblY = lastByPx + 4 - 24;
-    aLblY = Math.max(4, aLblY);
+  // Note when conversion eliminates the traditional IRA entirely
+  if(irasGone){
     g.append('text')
-      .attr('x', W + 6).attr('y', aLblY)
-      .attr('text-anchor','start').attr('dominant-baseline','middle')
-      .style('font-size','9.5px').style('font-family','DM Sans, sans-serif')
-      .style('fill',greenClr).style('font-weight','600')
-      .text('With this');
-    g.append('text')
-      .attr('x', W + 6).attr('y', aLblY + 10)
-      .attr('text-anchor','start').attr('dominant-baseline','middle')
-      .style('font-size','9.5px').style('font-family','DM Sans, sans-serif')
-      .style('fill',greenClr)
-      .text('conversion');
-    // Gap callout: annual RMD savings at life expectancy age
-    if(gapFinal > 100){
-      g.append('text')
-        .attr('x', W + 6).attr('y', Math.min(H - 2, aLblY + 22))
-        .attr('text-anchor','start').attr('dominant-baseline','middle')
-        .style('font-size','9px').style('font-family','DM Sans, sans-serif')
-        .style('fill',greenClr).style('opacity',0.8)
-        .text('\u2212' + fmtK(gapFinal) + '/yr');
-    }
-  } else {
-    // Conversion eliminates the traditional balance entirely
-    g.append('text')
-      .attr('x', W / 2).attr('y', H / 2)
+      .attr('x', W / 2).attr('y', H / 2 - 8)
       .attr('text-anchor','middle')
-      .style('font-size','11px').style('font-family','DM Sans, sans-serif')
+      .style('font-size','10px').style('font-family','DM Sans, sans-serif')
       .style('fill',greenClr).style('font-weight','600')
-      .text('This conversion eliminates your traditional IRA balance \u2014 no RMDs required.');
+      .text('This conversion eliminates your traditional IRA entirely \u2014 each bar is a fully avoided withdrawal.');
   }
 
   // ── Hover overlay ──
@@ -3701,8 +3637,7 @@ function renderRmdChart(p){
 
   var hLine = g.append('line').attr('y1',0).attr('y2',H)
     .attr('stroke',tc('#3D4451','#A6ABB5')).attr('stroke-width',1).attr('opacity',0.4).style('display','none');
-  var hDotB = g.append('circle').attr('r',4).attr('fill',amberClr).style('display','none');
-  var hDotA = g.append('circle').attr('r',3.5).attr('fill',greenClr).style('display','none');
+  var hDot = g.append('circle').attr('r',4).attr('fill',greenClr).style('display','none');
 
   svg.append('rect')
     .attr('x',margin.left).attr('y',margin.top).attr('width',W).attr('height',H)
@@ -3711,31 +3646,23 @@ function renderRmdChart(p){
       var px = d3.pointer(event, g.node())[0];
       var age = Math.round(xSc.invert(px));
       age = Math.max(xMin, Math.min(xMax, age));
-      var bv = p.rmdYrB[age] || 0;
-      var av = p.rmdYrA[age] || 0;
-      var ex = xSc(age);
-      hLine.attr('x1',ex).attr('x2',ex).style('display','block');
-      hDotB.attr('cx',ex).attr('cy',ySc(bv)).style('display','block');
-      hDotA.attr('cx',ex).attr('cy',ySc(av)).style('display',showWithLine&&av>0.5?'block':'none');
+      var gap = (p.rmdYrB[age] || 0) - (p.rmdYrA[age] || 0);
+      var cx = xSc(age);
+      hLine.attr('x1',cx).attr('x2',cx).style('display','block');
+      hDot.attr('cx',cx).attr('cy',ySc(gap)).style('display', gap > 0 ? 'block' : 'none');
       tipDiv.html('<strong>Age ' + age + '</strong>'
-        + '<br><span style="display:inline-block;width:8px;height:2px;background:'+amberClr+';vertical-align:middle;margin-right:4px;border-radius:1px"></span>'
-        + 'Without: ' + fmt(bv)
-        + (showWithLine&&av>0.5
-            ? '<br><span style="display:inline-block;width:8px;height:2px;background:'+greenClr+';vertical-align:middle;margin-right:4px;border-radius:1px"></span>'
-              + 'With: ' + fmt(av)
-              + '<br><span style="font-size:.7rem;opacity:.8">Gap: ' + fmt(bv - av) + '/yr</span>'
-            : ''));
-      // Position tooltip so it stays inside the SVG's rendered bounding box
+        + '<br><span style="display:inline-block;width:8px;height:8px;background:'+greenClr+';vertical-align:middle;margin-right:4px;border-radius:2px"></span>'
+        + 'Reduction: ' + fmt(gap) + '/yr'
+        + '<br><span style="font-size:.7rem;opacity:.8">Cumulative saved: ' + fmt(cumul[age]) + '</span>');
       var svgRect = svg.node().getBoundingClientRect();
       var scale = svgRect.width / totalW;
-      var tx = (ex + margin.left) * scale, ty = (ySc(bv) + margin.top) * scale;
-      var tLeft = Math.min(svgRect.width - 180, Math.max(4, tx + 10));
-      tipDiv.style('left', tLeft + 'px').style('top', Math.max(0, ty - 50) + 'px').style('opacity',1);
+      var cx2 = (cx + margin.left) * scale, cy2 = (ySc(gap) + margin.top) * scale;
+      var tLeft = Math.min(svgRect.width - 180, Math.max(4, cx2 + 10));
+      tipDiv.style('left', tLeft + 'px').style('top', Math.max(0, cy2 - 50) + 'px').style('opacity',1);
     })
     .on('mouseleave', function(){
       hLine.style('display','none');
-      hDotB.style('display','none');
-      hDotA.style('display','none');
+      hDot.style('display','none');
       tipDiv.style('opacity',0);
     });
 }
@@ -5859,11 +5786,13 @@ function calc(){
   var _wcMin = Math.min.apply(null, ci.map(function(i){ return Math.min(vA[i], vB[i]); }));
   var _wcStep = _wcMin >= 500000 ? 500000 : 100000;
   var _wcFloor = Math.max(0, Math.floor(_wcMin * 0.92 / _wcStep) * _wcStep);
+  // Fill color for the gap band between the two wealth curves
+  var _fillClr = CDARK ? 'rgba(125,178,236,0.22)' : 'rgba(28,58,94,0.18)';
   myChart=new Chart(ctx,{
     type:'line',
     data:{labels:ci.map(i=>ages[i]),datasets:[
-      {label:'With Roth Conversion',data:ci.map(i=>Math.round(vA[i])),borderColor:lineA,backgroundColor:CDARK?'rgba(125,178,236,.10)':'rgba(28,58,94,.06)',borderWidth:2.5,tension:.35,fill:true,pointRadius:0,pointHoverRadius:5},
-      {label:'Without Converting',  data:ci.map(i=>Math.round(vB[i])),borderColor:lineB,backgroundColor:CDARK?'rgba(232,154,56,.10)':'rgba(176,96,0,.06)', borderWidth:2.5,tension:.35,fill:true,borderDash:[7,4],pointRadius:0,pointHoverRadius:5}
+      {label:'With Roth Conversion',data:ci.map(i=>Math.round(vA[i])),borderColor:lineA,backgroundColor:_fillClr,borderWidth:2.5,tension:.35,fill:{target:'+1',above:_fillClr,below:'transparent'},pointRadius:0,pointHoverRadius:5},
+      {label:'Without Converting',  data:ci.map(i=>Math.round(vB[i])),borderColor:lineB,backgroundColor:'transparent',                borderWidth:2.5,tension:.35,fill:false,borderDash:[7,4],pointRadius:0,pointHoverRadius:5}
     ]},
     options:{
       responsive:true,maintainAspectRatio:false,animation:{duration:950,easing:'easeInOutQuart'},
