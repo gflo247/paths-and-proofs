@@ -2739,6 +2739,9 @@ function renderMarginalChart(p){
   // taxable at cvt=0 so torpedoStartC never fires, (c) torpedoAtZero=true
   // (already at 85% cap from cvt=0) correctly produces no torpedoEndC and
   // is excluded here — no spike to label.
+  // Rendering is deferred to after named marker lines are drawn — otherwise
+  // those dashed lines paint over the pill (later SVG elements win z-order).
+  var pkDeferred = null;
   if(margPoints.length >= 2 && torpedoEndC){
     var tzLoPeak = torpedoStartC ? torpedoStartC.x : 0;
     var tzHiPeak = torpedoEndC.x;
@@ -2751,18 +2754,10 @@ function renderMarginalChart(p){
       var pkY = ySc(Math.min(peakPt.y, yMax));
       var pkLblY = pkY - 10;
       if(pkLblY < 14) pkLblY = pkY + 18;
-      // Background pill for contrast against the dark chart area.
-      g.append('rect')
-        .attr('x', pkX - 36).attr('y', pkLblY - 12)
-        .attr('width', 72).attr('height', 16).attr('rx', 3)
-        .attr('fill', tc('rgba(255,255,255,0.82)', 'rgba(30,34,42,0.82)'));
-      g.append('text').attr('x', pkX).attr('y', pkLblY)
-        .attr('text-anchor', 'middle')
-        .style('font-size', '10.5px').style('font-family', 'DM Sans, sans-serif')
-        .style('fill', margColor).style('font-weight', '700')
-        .text(Math.round(peakPt.y) + '% marginal');
-      // Register so downstream "Your pick" and crossover labels can avoid it.
+      // Register the obstacle now so downstream collision checks avoid it,
+      // even though the actual rect/text are drawn later.
       labelRects.push({x0:pkX-36, x1:pkX+36, y0:pkLblY-12, y1:pkLblY+4});
+      pkDeferred = {x:pkX, lblY:pkLblY, rate:Math.round(peakPt.y)};
     }
   }
 
@@ -2875,6 +2870,19 @@ function renderMarginalChart(p){
     g.append('line').attr('x1',lx).attr('x2',lx).attr('y1',0).attr('y2',H)
       .attr('stroke',color).attr('stroke-width',1.75).attr('stroke-dasharray','5,3');
   });
+
+  // Peak callout drawn here (after marker lines) so it appears in front of them.
+  if(pkDeferred){
+    g.append('rect')
+      .attr('x', pkDeferred.x - 36).attr('y', pkDeferred.lblY - 12)
+      .attr('width', 72).attr('height', 16).attr('rx', 3)
+      .attr('fill', tc('rgba(255,255,255,0.82)', 'rgba(30,34,42,0.82)'));
+    g.append('text').attr('x', pkDeferred.x).attr('y', pkDeferred.lblY)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '10.5px').style('font-family', 'DM Sans, sans-serif')
+      .style('fill', margColor).style('font-weight', '700')
+      .text(pkDeferred.rate + '% marginal');
+  }
 
   // Reference line label intentionally omitted — rate is already in the legend.
 
