@@ -1243,7 +1243,7 @@ const ST={
   AZ: {n:'Arizona',cr:.025,ex:false,note:'Flat 2.5% (one of the lowest in the nation), applied to IRA and conversion income. Social Security is exempt. The flat rate means a conversion is taxed at 2.5% regardless of size, making Arizona one of the cheaper states for a large conversion.'},
   AR: {n:'Arkansas',cr:.037,ex:false,note:'Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000-per-person retirement exemption covers traditional IRA income at 59.5+ (early distributions do not qualify) -- genuinely per-spouse, not a flat joint cap, so a joint return with both spouses 59.5+ shelters $12,000, not $6,000 (this calculator previously applied none of this exclusion at all). Social Security is exempt below $100k AGI; a large conversion could push past that.'},
   CA: {n:'California',cr:.093,ex:false,note:'No retirement income exemption — IRA and Roth-conversion income is taxed as regular income through nine progressive brackets (1% to 12.3%), plus a 1% surcharge on income over $1M (13.3% top). The 9.3% bracket used here covers roughly $73k-$371k single income, where most filers land; your rate may be lower or higher. Social Security is not taxed by California.'},
-  CO: {n:'Colorado',cr:.044,ex:false,note:'Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR\'s own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ (this calculator previously modeled a flat $24,000 at any qualifying age, or applied no cap at all — now fixed to the real age-tiered amounts) — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+, and shares that same $20k/$24k cap with pension/annuity income below that age — but state-level Social Security taxability is out of scope for this calculator specifically (only the federal torpedo zone is modeled here, same as every other state; see the Relocation tool for CO\'s full state-level SS treatment).'},
+  CO: {n:'Colorado',cr:.044,ex:false,note:'Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR\'s own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ (this calculator previously modeled a flat $24,000 at any qualifying age, or applied no cap at all — now fixed to the real age-tiered amounts) — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+, and shares that same $20k/$24k cap with pension/annuity income below that age — but state-level Social Security taxability is out of scope for this calculator specifically (only the federal SS hidden tax zone is modeled here, same as every other state; see the Relocation tool for CO\'s full state-level SS treatment).'},
   CT: {n:'Connecticut',cr:.055,ex:false,note:'Connecticut shelters a percentage of your actual conversion income, stepping down in ten tiers from a top of $75,000 single / $100,000 joint AGI to $0 by $100,000 single / $150,000 joint AGI, with no age requirement at all (unusual — this applies at any age). Important: a Roth conversion is an IRA distribution, and CT\'s own Pension and Annuity Worksheet only lets 75% of an IRA distribution into the sheltered amount before that percentage applies — pension/annuity income gets 100%, but IRA money never does, even in the top tier. This calculator applies that 75% factor plus the real stepped table. A Roth conversion also raises AGI and can push you into a lower-percentage tier, so a large conversion shelters a smaller share of itself than a small one. Connecticut also taxes Social Security above those same AGI thresholds; whatever isn\'t sheltered is taxed at graduated 2%-6.99% rates (about 5.5% is typical for a mid-size conversion).'},
   DE: {n:'Delaware',cr:.066,ex:false,note:'Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k lands at the 6.6% used here (totals under $60k pay 5.55% or less). At 60+, a $12,500-per-person exclusion covers combined pension + IRA income -- genuinely per-spouse, so a joint return with both spouses 60+ shelters $25,000, not a flat $12,500 (this calculator previously applied none of this exclusion at all) — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax.'},
   FL: {n:'Florida',cr:0,ex:true,note:'No state income tax.'},
@@ -2002,7 +2002,7 @@ function updateRetRate(){
     var bktNote      = nextPct !== null ? 'taxable income '+fmt(ti0)+', '+fmt(bktCtx.room)+' below '+nextPct+'%' : 'taxable income '+fmt(ti0);
     out += '<div style="font-size:.79rem;line-height:1.65;border-top:1px solid var(--tip-bdr);margin-top:.35rem;padding-top:.35rem">';
     out += '<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">'+bracketPct+'% bracket rate <span style="font-size:.75rem">('+bktNote+')</span></span><span style="color:var(--muted)">'+bracketPct+'%</span></div>';
-    out += '<div style="display:flex;justify-content:space-between;color:var(--danger)"><span>+&thinsp;SS torpedo &thinsp;<span style="font-size:.75rem">each $1,000 withdrawn makes $'+ssDeltaPer1k+' more SS taxable &times;&thinsp;'+bracketPct+'%</span></span><span>+'+torpPct+'%</span></div>';
+    out += '<div style="display:flex;justify-content:space-between;color:var(--danger)"><span>+&thinsp;SS hidden tax &thinsp;<span style="font-size:.75rem">each $1,000 withdrawn makes $'+ssDeltaPer1k+' more SS taxable &times;&thinsp;'+bracketPct+'%</span></span><span>+'+torpPct+'%</span></div>';
     out += '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--tip-bdr);padding-top:.2rem;margin-top:.1rem;font-weight:700"><span>Marginal federal tax cost</span><span>'+fedPct+'%</span></div>';
     out += '</div>';
   } else {
@@ -2314,7 +2314,7 @@ function buildMarginalChartHTML(){
     + '<div class="stitle">📈 Why The Rate Climbs As You Convert More</div>'
     + '<p style="font-size:.88rem;color:var(--muted);margin-bottom:.85rem;line-height:1.55">'
     + 'Two curves, two questions. The <strong style="color:var(--text)">average effective rate</strong> (total tax ÷ conversion) is the blended cost across the full amount. '
-    + 'The <strong style="color:var(--text)">marginal income tax rate</strong> (cost of the next dollar) is the actual stopping signal — it spikes sharply inside the Social Security torpedo zone, where each extra dollar of conversion makes more Social Security taxable. '
+    + 'The <strong style="color:var(--text)">marginal income tax rate</strong> (cost of the next dollar) is the actual stopping signal — it spikes sharply inside the SS hidden tax zone, where each extra dollar of conversion makes more Social Security taxable. '
     + 'The breakeven simulation below may reach a different conclusion, since it also accounts for compounding and Required Minimum Distributions.</p>'
     + '<div id="marginalChartAbove" style="margin-bottom:.5rem"></div>'
     + '<div id="marginalChartMain" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start"><div id="marginalChartWrap" style="flex:1;min-width:240px"></div></div>'
@@ -2581,12 +2581,15 @@ function renderMarginalChart(p){
       .attr('fill',tc('#B06000','#E89A38')).attr('opacity',0.05);
   }
 
-  // Torpedo zone band — explicit amber shading between the zone's start and end.
+  // Hidden tax zone band — explicit amber shading between the zone's start and end.
   // Makes the spike visually legible as a named zone, not just noise. Drawn
   // before the gridlines and curves so it sits behind everything.
-  if(torpedoEndC || torpedoAtZero){
-    var tzX0 = torpedoAtZero ? 0 : (torpedoStartC ? xSc(torpedoStartC.x) : 0);
-    var tzX1 = torpedoEndC ? xSc(torpedoEndC.x) : W;
+  // Only drawn when torpedoEndC exists — when torpedoAtZero=true the zone has
+  // no visible traversal (SS already at 85% cap from $0), so no shading needed;
+  // the legend entry already communicates that state.
+  if(torpedoEndC){
+    var tzX0 = torpedoStartC ? xSc(torpedoStartC.x) : 0;
+    var tzX1 = xSc(torpedoEndC.x);
     var tzW  = Math.max(0, tzX1 - tzX0);
     if(tzW > 4){
       g.append('rect').attr('x',tzX0).attr('y',0).attr('width',tzW).attr('height',H)
@@ -2596,7 +2599,7 @@ function renderMarginalChart(p){
           .attr('text-anchor','middle')
           .style('font-size','8.5px').style('font-family','DM Sans, sans-serif')
           .style('fill',tc('#7A2E00','#D97A3A')).style('font-weight','700').style('letter-spacing','.03em')
-          .text('SS TORPEDO ZONE');
+          .text('SS HIDDEN TAX ZONE');
       }
     }
   }
@@ -2646,7 +2649,7 @@ function renderMarginalChart(p){
     irmaa:function(c){ return 'Medicare '+c.label.split('Tier ')[1]; },
     ltcg:function(){ return 'Qual. div./LTCG bumped'; },
     torpedo:function(){ return 'SS fully taxable (85% cap)'; },
-    torpedoStart:function(){ return 'SS torpedo starts'; }
+    torpedoStart:function(){ return 'SS hidden tax zone starts'; }
   };
   // Where each marker type's full explanation lives below — same targets the
   // "Why This Answer" panel already jumps to for these exact facts, reused
@@ -3060,7 +3063,7 @@ function renderMarginalChart(p){
     }
     if(torpedoAtZero){
       aboveRow.append('div').style('color',tc('#7A2E00','#D97A3A')).style('font-size','.73rem')
-        .text('⚠ SS already fully in torpedo zone at $0');
+        .text('⚠ SS already in hidden tax zone at $0');
     }
     // SS torpedo events inline with the legend row — same flex-wrap parent,
     // so they share the line when there is room and wrap naturally when not.
