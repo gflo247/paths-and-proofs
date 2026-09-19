@@ -2713,6 +2713,13 @@ function renderMarginalChart(p){
     // duplicate it on the line itself, and it cluttered the chart interior.
   }
 
+  // "Your pick" vertical line drawn here so the curves paint over it.
+  // The dot, connector, and pill label draw later (after curves) to stay on top.
+  var pickColor = tc('#1B6B3A','#54C285');
+  var mx = xSc(cvtX);
+  g.append('line').attr('x1',mx).attr('x2',mx).attr('y1',0).attr('y2',H)
+    .attr('stroke',pickColor).attr('stroke-width',1.75).attr('opacity',0.5);
+
   // The curves — average effective rate (primary, with area fill) + marginal
   // income tax rate (thinner, distinct color, no fill).
   var line = d3.line().x(function(d){ return xSc(d.x); }).y(function(d){ return ySc(Math.min(d.y,yMax)); });
@@ -2898,15 +2905,10 @@ function renderMarginalChart(p){
   // reader most wants to find would be worse than an imperfect position.
   var cvtCc = computeConversionCost(cvtX, p.ctx);
   var cvtY = Math.min(cvtCc.effR*100, yMax);
-  var mx = xSc(cvtX), my = ySc(cvtY);
-  // Green (the app's own --success token), not a shade of the curve's own
-  // amber-to-red gradient — "Your pick" previously reused the gradient's
-  // 60% amber stop almost exactly, which made it hard to tell apart from
-  // both the curve itself and the SS-torpedo marker (also amber). Nothing
-  // else on this chart is green, so it now reads as unambiguous.
-  var pickColor = tc('#1B6B3A','#54C285');
-  g.append('line').attr('x1',mx).attr('x2',mx).attr('y1',0).attr('y2',H)
-    .attr('stroke',pickColor).attr('stroke-width',1.75).attr('opacity',0.5);
+  var my = ySc(cvtY);
+  // mx and pickColor already defined above (before curves) so the vertical
+  // line draws behind the curves. The dot, connector, and pill stay here so
+  // they paint on top.
   g.append('circle').attr('cx',mx).attr('cy',my).attr('r',5.5)
     .attr('fill',pickColor).attr('stroke',tc('#F5F1EB','#222730')).attr('stroke-width',2);
   var pText = 'Your pick — '+fmt(cvtX);
