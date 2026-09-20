@@ -5702,16 +5702,8 @@ function calc(){
     +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Not in range')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
     +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'<br><span style="font-size:.76rem">Full age-by-age odds below ↓</span></div></div>'
     +'</div>'
-    +buildBeTimeline(curAge,beAge,betLifespan,survBE,isCouple,fmt(cvtTxTot))
-    +buildGapSpark(ages,vA,vB,curAge,betLifespan)
-    +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n,cvtTxLtcg)
-    +buildBetSection(fmt(cvtTxTot),beAge,curAge,survBE,isCouple,youOrOneOfYou)
     +'<div class="verdict '+vCls+'"><div class="vi">'+vIco+'</div><div class="vb"><strong>'+vHd+'</strong><p>'+vBd+'</p></div></div>'
-    +marginalChartHTML
-    +sensitivityHTML
-    + irmaaHTML
-    +widowCliffHTML
-    +rmdCfHTML
+    +buildBeTimeline(curAge,beAge,betLifespan,survBE,isCouple,fmt(cvtTxTot))
     +'<div class="card" id="survivalCard"><div class="stitle">❤️ '+(isCouple?'Will At Least One of You Be Around to Benefit?':'Will You Be Around to Benefit?')+'</div>'
     +'<p style="font-size:.9rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">'
     +(isCouple
@@ -5723,6 +5715,14 @@ function calc(){
     +'<p style="font-size:.78rem;color:var(--muted);margin-top:.75rem;margin-bottom:.6rem;line-height:1.45">These figures show population-level averages from <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener">Social Security Administration life expectancy statistics</a> — not personalized medical predictions. Your individual odds depend on your health, genetics, and lifestyle.</p>'
     +'<div class="alert anvy" style="margin-top:.5rem;font-size:.87rem"><strong>Worth keeping in mind:</strong> A plan built around the average life expectancy leaves half of all people underprepared. Many people live 10–20 years longer than they expect — and the longer you live, the more the Roth compounds.</div>'
     +'</div>'
+    +buildGapSpark(ages,vA,vB,curAge,betLifespan)
+    +buildTaxBar(cvtTxFed,cvtTxSt,niitCost,cvtTxTot,torpedoInc,stD.n,cvtTxLtcg)
+    +rmdCfHTML
+    +buildBetSection(fmt(cvtTxTot),beAge,curAge,survBE,isCouple,youOrOneOfYou)
+    +marginalChartHTML
+    +sensitivityHTML
+    + irmaaHTML
+    +widowCliffHTML
     +multiYearHTML
     +'<div class="card" style="margin-top:1.25rem;border-left:4px solid var(--amber)">'
     +'<div class="stitle">📋 What This Calculator Doesn\'t Model</div>'
