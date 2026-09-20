@@ -3748,11 +3748,12 @@ function buildBeTimeline(curAge,beAge,leAge,survBE,isCouple,costTxt){
 // down the page (see the "── PROJECTION SIMULATION ──" block above), just
 // plotted as a difference instead of two absolute lines.
 function buildGapSpark(agesArr,vAArr,vBArr,curAge,leAge){
-  var pts=[];
+  var pts=[], ageLabels=[];
   for(var i=0;i<agesArr.length;i++){
     if(agesArr[i]<curAge) continue;
     if(agesArr[i]>leAge) break;
     pts.push(vAArr[i]-vBArr[i]);
+    ageLabels.push(agesArr[i]);
   }
   if(pts.length<2) return '';
   var w=600,h=64,pad=4;
@@ -3764,8 +3765,8 @@ function buildGapSpark(agesArr,vAArr,vBArr,curAge,leAge){
   var coords=pts.map(function(v,i){ return (pad+i*xStep).toFixed(1)+','+yFor(v).toFixed(1); }).join(' ');
   var lineColor = pts[pts.length-1]>=0 ? 'var(--success)' : 'var(--danger)';
   var areaPts = coords+' '+(pad+(pts.length-1)*xStep).toFixed(1)+','+zeroY.toFixed(1)+' '+pad+','+zeroY.toFixed(1);
-  var startTxt = pts[0]>=0 ? fmt(pts[0])+' ahead' : fmt(pts[0])+' behind';
-  var endTxt = pts[pts.length-1]>=0 ? fmt(pts[pts.length-1])+' ahead' : fmt(pts[pts.length-1])+' behind';
+  var startTxt = pts[0]>=0 ? fmt(pts[0])+' ahead' : fmt(Math.abs(pts[0]))+' behind';
+  var endTxt = pts[pts.length-1]>=0 ? fmt(pts[pts.length-1])+' ahead' : fmt(Math.abs(pts[pts.length-1]))+' behind';
   // Labels are HTML overlays, not SVG <text> — the SVG uses
   // preserveAspectRatio="none" so it can stretch to the card's full width
   // while keeping a fixed px height; text glyphs would visibly distort
@@ -3774,18 +3775,92 @@ function buildGapSpark(agesArr,vAArr,vBArr,curAge,leAge){
   // % of h, which lines up with the SVG regardless of its rendered width.
   var zeroPct=(zeroY/h*100).toFixed(1);
   var endPct=(yFor(pts[pts.length-1])/h*100).toFixed(1);
-  return '<div class="gap-spark">'
-    +'<div class="gap-spark-chart" style="height:'+h+'px">'
+  // The crosshair line and dot live inside the SVG (viewBox coords scale
+  // correctly with the polyline under preserveAspectRatio="none"); the
+  // tooltip is an HTML overlay (SVG text would distort). Both start hidden.
+  return '<div class="gap-spark" id="gapSparkWrap"'
+    +' data-pts="'+JSON.stringify(pts)+'"'
+    +' data-ages="'+JSON.stringify(ageLabels)+'"'
+    +' data-pad="'+pad+'" data-xstep="'+xStep.toFixed(4)+'" data-h="'+h+'" data-w="'+w+'">'
+    +'<div class="gap-spark-chart" style="height:'+h+'px;cursor:crosshair">'
     +'<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="width:100%;height:100%;display:block" role="img" aria-label="Roth minus traditional after-tax wealth, age '+curAge+' to '+leAge+'">'
     +'<line x1="'+pad+'" y1="'+zeroY.toFixed(1)+'" x2="'+(w-pad)+'" y2="'+zeroY.toFixed(1)+'" stroke="var(--tip-bdr)" stroke-width="1" stroke-dasharray="3,3"/>'
     +'<polygon points="'+areaPts+'" fill="'+lineColor+'" opacity=".14"/>'
     +'<polyline points="'+coords+'" fill="none" stroke="'+lineColor+'" stroke-width="2"/>'
+    +'<line id="gapSparkCH" x1="0" y1="0" x2="0" y2="'+h+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3,2" display="none"/>'
+    +'<circle id="gapSparkDot" cx="0" cy="0" r="3.5" fill="'+lineColor+'" stroke="var(--bg)" stroke-width="1.5" display="none"/>'
     +'</svg>'
     +'<span class="gap-spark-zero" style="top:'+zeroPct+'%">$0</span>'
     +'<span class="gap-spark-end" style="top:'+endPct+'%;color:'+lineColor+'">'+endTxt+'</span>'
+    +'<div id="gapSparkTip" style="display:none;position:absolute;pointer-events:none;background:var(--tip-bg);border:1px solid var(--tip-bdr);border-radius:5px;padding:.3rem .55rem;font-size:.78rem;white-space:nowrap;z-index:10;color:var(--text)"></div>'
     +'</div>'
     +'<div class="gap-spark-lbl">Roth &minus; traditional after-tax wealth, at your assumed rates: <strong>'+startTxt+'</strong> at age '+curAge+' &rarr; <strong>'+endTxt+'</strong> by age '+leAge+'</div>'
     +'</div>';
+}
+
+function renderGapSpark(){
+  var wrap = document.getElementById('gapSparkWrap');
+  if(!wrap) return;
+  var chartDiv = wrap.querySelector('.gap-spark-chart');
+  var svg      = chartDiv.querySelector('svg');
+  var chLine   = svg.getElementById ? svg.getElementById('gapSparkCH')  : document.getElementById('gapSparkCH');
+  var dot      = svg.getElementById ? svg.getElementById('gapSparkDot') : document.getElementById('gapSparkDot');
+  var tip      = document.getElementById('gapSparkTip');
+  if(!chLine || !dot || !tip) return;
+
+  var pts      = JSON.parse(wrap.dataset.pts);
+  var ages     = JSON.parse(wrap.dataset.ages);
+  var pad      = parseFloat(wrap.dataset.pad);
+  var xStep    = parseFloat(wrap.dataset.xstep);
+  var svgH     = parseFloat(wrap.dataset.h);
+  var svgW     = parseFloat(wrap.dataset.w);
+  var minV     = Math.min(0, Math.min.apply(null, pts));
+  var maxV     = Math.max(0, Math.max.apply(null, pts));
+  var range    = (maxV - minV) || 1;
+  var yFor     = function(v){ return pad + (svgH - 2*pad) * (1 - (v - minV) / range); };
+
+  function onMove(e){
+    var rect = chartDiv.getBoundingClientRect();
+    var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    var frac = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    var idx  = Math.round(frac * (pts.length - 1));
+    var val  = pts[idx];
+    var age  = ages[idx];
+
+    // SVG viewBox x coordinate for this index
+    var svgX = (pad + idx * xStep).toFixed(1);
+    var svgY = yFor(val).toFixed(1);
+
+    chLine.setAttribute('x1', svgX);
+    chLine.setAttribute('x2', svgX);
+    chLine.removeAttribute('display');
+    dot.setAttribute('cx', svgX);
+    dot.setAttribute('cy', svgY);
+    dot.removeAttribute('display');
+
+    var label = val >= 0 ? fmt(val) + ' ahead' : fmt(Math.abs(val)) + ' behind';
+    tip.textContent = 'Age ' + age + ' \u2014 ' + label;
+
+    // Position tooltip: use the same fraction as the cursor, clamp near edges
+    var tipW = 140; // generous estimate before browser measures it
+    var rawLeft = frac * rect.width;
+    var tipLeft = Math.max(4, Math.min(rect.width - tipW - 4, rawLeft - tipW / 2));
+    tip.style.left  = tipLeft + 'px';
+    tip.style.top   = '-1.8rem';
+    tip.style.display = 'block';
+  }
+
+  function onLeave(){
+    chLine.setAttribute('display', 'none');
+    dot.setAttribute('display', 'none');
+    tip.style.display = 'none';
+  }
+
+  chartDiv.addEventListener('mousemove', onMove);
+  chartDiv.addEventListener('touchmove', onMove, {passive: true});
+  chartDiv.addEventListener('mouseleave', onLeave);
+  chartDiv.addEventListener('touchend', onLeave);
+  chartDiv.addEventListener('touchcancel', onLeave);
 }
 
 // ── TAX COMPOSITION BAR ──
@@ -5808,6 +5883,10 @@ function calc(){
     try{ renderRmdChart(rmdChartParams); }
     catch(e){ console.warn("RMD chart error:", e); }
   }
+
+  // ── GAP SPARK CROSSHAIR ──
+  try{ renderGapSpark(); }
+  catch(e){ console.warn("Gap spark crosshair error:", e); }
 
   // Hide the hero once the user runs a real calc with their own numbers.
   // _activeExample is set during example loads — skip the hide so clicking
