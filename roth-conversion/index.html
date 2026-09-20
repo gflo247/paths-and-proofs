@@ -492,6 +492,10 @@
       #sensChartWrap svg{max-height:240px;}
       .print-header{display:block!important;font-family:'Fraunces','Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1C3A5E;padding-bottom:.6rem;margin-bottom:1.25rem;border-bottom:2px solid #1C3A5E;}
     }
+    /* ── Share scenario panel ── */
+    #shareDetails{border-color:var(--navy-mid);margin-top:0}
+    #shareDetails summary{gap:.65rem}
+    .share-sum-hint{font-weight:400;font-size:.8rem;color:var(--muted)}
     /* ── Threshold picker (Step 3) ── */
     #thresholdPicker{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.25rem}
     .thr-card{display:flex;flex-direction:column;align-items:flex-start;gap:.2rem;padding:.6rem .85rem;border:1.5px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;text-align:left;min-width:0;flex:1}
@@ -1071,7 +1075,7 @@
     <button type="button" class="edit-link" onclick="jumpToStep(4)">Medicare &amp; assumptions</button>
   </div>
   <details class="rest" id="shareDetails" style="margin-bottom:1.25rem" ontoggle="if(this.open)refreshShareLink(true)">
-    <summary>🔗 Share this scenario</summary>
+    <summary>🔗 Share this scenario<span class="share-sum-hint">Send to a spouse or advisor, or bookmark for later</span></summary>
     <div class="restb">
       <div class="share-link-row">
         <input type="text" id="shareLinkBox" class="share-link-box" readonly onclick="this.select()">
