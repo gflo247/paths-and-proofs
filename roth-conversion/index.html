@@ -246,11 +246,6 @@
     .btn-primary:hover{background:var(--navy-mid);}
     .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);}
     .btn-ghost:hover{border-color:var(--navy-mid);color:var(--navy);}
-    .skip-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.5rem;font-size:.83rem;color:var(--muted);}
-    .skip-btn{background:none;border:none;padding:0;cursor:pointer;color:var(--navy-mid);font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:600;text-decoration:underline;text-underline-offset:2px;}
-    .skip-btn:hover{color:var(--navy);}
-    .skip-confirmed{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-top:.5rem;background:var(--sbg);border:1px solid var(--success);color:var(--success);padding:.7rem .9rem;border-radius:var(--rsm);font-size:.83rem;}
-    .skip-undo{background:none;border:1px solid var(--success);color:var(--success);border-radius:20px;padding:2px 10px;font-size:.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
     .edit-links-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:1rem;font-size:.85rem;}
     .edit-links-label{color:var(--muted);font-weight:600;}
     .edit-link{background:none;border:none;padding:0;cursor:pointer;color:var(--navy-mid);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;text-decoration:underline;text-underline-offset:2px;}
@@ -497,6 +492,14 @@
       #sensChartWrap svg{max-height:240px;}
       .print-header{display:block!important;font-family:'Fraunces','Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1C3A5E;padding-bottom:.6rem;margin-bottom:1.25rem;border-bottom:2px solid #1C3A5E;}
     }
+    /* ── Threshold picker (Step 3) ── */
+    #thresholdPicker{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.25rem}
+    .thr-card{display:flex;flex-direction:column;align-items:flex-start;gap:.2rem;padding:.6rem .85rem;border:1.5px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;text-align:left;min-width:0;flex:1}
+    .thr-card:hover:not(.thr-disabled){border-color:var(--navy);background:var(--navy-pale)}
+    .thr-selected{border-color:var(--navy)!important;outline:2px solid var(--navy);background:var(--navy-pale)}
+    .thr-disabled{opacity:.4;pointer-events:none;cursor:default}
+    .thr-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);line-height:1.2}
+    .thr-amt{font-size:1.05rem;font-weight:700;color:var(--navy);font-family:'DM Sans',system-ui,sans-serif}
   </style>
   <script>
     (function(){var d=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.setAttribute('data-theme','dark');})();
@@ -685,47 +688,14 @@
 </div>
 <div class="stepper" id="stepper">
   <div class="step-progress" id="stepProgress">
-    <div class="seg current" data-step="1" onclick="jumpToStep(1)"><div class="bar"></div><div class="lbl">How much</div></div>
-    <div class="seg" data-step="2" onclick="jumpToStep(2)"><div class="bar"></div><div class="lbl">About you</div></div>
-    <div class="seg" data-step="3" onclick="jumpToStep(3)"><div class="bar"></div><div class="lbl">Income &amp; accounts</div></div>
+    <div class="seg current" data-step="1" onclick="jumpToStep(1)"><div class="bar"></div><div class="lbl">About you</div></div>
+    <div class="seg" data-step="2" onclick="jumpToStep(2)"><div class="bar"></div><div class="lbl">Income &amp; accounts</div></div>
+    <div class="seg" data-step="3" onclick="jumpToStep(3)"><div class="bar"></div><div class="lbl">How much</div></div>
     <div class="seg" data-step="4" onclick="jumpToStep(4)"><div class="bar"></div><div class="lbl">Medicare &amp; assumptions</div></div>
   </div>
 
   <div class="card step-card current" data-step="1" id="stepCard1">
-    <div class="ch"><div class="sb">1</div><h2>How much are you converting?</h2></div>
-    <div class="field" style="margin-bottom:1.5rem">
-      <div class="flr"><label>Traditional IRA / 401(k) Balance</label><button class="tb" onclick="toggleTip('trad')">ⓘ</button></div>
-      <div class="idollar"><input type="number" id="tradBal" value="280000" min="0" step="1000" oninput="calc()"></div>
-          <div class="ttip" id="tip-trad"><strong>What to enter:</strong> Add up all your pre-tax retirement accounts — traditional IRAs, 401(k)s, 403(b)s, SEP-IRAs. Don’t have a statement handy? A rough estimate is fine for planning purposes. Every dollar here will eventually be taxed when withdrawn.</div>
-    </div>
-    <div class="field">
-      <div class="flr"><label>Amount You'd Like to Convert</label><button class="tb" onclick="toggleTip('convert')">ⓘ</button></div>
-      <div class="idollar"><input type="number" id="convertAmt" value="0" min="0" step="1000" oninput="if(document.getElementById('skipConfirmed').style.display!=='none')clearConvertAmtSkipFlag();calc()"></div>
-        <div class="ttip" id="tip-convert"><strong>How much is right?</strong> It depends on your bracket, Medicare thresholds, and how much of your Social Security is currently taxable. Your results show all three common stopping points. There's no income limit on conversions — anyone can convert in any year.</div>
-      <div class="skip-row" id="skipRow">
-        <span>Not sure how much to convert yet?</span>
-        <button type="button" class="skip-btn" onclick="skipConvertAmt()">Show me the thresholds first →</button>
-      </div>
-      <div class="skip-confirmed" id="skipConfirmed" style="display:none">
-        ✓ Skipped. We'll show your planning thresholds once we know your bracket and Medicare situation. <button type="button" class="skip-undo" onclick="undoSkipConvertAmt()">Undo</button>
-      </div>
-      <div id="rmdCvtHint" style="display:none;font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.5"></div>
-    </div>
-    <div class="privacy-note" role="note" style="justify-content:flex-start;margin:1.1rem 0 0;padding:0">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <span>Runs entirely in your browser — input numbers never leave your device. Your numbers are saved here automatically and will be waiting when you come back.</span>
-    </div>
-    <div class="step-nav">
-      <span></span>
-      <div class="step-nav-right">
-        <button type="button" class="quick-submit-link" style="display:none" onclick="revealResults()">Update results now →</button>
-        <button class="btn btn-primary" id="stepNext1" onclick="stepperNext()">Continue →</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="card step-card" data-step="2" id="stepCard2">
-    <div class="ch"><div class="sb">2</div><h2>About you</h2></div>
+    <div class="ch"><div class="sb">1</div><h2>About you</h2></div>
     <div class="frow">
       <div class="field">
         <div class="flr"><label>Current Age</label></div>
@@ -737,7 +707,7 @@
       </div>
     </div>
     <div class="field">
-      <div class="flr"><label>Filing Status</label><button class="tb" onclick="toggleTip('filing')">ⓘ</button></div>
+      <div class="flr"><label>Filing Status</label><button class="tb" onclick="toggleTip(‘filing’)">ⓘ</button></div>
       <select id="filingStatus" onchange="calc()">
         <option value="single">Single</option>
         <option value="mfj" selected>Married (jointly)</option>
@@ -748,19 +718,19 @@
     </div>
     <div id="spouseFields" style="display:none">
       <div class="field">
-        <div class="flr"><label>Spouse's Current Age</label></div>
+        <div class="flr"><label>Spouse’s Current Age</label></div>
         <input type="number" id="spouseAge" value="60" min="18" max="90" oninput="calc()">
       </div>
     </div>
       <div class="field">
-        <div class="flr"><label>Are You 65 or Older This Year?</label><button class="tb" onclick="toggleTip('senior')">ⓘ</button></div>
+        <div class="flr"><label>Are You 65 or Older This Year?</label><button class="tb" onclick="toggleTip(‘senior’)">ⓘ</button></div>
         <select id="seniorDeduction" onchange="calc()">
           <option value="0">Under 65 — standard deduction only</option>
           <option value="1">Yes, I am 65+ — add $6,000 deduction</option>
           <option value="2">Yes, both spouses are 65+ — add $12,000</option>
         </select>
         <div class="ttip" id="tip-senior"><strong>New for 2026:</strong> A new law gives people 65+ an extra $6,000 tax deduction per qualifying person, on top of the regular standard deduction. This can meaningfully reduce the tax cost of a conversion. Phases out above $75K (single) or $150K (joint). <strong>Not available if married filing separately</strong> — the law requires a joint return, so this selection has no effect if you file separately.</div>
-        <div class="hint" id="seniorMfsNote" style="display:none">Not available for Married Filing Separately — this deduction requires a joint return, so it won't change your results even if selected.</div>
+        <div class="hint" id="seniorMfsNote" style="display:none">Not available for Married Filing Separately — this deduction requires a joint return, so it won’t change your results even if selected.</div>
       </div>
     <div class="field">
       <div class="flr"><label>Your Sex</label></div>
@@ -771,7 +741,7 @@
       <div class="hint">Optional, but affects your own numbers — used only for the survival-probability estimate (skip it and you get a reasonable default; answer it and your own odds are accurate)</div>
     </div>
     <div class="field" id="spouseSexField" style="display:none">
-      <div class="flr"><label>Spouse's Sex</label></div>
+      <div class="flr"><label>Spouse’s Sex</label></div>
       <select id="spouseSex" onchange="calc()">
         <option value="male">Male</option>
         <option value="female" selected>Female</option>
@@ -779,7 +749,7 @@
       <div class="hint">For joint survival odds in the analysis</div>
     </div>
     <div class="field">
-      <div class="flr"><label>Your State</label><button class="tb" onclick="toggleTip('state')">ⓘ</button></div>
+      <div class="flr"><label>Your State</label><button class="tb" onclick="toggleTip(‘state’)">ⓘ</button></div>
       <select id="stateCode" onchange="calc()">
         <option value="">— Select your state —</option>
           <option value="AL">Alabama</option>
@@ -834,12 +804,12 @@
           <option value="WY">Wyoming — no income tax ✓</option>
           <option value="DC">Washington D.C.</option>
       </select>
-        <div class="ttip" id="tip-state"><strong>Why this matters:</strong> State income taxes typically add 4–9% in states that tax IRA income. Some states also exempt IRA withdrawals in retirement — meaning you'd pay state tax on the conversion today but nothing when you withdraw later, which affects the comparison. Selecting your state adds these numbers automatically.</div>
+        <div class="ttip" id="tip-state"><strong>Why this matters:</strong> State income taxes typically add 4–9% in states that tax IRA income. Some states also exempt IRA withdrawals in retirement — meaning you’d pay state tax on the conversion today but nothing when you withdraw later, which affects the comparison. Selecting your state adds these numbers automatically.</div>
         <div id="stateRetNote" style="margin-top:6px;"></div>
 
         <div id="nyLocalTaxField" style="display:none">
           <div class="field">
-            <div class="flr"><label>NYC or Yonkers Resident?</label><button class="tb" onclick="toggleTip('nyLocal')">ⓘ</button></div>
+            <div class="flr"><label>NYC or Yonkers Resident?</label><button class="tb" onclick="toggleTip(‘nyLocal’)">ⓘ</button></div>
             <select id="nyLocalTax" onchange="calc()">
               <option value="">Neither — rest of New York State</option>
               <option value="nyc">New York City resident</option>
@@ -851,13 +821,13 @@
 
         <div id="orLocalTaxField" style="display:none">
           <div class="field">
-            <div class="flr"><label>Portland-Area Locality?</label><button class="tb" onclick="toggleTip('orLocal')">ⓘ</button></div>
+            <div class="flr"><label>Portland-Area Locality?</label><button class="tb" onclick="toggleTip(‘orLocal’)">ⓘ</button></div>
             <select id="orLocalTax" onchange="calc()">
               <option value="">Neither — rest of Oregon</option>
               <option value="metro">Metro area (Washington or Clackamas County)</option>
               <option value="multnomah">Multnomah County (Portland)</option>
             </select>
-            <div class="ttip" id="tip-orLocal">Metro's Supportive Housing Services tax (1% above $125,000 single / $200,000 joint) covers the whole 3-county Metro district — Multnomah, Washington, and Clackamas. Multnomah County residents ALSO owe the county's own Preschool For All tax on top (1.5% above the same thresholds, an additional 1.5% — 3% total — above $250,000 single / $400,000 joint), so a Multnomah filer can owe up to 4% combined. Washington/Clackamas County residents inside Metro owe only the 1% Metro tax, not Preschool For All. Every other Oregon resident pays $0 local income tax.</div>
+            <div class="ttip" id="tip-orLocal">Metro’s Supportive Housing Services tax (1% above $125,000 single / $200,000 joint) covers the whole 3-county Metro district — Multnomah, Washington, and Clackamas. Multnomah County residents ALSO owe the county’s own Preschool For All tax on top (1.5% above the same thresholds, an additional 1.5% — 3% total — above $250,000 single / $400,000 joint), so a Multnomah filer can owe up to 4% combined. Washington/Clackamas County residents inside Metro owe only the 1% Metro tax, not Preschool For All. Every other Oregon resident pays $0 local income tax.</div>
           </div>
         </div>
 
@@ -919,35 +889,35 @@
               <option value="WY">Wyoming — no income tax ✓</option>
               <option value="DC">Washington D.C.</option>
             </select>
-            <p style="font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.5">Shows what the same conversion would cost if you wait until you're a resident of this state instead — using your same age, income, and conversion amount. See the full breakdown below for the comparison.</p>
+            <p style="font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.5">Shows what the same conversion would cost if you wait until you’re a resident of this state instead — using your same age, income, and conversion amount. See the full breakdown below for the comparison.</p>
           </div>
         </details>
     </div>
     <div class="step-nav">
-      <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
+      <span></span>
       <div class="step-nav-right">
         <button type="button" class="quick-submit-link" style="display:none" onclick="revealResults()">Update results now →</button>
-        <button class="btn btn-primary" onclick="stepperNext()">Continue →</button>
+        <button class="btn btn-primary" id="stepNext1" onclick="stepperNext()">Continue →</button>
       </div>
     </div>
   </div>
 
-  <div class="card step-card" data-step="3" id="stepCard3">
-    <div class="ch"><div class="sb">3</div><h2>Income &amp; accounts</h2></div>
+  <div class="card step-card" data-step="2" id="stepCard2">
+    <div class="ch"><div class="sb">2</div><h2>Income &amp; accounts</h2></div>
     <div class="field">
-      <div class="flr"><label>Your 2026 Wages &amp; Other Income (before conversion, excluding SS, &amp; pension)</label><button class="tb" onclick="toggleTip('income')">ⓘ</button></div>
+      <div class="flr"><label>Your 2026 Wages &amp; Other Income (before conversion, excluding SS, &amp; pension)</label><button class="tb" onclick="toggleTip(‘income’)">ⓘ</button></div>
       <div class="idollar"><input type="number" id="income" value="72000" min="0" step="1000" oninput="calc()"></div>
         <div class="ttip" id="tip-income"><strong>Quick:</strong> Add lines <strong>1z</strong> (wages), <strong>2b</strong> (taxable interest), <strong>3b</strong> (dividends), <strong>7a</strong> (capital gains), and <strong>8</strong> (other income from Schedule 1) from your most recent federal return — rough estimates are fine. <strong>For more precision:</strong> use 3b minus 3a here and move line <strong>3a</strong> (qualified dividends) and any long-term gains from Schedule D to the <strong>Qualified Dividends &amp; Long-Term Capital Gains</strong> field in the optional section below, since those are taxed at lower preferential rates. Enter pension/IRA income (lines 4b/5b) in the field below — some states shelter it differently. <strong>Do NOT include Social Security (line 6b) here</strong> — it goes in its own field so the tool can model how converting makes more of it taxable.</div>
         <div class="hint" id="niitHint" style="display:none">Your total income is approaching the NIIT threshold — if any of the amount above includes investment income, open the section below to model the 3.8% Net Investment Income Tax (NIIT) surcharge on it separately.</div>
     </div>
     <div class="field">
-      <div class="flr"><label>Pension / Other Retirement-Account Income (optional)</label><button class="tb" onclick="toggleTip('pension')">ⓘ</button></div>
+      <div class="flr"><label>Pension / Other Retirement-Account Income (optional)</label><button class="tb" onclick="toggleTip(‘pension’)">ⓘ</button></div>
       <div class="idollar"><input type="number" id="pensionIncome" value="0" min="0" step="1000" oninput="calc()"></div>
-        <div class="ttip" id="tip-pension"><strong>What to include:</strong> A pension, annuity, or IRA/401(k) distributions you're already receiving this year — not the conversion itself. Several states, including Michigan, shelter this specific kind of income from state tax up to a cap, but that cap doesn't apply to wages. Splitting this out from the field above means the state-tax number reflects the real cap, instead of assuming your whole income competes for it. Leave at $0 if you're still working and not yet drawing a pension or other retirement account. On your most recent federal return, this is lines <strong>4b</strong> (IRA/401(k) distributions, taxable amount) and <strong>5b</strong> (pensions and annuities, taxable amount). If line 4b includes a prior-year Roth conversion, subtract that amount — this field is for ongoing distributions only.</div>
-        <div class="hint">Not sure? Enter $0 — this only matters if you're already receiving pension or retirement-account income separate from this year's conversion</div>
+        <div class="ttip" id="tip-pension"><strong>What to include:</strong> A pension, annuity, or IRA/401(k) distributions you’re already receiving this year — not the conversion itself. Several states, including Michigan, shelter this specific kind of income from state tax up to a cap, but that cap doesn’t apply to wages. Splitting this out from the field above means the state-tax number reflects the real cap, instead of assuming your whole income competes for it. Leave at $0 if you’re still working and not yet drawing a pension or other retirement account. On your most recent federal return, this is lines <strong>4b</strong> (IRA/401(k) distributions, taxable amount) and <strong>5b</strong> (pensions and annuities, taxable amount). If line 4b includes a prior-year Roth conversion, subtract that amount — this field is for ongoing distributions only.</div>
+        <div class="hint">Not sure? Enter $0 — this only matters if you’re already receiving pension or retirement-account income separate from this year’s conversion</div>
     </div>
     <div class="field">
-      <div class="flr"><label>Annual Social Security Benefits</label><button class="tb" onclick="toggleTip('ss')">ⓘ</button></div>
+      <div class="flr"><label>Annual Social Security Benefits</label><button class="tb" onclick="toggleTip(‘ss’)">ⓘ</button></div>
       <div class="idollar"><input type="number" id="ssIncome" value="24000" min="0" step="500" oninput="calc()"></div>
         <div class="ttip" id="tip-ss"><strong>Why this field changes everything:</strong> Social Security benefits become partly taxable when your income reaches certain thresholds. A Roth conversion can push more of your SS into taxable territory — a hidden extra cost called the Social Security tax effect. At worst, each $1 converted triggers 85¢ more of SS taxation, pushing your real tax rate to ~40% even in the 22% bracket. Enter $0 if you do not receive SS yet. Use line <strong>6a</strong> from your most recent federal return — your total benefit before any taxability calculation. Do not use line 6b (the taxable amount); the tool calculates the taxable portion itself.</div>
         <div class="hint" id="ssHint">Enter your total annual SS benefit, or $0 if not yet receiving</div>
@@ -992,17 +962,45 @@
     </div>
   </div>
 
+  <div class="card step-card" data-step="3" id="stepCard3">
+    <div class="ch"><div class="sb">3</div><h2>How much are you converting?</h2></div>
+    <div class="field" style="margin-bottom:1.5rem">
+      <div class="flr"><label>Traditional IRA / 401(k) Balance</label><button class="tb" onclick="toggleTip(‘trad’)">ⓘ</button></div>
+      <div class="idollar"><input type="number" id="tradBal" value="280000" min="0" step="1000" oninput="calc()"></div>
+          <div class="ttip" id="tip-trad"><strong>What to enter:</strong> Add up all your pre-tax retirement accounts — traditional IRAs, 401(k)s, 403(b)s, SEP-IRAs. Don’t have a statement handy? A rough estimate is fine for planning purposes. Every dollar here will eventually be taxed when withdrawn.</div>
+    </div>
+    <div class="field">
+      <p style="font-size:.82rem;font-weight:600;margin:0 0 .5rem;color:var(--text)">Pick a threshold as your starting point:</p>
+      <div id="thresholdPicker"></div>
+      <div class="flr" style="margin-top:1.25rem"><label>Or Enter a Specific Amount</label><button class="tb" onclick="toggleTip(‘convert’)">ⓘ</button></div>
+      <div class="idollar"><input type="number" id="convertAmt" value="0" min="0" step="1000" oninput="calc()"></div>
+        <div class="ttip" id="tip-convert"><strong>How much is right?</strong> It depends on your bracket, Medicare thresholds, and how much of your Social Security is currently taxable. Your results show all three common stopping points. There’s no income limit on conversions — anyone can convert in any year.</div>
+      <div id="rmdCvtHint" style="display:none;font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.5"></div>
+    </div>
+    <div class="privacy-note" role="note" style="justify-content:flex-start;margin:1.1rem 0 0;padding:0">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Runs entirely in your browser — input numbers never leave your device. Your numbers are saved here automatically and will be waiting when you come back.</span>
+    </div>
+    <div class="step-nav">
+      <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
+      <div class="step-nav-right">
+        <button type="button" class="quick-submit-link" style="display:none" onclick="revealResults()">Update results now →</button>
+        <button class="btn btn-primary" onclick="stepperNext()">Continue →</button>
+      </div>
+    </div>
+  </div>
+
   <div class="card step-card" data-step="4" id="stepCard4">
     <div class="ch"><div class="sb">4</div><h2>Medicare &amp; assumptions</h2></div>
     <div class="frow">
       <div class="field">
-        <div class="flr"><label>Are You on Medicare?</label><button class="tb" onclick="toggleTip('medicare')">ⓘ</button></div>
+        <div class="flr"><label>Are You on Medicare?</label><button class="tb" onclick="toggleTip(‘medicare’)">ⓘ</button></div>
         <select id="medicareStatus" onchange="calc()">
           <option value="none">Not on Medicare, not expecting it soon</option>
           <option value="one" selected>Yes — just me, or within 3 years</option>
           <option value="two">Yes — both of us, married couple</option>
         </select>
-        <div class="ttip" id="tip-medicare"><strong>The hidden two-year trap:</strong> Medicare charges higher premiums to people with higher incomes — called IRMAA. It's based on your income from 2 years ago. A large Roth conversion in 2026 can raise your Medicare bill in 2028. This is one of the most commonly missed costs of converting.<br><br><strong>What counts as income for Medicare?</strong> Medicare adds up all your income from all sources — wages, IRA withdrawals, taxable Social Security, dividends, and capital gains. A Roth conversion counts as income dollar-for-dollar, which is why large conversions can push you into a higher premium tier.</div>
+        <div class="ttip" id="tip-medicare"><strong>The hidden two-year trap:</strong> Medicare charges higher premiums to people with higher incomes — called IRMAA. It’s based on your income from 2 years ago. A large Roth conversion in 2026 can raise your Medicare bill in 2028. This is one of the most commonly missed costs of converting.<br><br><strong>What counts as income for Medicare?</strong> Medicare adds up all your income from all sources — wages, IRA withdrawals, taxable Social Security, dividends, and capital gains. A Roth conversion counts as income dollar-for-dollar, which is why large conversions can push you into a higher premium tier.</div>
       </div>
       <div class="field">
         <div class="flr"><label>Include Medicare Part D?</label></div>
@@ -1013,18 +1011,18 @@
       </div>
     </div>
     <div class="field">
-      <div class="flr"><label>Annual Investment Return (after inflation) — <span id="gDisp" style="color:var(--navy);font-weight:700">7%</span></label><button class="tb" onclick="toggleTip('growth')">ⓘ</button></div>
-      <div class="rw"><input type="range" id="growthRate" min="3" max="12" step=".5" value="7" oninput="document.getElementById('gDisp').textContent=this.value+'%';document.getElementById('gValDisp').textContent=this.value+'%';calc()"><div class="rv" id="gValDisp">7%</div></div>
+      <div class="flr"><label>Annual Investment Return (after inflation) — <span id="gDisp" style="color:var(--navy);font-weight:700">7%</span></label><button class="tb" onclick="toggleTip(‘growth’)">ⓘ</button></div>
+      <div class="rw"><input type="range" id="growthRate" min="3" max="12" step=".5" value="7" oninput="document.getElementById(‘gDisp’).textContent=this.value+’%’;document.getElementById(‘gValDisp’).textContent=this.value+’%’;calc()"><div class="rv" id="gValDisp">7%</div></div>
         <div class="ttip" id="tip-growth"><strong>What to use?</strong> Historically ~7% after inflation for a diversified stock portfolio. A balanced mix of stocks and bonds might average 5–6%. Try sliding it to see how sensitive your results are.</div>
     </div>
     <div class="field">
-      <div class="flr"><label>Your Expected <strong>Federal</strong> Rate in Retirement</label><button class="tb" onclick="toggleTip('retrate')">ⓘ</button></div>
+      <div class="flr"><label>Your Expected <strong>Federal</strong> Rate in Retirement</label><button class="tb" onclick="toggleTip(‘retrate’)">ⓘ</button></div>
       <div class="ipct"><input type="number" id="retRate" value="22" min="0" max="60" oninput="calc()"></div>
-        <div class="ttip" id="tip-retrate"><strong>Federal only — I add your state rate automatically.</strong> Enter your expected federal bracket rate on IRA withdrawals. Select your state above and I'll fold the state rate in automatically so the comparison is apples-to-apples. Use the estimator below if you are unsure.</div>
+        <div class="ttip" id="tip-retrate"><strong>Federal only — I add your state rate automatically.</strong> Enter your expected federal bracket rate on IRA withdrawals. Select your state above and I’ll fold the state rate in automatically so the comparison is apples-to-apples. Use the estimator below if you are unsure.</div>
         <details class="rest">
           <summary>Not sure what rate to enter? Calculate it here ↓</summary>
           <div class="restb">
-            <p style="font-size:.82rem;color:var(--muted);margin-bottom:8px;line-height:1.5">Enter your expected retirement income sources and I'll compute the marginal federal rate on your IRA withdrawals — including how conversions can trigger extra tax on Social Security benefits.</p>
+            <p style="font-size:.82rem;color:var(--muted);margin-bottom:8px;line-height:1.5">Enter your expected retirement income sources and I’ll compute the marginal federal rate on your IRA withdrawals — including how conversions can trigger extra tax on Social Security benefits.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:6px">
               <div>
                 <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">SS benefit / yr</label>
@@ -1050,12 +1048,12 @@
         </details>
     </div>
     <div class="field">
-      <div class="flr"><label>Pay Conversion Taxes From</label><button class="tb" onclick="toggleTip('taxsrc')">ⓘ</button></div>
+      <div class="flr"><label>Pay Conversion Taxes From</label><button class="tb" onclick="toggleTip(‘taxsrc’)">ⓘ</button></div>
       <select id="taxSource" onchange="calc()">
         <option value="outside">Pay from outside savings ✓ Recommended for most</option>
         <option value="inside">Take taxes from the IRA itself (reduces converted amount)</option>
       </select>
-        <div class="ttip" id="tip-taxsrc"><strong>This matters more than people expect:</strong> Paying from outside savings puts the full converted amount into the Roth tax-free. Paying from inside means less money enters the Roth — you'd be giving up tax-advantaged growth on the tax payment itself.</div>
+        <div class="ttip" id="tip-taxsrc"><strong>This matters more than people expect:</strong> Paying from outside savings puts the full converted amount into the Roth tax-free. Paying from inside means less money enters the Roth — you’d be giving up tax-advantaged growth on the tax payment itself.</div>
     </div>
     <div class="step-nav">
       <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
@@ -1067,9 +1065,9 @@
 <div id="resultsArea" style="display:none">
   <div class="edit-links-row">
     <span class="edit-links-label">✎ Edit:</span>
-    <button type="button" class="edit-link" onclick="jumpToStep(1)">How much</button>
-    <button type="button" class="edit-link" onclick="jumpToStep(2)">About you</button>
-    <button type="button" class="edit-link" onclick="jumpToStep(3)">Income &amp; accounts</button>
+    <button type="button" class="edit-link" onclick="jumpToStep(1)">About you</button>
+    <button type="button" class="edit-link" onclick="jumpToStep(2)">Income &amp; accounts</button>
+    <button type="button" class="edit-link" onclick="jumpToStep(3)">How much</button>
     <button type="button" class="edit-link" onclick="jumpToStep(4)">Medicare &amp; assumptions</button>
   </div>
   <details class="rest" id="shareDetails" style="margin-bottom:1.25rem" ontoggle="if(this.open)refreshShareLink(true)">
@@ -1506,10 +1504,6 @@ function animCount(el,to,fmtFn,dur=900){
 function setConvert(amt,targetId,needsDetails){
   var el=document.getElementById('convertAmt');
   if(el){el.value=amt;}
-  // A real amount is being set here, so clear any leftover "you skipped
-  // this" state from step 1 — otherwise going back to edit it shows a
-  // filled-in field next to a banner claiming it was skipped.
-  clearConvertAmtSkipFlag();
   calc();
   if(targetId){
     jumpToLever(targetId,needsDetails);
@@ -1615,42 +1609,47 @@ function printResults(){
   if(!_wizardCompleted) revealResults(true);
   window.print();
 }
-var _lastConvertAmt = null;
-function applyConvertAmtSkipUI(skipped){
-  var row = document.getElementById('skipRow'), conf = document.getElementById('skipConfirmed');
-  if(row) row.style.display = skipped ? 'none' : 'flex';
-  if(conf) conf.style.display = skipped ? 'flex' : 'none';
-}
-function clearConvertAmtSkipFlag(){
-  applyConvertAmtSkipUI(false);
-  if(_canStore){ try{ localStorage.removeItem('rg_v1_skip'); }catch(e){} }
-}
 function tryDefaultConvertAmt(){
   var el = document.getElementById('convertAmt');
   if(el) el.value = 20000;
-  clearConvertAmtSkipFlag();
   if(el) el.dispatchEvent(new Event('input'));
 }
-// Skipping is a small, deliberate, explicit choice -- unlike the rest of the
-// wizard's fields, which saveInputs() deliberately waits to persist until the
-// wizard is completed once (see that function's own comment), so it never
-// treats a first-time visitor's still-being-filled-in defaults as saved state.
-// A skip on step 1 of a fresh session never reaches that point, so it needs
-// its own, always-on persistence key -- otherwise a refresh mid-wizard just
-// reloads the field's static HTML default and silently undoes the skip.
-function skipConvertAmt(){
-  var el = document.getElementById('convertAmt');
-  if(el){ _lastConvertAmt = el.value; el.value = ''; }
-  applyConvertAmtSkipUI(true);
-  calc();
-  if(_canStore){ try{ localStorage.setItem('rg_v1_skip','1'); }catch(e){} }
-}
-function undoSkipConvertAmt(){
-  var el = document.getElementById('convertAmt');
-  if(el) el.value = (_lastConvertAmt !== null && _lastConvertAmt !== '') ? _lastConvertAmt : 0;
-  applyConvertAmtSkipUI(false);
-  calc();
-  if(_canStore){ try{ localStorage.removeItem('rg_v1_skip'); }catch(e){} }
+
+// ── THRESHOLD PICKER: compact three-button version of the optimizer ──
+// Renders into #thresholdPicker inside Step 3 so users can click a threshold
+// amount directly before (or instead of) typing a custom value.
+function buildThresholdPicker(optTargets, fmt){
+  var cvtAmt = +(document.getElementById('convertAmt')||{}).value || 0;
+  var items = [
+    {
+      label: 'Fill your bracket',
+      amt:   (optTargets.bracketState !== 'na' && optTargets.bracketAmt > 0) ? optTargets.bracketAmt : null,
+      state: optTargets.bracketState,
+    },
+    {
+      label: 'Medicare-safe room',
+      amt:   (optTargets.irmaaState !== 'na' && optTargets.irmaaAmt > 0) ? optTargets.irmaaAmt : null,
+      state: optTargets.irmaaState,
+    },
+    (function(){
+      if(!optTargets.torpOpts) return {label:'Torpedo zone',amt:null,state:'na'};
+      var t = optTargets.torpOpts;
+      if(t.alreadyClear)  return {label:'Torpedo zone',amt:null,state:'na'};
+      if(t.alreadyFiring) return {label:'Clear torpedo zone', amt:t.clearAmt>0?t.clearAmt:null, state:'ok'};
+      return {label:'Avoid torpedo zone', amt:t.avoidAmt>0?t.avoidAmt:null, state:'ok'};
+    })(),
+  ];
+  return items.map(function(item){
+    var active = item.amt !== null;
+    var selected = active && Math.round(cvtAmt) === Math.round(item.amt);
+    var amtText = active ? fmt(item.amt) : '—';
+    var clickAttr = active ? ' onclick="setConvert(' + Math.round(item.amt) + ')"' : '';
+    var cls = 'thr-card' + (selected ? ' thr-selected' : '') + (active ? '' : ' thr-disabled');
+    return '<button type="button" class="' + cls + '"' + clickAttr + '>'
+         + '<span class="thr-label">' + item.label + '</span>'
+         + '<span class="thr-amt">' + amtText + '</span>'
+         + '</button>';
+  }).join('');
 }
 
 // ── OPTIMIZER: compute three smart targets ──
@@ -4177,7 +4176,7 @@ function clearAllInputs(){
   var gd=document.getElementById('gDisp'), gv=document.getElementById('gValDisp');
   if(gd) gd.textContent='7%'; if(gv) gv.textContent='7%';
   // Clear localStorage
-  if(_canStore) try{ localStorage.removeItem('rg_v1'); localStorage.removeItem('rg_v1_skip'); }catch(e){}
+  if(_canStore) try{ localStorage.removeItem('rg_v1'); }catch(e){}
   // Hide example banner
   var banner=document.getElementById('exBanner');
   if(banner) banner.style.display='none';
@@ -4202,9 +4201,6 @@ function clearAllInputs(){
   if(stepperEl) stepperEl.style.display = 'block';
   var spEl = document.getElementById('stepProgress');
   if(spEl) spEl.classList.remove('clickable');
-  var skipRowEl = document.getElementById('skipRow'), skipConfEl = document.getElementById('skipConfirmed');
-  if(skipRowEl) skipRowEl.style.display = 'flex';
-  if(skipConfEl) skipConfEl.style.display = 'none';
   renderStep();
   showHero();
   // Recalculate
@@ -4313,10 +4309,6 @@ function loadExample(name){
   setVal('seniorDeduction',f.seniorDeduction); setVal('stateCode',f.stateCode);
   setVal('income',f.income); setVal('pensionIncome',f.pensionIncome); setVal('ssIncome',f.ssIncome); setVal('niiIncome',f.niiIncome); setVal('ltcgIncome',f.ltcgIncome);
   setVal('convertAmt',f.convertAmt); setVal('tradBal',f.tradBal);
-  // An example always sets a real convert amount -- clear any stale skip
-  // state left over from a prior manual "Skip this" click, so its UI and
-  // persisted flag don't reassert themselves on the next refresh.
-  clearConvertAmtSkipFlag();
   setVal('rothBal',f.rothBal); setVal('iraBasis',f.iraBasis);
   setVal('growthRate',f.growthRate); setVal('retRate',f.retRate);
   setVal('taxSource',f.taxSource); setVal('medicareStatus',f.medicareStatus);
@@ -4363,10 +4355,6 @@ function clearExample(){
   sv('convertAmt',0); sv('tradBal',280000); sv('rothBal',40000); sv('iraBasis',0);
   sv('growthRate',7); sv('retRate',22);
   sv('taxSource','outside'); sv('medicareStatus','one'); sv('partD','yes');
-  // Resets convertAmt to a real value -- clear any stale skip state left
-  // over from a prior manual "Skip this" click (see loadExample()'s own
-  // identical comment), so it doesn't reassert itself on the next refresh.
-  clearConvertAmtSkipFlag();
   var gd=document.getElementById('gDisp'),gv=document.getElementById('gValDisp');
   if(gd) gd.textContent='7%'; if(gv) gv.textContent='7%';
   var banner=document.getElementById('exBanner');
@@ -4415,9 +4403,7 @@ function collectInputs(){
 // (anyone can hand-edit the hash), so a crafted value like currentAge=-99999
 // must not reach the DOM unclamped. <select> fields are already safe on
 // their own -- assigning an unrecognized .value is a no-op. convertAmt's
-// empty string is a legitimate state (the "skip this" affordance blanks it,
-// see skipConvertAmt()) and must pass through unclamped, not get rejected as
-// garbage.
+// empty string passes through unclamped, not rejected as garbage.
 function applyInputs(obj){
   INPUT_FIELDS.forEach(function(id){
     var el=document.getElementById(id); if(!el || obj[id]===undefined) return;
@@ -4479,7 +4465,6 @@ function loadSavedInputs(){
 var SHARE_VERSION = 'v1';
 function encodeShareState(){
   var vals = collectInputs();
-  vals.skip = (document.getElementById('convertAmt').value === '');
   // Every current INPUT_FIELDS member is a bounded number or a fixed-enum
   // <select>, so plain btoa (Latin1-only) never actually hits a non-Latin1
   // character today -- but btoa THROWS outright on one rather than mangling
@@ -4524,13 +4509,6 @@ function loadFromShareHash(){
   var payload=decodeShareState(h.slice(3));
   if(!payload) return false;
   applyInputs(payload);
-  applyConvertAmtSkipUI(!!payload.skip);
-  // A recipient's own leftover skip-flag from an earlier, unrelated session
-  // must not silently blank the SENDER's real convertAmt value back out --
-  // this key isn't gated by _wizardCompleted at all, so it's read back
-  // unconditionally a few lines below in DOMContentLoaded regardless of
-  // where the inputs actually came from.
-  if(_canStore){ try{ localStorage.removeItem('rg_v1_skip'); }catch(e){} }
   // Strip the hash immediately, before anything else in this path could
   // throw, so a decoded scenario's numbers don't linger in the visible
   // address bar / history entry any longer than necessary.
@@ -5392,11 +5370,13 @@ function calc(){
     $('taxPanel').innerHTML = '<div style="font-size:.9rem;color:var(--muted)"><strong style="color:var(--text);font-weight:600">No conversion amount selected.</strong> Pick a planning threshold above to see the full breakdown.</div>';
   }
 
-  // ── OPTIMIZER PANEL (needs all SS/IRMAA vars) ──
+  // ── OPTIMIZER PANEL + THRESHOLD PICKER (needs all SS/IRMAA vars) ──
   (function(){
     var optTargets=computeOptTargets(income+pensionIncome+nii,ltcg,ss,status,STDD[status],nSr,nMed,taxableFrac);
     var optEl=document.getElementById('optimizerPanel');
     if(optEl)optEl.innerHTML=buildOptimizerPanel(optTargets,fmt,pct,nMed,ss,cvtAmt);
+    var pickerEl=document.getElementById('thresholdPicker');
+    if(pickerEl)pickerEl.innerHTML=buildThresholdPicker(optTargets,fmt);
   })();
 
   // NIIT proximity hint — show when total income approaches the threshold and
@@ -5933,23 +5913,8 @@ window.addEventListener('scroll', function(){
 // first render for EVERY state, not just RIX states (calcTaxableSS is used broadly).
 document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('taxYearTitle').textContent=new Date().getFullYear();
-  // A valid shared link takes priority over whatever's already saved
-  // locally -- loadFromShareHash() also clears any stale rg_v1_skip key on
-  // success, before the unconditional read of it just below.
+  // A valid shared link takes priority over whatever's already saved locally.
   var _hadSavedInputs = loadFromShareHash() || loadSavedInputs();
-  // Separate from the main rg_v1 blob above -- see skipConvertAmt()'s own
-  // comment for why this needs its own always-on key, independent of
-  // _wizardCompleted/_hadSavedInputs (restoring it must not change whether
-  // this load lands on the wizard or jumps straight to results).
-  if(_canStore){
-    try{
-      if(localStorage.getItem('rg_v1_skip')==='1'){
-        var _cae = document.getElementById('convertAmt');
-        if(_cae){ _lastConvertAmt = _cae.value; _cae.value = ''; }
-        applyConvertAmtSkipUI(true);
-      }
-    }catch(e){}
-  }
   // On desktop, the right-column card holding this panel is otherwise shorter than
   // the left column, leaving a stretched, empty gap below it (CSS grid stretches both
   // columns to match the taller one). Open it by default only above the same 740px

@@ -57,7 +57,6 @@ const FIELDS_HTML = `
   <select id="nyLocalTax"><option value="" selected>Neither</option><option value="nyc">NYC</option><option value="yonkers">Yonkers</option></select>
   <select id="orLocalTax"><option value="" selected>Neither</option><option value="metro">Metro</option><option value="multnomah">Multnomah</option></select>
   <span id="gDisp">7%</span><span id="gValDisp">7%</span>
-  <div id="skipRow"></div><div id="skipConfirmed"></div>
   <input id="shareLinkBox"><button id="shareCopyBtn"></button>
 `;
 
@@ -106,7 +105,7 @@ function extract(html, { wizardCompleted = false, storage = makeStorage() } = {}
   const domReadyIdx = scriptSrc.indexOf("document.addEventListener('DOMContentLoaded'");
   if (domReadyIdx !== -1) scriptSrc = scriptSrc.slice(0, domReadyIdx);
   const suffix = (wizardCompleted ? '_wizardCompleted=true;\n' : '')
-    + 'return {INPUT_FIELDS, collectInputs, applyInputs, saveInputs, loadSavedInputs, encodeShareState, decodeShareState, loadFromShareHash, applyConvertAmtSkipUI, refreshShareLink};';
+    + 'return {INPUT_FIELDS, collectInputs, applyInputs, saveInputs, loadSavedInputs, encodeShareState, decodeShareState, loadFromShareHash, refreshShareLink};';
   const mod = new Function(scriptSrc + '\n' + suffix)();
   return { ...mod, document: dom.window.document, dom };
 }
@@ -199,39 +198,7 @@ function checkEq(label, actual, expected) {
   checkTrue('loadFromShareHash returns false with no hash present', loadFromShareHash() === false);
 }
 
-// --- 6. The rg_v1_skip clobber bug the Plan-agent review caught: a
-// recipient's own STALE skip flag from an unrelated earlier session must
-// not blank out the SENDER's real convertAmt, and must itself be cleared. ---
-{
-  const sender = extract(html, { wizardCompleted: true });
-  sender.document.getElementById('convertAmt').value = '35000';
-  const hash = '#s=' + sender.encodeShareState(); // skip:false, convertAmt:35000
-
-  const recipientStorage = makeStorage();
-  recipientStorage.setItem('rg_v1_skip', '1'); // recipient's own stale flag, seeded before the link is ever opened
-  const recipient = extract(html, { storage: recipientStorage });
-  recipient.dom.window.location.hash = hash;
-  recipient.loadFromShareHash();
-  checkEq('A stale local rg_v1_skip does not blank the sender\'s real convertAmt', recipient.document.getElementById('convertAmt').value, '35000');
-  checkTrue('loadFromShareHash clears the stale rg_v1_skip key', recipientStorage.getItem('rg_v1_skip') === null);
-}
-
-// --- 7. A genuinely skipped scenario (sender had convertAmt blank) decodes
-// to a blank field and the correct skip-confirmed UI state, not silently
-// dropped or misrendered as $0. ---
-{
-  const sender = extract(html, { wizardCompleted: true });
-  sender.document.getElementById('convertAmt').value = '';
-  const hash = '#s=' + sender.encodeShareState();
-
-  const recipient = extract(html);
-  recipient.dom.window.location.hash = hash;
-  recipient.loadFromShareHash();
-  checkEq('A skipped sender scenario decodes to a blank convertAmt (not clamped/rejected)', recipient.document.getElementById('convertAmt').value, '');
-  checkEq('skipConfirmed is shown (display:flex) for a decoded skip:true payload', recipient.document.getElementById('skipConfirmed').style.display, 'flex');
-}
-
-// --- 8. Numeric clamping: a hand-crafted payload with an out-of-range value
+// --- 6. Numeric clamping: a hand-crafted payload with an out-of-range value
 // must not reach the DOM unclamped -- this is untrusted input, unlike
 // localStorage's own self-authored data. ---
 {
@@ -244,7 +211,7 @@ function checkEq(label, actual, expected) {
   checkEq('applyInputs ignores a non-numeric garbage value (keeps prior value)', document.getElementById('currentAge').value, '90');
 }
 
-// --- 9. The clobber-prevention flag itself: opening a shared link must NOT
+// --- 7. The clobber-prevention flag itself: opening a shared link must NOT
 // overwrite a visitor's own already-saved rg_v1 scenario, but a real edit
 // afterward saves normally (tested via a fresh, non-suppressed extraction). ---
 {
@@ -282,7 +249,7 @@ function checkEq(label, actual, expected) {
   checkEq('A subsequent real edit (unsuppressed) saves normally', savedFinal.income, '111000');
 }
 
-// --- 10. loadFromShareHash strips the hash from the visible URL immediately
+// --- 8. loadFromShareHash strips the hash from the visible URL immediately
 // on success, so the decoded numbers don't linger in the address bar. ---
 {
   const sender = extract(html, { wizardCompleted: true });
