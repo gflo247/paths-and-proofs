@@ -1022,7 +1022,7 @@
       <div class="ipct"><input type="number" id="retRate" value="22" min="0" max="60" oninput="calc()"></div>
         <div class="ttip" id="tip-retrate"><strong>Federal only — I add your state rate automatically.</strong> Enter your expected federal bracket rate on IRA withdrawals. Select your state above and I'll fold the state rate in automatically so the comparison is apples-to-apples. Use the estimator below if you are unsure.</div>
         <details class="rest">
-          <summary>Not sure? Calculate your retirement rate here</summary>
+          <summary>Not sure what rate to enter? Calculate it here ↓</summary>
           <div class="restb">
             <p style="font-size:.82rem;color:var(--muted);margin-bottom:8px;line-height:1.5">Enter your expected retirement income sources and I'll compute the marginal federal rate on your IRA withdrawals — including how conversions can trigger extra tax on Social Security benefits.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:6px">
@@ -1125,7 +1125,7 @@
 </footer>
 <div class="wayfind-bar" id="wayfindBar" role="note">
   <div class="wayfind-inner">
-    <span>✓ <strong>You've seen your bottom line</strong> — everything below it is optional detail.</span>
+    <span>✓ <strong>You've seen your bottom line</strong> — everything below digs deeper.</span>
     <button class="wayfind-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ Back to top</button>
   </div>
 </div>
@@ -2209,16 +2209,16 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn,taxSrc){
   var ctx='';
   if(plan.preRows.length>0)ctx+='<strong>'+plan.preRows.length+' working '+(plan.preRows.length===1?'year':'years')+'</strong> before retirement at '+retAge+'. ';
   if(plan.goldRows.length>0){
-    ctx+='The <strong>golden window</strong> — retirement to age '+rmdStartAge+', when income drops and bracket room expands — adds <strong>'+plan.goldRows.length+' more years</strong> of conversions at a lower effective rate.';
+    ctx+='The years between retirement and age '+rmdStartAge+', when income drops and bracket room widens, add <strong>'+plan.goldRows.length+' more years</strong> of conversions at a lower effective rate.';
     if(plan.preRows.length>0){
       var preTot=plan.preRows.reduce(function(s,r){return s+r.convert;},0);
       var goldTot=plan.goldRows.reduce(function(s,r){return s+r.convert;},0);
       var preRate=plan.preRows.reduce(function(s,r){return s+r.tax;},0)/preTot;
       var goldRate=plan.goldRows.reduce(function(s,r){return s+r.tax;},0)/goldTot;
-      ctx+=' Converting now runs ~'+pctFn(preRate,1)+' per dollar; the golden window brings that to ~'+pctFn(goldRate,1)+'.';
+      ctx+=' Converting now runs ~'+pctFn(preRate,1)+' per dollar; that drops to ~'+pctFn(goldRate,1)+' after retirement.';
     }
   } else if(goldenYears>0)
-    ctx+='Enter expected retirement SS and pension in the rate estimator above to also see the golden window (age '+goldStartAge+' to '+rmdStartAge+').';
+    ctx+='Enter expected retirement SS and pension in the rate estimator above to also see the lower-rate years between retirement and age '+rmdStartAge+'.';
   else if(goldStartAge>=rmdStartAge)
     ctx+='RMDs start at or before retirement — consider converting more aggressively now while income is predictable.';
   var fundingNote = taxSrc==='inside'
@@ -2265,7 +2265,7 @@ function buildMultiYearHTML(plan,curAge,retAge,fmtFn,pctFn,fmtKFn,taxSrc){
   var goldTotal=plan.goldRows.reduce(function(s,r){return s+r.convert;},0);
   html+='<div class="alert agrn" style="font-size:.87rem">';
   html+='<strong>The full picture:</strong> Following this plan moves <strong>'+fmtKFn(totalConvert)+'</strong> to tax-free Roth at an average rate of <strong>'+pctFn(avgRate,1)+'</strong>. ';
-  if(goldTotal>0)html+='The golden window accounts for <strong>'+fmtKFn(goldTotal)+'</strong> of that at a lower rate — often the most efficient conversions because retirement income is lower and bracket room is wider. ';
+  if(goldTotal>0)html+='<strong>'+fmtKFn(goldTotal)+'</strong> of that happens after retirement at a lower rate — often the most efficient years because income drops and bracket room widens. ';
   html+='Without conversions, the IRS forces withdrawals as Required Minimum Distributions starting at '+rmdStartAge+', taxed at your then-current rate plus whatever SS taxation and state taxes apply.';
   html+='</div>';
 
@@ -5771,10 +5771,10 @@ function calc(){
     +'<div class="bottom-line"><div class="bl-eye">YOUR BOTTOM LINE · CONVERTING '+fmt(cvtAmt)+'</div><div class="bl-txt" id="blTxt">'+blTxt+'</div><div class="bl-cav">Estimates only — rough numbers are fine for planning. Scroll down for the full breakdown.</div></div>'
     +whyPanelHTML
     +'<div class="rgrid">'
-    +'<div class="sc2 cost"><div class="slbl">All-In Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(!stateCode?'<br>Federal only — no state selected':(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):'')))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + Net Investment Income Tax: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')
+    +'<div class="sc2 cost"><div class="slbl">Total Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(!stateCode?'<br>Federal only — no state selected':(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):'')))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + Net Investment Income Tax: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')
     +(taxSrc==='inside'?'<br>Tax withheld from IRA — only '+fmt(rothIn)+' enters Roth':'<br>Paid from outside savings — full '+fmt(rothIn)+' enters Roth')
     +'</div></div>'
-    +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Not in range')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
+    +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Traditional wins')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
     +'<div class="sc2 surv"><div class="slbl">'+(isCouple?'Last Survivor':'Life Expectancy')+'</div><div class="sval grn">Age '+(isCouple?leJoint:le)+'</div><div class="ssub">'+(isCouple?'You: Age '+le+' / Spouse: Age '+leSpouse+'<br><span style="font-size:.78rem">SSA 2023 (Social Security Administration) · joint last-survivor</span>':(sex==='male'?'Male':'Female')+' · SSA 2023 (Social Security Administration)'+(beAge&&beAge>curAge&&!isCouple?'<br>'+pct(survBE??0,0)+' chance of reaching breakeven':''))+'<br><span style="font-size:.76rem">Full age-by-age odds below ↓</span></div></div>'
     +'</div>'
     +'<div class="verdict '+vCls+'"><div class="vi">'+vIco+'</div><div class="vb"><strong>'+vHd+'</strong><p>'+vBd+'</p></div></div>'
@@ -5811,7 +5811,7 @@ function calc(){
     +'</div>'
     +'<div><p style="margin-bottom:.45rem"><strong style="color:var(--warn)">Medium impact</strong></p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Future dollars, not today\'s dollars.</strong> The numbers above show what you\'d actually have at each future age, not discounted back to today\'s purchasing power. Doing that would mean picking a discount rate, and there\'s no rate that\'s obviously correct for a decision like this one — so real amounts at real future ages, without an extra unstated assumption layered on top, is the deliberate choice here.</p>'
-    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Period vs. cohort life table.</strong> I use a 2023 mortality snapshot. A cohort table accounts for improving life expectancy over time — giving somewhat longer expected lifespans, which further favors the Roth.</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Life expectancy modeling uses a 2023 snapshot, not a forward-looking estimate.</strong> The technical term for this is a "period" table vs. a "cohort" table. A cohort table accounts for the fact that life expectancy has been improving over time — giving somewhat longer expected lifespans, which further favors the Roth.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Your first dollars of retirement income land in a lower bracket.</strong> They fall in the 10–12% range, not your top rate. Use the rate estimator above to find the true rate on your specific income mix.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Future state of residence.</strong> If you plan to move to a no-income-tax state before retirement, the state tax comparison is reversed — you pay state tax on the conversion today but owe nothing later. Factor this in before converting.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">State-level capital gains treatment.</strong> The Qualified Dividends &amp; LTCG field models the federal preferential rate (0/15/20%) correctly, but state tax on that income is still approximated at your flat conversion rate — nearly every state (including all the ones with large populations of Roth converters) taxes capital gains the same as ordinary income anyway, but a handful of states have their own capital-gains carve-outs this tool doesn\'t model. (The Alternative Minimum Tax isn\'t modeled either, but rarely applies at typical conversion income levels under current law.)</p>'
