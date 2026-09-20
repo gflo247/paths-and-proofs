@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../core/page.css">
 <link rel="stylesheet" href="../core/components.css">
 <style>
-  .heatmap-details { margin-top: 1rem; }
+  .heatmap-details { margin-top: 2rem; }
   .heatmap { max-width: 380px; margin: 0.5rem 0; }
   .heatmap-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; font-size: 0.85rem; }
   .heatmap-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -84,15 +84,14 @@
     </section>
   </div>
 
-  <details class="heatmap-details">
-    <summary>Show the full picture — both lifespans at once</summary>
-    <p class="caption">The chart above holds one death at your planning age and varies the other.
-      This grid varies both independently. Each cell is one pair of lifespans: green where the
-      higher earner waiting to 70 wins, red where claiming at 62 wins. It's the one view that
-      also shows what happens if the lower earner dies first.</p>
+  <section class="heatmap-details">
+    <h2>Both lifespans at once</h2>
+    <p class="caption">Each cell is a pair of lifespans — green where waiting to 70 wins, red
+      where claiming at 62 wins. The only view that also shows what happens when the lower
+      earner dies first.</p>
     <div class="heatmap" id="heatmap"></div>
     <div class="heatmap-legend" id="heatmap-legend"></div>
-  </details>
+  </section>
 
   <details>
     <summary>What this does and doesn't account for, and where the rules come from</summary>
@@ -127,8 +126,8 @@
       know, the chart computes both orders for your numbers and shows whichever one is more
       cautious — the one that asks more of the survivor's lifespan before waiting pays off. That
       way the age shown holds regardless of which of you actually goes first. To see every
-      combination of both lifespans at once, including the order not shown here, open the heatmap
-      below the chart.</p>
+      combination of both lifespans at once, including the order not shown here, see the grid
+      below.</p>
     <p><strong>Before state tax.</strong> These figures are benefits before any state tax. Most
       states — and the nine with no income tax — don't tax Social Security benefits at all. Eight
       still do in 2026 (Colorado, Connecticut, Minnesota, Montana, New Mexico, Rhode Island,
@@ -173,10 +172,9 @@
     'ctl-discountRate',
   ]);
 
-  // Opt-in heatmap. Page-local: it reuses the module's pure computeSurface but
+  // Heatmap. Page-local: it reuses the module's pure computeSurface but
   // does not touch the shared core. It reads the live control values straight
   // from the DOM, so it stays in sync without needing the engine's internals.
-  const details = document.querySelector('.heatmap-details');
   const host = document.getElementById('heatmap');
   const legend = document.getElementById('heatmap-legend');
 
@@ -195,7 +193,6 @@
   }
 
   function renderHeatmap() {
-    if (!details.open) return;
     const { ages, cells } = mod.computeSurface(liveValues(), 2);
     const n = ages.length;
     const maxAbs = cells.reduce((m, c) => Math.max(m, Math.abs(c.margin)), 1);
@@ -261,19 +258,30 @@
     xl.setAttribute('y', H - 4);
     xl.setAttribute('text-anchor', 'middle');
     xl.setAttribute('font-size', '11'); xl.setAttribute('fill', ink);
-    xl.textContent = 'Higher earner lives to age';
+    xl.textContent = 'If higher earner lives to →';
     svg.append(xl);
+
+    const chartCenterY = M.top + (H - M.top - M.bottom) / 2;
+    const ylX = 10;
+    const yl = document.createElementNS(ns, 'text');
+    yl.setAttribute('x', ylX);
+    yl.setAttribute('y', chartCenterY);
+    yl.setAttribute('transform', `rotate(-90, ${ylX}, ${chartCenterY})`);
+    yl.setAttribute('text-anchor', 'middle');
+    yl.setAttribute('font-size', '11'); yl.setAttribute('fill', ink);
+    yl.textContent = 'If lower earner lives to ↑';
+    svg.append(yl);
 
     host.replaceChildren(svg);
     legend.innerHTML =
       `<span><i style="background:${win}"></i> higher earner waiting to 70 wins</span>` +
       `<span><i style="background:${lose}"></i> claiming at 62 wins</span>` +
-      `<span class="muted">Vertical axis: lower earner lives to age. Deeper color = bigger difference.</span>`;
+      `<span class="muted">Deeper color = bigger difference.</span>`;
   }
 
-  details.addEventListener('toggle', renderHeatmap);
+  renderHeatmap();
   document.querySelector('[data-controls]')?.addEventListener('input', renderHeatmap);
-  // Re-theme the heatmap if the page theme flips while it's open.
+  // Re-theme the heatmap if the page theme flips.
   new MutationObserver(renderHeatmap).observe(
     document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 </script>
