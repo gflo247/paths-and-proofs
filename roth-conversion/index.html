@@ -622,7 +622,7 @@
       <div class="hv-col-sub" id="hvRothSub">More take-home — grows tax-free from here on</div>
     </div>
   </div>
-  <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$38K in total taxes vs keeping traditional (on this $380K IRA)</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Pays today's known rate — more take-home, no required withdrawals in your lifetime</div></div>
+  <div id="hvDollar" class="hv-dollar hv-dgrn" style="padding:.65rem 1rem"><div id="hvSavingsText" style="margin-bottom:.3rem">Converting saves ~$38K in total taxes vs keeping traditional (on this $380K IRA)</div><div id="hvCaption" style="font-size:.8rem;font-weight:500;opacity:.85;line-height:1.45">Locks in today's conversion tax rate — more take-home, no RMDs from the Roth</div></div>
   <p style="font-size:.72rem;color:var(--muted);text-align:center;line-height:1.5;max-width:420px;margin:.6rem auto .9rem;font-style:italic">Full-retirement totals from a multi-year conversion — the real payoff depends on future rates, returns, and lifespan matching these assumptions.</p>
   </div><!-- /heroExample -->
 <div id="heroToggleWrap" style="text-align:center;padding:.4rem 0;font-size:.82rem">
@@ -692,7 +692,7 @@
   </div>
 
   <div class="card step-card current" data-step="1" id="stepCard1">
-    <div class="ch"><div class="sb">1</div><h2>How much are you converting?</h2></div>
+    <div class="ch"><div class="sb">1</div><h2>How much are you converting? <span style="font-weight:400;font-size:.85rem;color:var(--muted)">— or skip below if you're not sure yet</span></h2></div>
     <div class="field" style="margin-bottom:1.5rem">
       <div class="flr"><label>Traditional IRA / 401(k) Balance</label><button class="tb" onclick="toggleTip('trad')">ⓘ</button></div>
       <div class="idollar"><input type="number" id="tradBal" value="280000" min="0" step="1000" oninput="calc()"></div>
@@ -4106,7 +4106,7 @@ function updateHeroVis(name){
   if(vCls==='good'){
     tradSub     = 'Tax owed on every withdrawal in retirement — and it compounds over time';
     rothSub     = 'More take-home — grows tax-free from here on';
-    caption     = 'Pays today\'s known rate — more take-home, no required withdrawals in your lifetime';
+    caption     = 'Locks in today\'s conversion tax rate — more take-home, no RMDs from the Roth';
     savingsText = 'Converting saves ~'+fmtK(savingsAmt)+' in total taxes vs keeping traditional (on this '+fmtK(tradBal)+' IRA)';
     savingsCls  = 'hv-dgrn';
   } else if(vCls==='neutral'){
