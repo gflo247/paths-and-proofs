@@ -168,11 +168,13 @@ export function initShareLink(fields) {
     }
   });
 
-  // 3. Insert the panel after #calc so it spans full width below the
-  // two-column layout on desktop. Falls back to after [data-local-tax]
-  // or [data-controls] if #calc is absent.
-  if (calc) {
-    calc.after(details);
+  // 3. Insert the panel at the end of <main> so it appears after all
+  // content (chart, summary, heatmap, etc.) as a natural end-of-page
+  // call to action. Falls back to after [data-local-tax] or
+  // [data-controls] if <main> is absent.
+  const mainEl = document.querySelector('main');
+  if (mainEl) {
+    mainEl.append(details);
   } else {
     const anchor = document.querySelector('[data-local-tax]') || document.querySelector('[data-controls]');
     if (anchor) anchor.after(details);
