@@ -3523,7 +3523,7 @@ function renderRmdChart(p){
       if((p.rmdYrB[agesArr[ai]] || 0) >= bhi){ crossAge = agesArr[ai]; break; }
     }
     if(crossAge !== null){
-      thresholds.push({ age: crossAge, label: Math.round(nextRate * 100) + '% bracket', color: tc('#B06000','#E89A38') });
+      thresholds.push({ age: crossAge, label: 'Enters ' + Math.round(nextRate * 100) + '% bracket', color: tc('#B06000','#E89A38') });
     }
   }
 
@@ -3539,7 +3539,7 @@ function renderRmdChart(p){
       if((p.rmdYrB[agesArr[ai2]] || 0) >= ihi){ iCrossAge = agesArr[ai2]; break; }
     }
     if(iCrossAge !== null){
-      thresholds.push({ age: iCrossAge, label: 'Medicare Tier\u00a01', color: tc('#8B1A1A','#EA7070') });
+      thresholds.push({ age: iCrossAge, label: 'Enters Medicare Tier\u00a01', color: tc('#8B1A1A','#EA7070') });
     }
   }
 
