@@ -163,7 +163,15 @@
 <script type="module">
   import { bootstrap } from '../core/bootstrap.js';
   import * as mod from './social-security.js';
+  import { initShareLink } from '../core/share-link.js';
   bootstrap(mod);
+  initShareLink([
+    'ctl-piaHigh', 'ctl-claimHigh',
+    'ctl-piaLow',  'ctl-claimLow',
+    'ctl-ageGap',
+    'ctl-lifeHigh', 'ctl-lifeLow',
+    'ctl-discountRate',
+  ]);
 
   // Opt-in heatmap. Page-local: it reuses the module's pure computeSurface but
   // does not touch the shared core. It reads the live control values straight

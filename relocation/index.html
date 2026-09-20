@@ -225,6 +225,7 @@
 <script type="module">
   import { bootstrap } from '../core/bootstrap.js';
   import * as mod from './relocation.js';
+  import { initShareLink } from '../core/share-link.js';
 
   const noteEl = document.querySelector('[data-note]');
   const ctxEl = document.querySelector('[data-context]');
@@ -294,6 +295,14 @@
   selects.fromOr.addEventListener('change', () => api.setValue('fromLocalTax', selects.fromOr.value));
   selects.toNy.addEventListener('change', () => api.setValue('toLocalTax', selects.toNy.value));
   selects.toOr.addEventListener('change', () => api.setValue('toLocalTax', selects.toOr.value));
+
+  // State selects first so visibility is set before local-tax selects are applied.
+  initShareLink([
+    'ctl-fromState', 'ctl-toState', 'ctl-status', 'ctl-age',
+    'ctl-socialSecurity', 'ctl-iraWithdrawal', 'ctl-pension',
+    'ctl-capGains', 'ctl-moveCost',
+    'fromNyLocalTax', 'fromOrLocalTax', 'toNyLocalTax', 'toOrLocalTax',
+  ]);
 
 </script>
 </body>

@@ -225,6 +225,7 @@
 <script type="module">
   import { bootstrap } from '../core/bootstrap.js';
   import * as mod from './medicare.js';
+  import { initShareLink } from '../core/share-link.js';
 
   const noteEl = document.querySelector('[data-note]');
   const ctxEl = document.querySelector('[data-context]');
@@ -289,6 +290,11 @@
   }
 
   bootstrap(mod, renderExtras);
+  initShareLink([
+    'ctl-stateCode',
+    'ctl-medigapMonthlyPremium', 'ctl-partDMonthlyPremium',
+    'ctl-advantageMonthlyPremium', 'ctl-advantageOOPMax',
+  ]);
 </script>
 </body>
 </html>
