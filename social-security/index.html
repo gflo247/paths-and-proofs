@@ -15,6 +15,10 @@
 <style>
   .heatmap-details { margin-top: 2rem; }
   .heatmap { max-width: 380px; margin: 0.5rem 0; }
+  @media (min-width: 900px) {
+    #calc { grid-template-areas: "inputs chart" "inputs summary" ". heatmap"; }
+    .heatmap-details { grid-area: heatmap; margin-top: 1rem; }
+  }
   .heatmap-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; font-size: 0.85rem; }
   .heatmap-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
   .heatmap-legend i { width: 0.85rem; height: 0.85rem; border-radius: 2px; display: inline-block; }
@@ -82,16 +86,15 @@
       <h2>What it works out to</h2>
       <div data-summary></div>
     </section>
+    <section class="heatmap-details">
+      <h2>Both lifespans at once</h2>
+      <p class="caption">Each cell is a pair of lifespans — green where waiting to 70 wins, red
+        where claiming at 62 wins. The only view that also shows what happens when the lower
+        earner dies first.</p>
+      <div class="heatmap" id="heatmap"></div>
+      <div class="heatmap-legend" id="heatmap-legend"></div>
+    </section>
   </div>
-
-  <section class="heatmap-details">
-    <h2>Both lifespans at once</h2>
-    <p class="caption">Each cell is a pair of lifespans — green where waiting to 70 wins, red
-      where claiming at 62 wins. The only view that also shows what happens when the lower
-      earner dies first.</p>
-    <div class="heatmap" id="heatmap"></div>
-    <div class="heatmap-legend" id="heatmap-legend"></div>
-  </section>
 
   <details>
     <summary>What this does and doesn't account for, and where the rules come from</summary>
