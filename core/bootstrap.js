@@ -6,6 +6,7 @@
 
 import { mount } from './app.js';
 import { applyOSTheme, installThemeToggle } from './theme.js';
+import './sw-init.js';
 
 export function bootstrap(module, onResult) {
   applyOSTheme();

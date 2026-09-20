@@ -24,6 +24,9 @@ echo "=== git diff (review before committing) ==="
 git --no-pager diff -- "$@"
 
 echo ""
+echo "⚠️  If this deploy changes any user-visible behavior, bump CACHE_NAME in sw.js"
+echo "   so tablets and cached browsers receive the update notification."
+echo ""
 read -r -p "Commit message: " msg
 if [ -z "$msg" ]; then
   echo "Empty commit message — aborting, nothing staged or committed."

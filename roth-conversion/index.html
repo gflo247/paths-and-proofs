@@ -713,7 +713,7 @@
     </div>
     <div class="privacy-note" role="note" style="justify-content:flex-start;margin:1.1rem 0 0;padding:0">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <span>Runs entirely in your browser — input numbers never leave your device.</span>
+      <span>Runs entirely in your browser — input numbers never leave your device. Your numbers are saved here automatically and will be waiting when you come back.</span>
     </div>
     <div class="step-nav">
       <span></span>
@@ -6005,6 +6005,7 @@ document.addEventListener('DOMContentLoaded', function(){
   import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
   window.resolveRetirementIncome = resolveRetirementIncome;
   window.calcTaxableSS = federalTaxableSS;
+  import '/core/sw-init.js';
 </script>
 </body>
 </html>
