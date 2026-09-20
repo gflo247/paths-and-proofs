@@ -168,10 +168,15 @@ export function initShareLink(fields) {
     }
   });
 
-  // 3. Insert the panel after [data-local-tax] if present (Relocation's
-  // custom local-tax wrapper), otherwise after [data-controls].
-  const anchor = document.querySelector('[data-local-tax]') || document.querySelector('[data-controls]');
-  if (anchor) anchor.after(details);
+  // 3. Insert the panel after #calc so it spans full width below the
+  // two-column layout on desktop. Falls back to after [data-local-tax]
+  // or [data-controls] if #calc is absent.
+  if (calc) {
+    calc.after(details);
+  } else {
+    const anchor = document.querySelector('[data-local-tax]') || document.querySelector('[data-controls]');
+    if (anchor) anchor.after(details);
+  }
 
   return details; // exposed for tests
 }
