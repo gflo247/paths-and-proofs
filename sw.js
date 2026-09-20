@@ -7,7 +7,8 @@ const PRECACHE = [
   '/roth-conversion/',
   '/social-security/',
   '/relocation/',
-  '/medicare/',
+  // /medicare/ deliberately excluded — not yet a live-linked tool; a non-200
+  // response from any single PRECACHE entry causes the entire install to fail.
   '/core/page.css',
   '/core/tokens.css',
   '/core/components.css',

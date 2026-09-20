@@ -31,6 +31,11 @@ if ('serviceWorker' in navigator) {
     + '">Refresh</button>';
   document.body.appendChild(banner);
 
+  // Capture before registration — used to distinguish an update (prevController
+  // non-null) from first install (prevController null, clients.claim() fires
+  // controllerchange without any user action).
+  const prevController = navigator.serviceWorker.controller;
+
   navigator.serviceWorker.register('/sw.js').then(reg => {
     // New SW found while page is open — show banner once it's installed.
     reg.addEventListener('updatefound', () => {
@@ -52,7 +57,9 @@ if ('serviceWorker' in navigator) {
   });
 
   // SW activated (after skipWaiting) — reload to pick up new version.
+  // Guard: only reload when updating an existing SW, not on first install
+  // (clients.claim() during first activate also fires controllerchange).
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    window.location.reload();
+    if (prevController) window.location.reload();
   });
 }
