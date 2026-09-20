@@ -16,8 +16,11 @@
   .heatmap-details { margin-top: 2rem; }
   .heatmap { max-width: 380px; margin: 0.5rem 0; }
   @media (min-width: 900px) {
-    #calc { grid-template-areas: "inputs chart" "inputs summary" ". heatmap"; }
-    .heatmap-details { grid-area: heatmap; margin-top: 1rem; }
+    #calc { grid-template-areas: "inputs right"; grid-template-columns: minmax(300px, 380px) 1fr; grid-template-rows: auto; }
+    #calc > section:nth-of-type(1) { grid-area: inputs; }
+    .ss-right { grid-area: right; display: flex; flex-direction: column; gap: 2rem; }
+    .ss-right > section { margin: 0; }
+    .heatmap-details { margin-top: 0; }
   }
   .heatmap-legend { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; font-size: 0.85rem; }
   .heatmap-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
@@ -75,25 +78,27 @@
       <div class="presets" id="presets"></div>
       <div data-controls></div>
     </section>
-    <section>
-      <h2>Lifetime benefits by claiming age</h2>
-      <div class="chart" data-chart></div>
-      <p class="caption">Each line is one strategy for the higher earner. Where waiting overtakes
-      claiming early is your breakeven — if the longer-living spouse reaches past that age,
-      waiting paid off.</p>
-    </section>
-    <section>
-      <h2>What it works out to</h2>
-      <div data-summary></div>
-    </section>
-    <section class="heatmap-details">
-      <h2>Both lifespans at once</h2>
-      <p class="caption">Each cell is a pair of lifespans — green where waiting to 70 wins, red
-        where claiming at 62 wins. The only view that also shows what happens when the lower
-        earner dies first.</p>
-      <div class="heatmap" id="heatmap"></div>
-      <div class="heatmap-legend" id="heatmap-legend"></div>
-    </section>
+    <div class="ss-right">
+      <section>
+        <h2>Lifetime benefits by claiming age</h2>
+        <div class="chart" data-chart></div>
+        <p class="caption">Each line is one strategy for the higher earner. Where waiting overtakes
+        claiming early is your breakeven — if the longer-living spouse reaches past that age,
+        waiting paid off.</p>
+      </section>
+      <section>
+        <h2>What it works out to</h2>
+        <div data-summary></div>
+      </section>
+      <section class="heatmap-details">
+        <h2>Both lifespans at once</h2>
+        <p class="caption">Each cell is a pair of lifespans — green where waiting to 70 wins, red
+          where claiming at 62 wins. The only view that also shows what happens when the lower
+          earner dies first.</p>
+        <div class="heatmap" id="heatmap"></div>
+        <div class="heatmap-legend" id="heatmap-legend"></div>
+      </section>
+    </div>
   </div>
 
   <details>
