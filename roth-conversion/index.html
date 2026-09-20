@@ -3451,8 +3451,8 @@ function buildRmdChartHTML(firstB, rmdStartAge, curAge, growthRate, simRetR){
     + '<div class="stitle">\u23f3 The Forced Withdrawals You\'d Be Reducing</div>'
     + '<p style="font-size:.9rem;line-height:1.6;margin-bottom:.85rem">'
     + (curAge >= rmdStartAge
-        ? 'Each bar is a portion of an RMD you\'d eliminate. RMDs grow each year as the IRS divisor shrinks \u2014 taxable income whether you need it or not.'
-        : 'Each bar is a portion of an RMD you\'d eliminate. Without converting, RMDs start at <strong>' + fmt(firstB) + '</strong> at age ' + rmdStartAge + ' and grow every year as the IRS divisor shrinks \u2014 taxable income whether you need it or not.')
+        ? 'Each bar is a portion of an RMD you\'d eliminate. RMDs grow each year as the IRS divisor shrinks.'
+        : 'Each bar is a portion of an RMD you\'d eliminate. Without converting, RMDs start at <strong>' + fmt(firstB) + '</strong> at age ' + rmdStartAge + ' and grow every year as the IRS divisor shrinks.')
     + '</p>'
     + '<div id="rmdChartWrap" style="width:100%;position:relative"></div>'
     + '<p style="font-size:.78rem;color:var(--muted);margin-top:9px;line-height:1.45">'
