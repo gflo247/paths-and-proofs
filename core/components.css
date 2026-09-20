@@ -37,6 +37,18 @@
 .summary-primary { border-color: var(--accent); }
 .summary-primary .summary-value { color: var(--accent); font-size: 18px; }
 
+/* ── Share-link panel ── */
+.share-panel { border: 1px solid var(--accent); border-radius: 8px; overflow: hidden; margin-top: 1.25rem; padding-top: 0; }
+.share-panel > summary { padding: 10px 14px; background: var(--surface); list-style: none; display: flex; align-items: center; gap: .6rem; font-weight: 600; font-size: .9rem; cursor: pointer; }
+.share-panel > summary::-webkit-details-marker { display: none; }
+.share-panel-hint { font-weight: 400; font-size: .8rem; color: var(--muted); }
+.share-panel-body { padding: 12px 14px; }
+.share-link-row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .5rem; }
+.share-link-box { flex: 1; min-width: 160px; padding: 6px 10px; font: inherit; font-size: .85rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: inherit; }
+.share-copy-btn { padding: 6px 14px; font: inherit; font-size: .85rem; font-weight: 600; border: 1px solid var(--accent); border-radius: 20px; background: transparent; color: var(--accent); cursor: pointer; white-space: nowrap; }
+.share-copy-btn:hover { background: var(--accent); color: #fff; }
+.share-note { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+
 /* Theme toggle — shared sun/moon button, fixed top-right. Stateless. */
 .theme-toggle {
   position: fixed; top: 16px; right: 16px; z-index: 50;

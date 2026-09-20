@@ -81,14 +81,17 @@ export function initShareLink(fields) {
 
   // 2. Build the share panel.
   const details = document.createElement('details');
-  details.style.cssText = 'margin-top:1.25rem';
+  details.className = 'share-panel';
 
   const summary = document.createElement('summary');
-  summary.textContent = 'Share this scenario';
+  const hint = document.createElement('span');
+  hint.className = 'share-panel-hint';
+  hint.textContent = 'Send to a spouse or advisor, or bookmark for later';
+  summary.append('🔗 Share this scenario', hint);
   details.appendChild(summary);
 
   const inner = document.createElement('div');
-  inner.className = 'restb';
+  inner.className = 'share-panel-body';
 
   const row = document.createElement('div');
   row.className = 'share-link-row';
@@ -111,7 +114,7 @@ export function initShareLink(fields) {
 
   const shareNote = document.createElement('div');
   shareNote.className = 'share-note';
-  shareNote.textContent = 'This link contains your numbers — only share it somewhere you\'re comfortable with that.';
+  shareNote.textContent = 'This link contains your numbers — only share it somewhere you\'re comfortable with that (e.g. your spouse or advisor). It never touches this site\'s servers, but becomes plain text the moment you paste it into a text, email, or chat.';
 
   inner.appendChild(row);
   inner.appendChild(shareNote);
