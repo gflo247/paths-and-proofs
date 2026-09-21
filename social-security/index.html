@@ -26,6 +26,14 @@
   .heatmap-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
   .heatmap-legend i { width: 0.85rem; height: 0.85rem; border-radius: 2px; display: inline-block; }
   .heatmap-legend .muted { color: var(--muted); }
+  .ss-verdict {
+    font-size: .9rem; line-height: 1.6;
+    padding: 12px 14px;
+    border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 8px; background: var(--surface);
+    margin-bottom: 1rem;
+  }
+  .ss-verdict strong { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -88,6 +96,7 @@
       </section>
       <section>
         <h2>What it works out to</h2>
+        <div id="ss-verdict" class="ss-verdict"></div>
         <div data-summary></div>
       </section>
       <section class="heatmap-details">
@@ -171,7 +180,7 @@
   import { bootstrap } from '../core/bootstrap.js';
   import * as mod from './social-security.js';
   import { initShareLink } from '../core/share-link.js';
-  bootstrap(mod);
+  bootstrap(mod, mod.onResult);
   initShareLink([
     'ctl-piaHigh', 'ctl-claimHigh',
     'ctl-piaLow',  'ctl-claimLow',

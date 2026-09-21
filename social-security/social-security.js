@@ -508,9 +508,53 @@ export function compute(values) {
     series,
     crossovers: [{ from: 0, to: 1, label: 'waiting pulls ahead' }],
     markers,
+    outcome,
     xAxis: { label: 'Age the longer-living spouse reaches', format: (n) => n.toFixed(0) },
     yAxis: { label: 'Household lifetime benefits (present value)', format: (n) => `$${Math.round(n / 1000)}k` },
   };
+}
+
+// Returns an HTML string interpreting the compute() result in plain English.
+// series[0] = early, series[1] = delay (matches compute()'s ordering).
+export function buildVerdict(outcome, planningAge, series) {
+  function yAt(points, age) {
+    const rounded = Math.round(age);
+    const pt = points.find(p => p.x === rounded) || points[points.length - 1];
+    return pt ? pt.y : 0;
+  }
+  const diff = yAt(series[1].points, planningAge) - yAt(series[0].points, planningAge);
+  const fmt = n => '$' + Math.round(Math.abs(n) / 1000) + 'k';
+
+  if (outcome.type === 'delayWins') {
+    return '<strong>Waiting to 70 wins across every scenario shown.</strong> '
+         + 'At this discount rate, no lifespan favors claiming early.';
+  }
+  if (outcome.type === 'earlyWins') {
+    return '<strong>At this discount rate, claiming early has the edge.</strong> '
+         + 'Try lowering the rate \u2014 most retirees use 0\u20132% for this kind of comparison '
+         + '\u2014 to see when waiting becomes competitive.';
+  }
+  // breakeven
+  const age = Math.round(outcome.age);
+  const planAge = Math.round(planningAge);
+  const diffLine = diff > 10000
+    ? ` At your planning horizon, that\u2019s roughly ${fmt(diff)} more in lifetime benefits from waiting.`
+    : '';
+  if (planAge >= age) {
+    return `<strong>Waiting is likely the right call.</strong> `
+         + `The breakeven is age\u00a0${age} \u2014 your planning ages clear that bar, `
+         + `and only one of you needs to reach it.`
+         + diffLine;
+  }
+  return `<strong>The breakeven is past your planning horizon.</strong> `
+       + `At age\u00a0${age}, it\u2019s beyond your current planning ages. `
+       + `If either of you outlives that estimate, waiting wins.`;
+}
+
+export function onResult(result) {
+  const el = document.getElementById('ss-verdict');
+  if (!el) return;
+  el.innerHTML = buildVerdict(result.outcome, result.markers[0].x, result.series);
 }
 
 export const _meta = { constantsYear: CONSTANTS_YEAR };

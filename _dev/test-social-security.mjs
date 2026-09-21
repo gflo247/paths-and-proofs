@@ -18,6 +18,7 @@ import {
   householdMonthly,
   compute,
   computeSurface,
+  buildVerdict,
   FULL_RETIREMENT_AGE,
   SURVIVOR_FULL_RETIREMENT_AGE,
   SURVIVOR_MIN_CLAIM_AGE,
@@ -416,6 +417,83 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
   }
   check('computeSurface(): cell margin matches independent hand-derivation with ageGap', cell.margin, pvDelay - pvEarly);
   check('computeSurface(): ageGap sanity -- margin is a large, specific number, not a placeholder', cell.margin, 166140, 1);
+}
+
+// --- buildVerdict() + outcome field -----------------------------------------
+
+// Helper for verdict tests: minimal mock series (two points each).
+const mockSeries = [
+  { points: [{ x: 79, y: 100000 }, { x: 85, y: 120000 }] }, // early
+  { points: [{ x: 79, y: 100000 }, { x: 85, y: 170000 }] }, // delay
+];
+
+// compute() now returns outcome with a type field.
+{
+  // Any inputs: outcome must exist with a string type.
+  const r = compute({ piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62,
+                      lifeHigh: 84, lifeLow: 87, discountRate: 2, ageGap: 0 });
+  if (r.outcome && typeof r.outcome.type === 'string') pass++;
+  else { fail++; console.log('FAIL  compute(): outcome field missing or has no type'); }
+}
+{
+  // Breakeven-producing inputs (same fixture as the ageGap test above):
+  // claimHigh=62 with low PIA and discount=0 crosses over at age 96.
+  const r = compute({ piaHigh: 1100, claimHigh: 62, piaLow: 1400, claimLow: 62,
+                      lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 0 });
+  if (r.outcome.type === 'breakeven' && typeof r.outcome.age === 'number' && isFinite(r.outcome.age)) pass++;
+  else { fail++; console.log(`FAIL  compute(): breakeven inputs — expected breakeven with finite age, got type=${r.outcome && r.outcome.type} age=${r.outcome && r.outcome.age}`); }
+}
+
+// buildVerdict: breakeven, planning age clears it (above).
+{
+  const html = buildVerdict({ type: 'breakeven', age: 81 }, 85, mockSeries);
+  if (html.includes('Waiting is likely')) pass++;
+  else { fail++; console.log(`FAIL  buildVerdict: breakeven above planning age — expected "Waiting is likely", got: ${html}`); }
+  // dollar diff: 170000-120000=50000 > 10000, so dollar line should appear
+  if (html.includes('$50k')) pass++;
+  else { fail++; console.log(`FAIL  buildVerdict: breakeven above — expected dollar diff "$50k", got: ${html}`); }
+}
+
+// buildVerdict: breakeven, planning age exactly equals breakeven — should still be positive.
+{
+  const html = buildVerdict({ type: 'breakeven', age: 81 }, 81, mockSeries);
+  if (html.includes('Waiting is likely')) pass++;
+  else { fail++; console.log(`FAIL  buildVerdict: breakeven === planning age — expected "Waiting is likely", got: ${html}`); }
+}
+
+// buildVerdict: breakeven, planning age below — dollar line must NOT appear.
+{
+  const html = buildVerdict({ type: 'breakeven', age: 81 }, 79, mockSeries);
+  if (html.includes('past your planning horizon')) pass++;
+  else { fail++; console.log(`FAIL  buildVerdict: breakeven below planning age — expected "past your planning horizon", got: ${html}`); }
+  // At x=79 both series tie (100k vs 100k), diff=0 — dollar line must be absent.
+  if (!html.includes('roughly')) pass++;
+  else { fail++; console.log(`FAIL  buildVerdict: dollar line incorrectly appeared in past-horizon case: ${html}`); }
+}
+
+// buildVerdict: breakeven, early wins at planning age (negative diff) — dollar line must NOT appear.
+{
+  const earlyWinsSeries = [
+    { points: [{ x: 85, y: 150000 }] }, // early wins at planning age
+    { points: [{ x: 85, y: 120000 }] }, // delay loses
+  ];
+  const html = buildVerdict({ type: 'breakeven', age: 81 }, 85, earlyWinsSeries);
+  if (!html.includes('roughly')) pass++;
+  else { fail++; console.log(`FAIL  buildVerdict: dollar line appeared despite early winning at planning age: ${html}`); }
+}
+
+// buildVerdict: delayWins.
+{
+  const html = buildVerdict({ type: 'delayWins' }, 85, mockSeries);
+  if (html.includes('wins across every scenario')) pass++;
+  else { fail++; console.log(`FAIL  buildVerdict: delayWins — expected "wins across every scenario", got: ${html}`); }
+}
+
+// buildVerdict: earlyWins.
+{
+  const html = buildVerdict({ type: 'earlyWins' }, 85, mockSeries);
+  if (html.includes('claiming early has the edge')) pass++;
+  else { fail++; console.log(`FAIL  buildVerdict: earlyWins — expected "claiming early has the edge", got: ${html}`); }
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
