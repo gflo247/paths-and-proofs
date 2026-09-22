@@ -106,7 +106,7 @@
         <p class="caption">Each cell is a pair of lifespans, colored by which strategy produces more
           lifetime income. The only view that also shows what happens when the lower earner dies
           first. When the higher earner dies very young (left edge), both strategies produce similar
-          totals — that's why those cells are gray.</p>
+          totals — that's why those cells often appear gray or lightly colored.</p>
         <div class="heatmap" id="heatmap"></div>
         <div class="heatmap-legend" id="heatmap-legend"></div>
         <div class="tie-control">
@@ -354,7 +354,7 @@
     legend.innerHTML =
       `<span><i style="background:${win}"></i> higher earner waiting to ${dAge} wins</span>` +
       `<span><i style="background:${lose}"></i> claiming at ${eAge} wins</span>` +
-      `<span><i style="background:${GRAY}"></i> near tie (within ${tieAmt})</span>` +
+      (tiePct > 0 ? `<span><i style="background:${GRAY}"></i> near tie (within ${tieAmt})</span>` : '') +
       `<span><i style="background:white;border:2px solid ${ink};border-radius:50%;box-sizing:border-box;"></i> your scenario</span>` +
       `<span class="muted">Darker = bigger margin.</span>`;
   }
