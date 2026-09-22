@@ -292,6 +292,26 @@
     const v = liveValues();
     const dAge = v.claimHigh ?? 70;
     const eAge = v.claimHighEarly ?? 62;
+
+    // "You are here" dot — shows where the user's current life-expectancy
+    // settings sit on the heatmap, connecting the line chart above to this grid.
+    const lh = Math.min(Math.max(v.lifeHigh, 60), 100);
+    const ll = Math.min(Math.max(v.lifeLow,  60), 100);
+    const dotX = M.left + ((lh - 60) / 2) * cell + cell / 2;
+    const dotY = M.top  + (n - 1 - (ll - 60) / 2) * cell + cell / 2;
+    const dot = document.createElementNS(ns, 'circle');
+    dot.setAttribute('cx', dotX.toFixed(1));
+    dot.setAttribute('cy', dotY.toFixed(1));
+    dot.setAttribute('r', '5');
+    dot.setAttribute('fill', 'white');
+    dot.setAttribute('stroke', ink);
+    dot.setAttribute('stroke-width', '2');
+    const dotTitle = document.createElementNS(ns, 'title');
+    dotTitle.textContent =
+      `Your scenario: higher earner to ${lh}, lower earner to ${ll}`;
+    dot.append(dotTitle);
+    svg.append(dot);
+
     host.replaceChildren(svg);
     legend.innerHTML =
       `<span><i style="background:${win}"></i> higher earner waiting to ${dAge} wins</span>` +
