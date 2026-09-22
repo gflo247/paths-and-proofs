@@ -101,9 +101,10 @@
       </section>
       <section class="heatmap-details">
         <h2>Both lifespans at once</h2>
-        <p class="caption">Each cell is a pair of lifespans — green where waiting to 70 wins, red
-          where claiming at 62 wins. The only view that also shows what happens when the lower
-          earner dies first.</p>
+        <p class="caption">Each cell is a pair of lifespans, colored by which strategy produces more
+          lifetime income. The only view that also shows what happens when the lower earner dies
+          first. When the higher earner dies very young (left edge), both strategies produce similar
+          totals — that's why those cells are gray.</p>
         <div class="heatmap" id="heatmap"></div>
         <div class="heatmap-legend" id="heatmap-legend"></div>
       </section>
@@ -220,12 +221,11 @@
     // Two-stop ramps: light → dark for each zone.
     // Near-tie cells (t < TIE_THRESHOLD) render gray to signal "too close to call."
     const TIE_THRESHOLD = 0.10;
-    // Mid-tone → deep ramps: starting point is clearly colored (not pale), so
-    // near-tie gray reads as visually distinct in both light and dark themes.
-    const WIN_LO  = [150, 210, 110]; // medium green
-    const WIN_HI  = [ 40, 105,  20]; // deep green
-    const LOSE_LO = [230, 140, 140]; // medium red
-    const LOSE_HI = [160,  25,  40]; // deep red
+    // Blue/orange ramps: universally readable across all color-vision types.
+    const WIN_LO  = [160, 205, 245]; // light blue
+    const WIN_HI  = [ 20,  85, 165]; // deep blue
+    const LOSE_LO = [255, 190, 110]; // light orange
+    const LOSE_HI = [195,  85,   5]; // deep orange
     const GRAY = '#c8cace';
 
     function lerpColor(lo, hi, t) {
@@ -338,10 +338,13 @@
     svg.append(dot);
 
     host.replaceChildren(svg);
+    const tieRaw = Math.round(maxAbs * TIE_THRESHOLD);
+    const tieAmt = tieRaw < 1000 ? `$${tieRaw}` : `$${Math.round(tieRaw / 1000)}k`;
     legend.innerHTML =
       `<span><i style="background:${win}"></i> higher earner waiting to ${dAge} wins</span>` +
       `<span><i style="background:${lose}"></i> claiming at ${eAge} wins</span>` +
-      `<span><i style="background:${GRAY}"></i> near tie</span>` +
+      `<span><i style="background:${GRAY}"></i> near tie (within ${tieAmt})</span>` +
+      `<span><i style="background:white;border:2px solid ${ink};border-radius:50%;box-sizing:border-box;"></i> your scenario</span>` +
       `<span class="muted">Darker = bigger margin.</span>`;
   }
 
