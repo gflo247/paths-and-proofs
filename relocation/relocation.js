@@ -187,19 +187,36 @@ export function compute(values) {
     headline,
   ];
 
+  // Tier-2 context: disclosed side by side, never summed into the headline.
+  // Defined before the note so property-tax rates are available for the callout.
+  const ctxFrom = RELO[from]?.taxContext;
+  const ctxTo = RELO[to]?.taxContext;
+
   // A plain note that keeps the tool honest when income tax is not the deciding factor.
+  // Property-tax gap computed up front so it's available in all branches.
+  const ptFrom = ctxFrom?.propertyTaxRateMedian;
+  const ptTo = ctxTo?.propertyTaxRateMedian;
+  const ptGap = ptFrom != null && ptTo != null ? ptTo - ptFrom : 0;
+
   let note;
   if (annualSaving > 0 && annualSaving < 500) {
     note = `The income-tax difference here is small (${dollars(annualSaving)} a year). Property and sales tax, cost of living, and being near the people you care about will likely matter more than income tax for this move.`;
   } else if (annualSaving < 0) {
-    note = `This move would cost you more in state income tax each year, so it never pays back on income tax alone. The context below and non-tax reasons are where a move like this has to earn its keep.`;
+    const ptAdvantage = ptGap <= -0.005
+      ? ` ${toName}'s median property tax rate (${pct(ptTo)}) is lower than ${fromName}'s (${pct(ptFrom)}), which partially offsets that — see the full tax picture below.`
+      : ' The context below and non-tax reasons are where a move like this has to earn its keep.';
+    note = `This move would cost you more in state income tax each year, so it never pays back on income tax alone.${ptAdvantage}`;
   } else {
-    note = `This counts state income tax only${r > 0 ? `, discounted at ${discountRate}% real return` : ''}. Weigh the property, sales, and estate tax below alongside it — for many retirees property tax is the larger number.`;
+    let ptClause;
+    if (Math.abs(ptGap) >= 0.005) {
+      ptClause = ptGap > 0
+        ? ` ${toName}'s median property tax rate (${pct(ptTo)}) is notably higher than ${fromName}'s (${pct(ptFrom)}) — that difference isn't in the payback number and is worth factoring into your real comparison. See the full tax picture below.`
+        : ` ${toName}'s median property tax rate (${pct(ptTo)}) is lower than ${fromName}'s (${pct(ptFrom)}), which works in your favor beyond what the payback number shows. See the full tax picture below.`;
+    } else {
+      ptClause = ` Weigh the property, sales, and estate tax below alongside it — for many retirees property tax is the larger number.`;
+    }
+    note = `This counts state income tax only${r > 0 ? `, discounted at ${discountRate}% real return` : ''}.${ptClause}`;
   }
-
-  // Tier-2 context: disclosed side by side, never summed into the headline.
-  const ctxFrom = RELO[from]?.taxContext;
-  const ctxTo = RELO[to]?.taxContext;
   const context = {
     from: fromName,
     to: toName,
