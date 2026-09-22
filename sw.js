@@ -1,6 +1,6 @@
 // Bump CACHE_NAME on every meaningful deploy — this is what tells
 // browsers to fetch and install the new version.
-const CACHE_NAME = 'paths-proofs-v4';
+const CACHE_NAME = 'paths-proofs-v5';
 
 const PRECACHE = [
   '/',

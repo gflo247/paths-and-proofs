@@ -26,6 +26,8 @@
   .heatmap-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
   .heatmap-legend i { width: 0.85rem; height: 0.85rem; border-radius: 2px; display: inline-block; }
   .heatmap-legend .muted { color: var(--muted); }
+  .tie-control { margin-top: 0.75rem; font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .tie-control input[type=range] { width: 140px; vertical-align: middle; }
   .ss-verdict {
     font-size: .9rem; line-height: 1.6;
     padding: 12px 14px;
@@ -107,6 +109,11 @@
           totals — that's why those cells are gray.</p>
         <div class="heatmap" id="heatmap"></div>
         <div class="heatmap-legend" id="heatmap-legend"></div>
+        <div class="tie-control">
+          Near-tie zone:
+          <input type="range" id="ctl-tie-threshold" min="0" max="30" step="1" value="10">
+          <span id="tie-label"></span>
+        </div>
       </section>
     </div>
   </div>
@@ -219,8 +226,9 @@
     const border = tokenColor('--border', '#e6e6e6');
 
     // Two-stop ramps: light → dark for each zone.
-    // Near-tie cells (t < TIE_THRESHOLD) render gray to signal "too close to call."
-    const TIE_THRESHOLD = 0.10;
+    // Near-tie cells (t <= TIE_THRESHOLD) render gray to signal "too close to call."
+    // User-adjustable via the slider below the heatmap.
+    const TIE_THRESHOLD = Number(document.getElementById('ctl-tie-threshold').value) / 100;
     // Blue/orange ramps: universally readable across all color-vision types.
     const WIN_LO  = [160, 205, 245]; // light blue
     const WIN_HI  = [ 20,  85, 165]; // deep blue
@@ -340,6 +348,9 @@
     host.replaceChildren(svg);
     const tieRaw = Math.round(maxAbs * TIE_THRESHOLD);
     const tieAmt = tieRaw < 1000 ? `$${tieRaw}` : `$${Math.round(tieRaw / 1000)}k`;
+    const tiePct = Math.round(TIE_THRESHOLD * 100);
+    document.getElementById('tie-label').textContent =
+      tiePct === 0 ? '0% — no gray zone' : `${tiePct}% (within ${tieAmt})`;
     legend.innerHTML =
       `<span><i style="background:${win}"></i> higher earner waiting to ${dAge} wins</span>` +
       `<span><i style="background:${lose}"></i> claiming at ${eAge} wins</span>` +
@@ -350,6 +361,7 @@
 
   renderHeatmap();
   document.querySelector('[data-controls]')?.addEventListener('input', renderHeatmap);
+  document.getElementById('ctl-tie-threshold').addEventListener('input', renderHeatmap);
   // Re-theme the heatmap if the page theme flips.
   new MutationObserver(renderHeatmap).observe(
     document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
