@@ -48,6 +48,9 @@ export const inputs = [
   { id: 'capGains',       type: 'number', label: 'Capital gains per year',       min: 0, max: 500000, step: 1000, default: 10000, unit: '$' },
   { id: 'moveCost',       type: 'number', label: 'One-time cost to move',        min: 0, max: 200000, step: 1000, default: 15000, unit: '$',
     help: 'Everything the move itself costs — movers, travel, and any costs to sell one home and buy another.' },
+  { id: 'discountRate', type: 'slider', label: 'Discount rate (real return)',
+    min: 0, max: 6, step: 0.5, default: 2, unit: '%',
+    help: 'The annual real return you could earn on the money instead. At 0% all future dollars count equally. Try 2–3% for a conservative real-return assumption.' },
   // custom:true — the page renders and wires these itself (conditional
   // visibility based on fromState/toState; see relocation/index.html), not
   // core/controls.js. Still real inputs: seeded into values, included in
@@ -127,16 +130,24 @@ export function compute(values) {
   // Two cumulative lines over the horizon:
   //   cost of moving  — flat at moveCost
   //   tax savings     — annualSaving * year (only meaningful if positive)
+  const discountRate = values.discountRate ?? 2;
+  const r = discountRate / 100;
   const costPoints = [];
   const savingPoints = [];
   for (let y = 0; y <= HORIZON; y++) {
     costPoints.push({ x: y, y: moveCost });
-    savingPoints.push({ x: y, y: Math.max(0, annualSaving) * y });
+    const pv = r === 0
+      ? Math.max(0, annualSaving) * y
+      : Math.max(0, annualSaving) * (1 - Math.pow(1 + r, -y)) / r;
+    savingPoints.push({ x: y, y: pv });
   }
 
+  const savingsLabel = r > 0
+    ? `Present value of tax savings (${discountRate}% discount)`
+    : 'Tax savings so far';
   const series = [
     { name: 'Cost of moving', color: '#e06c75', points: costPoints },
-    { name: 'Tax savings so far', color: '#61afef', points: savingPoints },
+    { name: savingsLabel, color: '#61afef', points: savingPoints },
   ];
 
   // Crossover: the year cumulative savings overtakes the move cost.
@@ -183,7 +194,7 @@ export function compute(values) {
   } else if (annualSaving < 0) {
     note = `This move would cost you more in state income tax each year, so it never pays back on income tax alone. The context below and non-tax reasons are where a move like this has to earn its keep.`;
   } else {
-    note = `This counts state income tax only. Weigh the property, sales, and estate tax below alongside it — for many retirees property tax is the larger number.`;
+    note = `This counts state income tax only${r > 0 ? `, discounted at ${discountRate}% real return` : ''}. Weigh the property, sales, and estate tax below alongside it — for many retirees property tax is the larger number.`;
   }
 
   // Tier-2 context: disclosed side by side, never summed into the headline.

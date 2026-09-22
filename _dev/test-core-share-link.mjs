@@ -74,7 +74,7 @@ const MED_FIELDS = [
 const RELO_FIELDS = [
   'ctl-fromState', 'ctl-toState', 'ctl-status', 'ctl-age',
   'ctl-socialSecurity', 'ctl-iraWithdrawal', 'ctl-pension',
-  'ctl-capGains', 'ctl-moveCost',
+  'ctl-capGains', 'ctl-moveCost', 'ctl-discountRate',
   'fromNyLocalTax', 'fromOrLocalTax', 'toNyLocalTax', 'toOrLocalTax',
 ];
 
@@ -124,6 +124,7 @@ makeInput('ctl-iraWithdrawal',  'number', '40000', 0, 500000);
 makeInput('ctl-pension',        'number', '12000', 0, 300000);
 makeInput('ctl-capGains',       'number', '5000',  0, 500000);
 makeInput('ctl-moveCost',       'number', '20000', 0, 200000);
+makeInput('ctl-discountRate',   'range',  '2',    0,   6);
 makeSelect('fromNyLocalTax', ['','nyc','yonkers'], 'nyc');
 makeSelect('fromOrLocalTax', ['','metro','multnomah'], '');
 makeSelect('toNyLocalTax',   ['','nyc','yonkers'], '');
@@ -135,7 +136,7 @@ ok('1.11 Relo decode → fromState round-trips',    reloDecoded?.['ctl-fromState
 ok('1.12 Relo decode → toState round-trips',      reloDecoded?.['ctl-toState']    === 'FL');
 ok('1.13 Relo decode → fromNyLocalTax round-trips',reloDecoded?.['fromNyLocalTax'] === 'nyc');
 ok('1.14 Relo decode → blank toNyLocalTax',       reloDecoded?.['toNyLocalTax']   === '');
-ok('1.15 Relo decode produces all 13 keys',       Object.keys(reloDecoded || {}).length === 13);
+ok('1.15 Relo decode produces all 14 keys',       Object.keys(reloDecoded || {}).length === 14);
 
 // ─── Group 2: version rejection and malformed input ───────────────────────────
 
