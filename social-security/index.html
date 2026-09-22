@@ -214,10 +214,30 @@
     const n = ages.length;
     const maxAbs = cells.reduce((m, c) => Math.max(m, Math.abs(c.margin)), 1);
 
-    const win = '#98c379';   // waiting wins (matches the delay line)
-    const lose = '#e06c75';  // claiming early wins (matches the early line)
     const ink = tokenColor('--chart-text', '#5a5f6a');
     const border = tokenColor('--border', '#e6e6e6');
+
+    // Two-stop ramps: light → dark for each zone.
+    // Near-tie cells (t < TIE_THRESHOLD) render gray to signal "too close to call."
+    const TIE_THRESHOLD = 0.10;
+    // Mid-tone → deep ramps: starting point is clearly colored (not pale), so
+    // near-tie gray reads as visually distinct in both light and dark themes.
+    const WIN_LO  = [150, 210, 110]; // medium green
+    const WIN_HI  = [ 40, 105,  20]; // deep green
+    const LOSE_LO = [230, 140, 140]; // medium red
+    const LOSE_HI = [160,  25,  40]; // deep red
+    const GRAY = '#c8cace';
+
+    function lerpColor(lo, hi, t) {
+      const r = Math.round(lo[0] + (hi[0] - lo[0]) * t);
+      const g = Math.round(lo[1] + (hi[1] - lo[1]) * t);
+      const b = Math.round(lo[2] + (hi[2] - lo[2]) * t);
+      return `rgb(${r},${g},${b})`;
+    }
+
+    // Legend color swatches — midpoint of each ramp.
+    const win  = lerpColor(WIN_LO,  WIN_HI,  0.5);
+    const lose = lerpColor(LOSE_LO, LOSE_HI, 0.5);
 
     const W = 360, M = { top: 8, right: 8, bottom: 40, left: 44 };
     const cell = (W - M.left - M.right) / n;
@@ -239,14 +259,19 @@
       rect.setAttribute('width', cell + 0.5);
       rect.setAttribute('height', cell + 0.5);
       const t = Math.min(Math.abs(c.margin) / maxAbs, 1);
-      rect.setAttribute('fill', c.margin >= 0 ? win : lose);
-      rect.setAttribute('fill-opacity', (0.25 + 0.75 * t).toFixed(2));
-      const who = c.margin >= 0 ? 'waiting wins' : 'claiming early wins';
+      const nearTie = t <= TIE_THRESHOLD;
+      rect.setAttribute('fill', nearTie
+        ? GRAY
+        : c.margin >= 0
+          ? lerpColor(WIN_LO,  WIN_HI,  t)
+          : lerpColor(LOSE_LO, LOSE_HI, t));
+      const who = nearTie ? 'near tie' : c.margin >= 0 ? 'waiting wins' : 'claiming early wins';
       rect.setAttribute('aria-label',
         `higher earner to ${c.highDeath}, lower earner to ${c.lowDeath}: ${who}`);
       const title = document.createElementNS(ns, 'title');
-      title.textContent =
-        `Higher earner lives to ${c.highDeath}, lower earner to ${c.lowDeath}: ${who}`;
+      title.textContent = nearTie
+        ? `Higher earner lives to ${c.highDeath}, lower earner to ${c.lowDeath}: near tie (small difference)`
+        : `Higher earner lives to ${c.highDeath}, lower earner to ${c.lowDeath}: ${who}`;
       rect.append(title);
       svg.append(rect);
     });
@@ -316,7 +341,8 @@
     legend.innerHTML =
       `<span><i style="background:${win}"></i> higher earner waiting to ${dAge} wins</span>` +
       `<span><i style="background:${lose}"></i> claiming at ${eAge} wins</span>` +
-      `<span class="muted">Deeper color = bigger difference.</span>`;
+      `<span><i style="background:${GRAY}"></i> near tie</span>` +
+      `<span class="muted">Darker = bigger margin.</span>`;
   }
 
   renderHeatmap();
