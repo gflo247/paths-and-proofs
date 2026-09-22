@@ -15,6 +15,36 @@
 import { computeStateIncomeTax, computeLocalTax } from './relo-engine.mjs';
 import { findCrossover } from '../core/finance.js';
 
+// SSA 2023 Period Life Table — annual mortality rates per 1,000.
+// Exact figures from ssa.gov/oact/STATS/table4c6.html (same source as roth-conversion).
+const QX={
+  male:{
+    20:1.235,21:1.315,22:1.378,23:1.439,24:1.509,25:1.595,26:1.685,27:1.783,28:1.876,29:1.970,
+    30:2.085,31:2.202,32:2.308,33:2.407,34:2.490,35:2.577,36:2.665,37:2.764,38:2.864,39:2.987,
+    40:3.115,41:3.253,42:3.419,43:3.600,44:3.777,45:3.931,46:4.073,47:4.245,48:4.477,49:4.795,
+    50:5.126,51:5.496,52:5.917,53:6.404,54:6.923,
+    55:7.491,56:8.173,57:8.938,58:9.714,59:10.494,60:11.337,61:12.232,62:13.196,63:14.229,64:15.316,
+    65:16.455,66:17.574,67:18.735,68:19.981,69:21.366,70:22.903,71:24.615,72:26.504,73:28.648,74:31.071,
+    75:33.802,76:37.010,77:41.158,78:45.461,79:50.346,80:55.633,81:61.757,82:68.358,83:75.420,84:83.364,
+    85:92.680,86:103.459,87:115.502,88:129.018,89:143.810,90:159.458,91:176.551,92:195.360,93:216.286,
+    94:238.799,95:262.268,96:286.291,97:310.944,98:332.325,99:349.036,100:366.568},
+  female:{
+    20:0.441,21:0.476,22:0.513,23:0.546,24:0.582,25:0.609,26:0.641,27:0.683,28:0.740,29:0.808,
+    30:0.878,31:0.947,32:1.018,33:1.089,34:1.154,35:1.209,36:1.263,37:1.347,38:1.438,39:1.533,
+    40:1.643,41:1.742,42:1.845,43:1.954,44:2.075,45:2.187,46:2.306,47:2.438,48:2.595,49:2.791,
+    50:3.030,51:3.288,52:3.554,53:3.847,54:4.172,
+    55:4.532,56:4.923,57:5.365,58:5.815,59:6.333,60:6.923,61:7.555,62:8.220,63:8.881,64:9.514,
+    65:10.188,66:10.880,67:11.659,68:12.543,69:13.581,70:14.769,71:16.153,72:17.705,73:19.495,74:21.533,
+    75:23.846,76:26.458,77:29.700,78:33.135,79:36.982,80:41.183,81:45.959,82:51.282,83:57.262,84:64.107,
+    85:71.752,86:80.490,87:90.566,88:102.204,89:115.178,90:129.176,91:144.229,92:160.353,93:177.635,
+    94:196.502,95:216.846,96:238.750,97:261.359,98:283.899,99:306.491,100:329.680}
+};
+function survFrom(sex,from,to){let p=1;for(let a=from;a<Math.min(to,100);a++)p*=1-(QX[sex][a]??400)/1000;return p;}
+function survJoint(sex1,age1,sex2,age2,to){
+  const elapsed=to-age1;
+  return 1-(1-survFrom(sex1,age1,to))*(1-survFrom(sex2,age2,age2+elapsed));
+}
+
 // RELO is inlined into index.html (generated from states.json). Read it off window
 // so this module stays a pure ES import with no fetch (local-first, nothing leaves
 // the device).
@@ -42,6 +72,8 @@ export const inputs = [
       { value: 'hoh',    label: 'Head of household' },
     ] },
   { id: 'age',            type: 'number', label: 'Your age',                      min: 50, max: 100, step: 1,    default: 68 },
+  { id: 'sex', type: 'select', label: 'Sex (for life expectancy)', default: 'female',
+    options: [{ value: 'female', label: 'Female' }, { value: 'male', label: 'Male' }] },
   { id: 'socialSecurity', type: 'number', label: 'Social Security per year',      min: 0, max: 120000, step: 500,  default: 30000, unit: '$' },
   { id: 'iraWithdrawal',  type: 'number', label: 'IRA / 401(k) withdrawal per year', min: 0, max: 500000, step: 1000, default: 40000, unit: '$' },
   { id: 'pension',        type: 'number', label: 'Pension per year',             min: 0, max: 300000, step: 1000, default: 20000, unit: '$' },
@@ -217,6 +249,25 @@ export function compute(values) {
     }
     note = `This counts state income tax only${r > 0 ? `, discounted at ${discountRate}% real return` : ''}.${ptClause}`;
   }
+
+  // Append survival-probability sentence when there's a concrete payback year to reach.
+  // Skip for small savings (annualSaving < 500): we've already told the user income tax
+  // doesn't drive that decision, so survival context for the payback year would be confusing.
+  if (payback != null && annualSaving >= 500) {
+    const sex = values.sex ?? 'female';
+    const targetAge = values.age + payback;
+    const isMFJ = values.status === 'mfj';
+    const survPct = Math.round(
+      (isMFJ
+        ? survJoint(sex, values.age, sex, values.age, targetAge)
+        : survFrom(sex, values.age, targetAge)) * 100
+    );
+    const survStr = isMFJ
+      ? `roughly ${survPct}% odds that at least one of you lives to see it (same-age assumption)`
+      : `roughly ${survPct}% odds of living to see that payback`;
+    note += ` SSA mortality tables give ${survStr}.`;
+  }
+
   const context = {
     from: fromName,
     to: toName,

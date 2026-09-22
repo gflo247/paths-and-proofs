@@ -18,11 +18,11 @@
   .context-table th, .context-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
   .context-table thead th { font-weight: 600; color: var(--muted); font-size: 13px; }
   .context-table td.num, .context-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .context-note { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+  .context-note { margin: 10px 0 0; font-size: 14px; color: var(--muted); }
   .note-emphasis {
     margin: 12px 0 0; padding: 10px 14px;
     border-left: 3px solid var(--accent);
-    font-size: 14px; color: var(--fg);
+    font-size: 15px; color: var(--fg);
   }
 
   /* Desktop two-column layout — Relocation prototype only.
@@ -299,7 +299,7 @@
 
   // State selects first so visibility is set before local-tax selects are applied.
   initShareLink([
-    'ctl-fromState', 'ctl-toState', 'ctl-status', 'ctl-age',
+    'ctl-fromState', 'ctl-toState', 'ctl-status', 'ctl-age', 'ctl-sex',
     'ctl-socialSecurity', 'ctl-iraWithdrawal', 'ctl-pension',
     'ctl-capGains', 'ctl-moveCost', 'ctl-discountRate',
     'fromNyLocalTax', 'fromOrLocalTax', 'toNyLocalTax', 'toOrLocalTax',
