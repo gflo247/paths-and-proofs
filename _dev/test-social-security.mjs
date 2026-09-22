@@ -173,11 +173,11 @@ check(
 // compute(): lifeHigh now reachable in 60-69 (previously floored at 70) -- exercises
 // the fix end-to-end through planValueBySecondDeath's death-age derivation.
 {
-  const case1 = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62, lifeHigh: 65, lifeLow: 90, discountRate: 0 };
+  const case1 = { piaHigh: 3000, claimHigh: 70, claimHighEarly: 62, piaLow: 1200, claimLow: 62, lifeHigh: 65, lifeLow: 90, discountRate: 0 };
   const r1 = compute(case1);
   check('compute(): lifeHigh=65 (died before FRA, before filing) gives the corrected breakeven age', parseFloat(r1.summary[3].value.replace('age ', '')), 78);
 
-  const case1b = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62, lifeHigh: 68, lifeLow: 90, discountRate: 0 };
+  const case1b = { piaHigh: 3000, claimHigh: 70, claimHighEarly: 62, piaLow: 1200, claimLow: 62, lifeHigh: 68, lifeLow: 90, discountRate: 0 };
   const r1b = compute(case1b);
   check('compute(): lifeHigh=68 (died after FRA, before filing) gives the corrected breakeven age', parseFloat(r1b.summary[3].value.replace('age ', '')), 86);
 }
@@ -287,7 +287,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 
 // --- compute() summary cards reflect the same symmetric top-up --------------
 {
-  const values4 = { piaHigh: 800, claimHigh: 62, piaLow: 3000, claimLow: 62, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
+  const values4 = { piaHigh: 800, claimHigh: 70, claimHighEarly: 62, piaLow: 3000, claimLow: 62, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
   const result = compute(values4);
   const expectedAt70 = Math.max(workerBenefit(800, 70), spousalBenefit(3000, 70));
   const expectedAt62 = Math.max(workerBenefit(800, 62), spousalBenefit(3000, 62));
@@ -312,7 +312,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
   // Found via sweep: piaLow > piaHigh (the "low" field isn't actually lower)
   // flips which order is worse. High-dies-first alone gives breakeven age 85;
   // low-dies-first is truly worse at age 96. The shown headline must be 96.
-  const case1 = { piaHigh: 1100, claimHigh: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0 };
+  const case1 = { piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0 };
   const r1 = compute(case1);
   check('compute(): shows the worse breakeven age across both death orders (96, not 85)', parseFloat(r1.summary[3].value.replace('age ', '')), 96);
 
@@ -321,7 +321,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
   // actually worse still -- delay never catches up at all ("early wins").
   // The shown headline must be the "claiming early wins" verdict, not a
   // deceptively optimistic breakeven age.
-  const case2 = { piaHigh: 500, claimHigh: 62, piaLow: 800, claimLow: 62, lifeHigh: 95, lifeLow: 75, discountRate: 0 };
+  const case2 = { piaHigh: 500, claimHigh: 70, claimHighEarly: 62, piaLow: 800, claimLow: 62, lifeHigh: 95, lifeLow: 75, discountRate: 0 };
   const r2 = compute(case2);
   checkEqual('compute(): shows "claiming early wins" when that is the true worst case', r2.summary[3].value, 'claiming early wins');
 }
@@ -332,7 +332,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 // this fix should not change the answer for the typical, correctly-labeled
 // household, only for the edge cases the sweep above found.
 {
-  const normal = { piaHigh: 3200, claimHigh: 62, piaLow: 1400, claimLow: 62, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
+  const normal = { piaHigh: 3200, claimHigh: 70, claimHighEarly: 62, piaLow: 1400, claimLow: 62, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
   const r = compute(normal);
   checkEqual('compute(): normally-labeled household is unaffected by the fix', r.summary[3].value, 'waiting wins');
 }
@@ -376,7 +376,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 // lowDiesFirst (high survives), so offset=ageGap=1: breakeven 96->93,
 // marker 75->76.
 {
-  const withGap = { piaHigh: 1100, claimHigh: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 1 };
+  const withGap = { piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 1 };
   const r = compute(withGap);
   check('compute(): breakeven age reflects ageGap offset', parseFloat(r.summary[3].value.replace('age ', '')), 93);
   check('compute(): marker reflects ageGap offset', r.markers[0].x, 76);
@@ -387,7 +387,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 // whole feature was designed around. Re-check the same case1 fixture with NO
 // ageGap field at all.
 {
-  const noGap = { piaHigh: 1100, claimHigh: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0 };
+  const noGap = { piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0 };
   const r = compute(noGap);
   check('compute(): ageGap-omitted breakeven age unchanged from pre-feature value', parseFloat(r.summary[3].value.replace('age ', '')), 96);
   check('compute(): ageGap-omitted marker unchanged from pre-feature value', r.markers[0].x, 75);
@@ -436,17 +436,32 @@ const mockSeries = [
   else { fail++; console.log('FAIL  compute(): outcome field missing or has no type'); }
 }
 {
-  // Breakeven-producing inputs (same fixture as the ageGap test above):
-  // claimHigh=62 with low PIA and discount=0 crosses over at age 96.
-  const r = compute({ piaHigh: 1100, claimHigh: 62, piaLow: 1400, claimLow: 62,
-                      lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 0 });
+  // Breakeven-producing inputs (same fixture as the ageGap test above,
+  // now with explicit claimHighEarly: 62 since claimHigh is the delay side).
+  const r = compute({ piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400,
+                      claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 0 });
   if (r.outcome.type === 'breakeven' && typeof r.outcome.age === 'number' && isFinite(r.outcome.age)) pass++;
   else { fail++; console.log(`FAIL  compute(): breakeven inputs — expected breakeven with finite age, got type=${r.outcome && r.outcome.type} age=${r.outcome && r.outcome.age}`); }
+  // claimHighDelay and claimHighEarly exposed in result.
+  if (r.claimHighDelay === 70 && r.claimHighEarly === 62) pass++;
+  else { fail++; console.log(`FAIL  compute(): claimHighDelay/claimHighEarly not in result (got ${r.claimHighDelay}/${r.claimHighEarly})`); }
 }
 
-// buildVerdict: breakeven, planning age clears it (above).
+// compute(): non-default claiming ages produce a different breakeven.
 {
-  const html = buildVerdict({ type: 'breakeven', age: 81 }, 85, mockSeries);
+  const r67 = compute({ piaHigh: 1100, claimHigh: 70, claimHighEarly: 67, piaLow: 1400,
+                        claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 0 });
+  const r62 = compute({ piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400,
+                        claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 0 });
+  const age67 = r67.outcome.type === 'breakeven' ? r67.outcome.age : null;
+  const age62 = r62.outcome.type === 'breakeven' ? r62.outcome.age : null;
+  if (age67 !== null && age62 !== null && age67 !== age62) pass++;
+  else { fail++; console.log(`FAIL  compute(): 67-vs-70 breakeven should differ from 62-vs-70 (got ${age67} vs ${age62})`); }
+}
+
+// buildVerdict: breakeven, planning age clears it (above) — ages appear in copy.
+{
+  const html = buildVerdict({ type: 'breakeven', age: 81 }, 85, mockSeries, 70, 62);
   if (html.includes('Waiting is likely')) pass++;
   else { fail++; console.log(`FAIL  buildVerdict: breakeven above planning age — expected "Waiting is likely", got: ${html}`); }
   // dollar diff: 170000-120000=50000 > 10000, so dollar line should appear
@@ -454,16 +469,23 @@ const mockSeries = [
   else { fail++; console.log(`FAIL  buildVerdict: breakeven above — expected dollar diff "$50k", got: ${html}`); }
 }
 
+// buildVerdict: non-default delay age appears in delayWins copy.
+{
+  const html = buildVerdict({ type: 'delayWins' }, 85, mockSeries, 67, 62);
+  if (html.includes('67')) pass++;
+  else { fail++; console.log(`FAIL  buildVerdict: delayWins with delayAge=67 — expected "67" in copy, got: ${html}`); }
+}
+
 // buildVerdict: breakeven, planning age exactly equals breakeven — should still be positive.
 {
-  const html = buildVerdict({ type: 'breakeven', age: 81 }, 81, mockSeries);
+  const html = buildVerdict({ type: 'breakeven', age: 81 }, 81, mockSeries, 70, 62);
   if (html.includes('Waiting is likely')) pass++;
   else { fail++; console.log(`FAIL  buildVerdict: breakeven === planning age — expected "Waiting is likely", got: ${html}`); }
 }
 
 // buildVerdict: breakeven, planning age below — dollar line must NOT appear.
 {
-  const html = buildVerdict({ type: 'breakeven', age: 81 }, 79, mockSeries);
+  const html = buildVerdict({ type: 'breakeven', age: 81 }, 79, mockSeries, 70, 62);
   if (html.includes('past your planning horizon')) pass++;
   else { fail++; console.log(`FAIL  buildVerdict: breakeven below planning age — expected "past your planning horizon", got: ${html}`); }
   // At x=79 both series tie (100k vs 100k), diff=0 — dollar line must be absent.
@@ -477,23 +499,37 @@ const mockSeries = [
     { points: [{ x: 85, y: 150000 }] }, // early wins at planning age
     { points: [{ x: 85, y: 120000 }] }, // delay loses
   ];
-  const html = buildVerdict({ type: 'breakeven', age: 81 }, 85, earlyWinsSeries);
+  const html = buildVerdict({ type: 'breakeven', age: 81 }, 85, earlyWinsSeries, 70, 62);
   if (!html.includes('roughly')) pass++;
   else { fail++; console.log(`FAIL  buildVerdict: dollar line appeared despite early winning at planning age: ${html}`); }
 }
 
 // buildVerdict: delayWins.
 {
-  const html = buildVerdict({ type: 'delayWins' }, 85, mockSeries);
+  const html = buildVerdict({ type: 'delayWins' }, 85, mockSeries, 70, 62);
   if (html.includes('wins across every scenario')) pass++;
   else { fail++; console.log(`FAIL  buildVerdict: delayWins — expected "wins across every scenario", got: ${html}`); }
 }
 
-// buildVerdict: earlyWins.
+// buildVerdict: earlyWins — earlyAge appears in copy.
 {
-  const html = buildVerdict({ type: 'earlyWins' }, 85, mockSeries);
-  if (html.includes('claiming early has the edge')) pass++;
-  else { fail++; console.log(`FAIL  buildVerdict: earlyWins — expected "claiming early has the edge", got: ${html}`); }
+  const html = buildVerdict({ type: 'earlyWins' }, 85, mockSeries, 70, 62);
+  if (html.includes('62') && html.includes('has the edge')) pass++;
+  else { fail++; console.log(`FAIL  buildVerdict: earlyWins — expected "62" and "has the edge", got: ${html}`); }
+}
+
+// compute(): claimHighEarly omitted entirely — ?? 62 fallback exercises correctly.
+{
+  const noEarly = { piaHigh: 1100, claimHigh: 70, piaLow: 1400, claimLow: 62,
+                    lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 0 };
+  const r = compute(noEarly);
+  // With claimHighEarly defaulting to 62, should produce the same breakeven as
+  // the explicit claimHighEarly: 62 fixture above (96).
+  if (r.outcome.type === 'breakeven') {
+    check('compute(): claimHighEarly omitted defaults to 62 (breakeven matches explicit 62)', r.outcome.age, 96, 0.5);
+  } else {
+    fail++; console.log(`FAIL  compute(): claimHighEarly omitted — expected breakeven, got ${r.outcome.type}`);
+  }
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

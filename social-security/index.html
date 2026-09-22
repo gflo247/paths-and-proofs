@@ -182,7 +182,7 @@
   import { initShareLink } from '../core/share-link.js';
   bootstrap(mod, mod.onResult);
   initShareLink([
-    'ctl-piaHigh', 'ctl-claimHigh',
+    'ctl-piaHigh', 'ctl-claimHigh', 'ctl-claimHighEarly',
     'ctl-piaLow',  'ctl-claimLow',
     'ctl-ageGap',
     'ctl-lifeHigh', 'ctl-lifeLow',
@@ -289,10 +289,13 @@
     yl.textContent = 'If lower earner lives to ↑';
     svg.append(yl);
 
+    const v = liveValues();
+    const dAge = v.claimHigh ?? 70;
+    const eAge = v.claimHighEarly ?? 62;
     host.replaceChildren(svg);
     legend.innerHTML =
-      `<span><i style="background:${win}"></i> higher earner waiting to 70 wins</span>` +
-      `<span><i style="background:${lose}"></i> claiming at 62 wins</span>` +
+      `<span><i style="background:${win}"></i> higher earner waiting to ${dAge} wins</span>` +
+      `<span><i style="background:${lose}"></i> claiming at ${eAge} wins</span>` +
       `<span class="muted">Deeper color = bigger difference.</span>`;
   }
 

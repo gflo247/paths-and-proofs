@@ -164,9 +164,15 @@ export const inputs = [
   },
   {
     id: 'claimHigh', type: 'slider',
-    label: 'Higher earner: age they claim',
+    label: 'Compare: higher earner waits to',
     min: 62, max: 70, step: 1, default: 70, unit: 'years',
-    help: 'The age the higher earner starts benefits. Delaying raises the survivor benefit too.',
+    help: 'The later strategy in the comparison. Delaying also raises the survivor benefit.',
+  },
+  {
+    id: 'claimHighEarly', type: 'slider',
+    label: '\u2026vs. claiming at',
+    min: 62, max: 70, step: 1, default: 62, unit: 'years',
+    help: 'The earlier strategy to compare against. Try 67 (full retirement age) to see how much the last three years of delay are worth.',
   },
   {
     id: 'piaLow', type: 'number',
@@ -207,9 +213,9 @@ export const inputs = [
 ];
 
 export const presets = {
-  'One earner, one not': { piaHigh: 3000, claimHigh: 70, piaLow: 800,  claimLow: 62, discountRate: 2 },
-  'Both earned, uneven': { piaHigh: 3200, claimHigh: 70, piaLow: 1800, claimLow: 67, discountRate: 2 },
-  'Close to equal':      { piaHigh: 2600, claimHigh: 67, piaLow: 2400, claimLow: 67, discountRate: 2 },
+  'One earner, one not': { piaHigh: 3000, claimHigh: 70, claimHighEarly: 62, piaLow: 800,  claimLow: 62, discountRate: 2 },
+  'Both earned, uneven': { piaHigh: 3200, claimHigh: 70, claimHighEarly: 62, piaLow: 1800, claimLow: 67, discountRate: 2 },
+  'Close to equal':      { piaHigh: 2600, claimHigh: 67, claimHighEarly: 62, piaLow: 2400, claimLow: 67, discountRate: 2 },
 };
 
 const AGE_START = 62;   // earliest either person can claim
@@ -371,12 +377,12 @@ function conservativenessScore(outcome) {
 }
 
 export function compute(values) {
-  // Two plans to compare: the higher earner DELAYS to 70 vs. the higher earner
-  // claims EARLY at 62. Everything else (lower earner's plan, discount rate)
-  // is held at the user's inputs, so the chart isolates the higher earner's
-  // decision \u2014 the one the survivor rule makes pivotal.
-  const planDelay = { ...values, claimHigh: 70 };
-  const planEarly = { ...values, claimHigh: 62 };
+  // Two plans to compare: higher earner delays to claimHigh vs. claims early at
+  // claimHighEarly. Everything else (lower earner's plan, discount rate) is held
+  // at the user's inputs, so the chart isolates the higher earner's decision —
+  // the one the survivor rule makes pivotal. Both default to 70/62 if omitted.
+  const planDelay = { ...values, claimHigh: values.claimHigh ?? 70 };
+  const planEarly = { ...values, claimHigh: values.claimHighEarly ?? 62 };
 
   // Age gap between the two of you (positive = higher earner older). Life
   // expectancies stay in each person's OWN years (unchanged meaning); convert
@@ -423,18 +429,21 @@ export function compute(values) {
     ? highDiesFirst
     : lowDiesFirst;
 
-  const seriesDelay = { name: 'Higher earner waits to 70', color: '#98c379', points: chosen.delayPoints };
-  const seriesEarly = { name: 'Higher earner claims at 62', color: '#e06c75', points: chosen.earlyPoints };
+  const seriesDelay = { name: `Higher earner waits to ${planDelay.claimHigh}`, color: '#98c379', points: chosen.delayPoints };
+  const seriesEarly = { name: `Higher earner claims at ${planEarly.claimHigh}`, color: '#e06c75', points: chosen.earlyPoints };
   const series = [seriesEarly, seriesDelay];
 
   const outcome = chosen.outcome;
 
+  const delayAge = planDelay.claimHigh;
+  const earlyAge = planEarly.claimHigh;
+
   let headlineLabel, headlineValue;
   if (outcome.type === 'breakeven') {
-    headlineLabel = 'Higher earner waiting to 70 pays off as long as one of you lives past';
+    headlineLabel = `Higher earner waiting to ${delayAge} pays off as long as one of you lives past`;
     headlineValue = `age ${outcome.age.toFixed(0)}`;
   } else if (outcome.type === 'delayWins') {
-    headlineLabel = 'Higher earner waiting to 70 pays off across every lifespan shown here';
+    headlineLabel = `Higher earner waiting to ${delayAge} pays off across every lifespan shown here`;
     headlineValue = 'waiting wins';
   } else {
     headlineLabel = 'At this discount rate, claiming early pays off across every lifespan shown here';
@@ -445,12 +454,12 @@ export function compute(values) {
   // 404.410(b)) -- usually the lower earner's top-up binds, but the higher
   // earner claiming very early can also dip below half the lower earner's
   // full-retirement-age amount, so both sides check it the same way.
-  const highOwn70 = workerBenefit(values.piaHigh, 70);
-  const highOwn62 = workerBenefit(values.piaHigh, 62);
-  const highSpousal70 = spousalBenefit(values.piaLow, 70);
-  const highSpousal62 = spousalBenefit(values.piaLow, 62);
-  const highGetsSpousal70 = highSpousal70 > highOwn70;
-  const highGetsSpousal62 = highSpousal62 > highOwn62;
+  const highOwnDelay    = workerBenefit(values.piaHigh, delayAge);
+  const highOwnEarly    = workerBenefit(values.piaHigh, earlyAge);
+  const highSpousalDelay = spousalBenefit(values.piaLow, delayAge);
+  const highSpousalEarly = spousalBenefit(values.piaLow, earlyAge);
+  const highGetsSpousalDelay = highSpousalDelay > highOwnDelay;
+  const highGetsSpousalEarly = highSpousalEarly > highOwnEarly;
 
   const lowOwn = workerBenefit(values.piaLow, values.claimLow);
   const lowSpousalAtClaim = spousalBenefit(values.piaHigh, values.claimLow);
@@ -458,16 +467,16 @@ export function compute(values) {
 
   const summary = [
     {
-      label: highGetsSpousal70
-        ? 'Higher earner\u2019s monthly check if they wait to 70 (spousal top-up applies)'
-        : 'Higher earner\u2019s monthly check if they wait to 70',
-      value: `$${Math.max(highOwn70, highSpousal70).toFixed(0)}`,
+      label: highGetsSpousalDelay
+        ? `Higher earner\u2019s monthly check if they wait to ${delayAge} (spousal top-up applies)`
+        : `Higher earner\u2019s monthly check if they wait to ${delayAge}`,
+      value: `$${Math.max(highOwnDelay, highSpousalDelay).toFixed(0)}`,
     },
     {
-      label: highGetsSpousal62
-        ? 'Higher earner\u2019s monthly check if they claim at 62 (spousal top-up applies)'
-        : 'Higher earner\u2019s monthly check if they claim at 62',
-      value: `$${Math.max(highOwn62, highSpousal62).toFixed(0)}`,
+      label: highGetsSpousalEarly
+        ? `Higher earner\u2019s monthly check if they claim at ${earlyAge} (spousal top-up applies)`
+        : `Higher earner\u2019s monthly check if they claim at ${earlyAge}`,
+      value: `$${Math.max(highOwnEarly, highSpousalEarly).toFixed(0)}`,
     },
     {
       label: lowGetsSpousal
@@ -509,6 +518,8 @@ export function compute(values) {
     crossovers: [{ from: 0, to: 1, label: 'waiting pulls ahead' }],
     markers,
     outcome,
+    claimHighDelay: delayAge,
+    claimHighEarly: earlyAge,
     xAxis: { label: 'Age the longer-living spouse reaches', format: (n) => n.toFixed(0) },
     yAxis: { label: 'Household lifetime benefits (present value)', format: (n) => `$${Math.round(n / 1000)}k` },
   };
@@ -516,7 +527,7 @@ export function compute(values) {
 
 // Returns an HTML string interpreting the compute() result in plain English.
 // series[0] = early, series[1] = delay (matches compute()'s ordering).
-export function buildVerdict(outcome, planningAge, series) {
+export function buildVerdict(outcome, planningAge, series, delayAge = 70, earlyAge = 62) {
   function yAt(points, age) {
     const rounded = Math.round(age);
     const pt = points.find(p => p.x === rounded) || points[points.length - 1];
@@ -526,11 +537,11 @@ export function buildVerdict(outcome, planningAge, series) {
   const fmt = n => '$' + Math.round(Math.abs(n) / 1000) + 'k';
 
   if (outcome.type === 'delayWins') {
-    return '<strong>Waiting to 70 wins across every scenario shown.</strong> '
+    return `<strong>Waiting to ${delayAge} wins across every scenario shown.</strong> `
          + 'At this discount rate, no lifespan favors claiming early.';
   }
   if (outcome.type === 'earlyWins') {
-    return '<strong>At this discount rate, claiming early has the edge.</strong> '
+    return `<strong>At this discount rate, claiming at ${earlyAge} has the edge.</strong> `
          + 'Try lowering the rate \u2014 most retirees use 0\u20132% for this kind of comparison '
          + '\u2014 to see when waiting becomes competitive.';
   }
@@ -554,7 +565,10 @@ export function buildVerdict(outcome, planningAge, series) {
 export function onResult(result) {
   const el = document.getElementById('ss-verdict');
   if (!el) return;
-  el.innerHTML = buildVerdict(result.outcome, result.markers[0].x, result.series);
+  el.innerHTML = buildVerdict(
+    result.outcome, result.markers[0].x, result.series,
+    result.claimHighDelay, result.claimHighEarly
+  );
 }
 
 export const _meta = { constantsYear: CONSTANTS_YEAR };
@@ -562,8 +576,9 @@ export const _meta = { constantsYear: CONSTANTS_YEAR };
 /**
  * The full two-death surface, for the opt-in heatmap. For every pair of death
  * ages (higher earner, lower earner), compute the present value of the household
- * under the higher earner waiting to 70 versus claiming at 62, and return the
- * margin (delay minus early). Positive means waiting wins for that pair.
+ * under the higher earner delaying vs. claiming early (same ages as the main
+ * chart), and return the margin (delay minus early). Positive means waiting wins
+ * for that pair.
  *
  * Unlike the line chart \u2014 which fixes the first death and varies the second \u2014
  * this varies BOTH deaths independently, so it shows the case the line chart
@@ -572,8 +587,8 @@ export const _meta = { constantsYear: CONSTANTS_YEAR };
 export function computeSurface(values, stepYears = 2) {
   const r = values.discountRate / 100;
   const i = Math.pow(1 + r, 1 / 12) - 1;
-  const planDelay = { ...values, claimHigh: 70 };
-  const planEarly = { ...values, claimHigh: 62 };
+  const planDelay = { ...values, claimHigh: values.claimHigh ?? 70 };
+  const planEarly = { ...values, claimHigh: values.claimHighEarly ?? 62 };
 
   /**
    * PV of a plan given explicit death ages for each person, each in that
