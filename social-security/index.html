@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="../core/components.css">
 <style>
   .heatmap-details { margin-top: 2rem; }
-  .heatmap { max-width: 380px; margin: 0.5rem 0; }
+  .heatmap { max-width: 480px; margin: 0.5rem 0; }
   @media (min-width: 900px) {
     #calc { grid-template-areas: "inputs right"; grid-template-columns: minmax(300px, 380px) 1fr; grid-template-rows: auto; }
     #calc > section:nth-of-type(1) { grid-area: inputs; }
@@ -240,7 +240,7 @@
       rect.setAttribute('height', cell + 0.5);
       const t = Math.min(Math.abs(c.margin) / maxAbs, 1);
       rect.setAttribute('fill', c.margin >= 0 ? win : lose);
-      rect.setAttribute('fill-opacity', (0.15 + 0.85 * t).toFixed(2));
+      rect.setAttribute('fill-opacity', (0.25 + 0.75 * t).toFixed(2));
       const who = c.margin >= 0 ? 'waiting wins' : 'claiming early wins';
       rect.setAttribute('aria-label',
         `higher earner to ${c.highDeath}, lower earner to ${c.lowDeath}: ${who}`);
@@ -258,14 +258,14 @@
       xt.setAttribute('x', M.left + idx * cell + cell / 2);
       xt.setAttribute('y', H - M.bottom + 16);
       xt.setAttribute('text-anchor', 'middle');
-      xt.setAttribute('font-size', '9'); xt.setAttribute('fill', ink);
+      xt.setAttribute('font-size', '10'); xt.setAttribute('fill', ink);
       xt.textContent = a;
       svg.append(xt);
       const yt = document.createElementNS(ns, 'text');
       yt.setAttribute('x', M.left - 6);
       yt.setAttribute('y', M.top + (n - 1 - idx) * cell + cell / 2 + 3);
       yt.setAttribute('text-anchor', 'end');
-      yt.setAttribute('font-size', '9'); yt.setAttribute('fill', ink);
+      yt.setAttribute('font-size', '10'); yt.setAttribute('fill', ink);
       yt.textContent = a;
       svg.append(yt);
     });
@@ -274,7 +274,7 @@
     xl.setAttribute('x', M.left + (W - M.left - M.right) / 2);
     xl.setAttribute('y', H - 4);
     xl.setAttribute('text-anchor', 'middle');
-    xl.setAttribute('font-size', '11'); xl.setAttribute('fill', ink);
+    xl.setAttribute('font-size', '12'); xl.setAttribute('fill', ink);
     xl.textContent = 'If higher earner lives to →';
     svg.append(xl);
 
@@ -285,7 +285,7 @@
     yl.setAttribute('y', chartCenterY);
     yl.setAttribute('transform', `rotate(-90, ${ylX}, ${chartCenterY})`);
     yl.setAttribute('text-anchor', 'middle');
-    yl.setAttribute('font-size', '11'); yl.setAttribute('fill', ink);
+    yl.setAttribute('font-size', '12'); yl.setAttribute('fill', ink);
     yl.textContent = 'If lower earner lives to ↑';
     svg.append(yl);
 
