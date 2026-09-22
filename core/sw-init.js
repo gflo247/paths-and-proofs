@@ -1,65 +1,46 @@
-// Service worker registration and update-notification banner.
+// Service worker registration and silent auto-reload.
 // Imported by core/bootstrap.js (Social Security, Relocation, Medicare)
 // and by roth-conversion/index.html's module bridge.
-// Creates the banner programmatically — no HTML changes needed per-page.
+// When a new SW installs, activates it immediately and reloads as soon as
+// the tab is safe: hidden, or no focused input / contentEditable element.
 
 if ('serviceWorker' in navigator) {
-  // Banner — appended to body, hidden until a new SW is waiting.
-  const banner = document.createElement('div');
-  banner.id = 'sw-update-banner';
-  banner.setAttribute('role', 'status');
-  banner.style.cssText = [
-    'display:none',
-    'position:fixed',
-    'bottom:1.25rem',
-    'left:50%',
-    'transform:translateX(-50%)',
-    'background:#1C3A5E',
-    'color:#fff',
-    'padding:.6rem 1.1rem',
-    'border-radius:6px',
-    'font-size:.85rem',
-    'z-index:9999',
-    'box-shadow:0 2px 10px rgba(0,0,0,.35)',
-    'white-space:nowrap',
-  ].join(';');
-  banner.innerHTML = 'A new version is available'
-    + '&nbsp;<button id="sw-update-btn" style="'
-    + 'background:#fff;color:#1C3A5E;border:none;'
-    + 'padding:.2rem .65rem;border-radius:4px;'
-    + 'cursor:pointer;font-weight:600;margin-left:.3rem'
-    + '">Refresh</button>';
-  document.body.appendChild(banner);
-
-  // Capture before registration — used to distinguish an update (prevController
-  // non-null) from first install (prevController null, clients.claim() fires
-  // controllerchange without any user action).
+  // Capture before registration — distinguishes an update (prevController
+  // non-null) from first install (clients.claim() also fires controllerchange).
   const prevController = navigator.serviceWorker.controller;
 
+  const safe = () =>
+    !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) &&
+    !document.activeElement?.isContentEditable;
+
+  let _swRefreshing = false;
+
+  const reloadWhenSafe = () => {
+    if (document.hidden || safe()) { location.reload(); return; }
+    setTimeout(reloadWhenSafe, 1000);
+  };
+
+  // If the user switches tabs while we're polling, reload immediately.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && _swRefreshing) location.reload();
+  });
+
   navigator.serviceWorker.register('/sw.js').then(reg => {
-    // New SW found while page is open — show banner once it's installed.
+    // New SW found while page is open — activate it as soon as it's installed.
     reg.addEventListener('updatefound', () => {
       const next = reg.installing;
       next.addEventListener('statechange', () => {
         if (next.state === 'installed' && navigator.serviceWorker.controller) {
-          banner.style.display = 'block';
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
       });
     });
   }).catch(err => console.warn('SW registration failed:', err));
 
-  // Refresh button: tell the waiting SW to activate immediately.
-  document.addEventListener('click', e => {
-    if (e.target.id !== 'sw-update-btn') return;
-    navigator.serviceWorker.ready.then(reg => {
-      if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-    });
-  });
-
-  // SW activated (after skipWaiting) — reload to pick up new version.
-  // Guard: only reload when updating an existing SW, not on first install
-  // (clients.claim() during first activate also fires controllerchange).
+  // SW activated after skipWaiting — reload when the tab is safe.
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (prevController) window.location.reload();
+    if (!prevController) return; // first install, not an update
+    _swRefreshing = true;
+    reloadWhenSafe();
   });
 }
