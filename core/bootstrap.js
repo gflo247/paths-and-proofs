@@ -16,14 +16,25 @@ export function bootstrap(module, onResult) {
 
   const presetsEl = document.getElementById('presets');
   if (presetsEl && module.presets) {
-    Object.keys(module.presets).forEach((name) => {
+    const presetNames = Object.keys(module.presets);
+    const buttons = [];
+    const setActive = (btn) => buttons.forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+    presetNames.forEach((name) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'preset';
+      b.setAttribute('aria-pressed', 'false');
       b.textContent = name;
-      b.addEventListener('click', () => api.loadPreset(name));
+      b.addEventListener('click', () => { setActive(b); api.loadPreset(name); });
       presetsEl.append(b);
+      buttons.push(b);
     });
+    // Auto-load the first preset on a fresh page load. Skip if a share link is
+    // present — the share link decoder runs after bootstrap and wins over any preset.
+    if (!location.hash && buttons.length) {
+      setActive(buttons[0]);
+      api.loadPreset(presetNames[0]);
+    }
   }
   return api;
 }

@@ -31,6 +31,7 @@ h2 { font-size: 15px; font-weight: 600; text-transform: uppercase;
   border: 1px solid var(--border); background: var(--surface); color: inherit; cursor: pointer;
 }
 .preset:hover { border-color: var(--accent); }
+.preset[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 .preset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .chart { width: 100%; }
