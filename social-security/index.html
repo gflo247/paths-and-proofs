@@ -28,6 +28,14 @@
   .heatmap-legend .muted { color: var(--muted); }
   .tie-control { margin-top: 0.75rem; font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
   .tie-control input[type=range] { width: 140px; vertical-align: middle; }
+  .heatmap svg { cursor: pointer; }
+  #heatmap-tip {
+    display: none; position: fixed; z-index: 100; pointer-events: none;
+    background: var(--surface, #fff); border: 1px solid var(--border, #e6e6e6);
+    border-radius: 6px; padding: 0.45rem 0.7rem;
+    font-size: 0.8rem; line-height: 1.55;
+    box-shadow: 0 2px 8px rgba(0,0,0,.18); max-width: 210px;
+  }
   .ss-verdict {
     font-size: .9rem; line-height: 1.6;
     padding: 12px 14px;
@@ -203,6 +211,13 @@
   const host = document.getElementById('heatmap');
   const legend = document.getElementById('heatmap-legend');
 
+  // Tap/click tooltip — created once, reused across renders.
+  const tip = document.createElement('div');
+  tip.id = 'heatmap-tip';
+  document.body.appendChild(tip);
+  const hideTip = () => { tip.style.display = 'none'; };
+  document.addEventListener('click', hideTip);
+
   function liveValues() {
     const v = {};
     mod.inputs.forEach((c) => {
@@ -344,6 +359,40 @@
       `Your scenario: higher earner to ${lh}, lower earner to ${ll}`;
     dot.append(dotTitle);
     svg.append(dot);
+
+    // Tap/click: show a tooltip with the cell's ages and margin.
+    // Closes over ages, cells, maxAbs, TIE_THRESHOLD, M, cell, n — all
+    // current-render values, so re-attaching on every render is correct.
+    svg.addEventListener('click', e => {
+      const svgRect = svg.getBoundingClientRect();
+      const svgX = (e.clientX - svgRect.left) * (360 / svgRect.width);
+      const svgY = (e.clientY - svgRect.top)  * (H   / svgRect.height);
+      const xi    = Math.floor((svgX - M.left) / cell);
+      const yiInv = Math.floor((svgY - M.top)  / cell);
+      const yi    = n - 1 - yiInv;
+      if (xi < 0 || xi >= n || yiInv < 0 || yiInv >= n) return;
+      const c = cells.find(cc => cc.highDeath === ages[xi] && cc.lowDeath === ages[yi]);
+      if (!c) return;
+      const nearTie  = Math.abs(c.margin) / maxAbs <= TIE_THRESHOLD;
+      const abs      = Math.abs(c.margin);
+      const dollarStr = abs < 500  ? 'essentially equal'
+                      : abs < 1000 ? `$${Math.round(abs)}`
+                      :              `~$${Math.round(abs / 1000)}k`;
+      const verdict  = nearTie        ? 'Near tie'
+                     : c.margin >= 0  ? 'Waiting wins'
+                     :                  'Claiming early wins';
+      tip.innerHTML =
+        `Higher earner to <strong>${ages[xi]}</strong><br>` +
+        `Lower earner to <strong>${ages[yi]}</strong><br>` +
+        `${verdict} &middot; ${dollarStr}`;
+      const tipW = 210;
+      let left = e.clientX + 14;
+      if (left + tipW > window.innerWidth - 8) left = e.clientX - tipW - 14;
+      tip.style.left = `${left}px`;
+      tip.style.top  = `${Math.min(e.clientY - 10, window.innerHeight - 90)}px`;
+      tip.style.display = 'block';
+      e.stopPropagation(); // prevent the document-level hideTip from firing immediately
+    });
 
     host.replaceChildren(svg);
     const tieRaw = Math.round(maxAbs * TIE_THRESHOLD);
