@@ -240,6 +240,7 @@
   }
 
   function renderHeatmap() {
+    hideTip(); // clear any stale tooltip/highlight before replacing the SVG
     const { ages, cells } = mod.computeSurface(liveValues(), 2);
     const n = ages.length;
     const maxAbs = cells.reduce((m, c) => Math.max(m, Math.abs(c.margin)), 1);
