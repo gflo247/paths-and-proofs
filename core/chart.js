@@ -155,8 +155,12 @@ export function drawChart(result, container) {
     });
 
   // Redraw on resize so it stays crisp and mobile-friendly.
+  // Always update _latestResult so the observer redraws with current data, not
+  // whatever result was captured in the initial closure (which would be stale
+  // after a preset load or any recompute that happens before layout settles).
+  container._latestResult = result;
   if (!container._chartObserver && globalThis.ResizeObserver) {
-    container._chartObserver = new ResizeObserver(() => drawChart(result, container));
+    container._chartObserver = new ResizeObserver(() => drawChart(container._latestResult, container));
     container._chartObserver.observe(container);
   }
 }
