@@ -160,7 +160,7 @@ export function drawChart(result, container) {
   // after a preset load or any recompute that happens before layout settles).
   container._latestResult = result;
   if (!container._chartObserver && globalThis.ResizeObserver) {
-    container._chartObserver = new ResizeObserver(() => drawChart(container._latestResult, container));
+    container._chartObserver = new ResizeObserver(() => { if (container._latestResult) drawChart(container._latestResult, container); });
     container._chartObserver.observe(container);
   }
 }
