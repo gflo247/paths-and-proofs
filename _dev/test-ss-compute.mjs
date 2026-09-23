@@ -173,6 +173,15 @@ check('6.3 near-equal PIAs: own benefit wins for lower earner at FRA',
   householdMonthly(vEqual, true, true, 70, 67) - workerBenefit(2600, 70),
   workerBenefit(2400, 67), 0.01);
 
+// Case D: high earner's spousal top-up binds.
+// piaHigh=1200, claimHigh=62: highWorker=1200*0.70=840, highSpousal=spousalBenefit(3000,62)=975.
+// highOwn = max(840, 975) = 975 (spousal wins). This path (highSpousal > highWorker) is
+// distinct from cases A–C where only the low earner's spousal path was exercised.
+const vHighTopUp = { piaHigh: 1200, claimHigh: 62, piaLow: 3000, claimLow: 67 };
+check('6.4 high earner spousal top-up binds: highOwn = spousalBenefit(piaLow, claimHigh)',
+  householdMonthly(vHighTopUp, true, true, 70, 67) - workerBenefit(3000, 67),
+  spousalBenefit(3000, 62), 0.01);
+
 // ── Group 7: survivor under SURVIVOR_MIN_CLAIM_AGE ───────────────────────────
 // A widow(er) under 60 cannot claim ANY survivor benefit. householdMonthly()
 // must return only the survivor's own worker benefit (often 0 if they also
@@ -220,13 +229,16 @@ checkTrue('8.3 piaHigh=0: compute() produces no NaN', rHighZero.series.every(s =
 checkTrue('8.4 piaHigh=0: outcome type is valid', ['earlyWins', 'delayWins', 'breakeven'].includes(rHighZero.outcome.type));
 
 // ── Group 9: both die at minimum age (60) ────────────────────────────────────
-// Both die at age 60, before AGE_START (62). Nobody collects anything under
-// either plan. compute() must handle this gracefully: all series values should
-// be 0 (or nearly 0), no crash, no NaN.
+// Both die at age 60, before AGE_START (62). compute() must handle this gracefully.
+// planValueBySecondDeath sweeps secondDeathAge from firstDeathAge (60) upward, so a
+// survivor at 62+ can still collect their own worker benefit — series values are NOT
+// all zero. We verify: no crash, no NaN, no negative PV.
 
 const rBothDie60 = compute({ ...BASE, lifeHigh: 60, lifeLow: 60 });
 
-checkTrue('9.1 both die at 60: compute() does not crash', true); // reaching here proves no throw
+// If compute() threw, Node would have exited before reaching this line.
+checkTrue('9.1 both die at 60: compute() does not crash and returns a series',
+  Array.isArray(rBothDie60.series) && rBothDie60.series.length === 2);
 checkTrue('9.2 both die at 60: no NaN in series',
   rBothDie60.series.every(s => s.points.every(p => isFinite(p.y))));
 // planValueBySecondDeath sweeps secondDeathAge from firstDeathAge upward, so a survivor
