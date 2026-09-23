@@ -6,8 +6,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,560;0,9..144,640;1,9..144,560&display=swap" rel="stylesheet">
-<title>When should each of you start Social Security?</title>
+<title>Social Security: Couples — When should each of you start?</title>
 <meta name="description" content="For a married couple: see how your Social Security benefits change with the age each of you claims, including spousal and survivor benefits, and the age past which waiting pays off. Runs in your browser.">
+<meta property="og:title" content="Social Security: Couples — When should each of you start?">
+<meta property="og:description" content="For a married couple: see how Social Security benefits change with the age each of you claims, including spousal and survivor benefits, and the breakeven age past which waiting pays off. Free, runs in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://paths-and-proofs.com/social-security-couples/">
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <link rel="stylesheet" href="../core/tokens.css">
 <link rel="stylesheet" href="../core/page.css">
@@ -93,6 +97,7 @@
         <span>Runs entirely in your browser — input numbers never leave your device.</span>
       </p>
       <p class="presets-label">New here? Start with an example, then change any number to match your own:</p>
+      <p class="caption" style="margin-top:.25rem;margin-bottom:.5rem;">Built for those born in 1960 or later (full retirement age 67). Earlier birth years have a lower FRA — the figures here won't be right for you.</p>
       <div class="presets" id="presets"></div>
       <div data-controls></div>
     </section>
@@ -138,10 +143,16 @@
       which applies to anyone born in 1960 or later. If you were born earlier, your full
       retirement age is younger and your numbers will differ — the figures here won't be right
       for you.</p>
-    <p>The discount rate is the real return you assume you could earn on benefits taken
-      earlier; a higher rate makes claiming early look better. The life-expectancy inputs are
-      planning ages you choose — they're marked on the chart, not predictions, and you can move
-      them to see how the answer shifts.</p>
+    <p>The discount rate is the real (inflation-adjusted) return you assume you could earn
+      on benefits taken earlier; a higher rate makes claiming early look better. At real
+      returns above roughly 4–5%, early claiming tends to win even across long lifespans —
+      that's the math working correctly, not an error. Most financial planning uses 2–3%
+      real as a conservative baseline. The life-expectancy inputs are planning ages you
+      choose — they're marked on the chart, not predictions, and you can move them to see
+      how the answer shifts.</p>
+    <p>COLA (cost-of-living adjustments) isn't modeled, but it scales both strategies
+      equally and doesn't move the crossover — so it doesn't change which claiming age
+      comes out ahead.</p>
     <p><strong>A real age gap, in whole years.</strong> Use the "Age gap between you" slider to
       say how many years older — or younger — the higher earner is. The model then advances each
       of you through your own age, offset by that gap, instead of assuming you're the same age —
