@@ -319,7 +319,7 @@
     yl.setAttribute('transform', `rotate(-90, ${ylX}, ${chartCenterY})`);
     yl.setAttribute('text-anchor', 'middle');
     yl.setAttribute('font-size', '12'); yl.setAttribute('fill', ink);
-    yl.textContent = 'If lower earner lives to ↑';
+    yl.textContent = 'If lower earner lives to →'; // → rotates to ↑ after rotate(-90)
     svg.append(yl);
 
     const v = liveValues();
