@@ -215,7 +215,14 @@
   const tip = document.createElement('div');
   tip.id = 'heatmap-tip';
   document.body.appendChild(tip);
-  const hideTip = () => { tip.style.display = 'none'; };
+  // activeHighlight points to the SVG rect currently showing the selection
+  // border. renderHeatmap() updates it each time it creates a new SVG so
+  // hideTip() can always reach the current one.
+  let activeHighlight = null;
+  const hideTip = () => {
+    tip.style.display = 'none';
+    if (activeHighlight) activeHighlight.style.display = 'none';
+  };
   document.addEventListener('click', hideTip);
 
   function liveValues() {
@@ -360,6 +367,18 @@
     dot.append(dotTitle);
     svg.append(dot);
 
+    // Selection highlight — a single rect drawn on top of whichever cell was
+    // last tapped. Starts hidden; positioned by the click handler below.
+    // pointer-events:none so it doesn't interfere with subsequent clicks.
+    const hlRect = document.createElementNS(ns, 'rect');
+    hlRect.setAttribute('fill', 'none');
+    hlRect.setAttribute('stroke', 'white');
+    hlRect.setAttribute('stroke-width', '2');
+    hlRect.setAttribute('pointer-events', 'none');
+    hlRect.style.display = 'none';
+    svg.append(hlRect);
+    activeHighlight = hlRect;
+
     // Tap/click: show a tooltip with the cell's ages and margin.
     // Closes over ages, cells, maxAbs, TIE_THRESHOLD, M, cell, n — all
     // current-render values, so re-attaching on every render is correct.
@@ -385,6 +404,12 @@
         `Higher earner to <strong>${ages[xi]}</strong><br>` +
         `Lower earner to <strong>${ages[yi]}</strong><br>` +
         `${verdict} &middot; ${dollarStr}`;
+      // Highlight the tapped cell with an inset border.
+      hlRect.setAttribute('x',      M.left + xi * cell + 1);
+      hlRect.setAttribute('y',      M.top  + (n - 1 - yi) * cell + 1);
+      hlRect.setAttribute('width',  cell - 1.5);
+      hlRect.setAttribute('height', cell - 1.5);
+      hlRect.style.display = 'block';
       const tipW = 210;
       let left = e.clientX + 14;
       if (left + tipW > window.innerWidth - 8) left = e.clientX - tipW - 14;
