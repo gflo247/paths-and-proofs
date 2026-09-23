@@ -22,7 +22,7 @@ const END = '<!-- PNP-BRAND-END -->';
 
 // The calculator family only.
 const TARGETS = [
-  'social-security/index.html',
+  'social-security-couples/index.html',
   'roth-conversion/index.html',
 ];
 

@@ -3,7 +3,7 @@ import { JSDOM } from 'jsdom';
 import * as d3 from 'd3';
 import { readFileSync } from 'node:fs';
 import { mount } from '../core/app.js';
-import * as socialSecurity from '../social-security/social-security.js';
+import * as socialSecurity from '../social-security-couples/social-security.js';
 
 const dom = new JSDOM('<!doctype html><body></body>');
 globalThis.window = dom.window;

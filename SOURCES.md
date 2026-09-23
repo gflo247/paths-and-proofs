@@ -15,7 +15,7 @@ softer spots to prioritize on the next pass.
 
 ---
 
-## Social Security (`social-security/social-security.js`)
+## Social Security: Couples (`social-security-couples/social-security.js`)
 
 These are formula constants fixed in the Code of Federal Regulations, not
 annually inflation-adjusted figures, so they change rarely (only by statute).

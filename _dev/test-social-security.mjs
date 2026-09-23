@@ -22,7 +22,7 @@ import {
   FULL_RETIREMENT_AGE,
   SURVIVOR_FULL_RETIREMENT_AGE,
   SURVIVOR_MIN_CLAIM_AGE,
-} from '../social-security/social-security.js';
+} from '../social-security-couples/social-security.js';
 
 let pass = 0, fail = 0;
 function check(label, actual, expected, tolerance = 0.01) {

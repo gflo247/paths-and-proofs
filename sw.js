@@ -1,11 +1,11 @@
 // Bump CACHE_NAME on every meaningful deploy — this is what tells
 // browsers to fetch and install the new version.
-const CACHE_NAME = 'paths-proofs-v7';
+const CACHE_NAME = 'paths-proofs-v8';
 
 const PRECACHE = [
   '/',
   '/roth-conversion/',
-  '/social-security/',
+  '/social-security-couples/',
   '/relocation/',
   // /medicare/ deliberately excluded — not yet a live-linked tool; a non-200
   // response from any single PRECACHE entry causes the entire install to fail.

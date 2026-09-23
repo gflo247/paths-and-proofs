@@ -10,7 +10,7 @@ Everything runs in the browser; nothing is sent anywhere.
 /                       Landing page (index.html) — the site's front door
 /core/                  Shared calculator engine (finance, chart, contract, controls)
                         — used by the calculator family only
-/social-security/       Social Security claiming calculator (the anchor tool)
+/social-security-couples/  Social Security: Couples — claiming age comparison (the anchor tool)
 /relocation/            State relocation tax-payback calculator — all 51
                         jurisdictions, uses /core/ plus its own relo-engine.mjs
 /roth-conversion/       Roth conversion calculator — its own self-contained front
