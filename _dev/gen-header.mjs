@@ -24,6 +24,8 @@ const END = '<!-- PNP-BRAND-END -->';
 const TARGETS = [
   'social-security-couples/index.html',
   'roth-conversion/index.html',
+  'relocation/index.html',
+  'medicare/index.html',
 ];
 
 // Strip the leading documentation comment block from the canonical source, keeping
