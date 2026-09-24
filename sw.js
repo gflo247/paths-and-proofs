@@ -1,6 +1,6 @@
 // Bump CACHE_NAME on every meaningful deploy — this is what tells
 // browsers to fetch and install the new version.
-const CACHE_NAME = '2026-09-24c';
+const CACHE_NAME = '2026-09-24d';
 
 const PRECACHE = [
   '/',

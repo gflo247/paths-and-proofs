@@ -9,6 +9,7 @@
 .page-header { position: sticky; top: 0; z-index: 40; background: var(--bg); border-bottom: 1px solid var(--border); }
 .page-header-row { max-width: 1080px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; height: 52px; gap: 0.75rem; }
 .page-privacy-note { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--muted); margin: 0; }
+@media (max-width: 600px) { .page-privacy-note { display: none; } }
 body {
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 17px; line-height: 1.6; margin: 0;
