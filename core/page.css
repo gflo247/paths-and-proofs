@@ -14,7 +14,10 @@
   position: relative;
 }
 @media (max-width: 600px) {
-  .page-privacy-note { cursor: pointer; }
+  .page-privacy-note {
+    cursor: pointer; width: 40px; height: 40px; justify-content: center;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+  }
   .page-privacy-note .privacy-text { display: none; }
   .page-privacy-note[aria-expanded="true"] .privacy-text {
     display: block; position: absolute; top: calc(100% + 10px); right: -8px;
