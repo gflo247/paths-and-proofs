@@ -4,6 +4,10 @@
    only content, never its own styles. */
 
 * { box-sizing: border-box; }
+
+/* Brand + privacy note in one header row: logo left, note right. Stacks on mobile. */
+.page-header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.5rem; }
+.page-privacy-note { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--muted); margin: 0; }
 body {
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 17px; line-height: 1.6; margin: 0;

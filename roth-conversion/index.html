@@ -69,6 +69,8 @@
        in light mode and vanish). Context overrides theme. */
     .site-header .pnp-brand{--pnp-path:#9fb3cc;--pnp-proof:#d9943a;--pnp-ink:#ffffff;}
     .privacy-pill{font-size:.74rem;font-weight:500;color:rgba(255,255,255,.78);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:4px 13px;border-radius:40px;display:flex;align-items:center;gap:5px;}
+    .site-header-privacy{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:.74rem;color:rgba(255,255,255,.6);margin:0;}
+    @media(max-width:640px){.site-header-privacy{display:none;}}
     /* Persistent wayfinding cue: appears once the reader has scrolled past the
        Bottom Line verdict, so a page with 16+ sections doesn't feel like it never
        resolves. Bottom-fixed (counterpart to the top .site-header) so it never
@@ -544,6 +546,10 @@
     <span>Paths <span class="pnp-amp">&amp;</span> <span class="pnp-mark">Proofs</span></span>
   </a>
   <!-- PNP-BRAND-END -->
+  <p class="site-header-privacy" role="note">
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;opacity:.8;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    No account or sign-in. Your numbers stay on your device.
+  </p>
   <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
     <button class="clear-btn" onclick="clearAllInputs()" title="Clear all inputs and saved data">Clear</button>
     <button class="print-btn" onclick="printResults()" title="Opens your browser's print dialog — choose &quot;Save as PDF&quot; as the destination">Print / PDF</button>
@@ -981,10 +987,7 @@
         <div class="ttip" id="tip-convert"><strong>How much is right?</strong> It depends on your bracket, Medicare thresholds, and how much of your Social Security is currently taxable. Your results show all three common stopping points. There’s no income limit on conversions — anyone can convert in any year.</div>
       <div id="rmdCvtHint" style="display:none;font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.5"></div>
     </div>
-    <div class="privacy-note" role="note" style="justify-content:flex-start;margin:1.1rem 0 0;padding:0">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <span>Runs entirely in your browser — input numbers never leave your device. Your numbers are saved here automatically and will be waiting when you come back.</span>
-    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin:1.1rem 0 0;">Your numbers are saved here automatically and will be waiting when you come back.</p>
     <div class="step-nav">
       <button class="btn btn-ghost" onclick="stepperBack()">← Back</button>
       <div class="step-nav-right">
@@ -1100,12 +1103,6 @@
 </div>
 <footer>
   <span class="footer-story">Built by an independent developer after getting frustrated by Roth calculators that ignored state taxes, a hidden Social Security tax effect, and Medicare surcharges — and charged $10–20/month for the privilege. Just the calculation.</span>
-
-  <div class="footer-badges">
-    <span class="footer-badge">Runs entirely in your browser</span>
-    <span class="footer-badge">No data collected or transmitted</span>
-    <span class="footer-badge">No sign-in required</span>
-  </div>
 
   <div class="footer-divider"></div>
 
