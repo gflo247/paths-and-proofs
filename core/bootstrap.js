@@ -16,6 +16,17 @@ export function bootstrap(module, onResult) {
   const headerRow = document.querySelector('.page-header-row');
   if (headerRow && btn) headerRow.appendChild(btn);
 
+  // Lock icon: tap to reveal/hide privacy note on mobile.
+  const privacyBtn = document.querySelector('.page-privacy-note');
+  if (privacyBtn) {
+    privacyBtn.addEventListener('click', (e) => {
+      const open = privacyBtn.getAttribute('aria-expanded') === 'true';
+      privacyBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
+      e.stopPropagation();
+    });
+    document.addEventListener('click', () => privacyBtn.setAttribute('aria-expanded', 'false'));
+  }
+
   const api = mount(module, document.getElementById('calc'), onResult);
 
   const presetsEl = document.getElementById('presets');
