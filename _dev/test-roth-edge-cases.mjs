@@ -196,12 +196,15 @@ function ctx({ wages = 0, pension = 0, nii = 0, ltcg = 0, ss = 0,
 // ═══════════════════════════════════════════════════════════════════════════
 
 {
-  // 4.1 Wages=$60k, pension=$0, age=65 (≥59.5) → wages don't compete for cap.
-  // stTiBase=0; stTiWithEligible=max(0,20000-20000)=0 (cvt<cap); cvtTxSt=0.
-  // A refactor that accidentally uses (wages+pension) instead of just pension
-  // for the cap competition would produce cvtTxSt>0 here, catching the bug.
-  const c1 = computeConversionCost(20000, ctx({ wages: 60000, stateCode: 'MI', curAge: 65 }));
-  near('4.1 MI wages=60k pension=0 age=65: cvtTxSt=0 (wages don\'t compete for cap)', c1.cvtTxSt, 0);
+  // 4.1 Wages=$80k (> cap=$67,610), pension=$0, age=65 (≥59.5) → wages don't compete.
+  // stTiBase=max(0,0-0)=0; stTiWithEligible=max(0,20000-20000)=0 (cvt<cap); cvtTxSt=0.
+  // Wages above the cap is intentional: if wages were incorrectly fed into the cap
+  // formula (e.g., using wages+pension instead of just pension), stTiBase would become
+  // max(0,80000-67610)=12390 and cvtTxSt would be non-zero → test would FAIL, catching
+  // the bug. Wages below the cap (e.g. $60k) would be silently absorbed by the cap
+  // clamp and miss that exact bug class.
+  const c1 = computeConversionCost(20000, ctx({ wages: 80000, stateCode: 'MI', curAge: 65 }));
+  near('4.1 MI wages=80k (>cap) pension=0 age=65: cvtTxSt=0 (wages don\'t compete for cap)', c1.cvtTxSt, 0);
 
   // 4.2 Pension=$70k (>cap=$67,610), age=65 → cap fully exhausted by pension.
   // stTiBase=max(0,70000-67610)=2390; stTiWithEligible=max(0,90000-67610)=22390.
@@ -247,6 +250,11 @@ function ctx({ wages = 0, pension = 0, nii = 0, ltcg = 0, ss = 0,
   // cvtTxSt = 20000 * MS.cr = 20000 * 0.044 = 880.
   const c3 = computeConversionCost(20000, ctx({ stateCode: 'MS', curAge: 58 }));
   near('5.3 MS single age=58 (<59.5): NOT exempt → cvtTxSt=880', c3.cvtTxSt, 880);
+
+  // 5.4 MS single: age=59.5 (exactly at EXAGE.MS gate) → exempt.
+  // cvtTxSt = 0.
+  const c4 = computeConversionCost(20000, ctx({ stateCode: 'MS', curAge: 59.5 }));
+  near('5.4 MS single age=59.5 (exactly at gate): exempt → cvtTxSt=0', c4.cvtTxSt, 0);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
