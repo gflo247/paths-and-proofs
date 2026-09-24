@@ -11,6 +11,10 @@ import './sw-init.js';
 export function bootstrap(module, onResult) {
   applyOSTheme();
   installThemeToggle();
+  // Move the toggle into the sticky page header (non-Roth tools only).
+  const btn = document.getElementById('themeToggle');
+  const headerRow = document.querySelector('.page-header-row');
+  if (headerRow && btn) headerRow.appendChild(btn);
 
   const api = mount(module, document.getElementById('calc'), onResult);
 
