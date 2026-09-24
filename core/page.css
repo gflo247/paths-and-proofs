@@ -8,23 +8,26 @@
 /* Sticky page header — brand left, privacy note + theme toggle right. */
 .page-header { position: sticky; top: 0; z-index: 40; background: var(--bg); border-bottom: 1px solid var(--border); }
 .page-header-row { max-width: 1080px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: flex-start; align-items: center; height: 52px; gap: 0.75rem; }
+/* Lock icon — matches theme toggle visually: always a 40×40 bordered button.
+   On wider screens the privacy text also shows inline; on narrow it's hidden
+   behind a tap-to-reveal popover. */
 .page-privacy-note {
-  display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--muted);
-  margin: 0 0 0 auto; background: none; border: none; padding: 0; cursor: default; font-family: inherit;
-  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; flex-shrink: 0; margin: 0 0 0 auto;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  cursor: pointer; color: var(--muted); font-family: inherit; font-size: 0.82rem;
+  position: relative; gap: 6px;
 }
-@media (max-width: 600px) {
-  .page-privacy-note {
-    cursor: pointer; width: 40px; height: 40px; justify-content: center;
-    border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
-  }
-  .page-privacy-note .privacy-text { display: none; }
-  .page-privacy-note[aria-expanded="true"] .privacy-text {
-    display: block; position: absolute; top: calc(100% + 10px); right: -8px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 12px; font-size: 0.82rem; color: var(--muted); white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0,0,0,.12); z-index: 50;
-  }
+.page-privacy-note .privacy-text { display: none; }
+@media (min-width: 601px) {
+  .page-privacy-note { width: auto; padding: 0 10px; cursor: default; }
+  .page-privacy-note .privacy-text { display: inline; }
+}
+.page-privacy-note[aria-expanded="true"] .privacy-text {
+  display: block; position: absolute; top: calc(100% + 10px); right: -8px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 12px; font-size: 0.82rem; color: var(--muted); white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12); z-index: 50;
 }
 body {
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
