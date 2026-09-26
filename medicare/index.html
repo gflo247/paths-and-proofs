@@ -8,6 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,560;0,9..144,640;1,9..144,560&display=swap" rel="stylesheet">
 <title>Medicare — Medigap vs. Medicare Advantage breakeven</title>
 <meta name="description" content="How much medical care you'd need to use in a year before Medigap's flat premium pays for itself against Medicare Advantage's growing out-of-pocket costs. Plus how your state's rules shape your premium over time and your rights to switch later. Runs in your browser.">
+<meta property="og:title" content="Medicare — Medigap vs. Medicare Advantage breakeven">
+<meta property="og:description" content="How much medical care you'd need before Medigap's flat premium beats Medicare Advantage's growing out-of-pocket costs. Plus state guaranteed-issue rights. Runs in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://paths-and-proofs.pages.dev/medicare/">
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <link rel="stylesheet" href="../core/tokens.css">
 <link rel="stylesheet" href="../core/page.css">
@@ -111,6 +115,7 @@
     <span class="muted">The honest question isn't which one is "better" — it's how much care
     you'd need to use in a year before Medigap's steadier cost wins out, and what your state's
     rules mean for that premium over time and your right to switch later.</span></p>
+  <p class="caption" style="margin-bottom: 0;">This tool is in testing — the math has been reviewed but it hasn't gone through the same depth of independent audit as the other tools. Use the numbers as a starting point, not a final answer.</p>
 
   <div id="calc">
     <section>
@@ -163,10 +168,10 @@
       window length and exact scope of that right weren't independently confirmed for most
       of those states, so treat it as "this protection exists" information, not a substitute
       for checking your state's own rule before relying on it.</p>
-    <p>Also comparing a Roth conversion or a move to a lower-tax state? The
-      <a href="/roth-conversion/">Roth conversion tool</a> and the
-      <a href="/relocation/">relocation tool</a> both account for how Medicare IRMAA surcharges
-      interact with those decisions.</p>
+    <p>Also comparing a Roth conversion? The
+      <a href="/roth-conversion/">Roth conversion tool</a> accounts for how Medicare IRMAA surcharges
+      interact with a conversion. The <a href="/relocation/">relocation tool</a> models state income
+      tax only and does not include IRMAA.</p>
     <p>This is information to help you think, not financial advice.</p>
   </details>
   <footer>Built to show the math, not to sell you anything.<br><span class="footer-nav">Also on Paths and Proofs: <a href="/social-security-couples/">Social Security: Couples</a> · <a href="/roth-conversion/">Roth conversion</a> · <a href="/relocation/">Relocation tax comparison</a></span></footer>
