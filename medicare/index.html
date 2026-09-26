@@ -12,6 +12,7 @@
 <meta property="og:description" content="How much medical care you'd need before Medigap's flat premium beats Medicare Advantage's growing out-of-pocket costs. Plus state guaranteed-issue rights. Runs in your browser.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://paths-and-proofs.pages.dev/medicare/">
+<link rel="canonical" href="https://paths-and-proofs.pages.dev/medicare/">
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <link rel="stylesheet" href="../core/tokens.css">
 <link rel="stylesheet" href="../core/page.css">
@@ -115,7 +116,7 @@
     <span class="muted">The honest question isn't which one is "better" — it's how much care
     you'd need to use in a year before Medigap's steadier cost wins out, and what your state's
     rules mean for that premium over time and your right to switch later.</span></p>
-  <p class="caption" style="margin-bottom: 0;">This tool is in testing — the math has been reviewed but it hasn't gone through the same depth of independent audit as the other tools. Use the numbers as a starting point, not a final answer.</p>
+  <p class="caption" style="margin-bottom: 0;">This tool is in testing — the math and state data have been reviewed to the same standard as the other tools; only mobile real-device verification is still outstanding.</p>
 
   <div id="calc">
     <section>
@@ -155,7 +156,7 @@
       guarantee. Medigap's own plan-letter differences (for example, Plan N's small
       office-visit copays) aren't modeled at this level of detail either.</p>
     <p class="src-note">The $283 Part B deductible folded into Medigap's cost comes from
-      CMS's <a href="https://public-inspection.federalregister.gov/2025-20251.pdf" target="_blank" rel="noopener">2026 Part B premium and deductible notice</a>.
+      the Centers for Medicare &amp; Medicaid Services (CMS) <a href="https://public-inspection.federalregister.gov/2025-20251.pdf" target="_blank" rel="noopener">2026 Part B premium and deductible notice</a>.
       The $9,250 Advantage out-of-pocket cap shown as this tool's starting value (edit it to
       match your own plan) is the CMS-set 2026 in-network ceiling, from CMS's
       <a href="https://mabenefitsmailbox.lmi.org/MABenefitsMailbox/S3Browser/GetFile?path=Final+CY+2026+Part+C+Bid+Review+Memorandum+and+Appendix-4-15-25.pdf" target="_blank" rel="noopener">2026 Part C bid review memorandum</a>
@@ -169,7 +170,7 @@
       of those states, so treat it as "this protection exists" information, not a substitute
       for checking your state's own rule before relying on it.</p>
     <p>Also comparing a Roth conversion? The
-      <a href="/roth-conversion/">Roth conversion tool</a> accounts for how Medicare IRMAA surcharges
+      <a href="/roth-conversion/">Roth conversion tool</a> accounts for how Medicare Income-Related Monthly Adjustment Amount (IRMAA) surcharges
       interact with a conversion. The <a href="/relocation/">relocation tool</a> models state income
       tax only and does not include IRMAA.</p>
     <p>This is information to help you think, not financial advice.</p>
