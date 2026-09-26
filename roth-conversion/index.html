@@ -71,6 +71,10 @@
     .privacy-pill{font-size:.74rem;font-weight:500;color:rgba(255,255,255,.78);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:4px 13px;border-radius:40px;display:flex;align-items:center;gap:5px;}
     .site-header-privacy{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:.74rem;color:rgba(255,255,255,.6);margin:0;}
     @media(max-width:640px){.site-header-privacy{display:none;}}
+    .roth-lock-btn{display:none;width:32px;height:32px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:rgba(255,255,255,.9);cursor:pointer;align-items:center;justify-content:center;position:relative;flex-shrink:0;padding:0;}
+    .roth-lock-btn[aria-expanded="true"] .roth-lock-popover{display:block;}
+    .roth-lock-popover{display:none;position:absolute;top:calc(100% + 8px);right:-8px;background:var(--card,#fff);border:1px solid var(--tip-bdr,#ddd);border-radius:8px;padding:8px 12px;font-size:.82rem;color:var(--muted,#555);white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.18);z-index:400;}
+    @media(max-width:640px){.roth-lock-btn{display:flex;}}
     /* Persistent wayfinding cue: appears once the reader has scrolled past the
        Bottom Line verdict, so a page with 16+ sections doesn't feel like it never
        resolves. Bottom-fixed (counterpart to the top .site-header) so it never
@@ -511,6 +515,7 @@
     (function(){var d=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.setAttribute('data-theme','dark');})();
     function toggleTheme(){var dark=document.documentElement.getAttribute('data-theme')==='dark';if(dark)document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme','dark');syncThemeBtn();if(typeof calc==='function'){try{calc();}catch(e){}}}
     function syncThemeBtn(){var d=document.documentElement.getAttribute('data-theme')==='dark';var b=document.getElementById('themeBtn');if(b){var t=d?'Switch to light mode':'Switch to dark mode';b.title=t;b.setAttribute('aria-label',t);}}
+    document.addEventListener('DOMContentLoaded',function(){var lb=document.getElementById('rothLockBtn');if(!lb)return;lb.addEventListener('click',function(e){var open=lb.getAttribute('aria-expanded')==='true';lb.setAttribute('aria-expanded',open?'false':'true');e.stopPropagation();});document.addEventListener('click',function(){lb.setAttribute('aria-expanded','false');});});
     document.addEventListener('DOMContentLoaded',syncThemeBtn);
   </script>
 </head>
@@ -553,6 +558,10 @@
   <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
     <button class="clear-btn" onclick="clearAllInputs()" title="Clear all inputs and saved data">Clear</button>
     <button class="print-btn" onclick="printResults()" title="Opens your browser's print dialog — choose &quot;Save as PDF&quot; as the destination">Print / PDF</button>
+    <button class="roth-lock-btn" id="rothLockBtn" aria-label="Privacy: No account or sign-in. Your numbers stay on your device." aria-expanded="false">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span class="roth-lock-popover">No account or sign-in. Your numbers stay on your device.</span>
+    </button>
     <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Switch to dark mode" aria-label="Switch to dark mode">
       <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
       <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
