@@ -1,14 +1,13 @@
-// Bump CACHE_NAME on every meaningful deploy — this is what tells
-// browsers to fetch and install the new version.
-const CACHE_NAME = '2026-09-26e';
+// Bump CACHE_NAME on every deploy that touches CSS or any PRECACHE entry —
+// this is what tells browsers to fetch and install the new version.
+const CACHE_NAME = '2026-09-28a';
 
 const PRECACHE = [
   '/',
   '/roth-conversion/',
   '/social-security-couples/',
   '/relocation/',
-  // /medicare/ deliberately excluded — not yet a live-linked tool; a non-200
-  // response from any single PRECACHE entry causes the entire install to fail.
+  '/medicare/',
   '/core/page.css',
   '/core/tokens.css',
   '/core/components.css',
