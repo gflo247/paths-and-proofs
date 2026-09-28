@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found — Paths and Proofs</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,560;0,9..144,640;1,9..144,560&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:#f4f2ec; --paper-2:#fbfaf6;
+    --ink:#22272e; --muted:#5a5f6a; --faint:#9aa0ad;
+    --teal:#2c6e6a; --teal-soft:#cfe0dd;
+    --border:#e3ded3; --surface:#ffffff;
+    --path:#7a8088; --proof:#b0681f;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#15181d; --paper-2:#191d23;
+      --ink:#e8eaf0; --muted:#9aa0ad; --faint:#5f6571;
+      --teal:#5fb3ad; --teal-soft:#26352f;
+      --border:#2b2f3a; --surface:#1b1f29;
+      --path:#7d828c; --proof:#d9943a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#15181d; --paper-2:#191d23;
+    --ink:#e8eaf0; --muted:#9aa0ad; --faint:#5f6571;
+    --teal:#5fb3ad; --teal-soft:#26352f;
+    --border:#2b2f3a; --surface:#1b1f29;
+    --path:#7d828c; --proof:#d9943a;
+  }
+
+  .theme-toggle {
+    position:fixed; top:16px; right:16px; z-index:50;
+    width:40px; height:40px; padding:8px;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:var(--surface); color:var(--ink);
+    border:1px solid var(--border); border-radius:8px; cursor:pointer; line-height:0;
+  }
+  .theme-toggle:hover { border-color:var(--teal); }
+  .theme-toggle svg { width:20px; height:20px; }
+  .theme-toggle .ic-moon { display:none; }
+  .theme-toggle.is-dark .ic-sun { display:none; }
+  .theme-toggle.is-dark .ic-moon { display:inline-block; }
+  .theme-toggle:focus-visible { outline:2px solid var(--teal); outline-offset:2px; }
+
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body {
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:17px; line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh; display:flex; flex-direction:column;
+  }
+  .wrap { max-width:760px; margin:0 auto; padding:0 22px; flex:1; }
+  a { color:var(--teal); text-underline-offset:3px; }
+  :where(a,button):focus-visible { outline:2px solid var(--teal); outline-offset:3px; border-radius:3px; }
+
+  header { padding:64px 0 0; }
+
+  .brand {
+    display:inline-flex; align-items:center; gap:.55ch;
+    font-family:'Fraunces','Playfair Display',Georgia,'Times New Roman',serif;
+    font-size:18px; font-weight:700; line-height:1; letter-spacing:-.01em;
+    text-decoration:none; color:var(--ink); padding:.4rem .15rem; opacity:.9;
+  }
+  .brand:hover { opacity:1; text-decoration:none; }
+  .brand svg { width:30px; height:20px; display:block; flex-shrink:0; }
+
+  .code {
+    font-family:'Fraunces','Playfair Display',Georgia,serif;
+    font-size:clamp(72px,18vw,120px); font-weight:640; line-height:1;
+    letter-spacing:-.02em; color:var(--proof); margin:40px 0 0;
+  }
+  h1 {
+    font-family:'Fraunces','Playfair Display',Georgia,serif;
+    font-size:clamp(26px,5vw,36px); font-weight:560; line-height:1.15;
+    letter-spacing:-.01em; margin:12px 0 16px;
+  }
+  p.lede { font-size:17px; color:var(--muted); margin:0 0 32px; max-width:34em; }
+
+  .tools { list-style:none; padding:0; margin:0 0 48px; display:flex; flex-direction:column; gap:2px; }
+  .tools li a {
+    display:block; padding:12px 16px;
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    text-decoration:none; color:var(--ink);
+    font-family:'Fraunces','Playfair Display',Georgia,serif; font-size:17px; font-weight:560;
+    transition:border-color .15s;
+  }
+  .tools li a:hover { border-color:var(--teal); color:var(--teal); }
+  .tools li a .desc { display:block; font-family:'Inter',sans-serif; font-size:13.5px; font-weight:400; color:var(--muted); margin-top:2px; }
+
+  footer {
+    padding:32px 0 56px; border-top:1px solid var(--border);
+    font-size:13.5px; color:var(--muted);
+  }
+  footer a { color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="/" aria-label="Paths and Proofs — back to home">
+      <svg viewBox="0 0 54 34" aria-hidden="true">
+        <path d="M2 26 C 22 23, 32 12, 52 7" stroke="var(--path)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <path d="M2 8 C 24 11, 34 22, 52 27" stroke="var(--path)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <circle cx="27" cy="17" r="4.1" fill="var(--paper)" stroke="var(--proof)" stroke-width="2.6"/>
+      </svg>
+      <span>Paths <span style="font-weight:600;opacity:.5;">&amp;</span> <span style="font-style:italic;color:var(--proof);">Proofs</span></span>
+    </a>
+
+    <p class="code" aria-hidden="true">404</p>
+    <h1>Page not found</h1>
+    <p class="lede">That URL doesn't point anywhere. Here are the four tools:</p>
+  </header>
+
+  <ul class="tools">
+    <li>
+      <a href="/roth-conversion/">
+        Roth conversion
+        <span class="desc">Whether to convert a traditional IRA or 401(k) this year, and how much</span>
+      </a>
+    </li>
+    <li>
+      <a href="/social-security-couples/">
+        Social Security: Couples
+        <span class="desc">When each spouse should start — including spousal and survivor benefits</span>
+      </a>
+    </li>
+    <li>
+      <a href="/relocation/">
+        Relocation tax comparison
+        <span class="desc">How long state income tax savings take to pay back the cost of moving</span>
+      </a>
+    </li>
+    <li>
+      <a href="/medicare/">
+        Medicare: Medigap vs Medicare Advantage
+        <span class="desc">How much care you'd need to use before Medigap's flat premium wins</span>
+      </a>
+    </li>
+  </ul>
+
+  <footer>
+    <p>Paths and Proofs · information to help you think, not financial advice · every tool runs
+      locally in your browser.</p>
+  </footer>
+</div>
+
+<button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch theme">
+  <span class="ic-sun" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+  <span class="ic-moon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
+</button>
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    function isDark() {
+      var t = root.getAttribute('data-theme');
+      if (t) return t === 'dark';
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    function sync() {
+      var d = isDark();
+      btn.classList.toggle('is-dark', d);
+      btn.title = d ? 'Switch to light mode' : 'Switch to dark mode';
+      btn.setAttribute('aria-label', btn.title);
+    }
+    btn.addEventListener('click', function () {
+      root.setAttribute('data-theme', isDark() ? 'light' : 'dark');
+      sync();
+    });
+    sync();
+  })();
+</script>
+</body>
+</html>

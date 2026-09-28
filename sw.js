@@ -1,9 +1,10 @@
 // Bump CACHE_NAME on every deploy that touches CSS or any PRECACHE entry —
 // this is what tells browsers to fetch and install the new version.
-const CACHE_NAME = '2026-09-28b';
+const CACHE_NAME = '2026-09-28c';
 
 const PRECACHE = [
   '/',
+  '/404.html',
   '/roth-conversion/',
   '/social-security-couples/',
   '/relocation/',
@@ -39,9 +40,14 @@ self.addEventListener('fetch', e => {
   if (url.origin !== location.origin) return; // don't intercept CDN
 
   // Navigation requests (HTML): network-first so users always get latest content.
-  // Falls back to cache only when offline.
+  // Falls back to cache when offline: serve the cached page if it exists, otherwise
+  // serve the cached 404 page (better than a blank screen for broken URLs offline).
   if (e.request.mode === 'navigate') {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    e.respondWith(
+      fetch(e.request).catch(() =>
+        caches.match(e.request).then(r => r || caches.match('/404.html'))
+      )
+    );
     return;
   }
 
