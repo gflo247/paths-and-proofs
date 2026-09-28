@@ -56,8 +56,8 @@ function makeSelect(id, options, value) {
 
 // ─── Social Security field list ───────────────────────────────────────────────
 const SS_FIELDS = [
-  'ctl-piaHigh', 'ctl-claimHigh', 'ctl-claimHighEarly',
-  'ctl-piaLow',  'ctl-claimLow',
+  'ctl-piaHigh', 'ctl-birthYearHigh', 'ctl-claimHigh', 'ctl-claimHighEarly',
+  'ctl-piaLow',  'ctl-birthYearLow',  'ctl-claimLow',
   'ctl-ageGap',
   'ctl-lifeHigh', 'ctl-lifeLow',
   'ctl-discountRate',
@@ -82,16 +82,18 @@ const RELO_FIELDS = [
 // ─── Group 1: encode / decode ─────────────────────────────────────────────────
 
 // Build DOM elements for SS
-makeInput('ctl-piaHigh',        'number', '2500',  0, 6000);
-makeInput('ctl-claimHigh',      'range',  '67',   62,   70);
-makeInput('ctl-claimHighEarly', 'range',  '62',   62,   70);
-makeInput('ctl-piaLow',         'number', '1200',  0, 6000);
-makeInput('ctl-claimLow',       'range',  '62',   62,   70);
-makeInput('ctl-ageGap',         'range',  '2',   -20,   20);
-makeInput('ctl-lifeHigh',       'range',  '90',   60,  100);
-makeInput('ctl-lifeLow',        'range',  '85',   60,  100);
-makeInput('ctl-discountRate',   'range',  '2',     0,    6);
-makeInput('ctl-tie-threshold',  'range',  '10',    0,   30);
+makeInput('ctl-piaHigh',        'number', '2500',  0,    6000);
+makeInput('ctl-birthYearHigh',  'number', '1957', 1943,  1970);
+makeInput('ctl-claimHigh',      'range',  '67',   62,    70);
+makeInput('ctl-claimHighEarly', 'range',  '62',   62,    70);
+makeInput('ctl-piaLow',         'number', '1200',  0,    6000);
+makeInput('ctl-birthYearLow',   'number', '1960', 1943,  1970);
+makeInput('ctl-claimLow',       'range',  '62',   62,    70);
+makeInput('ctl-ageGap',         'range',  '2',   -20,    20);
+makeInput('ctl-lifeHigh',       'range',  '90',   60,   100);
+makeInput('ctl-lifeLow',        'range',  '85',   60,   100);
+makeInput('ctl-discountRate',   'range',  '2',     0,     6);
+makeInput('ctl-tie-threshold',  'range',  '10',    0,    30);
 
 const ssEncoded = encodeShareState(SS_FIELDS);
 ok('1.1 SS encodeShareState produces a v1. prefix', ssEncoded.startsWith('v1.'));
@@ -101,7 +103,7 @@ ok('1.2 SS decode → piaHigh round-trips',     ssDecoded?.['ctl-piaHigh']      
 ok('1.3 SS decode → claimHigh round-trips',   ssDecoded?.['ctl-claimHigh']    === '67');
 ok('1.4 SS decode → ageGap round-trips',      ssDecoded?.['ctl-ageGap']       === '2');
 ok('1.5 SS decode → discountRate round-trips',ssDecoded?.['ctl-discountRate'] === '2');
-ok('1.6 SS decode produces all 10 keys',      Object.keys(ssDecoded || {}).length === 10);
+ok('1.6 SS decode produces all 12 keys',      Object.keys(ssDecoded || {}).length === 12);
 
 // Build DOM elements for Medicare
 makeSelect('ctl-stateCode', ['OH','MI','NY','FL'], 'MI');

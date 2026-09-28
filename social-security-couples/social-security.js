@@ -4,8 +4,8 @@
 // This version models a COUPLE: two earners, two claim ages, and the survivor
 // rule that makes the higher earner's delay decision matter for the SECOND
 // death, not their own. It folds in spousal benefits (a low earner can draw up
-// to 50% of the higher earner's full-retirement-age amount). It assumes a full
-// retirement age of 67 (born 1960 or later).
+// to 50% of the higher earner's full-retirement-age amount). Full retirement
+// age (FRA) is derived from each person's birth year via the SSA tables.
 //
 // Every rule and constant below links to the specific government page that
 // defines it, so any single number can be checked at its source:
@@ -17,8 +17,8 @@
 //     stepped worker/spousal ones above
 //   - Delayed retirement credits (8%/yr, stop at 70): CFR section 404.313
 //     https://www.ssa.gov/OP_Home/cfr20/404/404-0313.htm
-//   - Full retirement age 67 for WORKER and SPOUSAL benefits, born 1960 or
-//     later: https://www.ssa.gov/benefits/retirement/planner/1960-delay.html
+//   - Worker/spousal FRA by birth year (65 → 66 → 67 in two-month steps):
+//     https://www.ssa.gov/benefits/retirement/planner/1960-delay.html
 //   - Full retirement age for SURVIVOR benefits is a separate, younger table:
 //     66 years 8 months for the same 1960 birth cohort.
 //     https://www.ssa.gov/survivor/full-retirement-age-survivor
@@ -53,22 +53,50 @@ export const SURVIVOR_MIN_CLAIM_AGE = 60;   // earliest age a widow(er) can clai
                                              // this separately.
 
 /**
+ * Worker/spousal full retirement age by birth year.
+ * Source: ssa.gov/benefits/retirement/planner/1960-delay.html
+ * Steps up 2 months per birth year from 65 (born ≤1937) through 67 (born ≥1960),
+ * with a flat 66 plateau for 1943–1954.
+ */
+export function fraFromBirthYear(year) {
+  if (year <= 1937) return 65;
+  if (year <= 1942) return 65 + ((year - 1937) * 2) / 12;
+  if (year <= 1954) return 66;
+  if (year <= 1959) return 66 + ((year - 1954) * 2) / 12;
+  return 67;
+}
+
+/**
+ * Survivor full retirement age by birth year. This is a SEPARATE, younger
+ * table from the worker/spousal FRA above — the same two-month step pattern
+ * but shifted two years earlier in birth year.
+ * Source: ssa.gov/survivor/full-retirement-age-survivor
+ */
+export function survivorFraFromBirthYear(year) {
+  if (year <= 1939) return 65;
+  if (year <= 1944) return 65 + ((year - 1939) * 2) / 12;
+  if (year <= 1956) return 66;
+  if (year <= 1961) return 66 + ((year - 1956) * 2) / 12;
+  return 67;
+}
+
+/**
  * A worker's own monthly benefit at a given claiming age, from their
  * full-retirement-age amount (the primary insurance amount).
  * Early reduction: 5/9 of 1% per month for the first 36 months, then 5/12 of
  * 1% per month beyond that. Delayed credit: 2/3 of 1% per month (8%/year),
  * stopping at age 70. Source: CFR 404.410(a) and CFR 404.313.
  */
-export function workerBenefit(primaryInsuranceAmount, claimAge) {
+export function workerBenefit(primaryInsuranceAmount, claimAge, fra = FULL_RETIREMENT_AGE) {
   const age = Math.min(claimAge, 70);   // credits stop accruing at 70
-  if (age <= FULL_RETIREMENT_AGE) {
-    const monthsEarly = Math.round((FULL_RETIREMENT_AGE - age) * 12);
+  if (age <= fra) {
+    const monthsEarly = Math.round((fra - age) * 12);
     const reduction =
       (Math.min(monthsEarly, 36) * (5 / 9) +
        Math.max(monthsEarly - 36, 0) * (5 / 12)) / 100;
     return primaryInsuranceAmount * (1 - reduction);
   }
-  const monthsLate = Math.round((age - FULL_RETIREMENT_AGE) * 12);
+  const monthsLate = Math.round((age - fra) * 12);
   return primaryInsuranceAmount * (1 + monthsLate * (2 / 3) / 100);
 }
 
@@ -81,10 +109,10 @@ export function workerBenefit(primaryInsuranceAmount, claimAge) {
  * delayed retirement credits — they never exceed 50% of the partner's amount,
  * no matter how long claiming is delayed. Source: CFR 404.410(b).
  */
-export function spousalBenefit(partnerPrimaryInsuranceAmount, claimAge) {
+export function spousalBenefit(partnerPrimaryInsuranceAmount, claimAge, fra = FULL_RETIREMENT_AGE) {
   const unreduced = partnerPrimaryInsuranceAmount * 0.5;
-  if (claimAge >= FULL_RETIREMENT_AGE) return unreduced;   // no credits past FRA
-  const monthsEarly = Math.round((FULL_RETIREMENT_AGE - claimAge) * 12);
+  if (claimAge >= fra) return unreduced;   // no credits past FRA
+  const monthsEarly = Math.round((fra - claimAge) * 12);
   const reduction =
     (Math.min(monthsEarly, 36) * (25 / 36) +
      Math.max(monthsEarly - 36, 0) * (5 / 12)) / 100;
@@ -130,21 +158,21 @@ export function spousalBenefit(partnerPrimaryInsuranceAmount, claimAge) {
  * survivor-claiming age of 60. This reduction is orthogonal to whether the
  * deceased filed -- it always applies.
  */
-export function survivorBenefit(deceasedPia, deceasedClaimAge, survivorCurrentAge, deceasedDeathAge = Infinity) {
+export function survivorBenefit(deceasedPia, deceasedClaimAge, survivorCurrentAge, deceasedDeathAge = Infinity, survivorFra = SURVIVOR_FULL_RETIREMENT_AGE, deceasedFra = FULL_RETIREMENT_AGE) {
   const hasFiled = deceasedDeathAge >= deceasedClaimAge;
   let base;
   if (hasFiled) {
-    const deceasedActual = workerBenefit(deceasedPia, deceasedClaimAge);
+    const deceasedActual = workerBenefit(deceasedPia, deceasedClaimAge, deceasedFra);
     base = Math.max(deceasedActual, deceasedPia * 0.825);
   } else {
-    base = deceasedDeathAge >= FULL_RETIREMENT_AGE
-      ? workerBenefit(deceasedPia, Math.min(deceasedDeathAge, 70))
+    base = deceasedDeathAge >= deceasedFra
+      ? workerBenefit(deceasedPia, Math.min(deceasedDeathAge, 70), deceasedFra)
       : deceasedPia;
   }
 
-  const age = Math.max(60, Math.min(survivorCurrentAge, SURVIVOR_FULL_RETIREMENT_AGE));
-  const monthsEarly = Math.round((SURVIVOR_FULL_RETIREMENT_AGE - age) * 12);
-  const monthsInWindow = Math.round((SURVIVOR_FULL_RETIREMENT_AGE - 60) * 12);
+  const age = Math.max(60, Math.min(survivorCurrentAge, survivorFra));
+  const monthsEarly = Math.round((survivorFra - age) * 12);
+  const monthsInWindow = Math.round((survivorFra - 60) * 12);
   const reduction = monthsInWindow > 0 ? (0.285 * monthsEarly) / monthsInWindow : 0;
 
   return base * (1 - reduction);
@@ -163,6 +191,12 @@ export const inputs = [
     help: 'The full-retirement-age estimate on the higher earner\u2019s Social Security statement.',
   },
   {
+    id: 'birthYearHigh', type: 'number',
+    label: 'Higher earner: birth year',
+    min: 1924, max: 1970, step: 1, default: 1960,
+    help: 'Determines full retirement age (FRA). Born 1960 or later: FRA is 67. Born 1943\u20131954: FRA is 66. Born 1955\u20131959: FRA is 66y2mo to 66y10mo (steps up 2 months per birth year).',
+  },
+  {
     id: 'claimHigh', type: 'slider',
     label: 'Compare: higher earner waits to',
     min: 62, max: 70, step: 1, default: 70, unit: 'years',
@@ -172,13 +206,19 @@ export const inputs = [
     id: 'claimHighEarly', type: 'slider',
     label: '\u2026vs. claiming at',
     min: 62, max: 70, step: 1, default: 62, unit: 'years',
-    help: 'The earlier strategy to compare against. Try 67 (full retirement age) to see how much the last three years of delay are worth.',
+    help: 'The earlier strategy to compare against. Try your full retirement age to see how much the last few years of delay are worth.',
   },
   {
     id: 'piaLow', type: 'number',
     label: 'Lower earner: full retirement age benefit (monthly)',
     min: 0, max: 6000, step: 50, default: 1200, unit: '$',
     help: 'The lower earner\u2019s own estimate. If it is under half the higher earner\u2019s, a spousal top-up applies.',
+  },
+  {
+    id: 'birthYearLow', type: 'number',
+    label: 'Lower earner: birth year',
+    min: 1924, max: 1970, step: 1, default: 1960,
+    help: 'Determines full retirement age (FRA). Born 1960 or later: FRA is 67. Born 1943\u20131954: FRA is 66. Born 1955\u20131959: FRA is 66y2mo to 66y10mo (steps up 2 months per birth year).',
   },
   {
     id: 'claimLow', type: 'slider',
@@ -241,8 +281,13 @@ const AGE_END = 100;    // chart horizon
  * rule is what ties the higher earner\u2019s delay decision to the second death.
  */
 export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lowCurrentAge, highDeathAge = Infinity, lowDeathAge = Infinity) {
-  const highWorker = highCurrentAge >= values.claimHigh ? workerBenefit(values.piaHigh, values.claimHigh) : 0;
-  const lowWorker  = lowCurrentAge  >= values.claimLow  ? workerBenefit(values.piaLow,  values.claimLow)  : 0;
+  const highFra = fraFromBirthYear(values.birthYearHigh ?? 1960);
+  const lowFra  = fraFromBirthYear(values.birthYearLow  ?? 1960);
+  const highSurvivorFra = survivorFraFromBirthYear(values.birthYearHigh ?? 1960);
+  const lowSurvivorFra  = survivorFraFromBirthYear(values.birthYearLow  ?? 1960);
+
+  const highWorker = highCurrentAge >= values.claimHigh ? workerBenefit(values.piaHigh, values.claimHigh, highFra) : 0;
+  const lowWorker  = lowCurrentAge  >= values.claimLow  ? workerBenefit(values.piaLow,  values.claimLow,  lowFra)  : 0;
 
   const highHasFiled = highCurrentAge >= values.claimHigh;
   const lowHasFiled = lowCurrentAge >= values.claimLow;
@@ -250,10 +295,10 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
   // Spousal top-up, gated on the OTHER person having filed. Symmetric: either
   // spouse can draw off the other's record.
   const lowSpousal = (lowCurrentAge >= values.claimLow && highHasFiled)
-    ? spousalBenefit(values.piaHigh, values.claimLow)
+    ? spousalBenefit(values.piaHigh, values.claimLow, lowFra)
     : 0;
   const highSpousal = (highCurrentAge >= values.claimHigh && lowHasFiled)
-    ? spousalBenefit(values.piaLow, values.claimHigh)
+    ? spousalBenefit(values.piaLow, values.claimHigh, highFra)
     : 0;
   const lowOwn = Math.max(lowWorker, lowSpousal);     // larger of own vs spousal
   const highOwn = Math.max(highWorker, highSpousal);  // larger of own vs spousal
@@ -271,16 +316,18 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
     // A survivor under SURVIVOR_MIN_CLAIM_AGE isn't eligible for ANY survivor
     // benefit yet -- survivorBenefit()'s own age-reduction formula clamps up
     // to 60 rather than gating this, so callers must check it explicitly.
+    // Survivor is high (their survivorFra); deceased is low (their fra).
     const inherited = highCurrentAge >= SURVIVOR_MIN_CLAIM_AGE
-      ? survivorBenefit(values.piaLow, values.claimLow, highCurrentAge, lowDeathAge)
+      ? survivorBenefit(values.piaLow, values.claimLow, highCurrentAge, lowDeathAge, highSurvivorFra, lowFra)
       : 0;
     return Math.max(highWorker, inherited);
   }
   if (!highAlive && lowAlive) {
     // High has died; low survives and may inherit a survivor benefit off high's
     // record, subject to the same SURVIVOR_MIN_CLAIM_AGE eligibility floor.
+    // Survivor is low (their survivorFra); deceased is high (their fra).
     const inherited = lowCurrentAge >= SURVIVOR_MIN_CLAIM_AGE
-      ? survivorBenefit(values.piaHigh, values.claimHigh, lowCurrentAge, highDeathAge)
+      ? survivorBenefit(values.piaHigh, values.claimHigh, lowCurrentAge, highDeathAge, lowSurvivorFra, highFra)
       : 0;
     return Math.max(lowWorker, inherited);
   }
@@ -454,15 +501,17 @@ export function compute(values) {
   // 404.410(b)) -- usually the lower earner's top-up binds, but the higher
   // earner claiming very early can also dip below half the lower earner's
   // full-retirement-age amount, so both sides check it the same way.
-  const highOwnDelay    = workerBenefit(values.piaHigh, delayAge);
-  const highOwnEarly    = workerBenefit(values.piaHigh, earlyAge);
-  const highSpousalDelay = spousalBenefit(values.piaLow, delayAge);
-  const highSpousalEarly = spousalBenefit(values.piaLow, earlyAge);
+  const highFra = fraFromBirthYear(values.birthYearHigh ?? 1960);
+  const lowFra  = fraFromBirthYear(values.birthYearLow  ?? 1960);
+  const highOwnDelay    = workerBenefit(values.piaHigh, delayAge, highFra);
+  const highOwnEarly    = workerBenefit(values.piaHigh, earlyAge, highFra);
+  const highSpousalDelay = spousalBenefit(values.piaLow, delayAge, highFra);
+  const highSpousalEarly = spousalBenefit(values.piaLow, earlyAge, highFra);
   const highGetsSpousalDelay = highSpousalDelay > highOwnDelay;
   const highGetsSpousalEarly = highSpousalEarly > highOwnEarly;
 
-  const lowOwn = workerBenefit(values.piaLow, values.claimLow);
-  const lowSpousalAtClaim = spousalBenefit(values.piaHigh, values.claimLow);
+  const lowOwn = workerBenefit(values.piaLow, values.claimLow, lowFra);
+  const lowSpousalAtClaim = spousalBenefit(values.piaHigh, values.claimLow, lowFra);
   const lowGetsSpousal = lowSpousalAtClaim > lowOwn;
 
   const summary = [

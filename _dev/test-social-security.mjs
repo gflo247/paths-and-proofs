@@ -19,6 +19,8 @@ import {
   compute,
   computeSurface,
   buildVerdict,
+  fraFromBirthYear,
+  survivorFraFromBirthYear,
   FULL_RETIREMENT_AGE,
   SURVIVOR_FULL_RETIREMENT_AGE,
   SURVIVOR_MIN_CLAIM_AGE,
@@ -530,6 +532,127 @@ const mockSeries = [
   } else {
     fail++; console.log(`FAIL  compute(): claimHighEarly omitted — expected breakeven, got ${r.outcome.type}`);
   }
+}
+
+// --- fraFromBirthYear() boundary checks --------------------------------------
+// Source: ssa.gov/benefits/retirement/planner/1960-delay.html
+check('fraFromBirthYear: <=1937 -> 65',           fraFromBirthYear(1937), 65);
+check('fraFromBirthYear: 1938 -> 65y2mo',         fraFromBirthYear(1938), 65 + 2 / 12);
+check('fraFromBirthYear: 1942 -> 65y10mo',        fraFromBirthYear(1942), 65 + 10 / 12);
+check('fraFromBirthYear: 1943 -> 66 (plateau)',   fraFromBirthYear(1943), 66);
+check('fraFromBirthYear: 1954 -> 66 (plateau)',   fraFromBirthYear(1954), 66);
+check('fraFromBirthYear: 1955 -> 66y2mo',         fraFromBirthYear(1955), 66 + 2 / 12);
+check('fraFromBirthYear: 1957 -> 66y6mo',         fraFromBirthYear(1957), 66 + 6 / 12);
+check('fraFromBirthYear: 1959 -> 66y10mo',        fraFromBirthYear(1959), 66 + 10 / 12);
+check('fraFromBirthYear: 1960 -> 67 (default)',   fraFromBirthYear(1960), 67);
+check('fraFromBirthYear: 1975 -> 67',             fraFromBirthYear(1975), 67);
+
+// --- survivorFraFromBirthYear() boundary checks ------------------------------
+// Source: ssa.gov/survivor/full-retirement-age-survivor
+check('survivorFraFromBirthYear: <=1939 -> 65',          survivorFraFromBirthYear(1939), 65);
+check('survivorFraFromBirthYear: 1940 -> 65y2mo',        survivorFraFromBirthYear(1940), 65 + 2 / 12);
+check('survivorFraFromBirthYear: 1944 -> 65y10mo',       survivorFraFromBirthYear(1944), 65 + 10 / 12);
+check('survivorFraFromBirthYear: 1945 -> 66 (plateau)',  survivorFraFromBirthYear(1945), 66);
+check('survivorFraFromBirthYear: 1956 -> 66 (plateau)',  survivorFraFromBirthYear(1956), 66);
+check('survivorFraFromBirthYear: 1957 -> 66y2mo',        survivorFraFromBirthYear(1957), 66 + 2 / 12);
+check('survivorFraFromBirthYear: 1959 -> 66y6mo',        survivorFraFromBirthYear(1959), 66 + 6 / 12);
+check('survivorFraFromBirthYear: 1960 -> 66y8mo (=SURVIVOR_FULL_RETIREMENT_AGE)', survivorFraFromBirthYear(1960), SURVIVOR_FULL_RETIREMENT_AGE);
+check('survivorFraFromBirthYear: 1961 -> 66y10mo',       survivorFraFromBirthYear(1961), 66 + 10 / 12);
+check('survivorFraFromBirthYear: 1962+ -> 67',           survivorFraFromBirthYear(1962), 67);
+
+// --- workerBenefit() with a non-default FRA ----------------------------------
+// born 1957: FRA = 66y6mo = 66.5. workerBenefit at age 62:
+//   monthsEarly = round((66.5-62)*12) = 54. First 36: 0.2. Next 18: 18*5/12/100 = 0.075.
+//   Reduction = 0.275. Benefit = PIA * 0.725.
+check('workerBenefit: FRA=66.5, claimAge=62 -> PIA * 0.725', workerBenefit(3000, 62, 66.5), 3000 * 0.725);
+
+// workerBenefit at age 70: monthsLate = round((70-66.5)*12) = 42.
+//   DRC = 42 * (2/3) / 100 = 0.28. Benefit = PIA * 1.28.
+check('workerBenefit: FRA=66.5, claimAge=70 -> PIA * 1.28', workerBenefit(3000, 70, 66.5), 3000 * 1.28);
+
+// Default still equals FRA=67 for backward compat.
+check('workerBenefit: default fra still 67 (backward compat)', workerBenefit(3000, 62), workerBenefit(3000, 62, 67));
+
+// --- compute() with birthYear != 1960 produces different results -------------
+// Born 1957: FRA=66.5. Higher earner claiming at 62 on the "early" strategy
+// gets PIA * 0.725 instead of 0.70 -- the monthly benefit card should reflect this.
+{
+  const v1957 = { piaHigh: 3000, claimHigh: 70, claimHighEarly: 62, piaLow: 1200, claimLow: 62,
+                  birthYearHigh: 1957, birthYearLow: 1957,
+                  lifeHigh: 84, lifeLow: 87, discountRate: 2 };
+  const r = compute(v1957);
+  const expectedAt62 = Math.max(workerBenefit(3000, 62, 66.5), spousalBenefit(1200, 62, 66.5));
+  check('compute(): birthYearHigh=1957 raises the early-claim monthly benefit card',
+    parseFloat(r.summary[1].value.replace('$', '')), expectedAt62);
+
+  const expectedAt70 = Math.max(workerBenefit(3000, 70, 66.5), spousalBenefit(1200, 70, 66.5));
+  check('compute(): birthYearHigh=1957 raises the delay monthly benefit card',
+    parseFloat(r.summary[0].value.replace('$', '')), expectedAt70);
+}
+
+// Backward compat: omitting birthYear produces the same result as birthYear=1960.
+{
+  const base = { piaHigh: 3000, claimHigh: 70, claimHighEarly: 62, piaLow: 1200, claimLow: 62,
+                 lifeHigh: 84, lifeLow: 87, discountRate: 2 };
+  const withDefault = compute(base);
+  const with1960 = compute({ ...base, birthYearHigh: 1960, birthYearLow: 1960 });
+  check('compute(): no birthYear defaults to 1960 behavior (monthly card 0 matches)',
+    parseFloat(withDefault.summary[0].value.replace('$', '')),
+    parseFloat(with1960.summary[0].value.replace('$', '')));
+}
+
+// --- Mismatched birth years between spouses (adversarial gap) -----------------
+// If high/low FRAs were swapped, the monthly card for the high earner would show
+// lowFra's math instead of highFra's. Using different birth years for each spouse
+// produces different FRAs, so a wiring swap is detectable.
+{
+  const highFra1955 = fraFromBirthYear(1955);   // 66 + 2/12
+  const lowFra1960  = fraFromBirthYear(1960);   // 67
+  // Sanity: the two FRAs must actually differ, or this test proves nothing.
+  if (highFra1955 === lowFra1960) {
+    fail++; console.log('FAIL  test setup: expected fraFromBirthYear(1955) != fraFromBirthYear(1960)');
+  } else pass++;
+
+  const vMixed = { piaHigh: 3000, claimHigh: 70, claimHighEarly: 62, piaLow: 1200, claimLow: 62,
+                   birthYearHigh: 1955, birthYearLow: 1960,
+                   lifeHigh: 84, lifeLow: 87, discountRate: 2 };
+  const r = compute(vMixed);
+  // High earner claiming at 62 should use highFra=66y2mo, not lowFra=67.
+  const expectedHighAt62 = Math.max(workerBenefit(3000, 62, highFra1955), spousalBenefit(1200, 62, highFra1955));
+  const wrongIfSwapped   = Math.max(workerBenefit(3000, 62, lowFra1960),  spousalBenefit(1200, 62, lowFra1960));
+  if (expectedHighAt62 === wrongIfSwapped) {
+    fail++; console.log('FAIL  test setup: FRA swap would not be detectable here — pick different inputs');
+  } else pass++;
+  check('compute(): mismatched birth years -- high earner early card uses high FRA, not low FRA',
+    parseFloat(r.summary[1].value.replace('$', '')), expectedHighAt62);
+}
+
+// --- householdMonthly survivor FRA wiring (adversarial gap) ------------------
+// birthYearHigh=1955 -> survivorFraFromBirthYear(1955) = 66 (1945-1956 plateau).
+// birthYearLow=1960  -> survivorFraFromBirthYear(1960) = 66y8mo (= SURVIVOR_FULL_RETIREMENT_AGE).
+// At survivor age 66.25 (between 66 and 66.667): correct survivorFra=66 gives 0%
+// reduction (already past FRA); wrong survivorFra=66.667 gives ~1.8% reduction.
+// This test catches a swap of highSurvivorFra and lowSurvivorFra in the
+// survivorBenefit() call for the "high survives, low died" branch.
+{
+  const vSurv = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62,
+                  birthYearHigh: 1955, birthYearLow: 1960 };
+  // High survives, low died. High's claimHigh=70, current age=66.25 (not yet filed).
+  // survivor base: RIB-LIM on low's early claim (62), using lowFra=67:
+  //   workerBenefit(1200, 62, 67) = 1200*0.7 = 840; RIB-LIM floor = 1200*0.825 = 990 -> base=990
+  // highSurvivorFra = survivorFraFromBirthYear(1955) = 66; age=66.25 >= 66 -> 0% reduction -> inherited=990
+  const inherited = survivorBenefit(1200, 62, 66.25, Infinity,
+    survivorFraFromBirthYear(1955), fraFromBirthYear(1960));
+  check('survivorBenefit: survivor age 66.25 with survivorFra=66 -> 0% reduction (already past FRA)', inherited, 990);
+  const got = householdMonthly(vSurv, true, false, 66.25, 66.25);
+  check('householdMonthly: mismatched birth years, high survives -- uses highSurvivorFra=66 (0% reduction at 66.25)', got, 990);
+
+  // Confirm the wrong value if survivorFra=66.667 were used instead (proves the test discriminates).
+  const wrongInherited = survivorBenefit(1200, 62, 66.25, Infinity,
+    survivorFraFromBirthYear(1960), fraFromBirthYear(1960));
+  if (wrongInherited === inherited) {
+    fail++; console.log('FAIL  test setup: wrong survivorFra gives same result -- test cannot discriminate swap');
+  } else pass++;
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
