@@ -372,16 +372,15 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
   check('householdMonthly: survivor benefit resumes exactly at SURVIVOR_MIN_CLAIM_AGE', householdMonthly(v, true, false, SURVIVOR_MIN_CLAIM_AGE, 62), 707.85, 0.01);
 }
 
-// compute(): a nonzero ageGap shifts the breakeven age and the marker by
-// exactly the survivor-offset amount. Same fixture as the worst-case-order
-// test above (case1), with ageGap=1 added -- chosen order stays
-// lowDiesFirst (high survives), so offset=ageGap=1: breakeven 96->93,
-// marker 75->76.
+// compute(): a nonzero age gap (derived from birth years) shifts the breakeven
+// age and the marker by the survivor-offset amount. Same fixture as the
+// worst-case-order test above (case1), with birthYearHigh:1959/birthYearLow:1960
+// giving ageGap=1. Chosen order stays lowDiesFirst (high survives).
 {
-  const withGap = { piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 1 };
+  const withGap = { piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0, birthYearHigh: 1959, birthYearLow: 1960 };
   const r = compute(withGap);
-  check('compute(): breakeven age reflects ageGap offset', parseFloat(r.summary[3].value.replace('age ', '')), 93);
-  check('compute(): marker reflects ageGap offset', r.markers[0].x, 76);
+  check('compute(): breakeven age reflects birth-year-derived gap', parseFloat(r.summary[3].value.replace('age ', '')), 92);
+  check('compute(): marker reflects birth-year-derived gap', r.markers[0].x, 76);
 }
 
 // Backward compatibility: ageGap omitted (undefined) must default to 0 and
@@ -396,18 +395,18 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 }
 
 // computeSurface(): independently hand-derive one cell's PV with a real
-// ageGap, walking the same month-by-month logic outside the module (not
-// copy-pasting its internals) to confirm the clock-conversion math.
+// age gap (birthYearHigh:1955/birthYearLow:1960 → ageGap=5), walking the
+// same month-by-month logic outside the module to confirm the clock-conversion math.
 {
-  const plan = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62, discountRate: 0, ageGap: 5 };
+  const plan = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62, discountRate: 0, birthYearHigh: 1955, birthYearLow: 1960 };
   const { cells } = computeSurface(plan, 5);
   const cell = cells.find((c) => c.highDeath === 75 && c.lowDeath === 80);
   // highDeathAgeOnClock = 75-5=70, lowDeathAgeOnClock=80 (unchanged).
   const highDeathMonth = Math.round((70 - 62) * 12);
   const lowDeathMonth = Math.round((80 - 62) * 12);
   const months = Math.round((80 - 62) * 12);
-  const planDelay = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62, discountRate: 0 };
-  const planEarly = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62, discountRate: 0 };
+  const planDelay = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62, discountRate: 0, birthYearHigh: 1955, birthYearLow: 1960 };
+  const planEarly = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62, discountRate: 0, birthYearHigh: 1955, birthYearLow: 1960 };
   let pvDelay = 0, pvEarly = 0;
   for (let m = 0; m < months; m++) {
     const lowAge = 62 + m / 12;
@@ -418,7 +417,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
     pvEarly += householdMonthly(planEarly, hAlive, lAlive, highAge, lowAge);
   }
   check('computeSurface(): cell margin matches independent hand-derivation with ageGap', cell.margin, pvDelay - pvEarly);
-  check('computeSurface(): ageGap sanity -- margin is a large, specific number, not a placeholder', cell.margin, 166140, 1);
+  check('computeSurface(): age-gap sanity -- margin is a large, specific number, not a placeholder', cell.margin, 190140, 1);
 }
 
 // --- buildVerdict() + outcome field -----------------------------------------
@@ -433,7 +432,7 @@ const mockSeries = [
 {
   // Any inputs: outcome must exist with a string type.
   const r = compute({ piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62,
-                      lifeHigh: 84, lifeLow: 87, discountRate: 2, ageGap: 0 });
+                      lifeHigh: 84, lifeLow: 87, discountRate: 2 });
   if (r.outcome && typeof r.outcome.type === 'string') pass++;
   else { fail++; console.log('FAIL  compute(): outcome field missing or has no type'); }
 }
@@ -441,7 +440,7 @@ const mockSeries = [
   // Breakeven-producing inputs (same fixture as the ageGap test above,
   // now with explicit claimHighEarly: 62 since claimHigh is the delay side).
   const r = compute({ piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400,
-                      claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0, ageGap: 0 });
+                      claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0 });
   if (r.outcome.type === 'breakeven' && typeof r.outcome.age === 'number' && isFinite(r.outcome.age)) pass++;
   else { fail++; console.log(`FAIL  compute(): breakeven inputs — expected breakeven with finite age, got type=${r.outcome && r.outcome.type} age=${r.outcome && r.outcome.age}`); }
   // claimHighDelay and claimHighEarly exposed in result.

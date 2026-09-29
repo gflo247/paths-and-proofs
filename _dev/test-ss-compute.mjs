@@ -43,7 +43,7 @@ function checkTrue(label, condition) {
 const BASE = {
   piaHigh: 3000, claimHigh: 70, claimHighEarly: 62,
   piaLow:  1200, claimLow:  62,
-  ageGap: 0, lifeHigh: 84, lifeLow: 87,
+  lifeHigh: 84, lifeLow: 87,
   discountRate: 2,
 };
 
@@ -206,7 +206,7 @@ checkTrue('7.3 survivor at 59 (below minimum): survivorBenefit clamps age up to 
 // receives their own worker benefit. The high earner (survivor) gets a
 // survivor benefit off piaHigh=0, which should be 0.
 
-const vHighZero = { piaHigh: 0, claimHigh: 70, claimHighEarly: 62, piaLow: 2000, claimLow: 67, ageGap: 0, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
+const vHighZero = { piaHigh: 0, claimHigh: 70, claimHighEarly: 62, piaLow: 2000, claimLow: 67, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
 
 // Both alive, both at/past their claim ages.
 // highWorker = workerBenefit(0, 70) = 0
@@ -247,16 +247,18 @@ checkTrue('9.2 both die at 60: no NaN in series',
 checkTrue('9.3 both die at 60: series values are finite and non-negative (no crash)',
   rBothDie60.series.every(s => s.points.every(p => isFinite(p.y) && p.y >= 0)));
 
-// ── Group 10: ageGap extremes (±20) ─────────────────────────────────────────
-// The ageGap slider goes from -20 to +20. Both extremes must produce a valid
-// result with no NaN, and the two extremes must differ from each other.
+// ── Group 10: age-gap extremes (±20 years) ──────────────────────────────────
+// Both extremes must produce a valid result with no NaN, and the two extremes
+// must differ from each other.
+// birthYearHigh:1940/birthYearLow:1960 → gap=+20 (higher earner older by 20).
+// birthYearHigh:1960/birthYearLow:1940 → gap=-20 (higher earner younger by 20).
 
-const rGapPlus20  = compute({ ...BASE, ageGap:  20 });
-const rGapMinus20 = compute({ ...BASE, ageGap: -20 });
+const rGapPlus20  = compute({ ...BASE, birthYearHigh: 1940, birthYearLow: 1960 });
+const rGapMinus20 = compute({ ...BASE, birthYearHigh: 1960, birthYearLow: 1940 });
 
-checkTrue('10.1 ageGap=+20: no NaN', rGapPlus20.series.every(s => s.points.every(p => isFinite(p.y))));
-checkTrue('10.2 ageGap=-20: no NaN', rGapMinus20.series.every(s => s.points.every(p => isFinite(p.y))));
-checkTrue('10.3 ageGap=+20 and ageGap=-20 produce different outcomes',
+checkTrue('10.1 age-gap=+20: no NaN', rGapPlus20.series.every(s => s.points.every(p => isFinite(p.y))));
+checkTrue('10.2 age-gap=-20: no NaN', rGapMinus20.series.every(s => s.points.every(p => isFinite(p.y))));
+checkTrue('10.3 age-gap=+20 and age-gap=-20 produce different outcomes',
   JSON.stringify(rGapPlus20.outcome) !== JSON.stringify(rGapMinus20.outcome) ||
   rGapPlus20.series[0].points.some((p, i) => Math.abs(p.y - rGapMinus20.series[0].points[i]?.y) > 1));
 

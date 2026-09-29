@@ -159,14 +159,14 @@
     <p>Cost-of-living adjustments (COLA) aren't modeled, but they scale both strategies
       equally and don't move the crossover — so they don't change which claiming age
       comes out ahead.</p>
-    <p><strong>A real age gap, in whole years.</strong> Use the "Age gap between you" slider to
-      say how many years older — or younger — the higher earner is. The model then advances each
-      of you through your own age, offset by that gap, instead of assuming you're the same age —
-      so worker, spousal, and survivor eligibility line up with your real timeline. Two things
-      stay simplified: the gap is a fixed whole-year offset, not exact birth dates, and the "your
-      planning age" marker always shows the later of your two chosen planning ages — in unusual
-      cases that number won't exactly match what you typed for whichever of you the chart happens
-      to be tracking at that point, though it's still marking the same underlying age.</p>
+    <p><strong>A real age gap, derived from your birth years.</strong> The model derives the age
+      gap between you from the birth years you enter for each spouse, then advances each of you
+      through your own age — offset by that gap — instead of assuming you're the same age. Worker,
+      spousal, and survivor eligibility line up with your real timeline. The gap is a fixed
+      whole-year offset derived from birth years, not exact birth dates. The "your planning age"
+      marker always shows the later of your two chosen planning ages — in unusual cases that number
+      won't exactly match what you typed for whichever of you the chart happens to be tracking at
+      that point, though it's still marking the same underlying age.</p>
     <p><strong>What the chart shows.</strong> Two death orders are possible — the higher earner
       dies first, or the lower earner does — and they don't give the same answer: when the higher
       earner dies first, a widow(er) limit floors what the survivor inherits, which narrows the
@@ -220,7 +220,6 @@
   initShareLink([
     'ctl-piaHigh', 'ctl-birthYearHigh', 'ctl-claimHigh', 'ctl-claimHighEarly',
     'ctl-piaLow',  'ctl-birthYearLow',  'ctl-claimLow',
-    'ctl-ageGap',
     'ctl-lifeHigh', 'ctl-lifeLow',
     'ctl-discountRate',
     'ctl-tie-threshold',

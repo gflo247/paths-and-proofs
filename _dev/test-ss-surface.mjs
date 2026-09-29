@@ -92,7 +92,7 @@ checkTrue('spousalBenefit at 62 < workerBenefit at same effective PIA (25/36 > 5
 
 const baseVals = {
   piaHigh: 3000, claimHigh: 70, claimHighEarly: 62,
-  piaLow:  1200, claimLow:  62, ageGap: 0,
+  piaLow:  1200, claimLow:  62,
   lifeHigh: 84,  lifeLow:  87,
 };
 
@@ -189,29 +189,31 @@ const expectedWorker  = workerBenefit(3000, 67);  // 3000
 check('householdMonthly: piaLow=0 both alive — lower earner draws full spousal benefit',
   gotBothAlive, expectedWorker + expectedSpousal, 0.01);
 
-// ── Group 6: negative ageGap (higher earner is younger) ──────────────────────
-// ageGap<0 means the higher earner is younger. Clock conversion:
-// highDeathAgeOnClock = highDeathAge - ageGap = highDeathAge + |ageGap|.
+// ── Group 6: negative age gap (higher earner is younger) ─────────────────────
+// A negative gap means birthYearHigh > birthYearLow, so ageGap = birthYearLow - birthYearHigh < 0.
+// Clock conversion: highDeathAgeOnClock = highDeathAge - ageGap = highDeathAge + |ageGap|.
 // Test that the surface computes finite margins without crashing, and that
 // a plausible cell gives a directionally-correct result.
+// birthYearHigh:1965/birthYearLow:1960 → ageGap = 1960-1965 = -5.
 
-const negGapVals = { ...baseVals, discountRate: 0, ageGap: -5 };
+const negGapVals = { ...baseVals, discountRate: 0, birthYearHigh: 1965, birthYearLow: 1960 };
 const surf_neg  = computeSurface(negGapVals, 2);
 
-checkTrue('computeSurface: negative ageGap — no NaN cells',
+checkTrue('computeSurface: negative age gap — no NaN cells',
   surf_neg.cells.every(c => isFinite(c.margin)));
 
 // With ageGap=-5, higher earner (younger by 5) lives longer relative to the
 // lower-earner clock. For hd=90, ld=90 the higher earner is 95 on their own
 // clock. Still expect delay to win at 0% discount over long lifespans.
 const neg_c90_90 = findCell(surf_neg, 90, 90);
-checkTrue('computeSurface: negative ageGap, hd=90 ld=90 — delay wins at 0% discount',
+checkTrue('computeSurface: negative age gap, hd=90 ld=90 — delay wins at 0% discount',
   neg_c90_90.margin > 0);
 
-// Reversing ageGap should change the margin (not produce the same result).
-checkTrue('computeSurface: ageGap=+5 and ageGap=-5 produce different margins for the same cell',
-  findCell(computeSurface({ ...baseVals, discountRate: 0, ageGap:  5 }, 2), 90, 90).margin !==
-  findCell(computeSurface({ ...baseVals, discountRate: 0, ageGap: -5 }, 2), 90, 90).margin);
+// Reversing the age gap should change the margin (not produce the same result).
+// birthYearHigh:1955/birthYearLow:1960 → ageGap=+5; birthYearHigh:1965/birthYearLow:1960 → ageGap=-5.
+checkTrue('computeSurface: +5 and -5 age gaps produce different margins for the same cell',
+  findCell(computeSurface({ ...baseVals, discountRate: 0, birthYearHigh: 1955, birthYearLow: 1960 }, 2), 90, 90).margin !==
+  findCell(computeSurface({ ...baseVals, discountRate: 0, birthYearHigh: 1965, birthYearLow: 1960 }, 2), 90, 90).margin);
 
 // ── Group 7: claimLow variation ───────────────────────────────────────────────
 // claimLow affects when the spousal top-up kicks in while both are alive,

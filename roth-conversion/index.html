@@ -1121,7 +1121,7 @@
     <a href="https://www.irs.gov/pub/irs-drop/rp-25-32.pdf" target="_blank" rel="noopener">IRS 2026 tax brackets</a> ·
     <a href="https://www.congress.gov/bill/119th-congress/house-bill/1" target="_blank" rel="noopener">One Big Beautiful Bill Act</a> ·
     <a href="https://www.irs.gov/publications/p915" target="_blank" rel="noopener">SS taxability (Pub 915)</a> ·
-    <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener">RMD tables (Pub 590-B)</a> ·
+    <a href="https://www.irs.gov/publications/p590b" target="_blank" rel="noopener">Required minimum distribution (RMD) tables (Pub 590-B)</a> ·
     <a href="https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles" target="_blank" rel="noopener">CMS Medicare rates</a> ·
     <a href="https://www.ssa.gov/oact/STATS/table4c6.html" target="_blank" rel="noopener">SSA life table</a>
   </div>
@@ -1184,7 +1184,7 @@ function updateRMDCvtHint(curAge, tradBal, rmdStartAge){
   var div = RMDD[Math.min(curAge,100)] || 6.4;
   var rmd = Math.round(tradBal / div / 500) * 500;
   el.style.display = '';
-  el.innerHTML = '<strong>RMD required:</strong> At age '+curAge+', the IRS requires you to withdraw ~'+fmt(rmd)+' this year before converting. That amount can\'t be converted — only what you withdraw above your RMD is eligible. Confirm the exact figure with your custodian.';
+  el.innerHTML = '<strong>Required minimum distribution (RMD):</strong> At age '+curAge+', the IRS requires you to withdraw ~'+fmt(rmd)+' this year before converting. That amount can\'t be converted — only what you withdraw above your RMD is eligible. Confirm the exact figure with your custodian.';
 }
 function updateRetWdHint(){
   var el = document.getElementById('retWdHint');
@@ -5528,7 +5528,7 @@ function calc(){
       '<div class="irmaa-card '+(tCrossed?'hit':'safe')+'" id="irmaaCard">'
       +'<div class="stitle">🏥 Medicare Premium Impact</div>'
       +'<div class="src-note">Source: <a href="https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-and-d-premiums-and-deductibles" target="_blank" rel="noopener">Official CMS 2026 premium rates</a></div>'
-      +'<div class="irmaa-what"><strong>Medicare charges higher premiums to higher earners</strong> — based on your income from <strong>2 years ago</strong> (specifically your MAGI, or Modified Adjusted Gross Income). A Roth conversion in 2026 raises 2026 income → affects 2028 premiums. Crossing a threshold by $1 triggers the full surcharge for that tier.</div>'
+      +'<div class="irmaa-what"><strong>IRMAA (Income-Related Monthly Adjustment Amount) is a Medicare surcharge on higher earners</strong> — based on your income from <strong>2 years ago</strong> (specifically your Modified Adjusted Gross Income, or MAGI). A Roth conversion in 2026 raises 2026 income → affects 2028 premiums. Crossing a threshold by $1 triggers the full surcharge for that tier.</div>'
       +'<div class="igrid">'
       +'<div class="ibox"><div class="ilbl">Without Conversion</div><div class="ival" style="color:'+(tBefore===0?'var(--success)':'var(--warn)')+'">'+ITIERS[tBefore].lbl+'</div><div class="isub">Total income: '+fmt(magiBase)+'<br>Part B premium: '+fmt(ITIERS[tBefore].B*12)+'/yr per person</div></div>'
       +'<div class="ibox '+(tCrossed?'hit':'')+'"><div class="ilbl">With Conversion</div><div class="ival" style="color:'+(tAfter===0?'var(--success)':tCrossed?'var(--danger)':'var(--warn)')+'">'+ITIERS[tAfter].lbl+(tCrossed?' ⬆':' ✓')+'</div><div class="isub">Total income: '+fmt(magiWith)+'<br>Part B premium: '+fmt(ITIERS[tAfter].B*12)+'/yr per person'+(inclD?'<br>Part D premium: '+fmt(ITIERS[tAfter].D*12)+'/yr per person':'')+'</div></div>'

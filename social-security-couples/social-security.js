@@ -227,12 +227,6 @@ export const inputs = [
     help: 'The age the lower earner starts benefits.',
   },
   {
-    id: 'ageGap', type: 'slider',
-    label: 'Age gap between you',
-    min: -20, max: 20, step: 1, default: 0, unit: 'years',
-    help: 'How many years older the higher earner is than the lower earner. Negative means the higher earner is younger. Leave at 0 if you’re close in age.',
-  },
-  {
     id: 'lifeHigh', type: 'slider',
     label: 'Higher earner: life expectancy',
     min: 60, max: 100, step: 1, default: 84, unit: 'years',
@@ -435,7 +429,7 @@ export function compute(values) {
   // expectancies stay in each person's OWN years (unchanged meaning); convert
   // to the shared (lower-earner) clock before comparing them. At ageGap=0
   // this is a no-op and every formula below collapses to its pre-feature form.
-  const ageGap = values.ageGap || 0;
+  const ageGap = (values.birthYearLow ?? 1960) - (values.birthYearHigh ?? 1960);
   const lifeHighOnClock = values.lifeHigh - ageGap;
   const lifeLowOnClock = values.lifeLow;
 
@@ -646,7 +640,7 @@ export function computeSurface(values, stepYears = 2) {
    * convention as planValueBySecondDeath. At ageGap=0 this is a no-op.
    */
   function planValue(plan, highDeathAge, lowDeathAge) {
-    const ageGap = plan.ageGap || 0;
+    const ageGap = (plan.birthYearLow ?? 1960) - (plan.birthYearHigh ?? 1960);
     const highDeathAgeOnClock = highDeathAge - ageGap;
     const lowDeathAgeOnClock = lowDeathAge;
     const lastAge = Math.max(highDeathAgeOnClock, lowDeathAgeOnClock);

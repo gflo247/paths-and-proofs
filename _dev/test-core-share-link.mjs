@@ -58,7 +58,6 @@ function makeSelect(id, options, value) {
 const SS_FIELDS = [
   'ctl-piaHigh', 'ctl-birthYearHigh', 'ctl-claimHigh', 'ctl-claimHighEarly',
   'ctl-piaLow',  'ctl-birthYearLow',  'ctl-claimLow',
-  'ctl-ageGap',
   'ctl-lifeHigh', 'ctl-lifeLow',
   'ctl-discountRate',
   'ctl-tie-threshold',
@@ -89,7 +88,6 @@ makeInput('ctl-claimHighEarly', 'range',  '62',   62,    70);
 makeInput('ctl-piaLow',         'number', '1200',  0,    6000);
 makeInput('ctl-birthYearLow',   'number', '1960', 1943,  1970);
 makeInput('ctl-claimLow',       'range',  '62',   62,    70);
-makeInput('ctl-ageGap',         'range',  '2',   -20,    20);
 makeInput('ctl-lifeHigh',       'range',  '90',   60,   100);
 makeInput('ctl-lifeLow',        'range',  '85',   60,   100);
 makeInput('ctl-discountRate',   'range',  '2',     0,     6);
@@ -101,9 +99,9 @@ ok('1.1 SS encodeShareState produces a v1. prefix', ssEncoded.startsWith('v1.'))
 const ssDecoded = decodeShareState(ssEncoded);
 ok('1.2 SS decode → piaHigh round-trips',     ssDecoded?.['ctl-piaHigh']      === '2500');
 ok('1.3 SS decode → claimHigh round-trips',   ssDecoded?.['ctl-claimHigh']    === '67');
-ok('1.4 SS decode → ageGap round-trips',      ssDecoded?.['ctl-ageGap']       === '2');
+ok('1.4 SS decode → birthYearLow round-trips', ssDecoded?.['ctl-birthYearLow'] === '1960');
 ok('1.5 SS decode → discountRate round-trips',ssDecoded?.['ctl-discountRate'] === '2');
-ok('1.6 SS decode produces all 12 keys',      Object.keys(ssDecoded || {}).length === 12);
+ok('1.6 SS decode produces all 11 keys',      Object.keys(ssDecoded || {}).length === 11);
 
 // Build DOM elements for Medicare
 makeSelect('ctl-stateCode', ['OH','MI','NY','FL'], 'MI');
