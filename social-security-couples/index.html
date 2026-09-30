@@ -120,10 +120,11 @@
       </section>
       <section class="heatmap-details">
         <h2>Both lifespans at once</h2>
-        <p class="caption">Each cell is a pair of lifespans, colored by which strategy produces more
-          lifetime income. The only view that also shows what happens when the lower earner dies
-          first. When the higher earner dies very young (left edge), both strategies produce similar
-          totals — that's why those cells often appear gray or lightly colored.</p>
+        <p class="caption">Each cell represents a pair of lifespans, colored by which claiming
+          strategy produces more lifetime household income. Unlike the chart above, this view
+          includes scenarios where the lower earner dies first. When the higher earner dies very
+          young (left edge), both strategies produce similar totals — that's why those cells
+          appear gray.</p>
         <div class="heatmap" id="heatmap"></div>
         <div class="heatmap-legend" id="heatmap-legend"></div>
         <div class="tie-control">
@@ -380,21 +381,22 @@
     dot.setAttribute('cy', dotY.toFixed(1));
     dot.setAttribute('r', '5');
     dot.setAttribute('fill', 'white');
-    dot.setAttribute('stroke', ink);
-    dot.setAttribute('stroke-width', '2');
+    dot.setAttribute('stroke', 'rgba(0,0,0,0.25)');
+    dot.setAttribute('stroke-width', '1.5');
     const dotTitle = document.createElementNS(ns, 'title');
     dotTitle.textContent =
       `Your scenario: higher earner to ${lh}, lower earner to ${ll}`;
     dot.append(dotTitle);
     svg.append(dot);
 
-    // Selection highlight — a single rect drawn on top of whichever cell was
-    // last tapped. Starts hidden; positioned by the click handler below.
-    // pointer-events:none so it doesn't interfere with subsequent clicks.
-    const hlRect = document.createElementNS(ns, 'rect');
-    hlRect.setAttribute('fill', 'none');
-    hlRect.setAttribute('stroke', 'white');
-    hlRect.setAttribute('stroke-width', '2');
+    // Selection marker — a filled circle centered on the tapped cell, same
+    // visual language as the planning age dot. Starts hidden; positioned by
+    // the click handler below. pointer-events:none so it doesn't block clicks.
+    const hlRect = document.createElementNS(ns, 'circle');
+    hlRect.setAttribute('r', '4');
+    hlRect.setAttribute('fill', 'white');
+    hlRect.setAttribute('stroke', 'rgba(0,0,0,0.25)');
+    hlRect.setAttribute('stroke-width', '1.5');
     hlRect.setAttribute('pointer-events', 'none');
     hlRect.style.display = 'none';
     svg.append(hlRect);
@@ -425,11 +427,9 @@
         `Higher earner to <strong>${ages[xi]}</strong><br>` +
         `Lower earner to <strong>${ages[yi]}</strong><br>` +
         `${verdict} &middot; ${dollarStr}`;
-      // Highlight the tapped cell with an inset border.
-      hlRect.setAttribute('x',      M.left + xi * cell + 1);
-      hlRect.setAttribute('y',      M.top  + (n - 1 - yi) * cell + 1);
-      hlRect.setAttribute('width',  cell - 1.5);
-      hlRect.setAttribute('height', cell - 1.5);
+      // Position the circle marker at the center of the tapped cell.
+      hlRect.setAttribute('cx', M.left + xi * cell + cell / 2);
+      hlRect.setAttribute('cy', M.top  + (n - 1 - yi) * cell + cell / 2);
       hlRect.style.display = 'block';
       const tipW = 210;
       let left = e.clientX + 14;
