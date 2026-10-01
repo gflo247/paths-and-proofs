@@ -29,13 +29,13 @@ export function mount(calculator, root, onResult) {
   }
 
   // A control change mutates values and re-runs the loop. That's the entire engine.
-  buildControls(calculator.inputs, values, recompute, root.querySelector('[data-controls]'));
+  buildControls(calculator.inputs, values, recompute, root.querySelector('[data-controls]'), calculator.groups);
   recompute();
 
   return {
     loadPreset(name) {
       Object.assign(values, calculator.presets[name] || {});
-      buildControls(calculator.inputs, values, recompute, root.querySelector('[data-controls]'));
+      buildControls(calculator.inputs, values, recompute, root.querySelector('[data-controls]'), calculator.groups);
       recompute();
     },
     // For custom:true inputs (see core/controls.js) — the page owns that

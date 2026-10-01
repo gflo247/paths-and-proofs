@@ -13,95 +13,144 @@ function formatValue(control, v) {
   return control.unit ? `${v} ${control.unit}` : `${v}`;
 }
 
+function buildOneControl(c, values, onChange) {
+  // custom:true means the PAGE renders and wires this control itself (e.g.
+  // Relocation's from/to local-tax selectors, which need conditional
+  // visibility this generic renderer has no concept of). Still seeded into
+  // values/presets/compute like any other input — only rendering is skipped.
+  if (c.custom) return null;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'control';
+
+  const label = document.createElement('label');
+  label.className = 'control-label';
+  label.setAttribute('for', `ctl-${c.id}`);
+  label.textContent = c.label;
+
+  const readout = document.createElement('span');
+  readout.className = 'control-value';
+  readout.setAttribute('aria-live', 'polite');
+  readout.textContent = formatValue(c, values[c.id]);
+  // A select shows its own chosen value, so the separate readout would be redundant.
+  if (c.type === 'select') readout.style.display = 'none';
+
+  let input;
+  if (c.type === 'select') {
+    input = document.createElement('select');
+    input.id = `ctl-${c.id}`;
+    input.className = 'control-input control-select';
+    (c.options || []).forEach((o) => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      if (o.value === values[c.id]) opt.selected = true;
+      input.append(opt);
+    });
+    input.addEventListener('change', () => {
+      values[c.id] = input.value;
+      readout.textContent = formatValue(c, values[c.id]);
+      onChange();
+    });
+  } else {
+    input = document.createElement('input');
+    input.id = `ctl-${c.id}`;
+    input.className = 'control-input';
+
+    if (c.type === 'toggle') {
+      input.type = 'checkbox';
+      input.checked = !!values[c.id];
+      input.addEventListener('change', () => {
+        values[c.id] = input.checked;
+        readout.textContent = formatValue(c, values[c.id]);
+        onChange();
+      });
+    } else {
+      input.type = c.type === 'slider' ? 'range' : 'number';
+      if (c.min != null) input.min = c.min;
+      if (c.max != null) input.max = c.max;
+      if (c.step != null) input.step = c.step;
+      input.value = values[c.id];
+      if (input.type === 'number') input.inputMode = 'decimal';
+      input.addEventListener('input', () => {
+        if (input.value === '') return;          // wait for a real value, don't flash zero
+        values[c.id] = Number(input.value);
+        readout.textContent = formatValue(c, values[c.id]);
+        onChange();
+      });
+    }
+  }
+
+  const head = document.createElement('div');
+  head.className = 'control-head';
+  head.append(label, readout);
+  wrap.append(head, input);
+
+  if (c.help) {
+    const help = document.createElement('p');
+    help.className = 'control-help';
+    help.textContent = c.help;
+    wrap.append(help);
+  }
+  return wrap;
+}
+
 /**
  * @param {import('./contract.js').InputControl[]} inputs
  * @param {Object} values     Mutated in place as the user adjusts controls.
  * @param {() => void} onChange  Called after every change.
  * @param {HTMLElement} container
+ * @param {{id:string, label:string, open?:boolean}[]} [groups]
  */
-export function buildControls(inputs, values, onChange, container) {
+export function buildControls(inputs, values, onChange, container, groups) {
   if (!container) return;
+
+  // Preserve the open/closed state of existing groups so a preset reload
+  // doesn't collapse sections the user had open (or open ones they closed).
+  const prevOpen = {};
+  container.querySelectorAll('details.control-group').forEach(d => {
+    const gid = d.dataset.groupId;
+    if (gid) prevOpen[gid] = d.open;
+  });
+
   container.replaceChildren();
 
+  if (!groups || groups.length === 0) {
+    // No groups: render all inputs flat, exactly as before.
+    inputs.forEach((c) => {
+      const el = buildOneControl(c, values, onChange);
+      if (el) container.append(el);
+    });
+    return;
+  }
+
+  // Render ungrouped inputs first (inputs with no group field).
   inputs.forEach((c) => {
-    // custom:true means the PAGE renders and wires this control itself (e.g.
-    // Relocation's from/to local-tax selectors, which need conditional
-    // visibility this generic renderer has no concept of). Still seeded into
-    // values/presets/compute like any other input — only rendering is skipped.
-    if (c.custom) return;
-
-    const wrap = document.createElement('div');
-    wrap.className = 'control';
-
-    const label = document.createElement('label');
-    label.className = 'control-label';
-    label.setAttribute('for', `ctl-${c.id}`);
-    label.textContent = c.label;
-
-    const readout = document.createElement('span');
-    readout.className = 'control-value';
-    readout.setAttribute('aria-live', 'polite');
-    readout.textContent = formatValue(c, values[c.id]);
-    // A select shows its own chosen value, so the separate readout would be redundant.
-    if (c.type === 'select') readout.style.display = 'none';
-
-    let input;
-    if (c.type === 'select') {
-      input = document.createElement('select');
-      input.id = `ctl-${c.id}`;
-      input.className = 'control-input control-select';
-      (c.options || []).forEach((o) => {
-        const opt = document.createElement('option');
-        opt.value = o.value;
-        opt.textContent = o.label;
-        if (o.value === values[c.id]) opt.selected = true;
-        input.append(opt);
-      });
-      input.addEventListener('change', () => {
-        values[c.id] = input.value;
-        readout.textContent = formatValue(c, values[c.id]);
-        onChange();
-      });
-    } else {
-      input = document.createElement('input');
-      input.id = `ctl-${c.id}`;
-      input.className = 'control-input';
-
-      if (c.type === 'toggle') {
-        input.type = 'checkbox';
-        input.checked = !!values[c.id];
-        input.addEventListener('change', () => {
-          values[c.id] = input.checked;
-          readout.textContent = formatValue(c, values[c.id]);
-          onChange();
-        });
-      } else {
-        input.type = c.type === 'slider' ? 'range' : 'number';
-        if (c.min != null) input.min = c.min;
-        if (c.max != null) input.max = c.max;
-        if (c.step != null) input.step = c.step;
-        input.value = values[c.id];
-        if (input.type === 'number') input.inputMode = 'decimal';
-        input.addEventListener('input', () => {
-          if (input.value === '') return;          // wait for a real value, don't flash zero
-          values[c.id] = Number(input.value);
-          readout.textContent = formatValue(c, values[c.id]);
-          onChange();
-        });
-      }
-    }
-
-    const head = document.createElement('div');
-    head.className = 'control-head';
-    head.append(label, readout);
-    wrap.append(head, input);
-
-    if (c.help) {
-      const help = document.createElement('p');
-      help.className = 'control-help';
-      help.textContent = c.help;
-      wrap.append(help);
-    }
-    container.append(wrap);
+    if (c.group) return;
+    const el = buildOneControl(c, values, onChange);
+    if (el) container.append(el);
   });
+
+  // Render grouped inputs inside <details> elements, in groups order.
+  for (const g of groups) {
+    const groupInputs = inputs.filter(c => c.group === g.id);
+    if (groupInputs.length === 0) continue;
+
+    const details = document.createElement('details');
+    details.className = 'control-group';
+    details.dataset.groupId = g.id;
+    // Use previous open state if available, otherwise the group's default.
+    details.open = g.id in prevOpen ? prevOpen[g.id] : !!g.open;
+
+    const summary = document.createElement('summary');
+    summary.textContent = g.label;
+    details.append(summary);
+
+    groupInputs.forEach(c => {
+      const el = buildOneControl(c, values, onChange);
+      if (el) details.append(el);
+    });
+
+    container.append(details);
+  }
 }

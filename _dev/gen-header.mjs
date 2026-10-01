@@ -26,6 +26,7 @@ const TARGETS = [
   'roth-conversion/index.html',
   'relocation/index.html',
   'medicare/index.html',
+  'life-insurance/index.html',
 ];
 
 // Strip the leading documentation comment block from the canonical source, keeping

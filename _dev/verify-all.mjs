@@ -39,6 +39,7 @@ for (const code of Object.keys(medicareStates).filter((k) => k !== '_schema')) {
 }
 globalThis.window.MEDICARE_STATES = MEDICARE_STATES;
 const medicare = await import('../medicare/medicare.js');
+const lifeInsurance = await import('../life-insurance/life-insurance.js');
 
 let failures = 0;
 const ok = (n, c, x = '') => { console.log(`${c ? 'ok  ' : 'FAIL'}  ${n}${x ? '  (' + x + ')' : ''}`); if (!c) failures++; };
@@ -60,6 +61,6 @@ function check(mod) {
   ok('headline result present', !!primary, primary);
 }
 
-[socialSecurity, relocation, medicare].forEach(check);
+[socialSecurity, relocation, medicare, lifeInsurance].forEach(check);
 console.log(failures ? `\n${failures} failed` : '\nAll calculators run on the shared core.');
 process.exit(failures ? 1 : 0);

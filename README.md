@@ -15,6 +15,7 @@ Everything runs in the browser; nothing is sent anywhere.
                         jurisdictions, uses /core/ plus its own relo-engine.mjs
 /roth-conversion/       Roth conversion calculator — its own self-contained front
                         end (Playfair/DM Sans, Chart.js). Does NOT use /core/.
+/life-insurance/        Life insurance — how much term life, and for how long
 /shared/                Cross-site icons (theme toggle, print, vault actions).
                         Icons only — no shared palette or fonts (see shared/README.md).
 /_dev/                  Dev tooling (verify-all.mjs). Not served.

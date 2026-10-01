@@ -1,6 +1,6 @@
 // Bump CACHE_NAME on every deploy that touches CSS or any PRECACHE entry —
 // this is what tells browsers to fetch and install the new version.
-const CACHE_NAME = '2026-10-01a';
+const CACHE_NAME = '2026-10-01b';
 
 const PRECACHE = [
   '/',
@@ -9,6 +9,7 @@ const PRECACHE = [
   '/social-security-couples/',
   '/relocation/',
   '/medicare/',
+  '/life-insurance/',
   '/core/page.css',
   '/core/tokens.css',
   '/core/components.css',

@@ -1271,6 +1271,31 @@ ranges.
 
 ---
 
+## Life insurance (`life-insurance/life-engine.mjs`)
+
+| Constant | Value | Source | Status |
+|---|---|---|---|
+| Retirement earnings test exempt amount (2026) | $24,480 | [SSA OACT COLA page](https://www.ssa.gov/oact/cola/rtea.html) | ✅ |
+| Child survivor benefit eligibility, 75% amount, caregiver benefit ending at child's 16th birthday, family maximum range | Per SSA statement | [SSA publication EN-05-10085](https://www.ssa.gov/pubs/EN-05-10085.pdf) | ✅ |
+| Family-max treatment under earnings-test deductions (redistribution) | Per POMS | [SSA POMS RS 02501.155](https://secure.ssa.gov/poms.nsf/lnx/0302501155) | ✅ |
+| Social Security statement survivor line items | Per sample statement SSA-7005 | [SSA sample statement](https://www.ssa.gov/myaccount/) | ✅ |
+| Final expenses default ($15,000) | Median funeral ~$8,000 + estate settlement estimate | [National Funeral Directors Association (NFDA)](https://nfda.org/news/statistics) | ⚠️ Median funeral cost sourced from NFDA; estate settlement portion is an assumption |
+
+**Assumptions (not sourced from a primary authority):**
+
+| Assumption | Value | Rationale |
+|---|---|---|
+| Spending continuation share | 80% | ⚠️ Common financial planning assumption; actual varies by household |
+| Take-home share of gross pay | 75% | ⚠️ Rough after-tax-and-deductions estimate |
+| Discount rate | 2% | ⚠️ Roughly the historical real return on safe investments |
+| Inflation | 2.5% | ⚠️ Long-run CPI average; used only for mortgage-balance conversion |
+| Minimum face amount | $100,000 | ⚠️ Reflects common insurer minimums |
+| Ladder minimum savings threshold | 15% | ⚠️ Judgment call: each extra policy carries its own fee and can miss a price break |
+| Retirement age | 65 | ⚠️ Common planning assumption |
+| "10 times pay" rule of thumb | 10x gross salary | ⚠️ Widely cited in consumer finance; shown for comparison, not as a recommendation |
+
+---
+
 ## Annual re-verification checklist (do each tax year)
 
 1. **Federal brackets + standard deduction** → new IRS Rev. Proc. (issued each fall for the next year).

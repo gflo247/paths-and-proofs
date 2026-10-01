@@ -69,8 +69,12 @@ export function drawChart(result, container) {
     .attr('text-anchor', 'middle').attr('fill', ink).attr('font-size', desktop ? 14 : 12).text(xAxis.label);
 
   // Lines — monotone curve avoids overshoot that would misstate money.
-  const line = d3.line().x((p) => x(p.x)).y((p) => y(p.y)).curve(d3.curveMonotoneX);
+  // Per-series curve: 'step' uses d3.curveStepAfter (coverage drops all at once
+  // when a term ends); default 'monotone' uses d3.curveMonotoneX.
+  const monotoneLine = d3.line().x((p) => x(p.x)).y((p) => y(p.y)).curve(d3.curveMonotoneX);
+  const stepLine = d3.line().x((p) => x(p.x)).y((p) => y(p.y)).curve(d3.curveStepAfter);
   series.forEach((s) => {
+    const line = s.curve === 'step' ? stepLine : monotoneLine;
     const path = g.append('path').datum(s.points)
       .attr('fill', 'none').attr('stroke', s.color || ink)
       .attr('stroke-width', 2.5).attr('stroke-linejoin', 'round').attr('d', line);

@@ -15,6 +15,7 @@
  * @property {string} [unit]    e.g. '$', '%', 'years'
  * @property {string} [help]    One-line plain-English explanation.
  * @property {{value:string,label:string}[]} [options]   Required when type is 'select'.
+ * @property {string} [group]   Id of the group this input belongs to (see groups).
  * @property {boolean} [custom]   The page renders and wires this control itself
  *   (conditional visibility, non-standard markup) instead of core/controls.js
  *   auto-rendering it. Still seeded into values/presets/compute like any other
@@ -25,6 +26,7 @@
  * @typedef {Object} Series
  * @property {string} name              One strategy (e.g. "Claim at 62").
  * @property {string} [color]
+ * @property {'monotone'|'step'} [curve]  Line interpolation. Default 'monotone'.
  * @property {{x:number,y:number}[]} points   Aligned to the shared x grid.
  */
 
@@ -65,6 +67,7 @@
  * @typedef {Object} CalculatorModule
  * @property {{name:string, tagline:string}} meta
  * @property {InputControl[]} inputs
+ * @property {{id:string, label:string, open?:boolean}[]} [groups]  Input groups.
  * @property {Object<string, Object>} presets   Name -> partial values.
  * @property {(values:Object)=>ComputeResult} compute   Pure: no side effects.
  */
@@ -75,9 +78,11 @@ export function validateModule(m) {
   if (!m.meta?.name) errors.push('meta.name missing');
   if (!Array.isArray(m.inputs)) errors.push('inputs must be an array');
   if (typeof m.compute !== 'function') errors.push('compute must be a function');
+  const groupIds = new Set((m.groups || []).map(g => g.id));
   (m.inputs || []).forEach((c, i) => {
     if (!c.id) errors.push(`inputs[${i}].id missing`);
     if (!('default' in c)) errors.push(`inputs[${i}].default missing`);
+    if (c.group && !groupIds.has(c.group)) errors.push(`inputs[${i}].group '${c.group}' not in groups`);
   });
   if (errors.length) throw new Error(`Invalid calculator module:\n - ${errors.join('\n - ')}`);
   return true;

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,560;0,9..144,640;1,9..144,560&display=swap" rel="stylesheet">
+<title>Life insurance — how much, and for how long?</title>
+<meta name="description" content="If one of you died, how much term life insurance would your family need, and for how long? Counts Social Security survivor benefits, the survivor's own pay, the mortgage, and children aging out. Runs in your browser.">
+<meta property="og:title" content="Life insurance — how much, and for how long?">
+<meta property="og:description" content="How much term life insurance a two-parent household needs, and when it's no longer needed. Counts Social Security survivor benefits and the survivor's own pay. Runs in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://paths-and-proofs.pages.dev/life-insurance/">
+<link rel="canonical" href="https://paths-and-proofs.pages.dev/life-insurance/">
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<link rel="stylesheet" href="../core/tokens.css">
+<link rel="stylesheet" href="../core/page.css">
+<link rel="stylesheet" href="../core/components.css">
+<style>
+  .li-section { margin: 18px 0; font-size: 14px; color: var(--fg); }
+  .li-section h3 { font-size: 15px; font-weight: 600; margin: 0 0 6px; }
+  .li-section p { margin: 0 0 6px; }
+  .li-section hr { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+  .li-disclosure { font-size: 13px; color: var(--muted); font-style: italic; }
+
+  @media (min-width: 900px) {
+    main { max-width: 1080px; }
+    #calc {
+      display: grid;
+      grid-template-columns: minmax(300px, 380px) 1fr;
+      grid-template-areas:
+        "inputs chart"
+        "inputs summary"
+        "inputs extras";
+      column-gap: 48px;
+      align-items: start;
+    }
+    #calc > section:nth-of-type(1) { grid-area: inputs; }
+    #calc > section:nth-of-type(2) { grid-area: chart; }
+    #calc > section:nth-of-type(3) { grid-area: summary; }
+    #calc > section:nth-of-type(4) { grid-area: extras; }
+  }
+</style>
+</head>
+<body>
+<header class="page-header">
+  <div class="page-header-row">
+  <!-- PNP-BRAND-START -->
+  <style>
+    .pnp-brand{
+      --pnp-path:#7a8088; --pnp-proof:#b0681f; --pnp-ink:#2b3440;
+      display:inline-flex;align-items:center;gap:.55ch;
+      font-family:'Fraunces','Playfair Display',Georgia,'Times New Roman',serif;
+      font-size:1.02rem;font-weight:700;line-height:1;letter-spacing:-.01em;
+      text-decoration:none;color:var(--pnp-ink);
+      padding:.4rem .15rem;margin:0;white-space:nowrap;cursor:pointer;
+      opacity:.9;transition:opacity .15s ease;
+    }
+    .pnp-brand:hover,.pnp-brand:focus-visible{opacity:1;text-decoration:none;}
+    .pnp-brand:focus-visible{outline:2px solid var(--pnp-proof);outline-offset:3px;border-radius:4px;}
+    .pnp-brand .pnp-glyph{display:block;flex-shrink:0;width:30px;height:20px;}
+    .pnp-brand .pnp-path{stroke:var(--pnp-path);stroke-width:2.6;fill:none;stroke-linecap:round;}
+    .pnp-brand .pnp-point{fill:none;stroke:var(--pnp-proof);stroke-width:2.6;}
+    .pnp-brand .pnp-mark{font-style:italic;color:var(--pnp-proof);}
+    .pnp-brand .pnp-amp{font-weight:600;opacity:.5;margin:0 .04ch;}
+    [data-theme="dark"] .pnp-brand{--pnp-path:#7d828c;--pnp-proof:#d9943a;--pnp-ink:#e8eaf0;}
+  </style>
+  <a class="pnp-brand" href="/" aria-label="Paths and Proofs — back to all tools">
+    <svg class="pnp-glyph" viewBox="0 0 54 34" aria-hidden="true">
+      <path class="pnp-path" d="M2 26 C 22 23, 32 12, 52 7"/>
+      <path class="pnp-path" d="M2 8 C 24 11, 34 22, 52 27"/>
+      <circle class="pnp-point" cx="27" cy="17" r="4.1"/>
+    </svg>
+    <span>Paths <span class="pnp-amp">&amp;</span> <span class="pnp-mark">Proofs</span></span>
+  </a>
+  <!-- PNP-BRAND-END -->
+  <button class="page-privacy-note" aria-label="Privacy: No account or sign-in. Your numbers stay on your device." aria-expanded="false">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;opacity:.7;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <span class="privacy-text">No account or sign-in. Your numbers stay on your device.</span>
+  </button>
+  </div>
+</header>
+<main>
+  <p class="eyebrow">Life insurance</p>
+  <h1>How much life insurance, and for how long?</h1>
+  <p class="lede">If one of you died, your family's need for life insurance starts high and falls
+    over time — the mortgage shrinks, the children age out, and Social Security survivor benefits
+    cover part of the gap. This tool finds the amount and the duration, and shows when coverage is
+    no longer needed at all.</p>
+  <p class="caption" style="margin-bottom: 0;">This tool is in testing — the math has been reviewed to the same standard as the other tools; only mobile real-device verification is still outstanding.</p>
+
+  <div id="calc">
+    <section>
+      <h2>Your numbers</h2>
+      <p class="presets-label">Start with an example, then adjust any number to match your own:</p>
+      <div class="presets" id="presets"></div>
+      <div data-controls></div>
+    </section>
+    <section>
+      <h2>The insurance need over time</h2>
+      <div class="chart" data-chart></div>
+      <p class="caption">The red line is what your family would need. The blue line is what they'd
+        already have. When blue catches red, coverage is no longer needed. The green step line shows
+        what the suggested policies would add.</p>
+    </section>
+    <section>
+      <h2>What it works out to</h2>
+      <div data-summary></div>
+    </section>
+    <section>
+      <div id="li-extras"></div>
+    </section>
+  </div>
+
+  <details>
+    <summary>What this does and doesn't account for</summary>
+    <p><strong>In this version:</strong> two adults (each can be the scenario person), up to 4
+      children, mortgage payoff, other debts, final expenses, college savings, extra childcare cost
+      if a parent dies, Social Security survivor benefits for children and for the surviving parent
+      caring for them (from numbers on each person's Social Security statement), the deceased's lost
+      retirement saving, existing individual term policies, employer coverage (shown separately), a
+      one-policy suggestion, a two-policy ladder suggestion, and optional quote comparison.</p>
+    <p>Savings are held at today's level for every death year. This is conservative, since real
+      savings would likely grow.</p>
+    <p><strong>Not in this version:</strong> whole life or other permanent insurance, disability
+      insurance, estimated premiums (no pricing from mortality tables), single-parent households and
+      guardianship, keeping the mortgage instead of paying it off, the survivor taking time off work,
+      the surviving spouse's own survivor benefit at age 60+ (the gap-years note below covers this),
+      child benefits past 18 (high school students until 19, children disabled before 22), taxes on
+      investment earnings from the payout, three-policy ladders, and anything state-specific.</p>
+    <p>Social Security survivor benefits use a yearly approximation of the earnings test, which the
+      Social Security Administration (SSA) actually applies by withholding whole months. Statement
+      figures assume death this year, and benefits rise with cost-of-living adjustments (COLAs);
+      this tool holds them constant in today's dollars.</p>
+    <p>This is information to help you think, not financial advice.</p>
+  </details>
+  <footer>Built to show the math, not to sell you anything.<br><span class="footer-nav">Also on Paths and Proofs: <a href="/social-security-couples/">Social Security: Couples</a> · <a href="/roth-conversion/">Roth conversion</a> · <a href="/relocation/">Relocation tax comparison</a> · <a href="/medicare/">Medicare: Medigap vs Medicare Advantage</a></span></footer>
+</main>
+
+<script type="module">
+  import { bootstrap } from '../core/bootstrap.js';
+  import * as mod from './life-insurance.js';
+  import { initShareLink } from '../core/share-link.js';
+
+  const api = bootstrap(mod, mod.onResult);
+
+  initShareLink([
+    'ctl-scenario',
+    'ctl-child1Age', 'ctl-child2Age', 'ctl-child3Age', 'ctl-child4Age',
+    'ctl-householdSpending', 'ctl-spendingContinues', 'ctl-supportUntilAge', 'ctl-collegePerChild',
+    'ctl-youAge', 'ctl-youGrossPay', 'ctl-youRetirementSaving',
+    'ctl-youSsPerChild', 'ctl-youSsFamilyMax', 'ctl-youExtraCare',
+    'ctl-youTermCoverage', 'ctl-youTermYearsLeft', 'ctl-youEmployerCoverage',
+    'ctl-spouseAge', 'ctl-spouseGrossPay', 'ctl-spouseRetirementSaving',
+    'ctl-spouseSsPerChild', 'ctl-spouseSsFamilyMax', 'ctl-spouseExtraCare',
+    'ctl-spouseTermCoverage', 'ctl-spouseTermYearsLeft', 'ctl-spouseEmployerCoverage',
+    'ctl-mortgageBalance', 'ctl-mortgageRate', 'ctl-mortgageYearsLeft',
+    'ctl-otherDebts', 'ctl-finalExpenses', 'ctl-savings', 'ctl-collegeSavings',
+    'ctl-discountRate', 'ctl-inflation', 'ctl-takeHomeShare',
+    'ctl-childcareUntilAge', 'ctl-supportYearsNoKids', 'ctl-retirementAge',
+    'ctl-countEmployerCoverage',
+    'ctl-quoteSingle', 'ctl-quoteLadderShort', 'ctl-quoteLadderLong',
+  ]);
+</script>
+</body>
+</html>
