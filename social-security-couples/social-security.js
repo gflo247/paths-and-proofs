@@ -224,7 +224,7 @@ export const inputs = [
     id: 'claimLow', type: 'slider',
     label: 'Lower earner: age they claim',
     min: 62, max: 70, step: 1, default: 62, unit: 'years',
-    help: 'The age the lower earner starts benefits.',
+    help: 'The lower earner\u2019s claiming age — the same in both strategies. The comparison above isolates the higher earner\u2019s decision only.',
   },
   {
     id: 'lifeHigh', type: 'slider',

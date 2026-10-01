@@ -109,9 +109,9 @@
       <section>
         <h2>Lifetime benefits by claiming age</h2>
         <div class="chart" data-chart></div>
-        <p class="caption">Each line is one strategy for the higher earner. Where waiting overtakes
-        claiming early is your breakeven — if the longer-living spouse reaches past that age,
-        waiting paid off.</p>
+        <p class="caption">Each line is one strategy for the higher earner; the lower earner
+        claims at the same age in both. Where waiting overtakes claiming early is your breakeven —
+        if the longer-living spouse reaches past that age, waiting paid off.</p>
       </section>
       <section>
         <h2>What it works out to</h2>
@@ -120,11 +120,11 @@
       </section>
       <section class="heatmap-details">
         <h2>Both lifespans at once</h2>
-        <p class="caption">Each cell represents a pair of lifespans, colored by which claiming
-          strategy produces more lifetime household income. Unlike the chart above, this view
-          includes scenarios where the lower earner dies first. When the higher earner dies very
-          young (left edge), both strategies produce similar totals — that's why those cells
-          appear gray.</p>
+        <p class="caption">Each cell is a pair of lifespans colored by which strategy produces
+          more lifetime household income. The two strategies differ only in the higher earner's
+          claiming age — the lower earner claims at the same age in both (see legend). When the
+          higher earner dies very young (left edge), both strategies produce similar totals —
+          that's why those cells appear gray.</p>
         <div class="heatmap" id="heatmap"></div>
         <div class="heatmap-legend" id="heatmap-legend"></div>
         <div class="tie-control">
@@ -369,6 +369,7 @@
     const v = liveValues();
     const dAge = v.claimHigh ?? 70;
     const eAge = v.claimHighEarly ?? 62;
+    const lAge = v.claimLow ?? 62;
 
     // "You are here" dot — shows where the user's current life-expectancy
     // settings sit on the heatmap, connecting the line chart above to this grid.
@@ -421,8 +422,8 @@
                       : abs < 1000 ? `$${Math.round(abs)}`
                       :              `~$${Math.round(abs / 1000)}k`;
       const verdict  = nearTie        ? 'Near tie'
-                     : c.margin >= 0  ? 'Waiting wins'
-                     :                  'Claiming early wins';
+                     : c.margin >= 0  ? `Higher earner waits to ${dAge} — wins`
+                     :                  `Higher earner claims at ${eAge} — wins`;
       tip.innerHTML =
         `Higher earner to <strong>${ages[xi]}</strong><br>` +
         `Lower earner to <strong>${ages[yi]}</strong><br>` +
@@ -446,9 +447,12 @@
     const tiePct = Math.round(TIE_THRESHOLD * 100);
     document.getElementById('tie-label').textContent =
       tiePct === 0 ? '0% — no gray zone' : `${tiePct}% (within ${tieAmt})`;
+    const lLabel = lAge === eAge
+      ? `both claim at ${eAge}`
+      : `higher earner claims at ${eAge}, lower earner at ${lAge}`;
     legend.innerHTML =
-      `<span><i style="background:${win}"></i> higher earner waiting to ${dAge} wins</span>` +
-      `<span><i style="background:${lose}"></i> claiming at ${eAge} wins</span>` +
+      `<span><i style="background:${win}"></i> higher earner waits to ${dAge}, lower earner at ${lAge} — wins</span>` +
+      `<span><i style="background:${lose}"></i> ${lLabel} — wins</span>` +
       (tiePct > 0 ? `<span><i style="background:${GRAY}"></i> near tie (within ${tieAmt})</span>` : '') +
       `<span><i style="background:white;border:2px solid ${ink};border-radius:50%;box-sizing:border-box;"></i> your scenario</span>` +
       `<span class="muted">Darker = bigger margin.</span>`;
