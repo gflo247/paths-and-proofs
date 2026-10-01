@@ -167,12 +167,15 @@ export function scenarioByYear(inputs, deceased) {
   const results = [];
 
   for (let t = 0; t <= MAX_T; t++) {
-    // Support window: years until youngest turns supportUntilAge.
+    // Support window: years until youngest turns supportUntilAge (child case),
+    // or until the survivor reaches retirement age (capped at user's stated
+    // supportYearsNoKids). The cap at survivor retirement prevents the tool
+    // from granting a fresh N-year window even when the survivor dies at 64.
     let supportEnd;
     if (hasChildren) {
       supportEnd = Math.max(0, supportUntilAge - youngestAge - t);
     } else {
-      supportEnd = supportYearsNoKids;
+      supportEnd = Math.min(supportYearsNoKids, Math.max(0, retirementAge - (survivorAge + t)));
     }
 
     // ── Yearly flows ──
@@ -189,10 +192,12 @@ export function scenarioByYear(inputs, deceased) {
         outflow += extraCare;
       }
 
-      // Lost retirement saving inside the support window.
+      // Lost retirement saving inside the support window. The deceased's
+      // contributions stop entirely — this is not discretionary spending, so
+      // spendingContinues does not apply.
       const deceasedAgeAtA = deceasedAge + t + a;
       if (deceasedAgeAtA < retirementAge) {
-        outflow += deceasedRetSaving * spendingContinues;
+        outflow += deceasedRetSaving;
       }
 
       const ss = survivorSocialSecurity(ssPerChild, ssFamilyMax, survivorPay, childAgesAtA, 0);
@@ -213,7 +218,7 @@ export function scenarioByYear(inputs, deceased) {
     for (let a = pastSupportStart; a < MAX_T; a++) {
       const deceasedAgeAtA = deceasedAge + t + a;
       if (deceasedAgeAtA >= retirementAge) break;
-      const lostSaving = deceasedRetSaving * spendingContinues;
+      const lostSaving = deceasedRetSaving;
       if (lostSaving > 0) {
         needsPV += presentValueOfStream(lostSaving / 12, a * 12, (a + 1) * 12, discountRate);
       }
@@ -228,20 +233,26 @@ export function scenarioByYear(inputs, deceased) {
       oneTimeNeeds += nominalBal / Math.pow(1 + inflation, t);
     }
 
-    // College: PV of remaining college years for each child.
+    // College: PV of remaining college years for each child. Kept separate
+    // so collegeSavings only offsets these costs — 529 withdrawals for
+    // non-education expenses carry a 10% penalty plus income tax, so they
+    // can't be treated as fungible with general savings.
+    let collegeNeeds = 0;
     if (collegePerChild > 0) {
       for (const ca of childAges) {
         const costPerYear = collegePerChild / 4;
         for (let yr = 18; yr <= 21; yr++) {
           const yearsFromT = yr - ca - t;
           if (yearsFromT < 0) continue;
-          oneTimeNeeds += presentValueOfStream(costPerYear / 12, yearsFromT * 12, (yearsFromT + 1) * 12, discountRate);
+          collegeNeeds += presentValueOfStream(costPerYear / 12, yearsFromT * 12, (yearsFromT + 1) * 12, discountRate);
         }
       }
     }
+    oneTimeNeeds += collegeNeeds;
 
     // ── Have ──
-    let haveTotal = savings + collegeSavings + havePV;
+    const collegeSavingsApplied = Math.min(collegeSavings, collegeNeeds);
+    let haveTotal = savings + collegeSavingsApplied + havePV;
 
     // Deceased's individual term coverage.
     if (termCoverage > 0 && t < termYearsLeft) {

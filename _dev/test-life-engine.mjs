@@ -241,6 +241,23 @@ function makeInputs(overrides = {}) {
 }
 
 {
+  // High-early, low-late curve: 500k for years 0-9, then 150k for years 10-19.
+  // A 10+20 ladder should save ~35% vs a single 20-year 500k policy.
+  // This verifies the ladder IS returned (not silently null), and covers need each year.
+  const needByYear = [...Array(10).fill(500000), ...Array(10).fill(150000), 0];
+  const pol = fitPolicies(needByYear, 19);
+  check('policy: ladder is returned for high-early/low-late curve', pol.ladder !== null, true);
+  if (pol.ladder) {
+    const { short, long } = pol.ladder;
+    for (let t = 0; t < 20; t++) {
+      const coverage = (t < short.term ? short.face : 0) + (t < long.term ? long.face : 0);
+      check(`policy: high-early ladder covers year ${t}`, coverage >= needByYear[t], true);
+    }
+    check('policy: high-early ladder saves >= 15% coverage-years', pol.ladder.savingsPct >= 0.15, true);
+  }
+}
+
+{
   // Ladder suppressed when savings < 15%.
   // Flat need: 200k for 10 years. Single = 200k * 10 = 2M coverage-years.
   // No ladder pair can save 15% from a flat curve.
@@ -316,6 +333,69 @@ function makeInputs(overrides = {}) {
     if (Math.abs(rSpouse[i].need - rSwapYou[i].need) > 1) { symOk2 = false; break; }
   }
   check('symmetry: swapping you/spouse swaps results (spouse→swap-you)', symOk2, true);
+}
+
+// ── Bug-fix regressions ──
+
+// Bug 1: retirement saving must NOT be scaled by spendingContinues.
+// Set spendingContinues=0 so spending contributes nothing; with the old bug
+// (retSaving * 0) needs would be 0, but they must reflect the full 12000/yr.
+{
+  const r = scenarioByYear(makeInputs({
+    youAge: '35', spouseAge: '35',
+    youGrossPay: '0', spouseGrossPay: '0',
+    youRetirementSaving: '12000',
+    householdSpending: '0', spendingContinues: '0',
+    supportYearsNoKids: '10', retirementAge: '65',
+    finalExpenses: '0', savings: '0', discountRate: '0'
+  }), 'you');
+  // 30 years of lost retirement saving (35→65), 0% discount → 360000.
+  check('bug1: retirement saving not scaled by spendingContinues', r[0].needs, 360000, 500);
+}
+
+// Bug 2: childless support window must shrink as the survivor approaches retirement.
+// At t=25, survivor is 60 — only 5 years until retirement, not a fresh 10-year window.
+{
+  const r = scenarioByYear(makeInputs({
+    youAge: '35', spouseAge: '35',
+    youGrossPay: '0', spouseGrossPay: '0',
+    householdSpending: '48000', spendingContinues: '100',
+    supportYearsNoKids: '10', retirementAge: '65',
+    finalExpenses: '0', savings: '0', discountRate: '0'
+  }), 'you');
+  // need(t=0): window = min(10, 65-35) = 10. need(t=25): window = min(10, 5) = 5.
+  check('bug2: childless support window shrinks near survivor retirement', r[25].need < r[0].need, true);
+  // At t=30, survivor is 65 (at retirement) — support window = 0.
+  check('bug2: support window is zero when survivor is at retirement age', r[30].need, 0, 100);
+}
+
+// Bug 3: college savings only offset college costs, not mortgage or final expenses.
+{
+  // No college costs, but large collegeSavings. Only final expenses remain.
+  const rNoCollege = scenarioByYear(makeInputs({
+    youGrossPay: '0', spouseGrossPay: '0',
+    householdSpending: '0', spendingContinues: '100',
+    supportYearsNoKids: '0', savings: '0',
+    collegeSavings: '100000', collegePerChild: '0',
+    finalExpenses: '50000', discountRate: '0'
+  }), 'you');
+  // With old bug: need = max(0, 50000 - 100000) = 0.
+  // Correct: collegeSavings offsets nothing (no college costs), need = 50000.
+  check('bug3: college savings do not offset final expenses', rNoCollege[0].need, 50000, 100);
+}
+{
+  // College costs present; savings offsets only up to the college portion.
+  const r = scenarioByYear(makeInputs({
+    youGrossPay: '0', spouseGrossPay: '0',
+    householdSpending: '0', spendingContinues: '100',
+    supportYearsNoKids: '0', savings: '0',
+    collegeSavings: '40000', collegePerChild: '80000',
+    child1Age: '10',
+    finalExpenses: '0', discountRate: '0', inflation: '0'
+  }), 'you');
+  // College cost = 80000 at 0% discount. Savings applied = min(40000, 80000) = 40000.
+  // Remaining need ≈ 40000.
+  check('bug3: college savings offset college costs up to the college need', r[0].need, 40000, 500);
 }
 
 // ── Present value at 0% discount ──
