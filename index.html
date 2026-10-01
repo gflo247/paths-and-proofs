@@ -203,10 +203,11 @@
   }
 
   footer {
-    padding:40px 0 64px; margin-top:18px;
+    padding:40px 22px 64px; margin-top:18px;
     border-top:1px solid var(--border);
     font-size:13.5px; color:var(--muted);
   }
+  footer > * { max-width:760px; margin-left:auto; margin-right:auto; }
   footer a { color:var(--muted); }
 
   :where(a,button):focus-visible { outline:2px solid var(--teal); outline-offset:3px; border-radius:3px; }
@@ -358,15 +359,16 @@
     </p>
   </section>
 
-  <footer>
-    <p>Paths and Proofs · information to help you think, not financial advice · every tool runs
-      locally in your browser.</p>
-    <p style="margin-top:6px">
-      <a href="https://github.com/gflo247">GitHub</a>
-    </p>
-  </footer>
 
 </div>
+
+<footer>
+  <p>Paths and Proofs · information to help you think, not financial advice · every tool runs
+    locally in your browser.</p>
+  <p style="margin-top:6px">
+    <a href="https://github.com/gflo247">GitHub</a>
+  </p>
+</footer>
 <button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch theme">
   <span class="ic-sun" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
   <span class="ic-moon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
