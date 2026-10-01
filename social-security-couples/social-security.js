@@ -186,7 +186,7 @@ export const meta = {
 export const inputs = [
   {
     id: 'piaHigh', type: 'number',
-    label: 'Higher earner: full retirement age benefit (monthly)',
+    label: 'Higher earner: monthly benefit at full retirement age',
     min: 0, max: 6000, step: 50, default: 3000, unit: '$',
     help: 'The full-retirement-age estimate on the higher earner\u2019s Social Security statement.',
   },
@@ -204,13 +204,13 @@ export const inputs = [
   },
   {
     id: 'claimHighEarly', type: 'slider',
-    label: '\u2026vs. claiming at',
+    label: 'vs. higher earner claims at',
     min: 62, max: 70, step: 1, default: 62, unit: 'years',
     help: 'The earlier strategy to compare against. Try your full retirement age to see how much the last few years of delay are worth.',
   },
   {
     id: 'piaLow', type: 'number',
-    label: 'Lower earner: full retirement age benefit (monthly)',
+    label: 'Lower earner: monthly benefit at full retirement age',
     min: 0, max: 6000, step: 50, default: 1200, unit: '$',
     help: 'The lower earner\u2019s own estimate. If it is under half the higher earner\u2019s, a spousal top-up applies.',
   },
@@ -240,9 +240,9 @@ export const inputs = [
   },
   {
     id: 'discountRate', type: 'slider',
-    label: 'Real discount rate',
+    label: 'Discount rate (inflation-adjusted)',
     min: 0, max: 6, step: 0.5, default: 2, unit: '%',
-    help: 'The real return you assume on benefits taken earlier. Higher makes claiming early look better.',
+    help: 'The inflation-adjusted return you assume on benefits taken earlier. Higher makes claiming early look better.',
   },
 ];
 
