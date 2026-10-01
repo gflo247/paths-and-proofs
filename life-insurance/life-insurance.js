@@ -8,7 +8,7 @@
 import { scenarioByYear, fitPolicies, survivorSocialSecurity } from './life-engine.mjs';
 
 export const meta = {
-  name: 'Life insurance: how much, and for how long?',
+  name: 'Life insurance: how much, and for how long',
   tagline: 'What your family would need if one of you died, and when they would no longer need it.',
 };
 
