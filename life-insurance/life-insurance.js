@@ -403,7 +403,7 @@ export function onResult(result) {
     if (countEmployer && employerCoverage > 0) items.push(`Employer coverage (counted): ${dollars(employerCoverage)}`);
 
     items.push('');
-    items.push(`Gap at t=0: ${dollars(r0.need)}`);
+    items.push(`Gap if it happened today: ${dollars(r0.need)}`);
     if (maxNeed > r0.need) items.push(`Peak gap (in a later year): ${dollars(maxNeed)}`);
 
     items.forEach(text => {
