@@ -1,6 +1,6 @@
 // Bump CACHE_NAME on every deploy that touches CSS or any PRECACHE entry —
 // this is what tells browsers to fetch and install the new version.
-const CACHE_NAME = '2026-10-01c';
+const CACHE_NAME = '2026-10-06a';
 
 const PRECACHE = [
   '/',
@@ -13,6 +13,16 @@ const PRECACHE = [
   '/core/page.css',
   '/core/tokens.css',
   '/core/components.css',
+  '/core/fonts.css',
+  '/core/vendor/d3.min.js',
+  '/core/fonts/fraunces-latin-wght-normal.woff2',
+  '/core/fonts/fraunces-latin-wght-italic.woff2',
+  '/core/fonts/inter-latin-wght-normal.woff2',
+  '/core/fonts/dm-sans-latin-wght-normal.woff2',
+  '/core/fonts/playfair-display-latin-500-normal.woff2',
+  '/core/fonts/playfair-display-latin-500-italic.woff2',
+  '/core/fonts/playfair-display-latin-700-normal.woff2',
+  '/core/fonts/playfair-display-latin-700-italic.woff2',
 ];
 
 self.addEventListener('install', e => {
