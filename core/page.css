@@ -15,10 +15,11 @@
   display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; flex-shrink: 0; margin: 0 0 0 auto;
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-  cursor: pointer; color: var(--muted); font-family: inherit; font-size: 0.82rem;
+  cursor: pointer; color: var(--fg); font-family: inherit; font-size: 0.82rem;
   position: relative; gap: 6px;
 }
-.page-privacy-note .privacy-text { display: none; }
+.page-privacy-note:focus:not(:focus-visible) { outline: none; }
+.page-privacy-note .privacy-text { display: none; color: var(--muted); }
 .page-privacy-note .privacy-drawer { display: none; }
 @media (min-width: 601px) {
   .page-privacy-note { width: auto; padding: 0 10px; cursor: pointer; }

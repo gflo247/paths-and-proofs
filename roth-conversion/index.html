@@ -71,8 +71,9 @@
     .site-header-privacy{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:.74rem;color:rgba(255,255,255,.6);margin:0;}
     @media(max-width:640px){.site-header-privacy{display:none;}}
     .roth-lock-btn{display:flex;width:32px;height:32px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:rgba(255,255,255,.9);cursor:pointer;align-items:center;justify-content:center;position:relative;flex-shrink:0;padding:0;}
+    .roth-lock-btn:focus:not(:focus-visible){outline:none;}
     .roth-lock-btn[aria-expanded="true"] .roth-lock-popover{display:block;}
-    .roth-lock-popover{display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--card,#fff);border:1px solid var(--tip-bdr,#ddd);border-radius:10px;padding:16px 18px;font-size:.82rem;color:var(--text,#18151F);white-space:normal;min-width:300px;max-width:min(400px,calc(100vw - 24px));box-shadow:0 2px 8px rgba(0,0,0,.18);z-index:400;}
+    .roth-lock-popover{display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--card,#fff);border:1px solid var(--tip-bdr,#ddd);border-radius:10px;padding:16px 18px;font-size:.82rem;color:var(--text,#18151F);white-space:normal;min-width:300px;max-width:min(400px,calc(100vw - 24px));box-shadow:0 2px 8px rgba(0,0,0,.18);z-index:400;text-align:left;}
     .roth-lock-popover .pd-title{display:block;margin:0 0 12px;font-weight:600;}
     .roth-lock-popover .pd-row{display:flex;gap:14px;padding:4px 0;}
     .roth-lock-popover .pd-key{font-weight:600;white-space:nowrap;flex-shrink:0;min-width:100px;}
