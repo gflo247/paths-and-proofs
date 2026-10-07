@@ -414,6 +414,7 @@
     lockBtn.addEventListener('click', function (e) {
       var open = lockBtn.getAttribute('aria-expanded') === 'true';
       lockBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
+      if (open) lockBtn.blur();
       e.stopPropagation();
     });
     var drawer = lockBtn.querySelector('.privacy-drawer');
