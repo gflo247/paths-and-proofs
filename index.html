@@ -77,7 +77,8 @@
     font-family:inherit; font-size:0.82rem;
   }
   .home-lock-btn:hover { border-color:var(--teal); }
-  .home-lock-btn:focus { outline:none; }
+  .home-lock-btn:focus,
+  .home-lock-btn:focus-visible { outline:none; }
   .home-lock-btn[aria-expanded="true"] { border-color:var(--teal); }
   .home-lock-btn .privacy-drawer { display:none; }
   .home-lock-btn[aria-expanded="true"] .privacy-drawer {
@@ -105,7 +106,8 @@
   .theme-toggle .ic-moon { display:none; }
   .theme-toggle.is-dark .ic-sun { display:none; }
   .theme-toggle.is-dark .ic-moon { display:inline-block; }
-  .theme-toggle:focus-visible { outline:2px solid var(--teal); outline-offset:2px; }
+  .theme-toggle:focus,
+  .theme-toggle:focus-visible { outline:none; }
 
   * { box-sizing:border-box; }
   html { -webkit-text-size-adjust:100%; }
