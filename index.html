@@ -26,9 +26,9 @@
     --line-b:#2c6e6a;   /* "wait / the other path" line */
     --border:#e3ded3;
     --surface:#ffffff;
-    --amber:#b06a1f;    /* in-testing accent, used sparingly */
+    --amber:#924e10;    /* in-testing accent, used sparingly (~6.1:1 on near-white) */
     --path:#7a8088;     /* IDENTITY: neutral crossing path (light, 3.56:1 non-text contrast) */
-    --proof:#b0681f;    /* IDENTITY: the breakeven point + "Proofs" — sole brand accent (light, 3.87:1) */
+    --proof:#924e10;    /* IDENTITY: the breakeven point + "Proofs" — sole brand accent (light, ~6.1:1) */
     color-scheme: light dark;
   }
   /* Dark palette applies when the OS prefers dark (unless the visitor has
@@ -167,7 +167,9 @@
     padding:3px 10px; border-radius:40px; white-space:nowrap;
     border:1px solid var(--border);
   }
-  .badge.built     { color:var(--teal); border-color:var(--teal-soft); background:var(--teal-soft); }
+  .badge.built     { color:#245c59; border-color:var(--teal-soft); background:var(--teal-soft); } /* #245c59 = darkened teal, ~5.7:1 on light teal-soft */
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .badge.built { color:var(--teal); } }
+  :root[data-theme="dark"] .badge.built { color:var(--teal); }
   .badge.testing   { color:var(--amber); border-color:var(--amber); background:transparent; }
   .badge.planned   { color:var(--faint); border-color:var(--border); background:transparent; }
 
@@ -264,6 +266,7 @@
 
   </header>
 
+  <main>
   <section class="family">
     <h2 class="display family-head">The family, and where each one stands</h2>
     <p class="small muted" style="margin:2px 0 0">Each mark shows the tool's state: a resolved
@@ -357,6 +360,7 @@
     </p>
   </section>
 
+  </main>
 
 </div>
 

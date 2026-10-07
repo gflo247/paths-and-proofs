@@ -147,7 +147,7 @@ export function drawChart(result, container) {
   }
 
   g.append('rect').attr('width', innerW).attr('height', innerH)
-    .attr('fill', 'transparent').attr('tabindex', 0)
+    .attr('fill', 'transparent').attr('tabindex', 0).attr('role', 'img')
     .attr('aria-label', `Explore values along ${xAxis.label} with the arrow keys`)
     .on('pointermove', (e) => moveTo(d3.pointer(e)[0]))
     .on('pointerleave', hide)
