@@ -24,6 +24,9 @@ export function bootstrap(module, onResult) {
       privacyBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
       e.stopPropagation();
     });
+    // Stop clicks inside the open drawer from bubbling to the button and toggling it closed.
+    const drawer = privacyBtn.querySelector('.privacy-drawer');
+    if (drawer) drawer.addEventListener('click', (e) => e.stopPropagation());
     document.addEventListener('click', () => privacyBtn.setAttribute('aria-expanded', 'false'));
   }
 
