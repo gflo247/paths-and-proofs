@@ -77,8 +77,8 @@
     font-family:inherit; font-size:0.82rem;
   }
   .home-lock-btn:hover { border-color:var(--teal); }
-  .home-lock-btn:focus:not(:focus-visible) { outline:none; }
-  .home-lock-btn:focus-visible { outline:2px solid var(--teal); outline-offset:2px; }
+  .home-lock-btn:focus { outline:none; }
+  .home-lock-btn[aria-expanded="true"] { border-color:var(--teal); }
   .home-lock-btn .privacy-drawer { display:none; }
   .home-lock-btn[aria-expanded="true"] .privacy-drawer {
     display:block; position:absolute; top:calc(100% + 10px); right:0;
