@@ -727,16 +727,16 @@
     <div class="ch"><div class="sb">1</div><h2>About you</h2></div>
     <div class="frow">
       <div class="field">
-        <div class="flr"><label>Current Age</label></div>
+        <div class="flr"><label for="currentAge">Current Age</label></div>
         <input type="number" id="currentAge" value="60" min="18" max="90" oninput="calc()">
       </div>
       <div class="field">
-        <div class="flr"><label>Retirement Age</label></div>
+        <div class="flr"><label for="retirementAge">Retirement Age</label></div>
         <input type="number" id="retirementAge" value="67" min="50" max="90" oninput="calc()">
       </div>
     </div>
     <div class="field">
-      <div class="flr"><label>Filing Status</label><button class="tb" onclick="toggleTip(‘filing’)">ⓘ</button></div>
+      <div class="flr"><label for="filingStatus">Filing Status</label><button class="tb" onclick="toggleTip(‘filing’)">ⓘ</button></div>
       <select id="filingStatus" onchange="calc()">
         <option value="single">Single</option>
         <option value="mfj" selected>Married (jointly)</option>
@@ -747,12 +747,12 @@
     </div>
     <div id="spouseFields" style="display:none">
       <div class="field">
-        <div class="flr"><label>Spouse’s Current Age</label></div>
+        <div class="flr"><label for="spouseAge">Spouse’s Current Age</label></div>
         <input type="number" id="spouseAge" value="60" min="18" max="90" oninput="calc()">
       </div>
     </div>
       <div class="field">
-        <div class="flr"><label>Are You 65 or Older This Year?</label><button class="tb" onclick="toggleTip(‘senior’)">ⓘ</button></div>
+        <div class="flr"><label for="seniorDeduction">Are You 65 or Older This Year?</label><button class="tb" onclick="toggleTip(‘senior’)">ⓘ</button></div>
         <select id="seniorDeduction" onchange="calc()">
           <option value="0">Under 65 — standard deduction only</option>
           <option value="1">Yes, I am 65+ — add $6,000 deduction</option>
@@ -762,7 +762,7 @@
         <div class="hint" id="seniorMfsNote" style="display:none">Not available for Married Filing Separately — this deduction requires a joint return, so it won’t change your results even if selected.</div>
       </div>
     <div class="field">
-      <div class="flr"><label>Your Sex</label></div>
+      <div class="flr"><label for="sex">Your Sex</label></div>
       <select id="sex" onchange="calc()">
         <option value="male" selected>Male</option>
         <option value="female">Female</option>
@@ -770,7 +770,7 @@
       <div class="hint">Optional, but affects your own numbers — used only for the survival-probability estimate (skip it and you get a reasonable default; answer it and your own odds are accurate)</div>
     </div>
     <div class="field" id="spouseSexField" style="display:none">
-      <div class="flr"><label>Spouse’s Sex</label></div>
+      <div class="flr"><label for="spouseSex">Spouse’s Sex</label></div>
       <select id="spouseSex" onchange="calc()">
         <option value="male">Male</option>
         <option value="female" selected>Female</option>
@@ -778,7 +778,7 @@
       <div class="hint">For joint survival odds in the analysis</div>
     </div>
     <div class="field">
-      <div class="flr"><label>Your State</label><button class="tb" onclick="toggleTip(‘state’)">ⓘ</button></div>
+      <div class="flr"><label for="stateCode">Your State</label><button class="tb" onclick="toggleTip(‘state’)">ⓘ</button></div>
       <select id="stateCode" onchange="calc()">
         <option value="">— Select your state —</option>
           <option value="AL">Alabama</option>
@@ -838,7 +838,7 @@
 
         <div id="nyLocalTaxField" style="display:none">
           <div class="field">
-            <div class="flr"><label>NYC or Yonkers Resident?</label><button class="tb" onclick="toggleTip(‘nyLocal’)">ⓘ</button></div>
+            <div class="flr"><label for="nyLocalTax">NYC or Yonkers Resident?</label><button class="tb" onclick="toggleTip(‘nyLocal’)">ⓘ</button></div>
             <select id="nyLocalTax" onchange="calc()">
               <option value="">Neither — rest of New York State</option>
               <option value="nyc">New York City resident</option>
@@ -850,7 +850,7 @@
 
         <div id="orLocalTaxField" style="display:none">
           <div class="field">
-            <div class="flr"><label>Portland-Area Locality?</label><button class="tb" onclick="toggleTip(‘orLocal’)">ⓘ</button></div>
+            <div class="flr"><label for="orLocalTax">Portland-Area Locality?</label><button class="tb" onclick="toggleTip(‘orLocal’)">ⓘ</button></div>
             <select id="orLocalTax" onchange="calc()">
               <option value="">Neither — rest of Oregon</option>
               <option value="metro">Metro area (Washington or Clackamas County)</option>
@@ -863,7 +863,7 @@
         <details class="rest">
           <summary>Planning to move before you convert?</summary>
           <div class="restb">
-            <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Moving to</label>
+            <label for="reloStateCode" style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Moving to</label>
             <select id="reloStateCode" onchange="calc()">
               <option value="">— Select destination state —</option>
               <option value="AL">Alabama</option>
@@ -934,25 +934,25 @@
   <div class="card step-card" data-step="2" id="stepCard2">
     <div class="ch"><div class="sb">2</div><h2>Income &amp; accounts</h2></div>
     <div class="field">
-      <div class="flr"><label>Your 2026 Wages &amp; Other Income (before conversion, excluding SS, &amp; pension)</label><button class="tb" onclick="toggleTip(‘income’)">ⓘ</button></div>
+      <div class="flr"><label for="income">Your 2026 Wages &amp; Other Income (before conversion, excluding SS, &amp; pension)</label><button class="tb" onclick="toggleTip(‘income’)">ⓘ</button></div>
       <div class="idollar"><input type="number" id="income" value="72000" min="0" step="1000" oninput="calc()"></div>
         <div class="ttip" id="tip-income"><strong>Quick:</strong> Add lines <strong>1z</strong> (wages), <strong>2b</strong> (taxable interest), <strong>3b</strong> (dividends), <strong>7a</strong> (capital gains), and <strong>8</strong> (other income from Schedule 1) from your most recent federal return — rough estimates are fine. <strong>For more precision:</strong> use 3b minus 3a here and move line <strong>3a</strong> (qualified dividends) and any long-term gains from Schedule D to the <strong>Qualified Dividends &amp; Long-Term Capital Gains</strong> field in the optional section below, since those are taxed at lower preferential rates. Enter pension/IRA income (lines 4b/5b) in the field below — some states shelter it differently. <strong>Do NOT include Social Security (line 6b) here</strong> — it goes in its own field so the tool can model how converting makes more of it taxable.</div>
         <div class="hint" id="niitHint" style="display:none">Your total income is approaching the Net Investment Income Tax (NIIT) threshold — if any of the amount above includes investment income, open the section below to model the 3.8% NIIT surcharge on it separately.</div>
     </div>
     <div class="field">
-      <div class="flr"><label>Pension / Other Retirement-Account Income (optional)</label><button class="tb" onclick="toggleTip(‘pension’)">ⓘ</button></div>
+      <div class="flr"><label for="pensionIncome">Pension / Other Retirement-Account Income (optional)</label><button class="tb" onclick="toggleTip(‘pension’)">ⓘ</button></div>
       <div class="idollar"><input type="number" id="pensionIncome" value="0" min="0" step="1000" oninput="calc()"></div>
         <div class="ttip" id="tip-pension"><strong>What to include:</strong> A pension, annuity, or IRA/401(k) distributions you’re already receiving this year — not the conversion itself. Several states, including Michigan, shelter this specific kind of income from state tax up to a cap, but that cap doesn’t apply to wages. Splitting this out from the field above means the state-tax number reflects the real cap, instead of assuming your whole income competes for it. Leave at $0 if you’re still working and not yet drawing a pension or other retirement account. On your most recent federal return, this is lines <strong>4b</strong> (IRA/401(k) distributions, taxable amount) and <strong>5b</strong> (pensions and annuities, taxable amount). If line 4b includes a prior-year Roth conversion, subtract that amount — this field is for ongoing distributions only.</div>
         <div class="hint">Not sure? Enter $0 — this only matters if you’re already receiving pension or retirement-account income separate from this year’s conversion</div>
     </div>
     <div class="field">
-      <div class="flr"><label>Annual Social Security Benefits</label><button class="tb" onclick="toggleTip(‘ss’)">ⓘ</button></div>
+      <div class="flr"><label for="ssIncome">Annual Social Security Benefits</label><button class="tb" onclick="toggleTip(‘ss’)">ⓘ</button></div>
       <div class="idollar"><input type="number" id="ssIncome" value="24000" min="0" step="500" oninput="calc()"></div>
         <div class="ttip" id="tip-ss"><strong>Why this field changes everything:</strong> Social Security benefits become partly taxable when your income reaches certain thresholds. A Roth conversion can push more of your SS into taxable territory — a hidden extra cost called the Social Security tax effect. At worst, each $1 converted triggers 85¢ more of SS taxation, pushing your real tax rate to ~40% even in the 22% bracket. Enter $0 if you do not receive SS yet. Use line <strong>6a</strong> from your most recent federal return — your total benefit before any taxability calculation. Do not use line 6b (the taxable amount); the tool calculates the taxable portion itself.</div>
         <div class="hint" id="ssHint">Enter your total annual SS benefit, or $0 if not yet receiving</div>
     </div>
     <div class="field">
-      <div class="flr"><label>Existing Roth IRA</label></div>
+      <div class="flr"><label for="rothBal">Existing Roth IRA</label></div>
       <div class="idollar"><input type="number" id="rothBal" value="40000" min="0" step="1000" oninput="calc()"></div>
       <div class="hint">Enter $0 if you do not have one yet</div>
     </div>
@@ -960,13 +960,13 @@
       <summary>Brokerage &amp; investment income</summary>
       <div class="restb">
         <div class="field">
-          <div class="flr"><label>Qualified Dividends &amp; Long-Term Capital Gains</label><button class="tb" onclick="toggleTip(‘ltcg’)">ⓘ</button></div>
+          <div class="flr"><label for="ltcgIncome">Qualified Dividends &amp; Long-Term Capital Gains</label><button class="tb" onclick="toggleTip(‘ltcg’)">ⓘ</button></div>
           <div class="idollar"><input type="number" id="ltcgIncome" value="0" min="0" step="500" oninput="calc()"></div>
         <div class="ttip" id="tip-ltcg"><strong>What is this field?</strong> Qualified dividends (1099-DIV box 1b, or line 3a on your return) and net long-term capital gains (Schedule D, line 15) — these get the federal preferential rate (0%, 15%, or 20%) instead of your ordinary bracket rate, and this tool models that correctly, stacking them on top of your other income the way the IRS actually calculates it. A Roth conversion is ordinary income that stacks underneath this, so converting can push some of this income into a higher preferential-rate bracket — this tool accounts for that too. This income still counts toward Medicare IRMAA, Social Security taxation, and the 3.8% Net Investment Income Tax (NIIT) surcharge, just not your ordinary federal bracket. Enter $0 if this doesn’t apply to you.</div>
         <div class="hint">Mutual funds, ETFs, and index funds report this on your 1099-DIV, Box 1b. Enter $0 if you don’t have a taxable brokerage account. This affects your Social Security taxability calculation.</div>
         </div>
         <div class="field">
-          <div class="flr"><label>Other Investment Income</label><button class="tb" onclick="toggleTip(‘nii’)">ⓘ</button></div>
+          <div class="flr"><label for="niiIncome">Other Investment Income</label><button class="tb" onclick="toggleTip(‘nii’)">ⓘ</button></div>
           <div class="idollar"><input type="number" id="niiIncome" value="0" min="0" step="500" oninput="calc()"></div>
         <div class="ttip" id="tip-nii"><strong>What is this field?</strong> Interest, non-qualified dividends, short-term capital gains, and rental income — enter your annual total here. This tool taxes it at your ordinary income rate and includes it in the income that determines your tax bracket, Social Security taxation, and Medicare IRMAA tier, the same as wages or pension income. It also adds the 3.8% federal Net Investment Income Tax (NIIT) surcharge once your total income tops $200,000 (single) or $250,000 (married) — a Roth conversion counts as income and can push you over that threshold. <strong>Have qualified dividends or long-term capital gains?</strong> Those get a lower preferential rate (0/15/20%) — enter them in the field above instead, not here. If you filed Form 8960 last year, that’s the cleanest starting point — it already categorizes each type of NII. Otherwise, on a 1099-DIV, box 1a (ordinary dividends) already includes box 1b (qualified dividends) as a subset — put only the non-qualified portion (1a minus 1b) here to avoid double-counting. Enter $0 if this doesn’t apply to you.</div>
         <div class="hint">Non-qualified dividends, interest (savings, bonds, CDs), rent, or short-term gains. Enter $0 if none of these apply.</div>
@@ -974,7 +974,7 @@
         <details style="margin-top:.75rem">
           <summary style="font-size:.82rem;color:var(--muted);cursor:pointer">IRA basis (most people: $0)</summary>
           <div class="field" style="margin-top:.5rem">
-            <div class="flr"><label>After-Tax Contributions</label><button class="tb" onclick="toggleTip(‘basis’)">ⓘ</button></div>
+            <div class="flr"><label for="iraBasis">After-Tax Contributions</label><button class="tb" onclick="toggleTip(‘basis’)">ⓘ</button></div>
             <div class="idollar"><input type="number" id="iraBasis" value="0" min="0" step="500" oninput="calc()"></div>
           <div class="ttip" id="tip-basis"><strong>Have you ever contributed already-taxed money to a traditional IRA?</strong> If so, that amount is called your "basis." It matters because the IRS requires every conversion to be a proportional mix of taxed and untaxed money — you can’t cherry-pick just the pre-tax portion. The already-taxed share converts tax-free. If this applies to you, the number lives on IRS Form 8606, line 14. Most people enter $0 — the vast majority of IRA money is pre-tax.</div>
           <div class="hint">Only applies if you’ve made non-deductible IRA contributions. Check IRS Form 8606, line 14.</div>
@@ -994,14 +994,14 @@
   <div class="card step-card" data-step="3" id="stepCard3">
     <div class="ch"><div class="sb">3</div><h2>How much are you converting?</h2></div>
     <div class="field" style="margin-bottom:1.5rem">
-      <div class="flr"><label>Traditional IRA / 401(k) Balance</label><button class="tb" onclick="toggleTip(‘trad’)">ⓘ</button></div>
+      <div class="flr"><label for="tradBal">Traditional IRA / 401(k) Balance</label><button class="tb" onclick="toggleTip(‘trad’)">ⓘ</button></div>
       <div class="idollar"><input type="number" id="tradBal" value="280000" min="0" step="1000" oninput="calc()"></div>
           <div class="ttip" id="tip-trad"><strong>What to enter:</strong> Add up all your pre-tax retirement accounts — traditional IRAs, 401(k)s, 403(b)s, SEP-IRAs. Don’t have a statement handy? A rough estimate is fine for planning purposes. Every dollar here will eventually be taxed when withdrawn.</div>
     </div>
     <div class="field">
       <p style="font-size:.82rem;font-weight:600;margin:0 0 .5rem;color:var(--text)">Pick a threshold as your starting point:</p>
       <div id="thresholdPicker"></div>
-      <div class="flr" style="margin-top:1.25rem"><label>Or Enter a Specific Amount</label><button class="tb" onclick="toggleTip(‘convert’)">ⓘ</button></div>
+      <div class="flr" style="margin-top:1.25rem"><label for="convertAmt">Or Enter a Specific Amount</label><button class="tb" onclick="toggleTip(‘convert’)">ⓘ</button></div>
       <div class="idollar"><input type="number" id="convertAmt" value="0" min="0" step="1000" oninput="calc()"></div>
         <div class="ttip" id="tip-convert"><strong>How much is right?</strong> It depends on your bracket, Medicare thresholds, and how much of your Social Security is currently taxable. Your results show all three common stopping points. There’s no income limit on conversions — anyone can convert in any year.</div>
       <div id="rmdCvtHint" style="display:none;font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.5"></div>
@@ -1020,7 +1020,7 @@
     <div class="ch"><div class="sb">4</div><h2>Medicare &amp; assumptions</h2></div>
     <div class="frow">
       <div class="field">
-        <div class="flr"><label>Are You on Medicare?</label><button class="tb" onclick="toggleTip(‘medicare’)">ⓘ</button></div>
+        <div class="flr"><label for="medicareStatus">Are You on Medicare?</label><button class="tb" onclick="toggleTip(‘medicare’)">ⓘ</button></div>
         <select id="medicareStatus" onchange="calc()">
           <option value="none">Not on Medicare, not expecting it soon</option>
           <option value="one" selected>Yes — just me, or within 3 years</option>
@@ -1029,7 +1029,7 @@
         <div class="ttip" id="tip-medicare"><strong>The hidden two-year trap:</strong> Medicare charges higher premiums to people with higher incomes — called IRMAA. It’s based on your income from 2 years ago. A large Roth conversion in 2026 can raise your Medicare bill in 2028. This is one of the most commonly missed costs of converting.<br><br><strong>What counts as income for Medicare?</strong> Medicare adds up all your income from all sources — wages, IRA withdrawals, taxable Social Security, dividends, and capital gains. A Roth conversion counts as income dollar-for-dollar, which is why large conversions can push you into a higher premium tier.</div>
       </div>
       <div class="field">
-        <div class="flr"><label>Include Medicare Part D?</label></div>
+        <div class="flr"><label for="partD">Include Medicare Part D?</label></div>
         <select id="partD" onchange="calc()">
           <option value="yes" selected>Yes — include Part D surcharge</option>
           <option value="no">No — Part B only</option>
@@ -1037,12 +1037,12 @@
       </div>
     </div>
     <div class="field">
-      <div class="flr"><label>Annual Investment Return (after inflation) — <span id="gDisp" style="color:var(--navy);font-weight:700">7%</span></label><button class="tb" onclick="toggleTip(‘growth’)">ⓘ</button></div>
+      <div class="flr"><label for="growthRate">Annual Investment Return (after inflation) — <span id="gDisp" style="color:var(--navy);font-weight:700">7%</span></label><button class="tb" onclick="toggleTip(‘growth’)">ⓘ</button></div>
       <div class="rw"><input type="range" id="growthRate" min="3" max="12" step=".5" value="7" oninput="document.getElementById(‘gDisp’).textContent=this.value+’%’;document.getElementById(‘gValDisp’).textContent=this.value+’%’;calc()"><div class="rv" id="gValDisp">7%</div></div>
         <div class="ttip" id="tip-growth"><strong>What to use?</strong> Historically ~7% after inflation for a diversified stock portfolio. A balanced mix of stocks and bonds might average 5–6%. Try sliding it to see how sensitive your results are.</div>
     </div>
     <div class="field">
-      <div class="flr"><label>Your Expected <strong>Federal</strong> Rate in Retirement</label><button class="tb" onclick="toggleTip(‘retrate’)">ⓘ</button></div>
+      <div class="flr"><label for="retRate">Your Expected <strong>Federal</strong> Rate in Retirement</label><button class="tb" onclick="toggleTip(‘retrate’)">ⓘ</button></div>
       <div class="ipct"><input type="number" id="retRate" value="22" min="0" max="60" oninput="calc()"></div>
         <div class="ttip" id="tip-retrate"><strong>Federal only — I add your state rate automatically.</strong> Enter your expected federal bracket rate on IRA withdrawals. Select your state above and I’ll fold the state rate in automatically so the comparison is apples-to-apples. Use the estimator below if you are unsure.</div>
         <details class="rest">
@@ -1051,21 +1051,21 @@
             <p style="font-size:.82rem;color:var(--muted);margin-bottom:8px;line-height:1.5">Enter your expected retirement income sources and I’ll compute the marginal federal rate on your IRA withdrawals — including how conversions can trigger extra tax on Social Security benefits.</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:6px">
               <div>
-                <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">SS benefit / yr</label>
+                <label for="retSS" style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">SS benefit / yr</label>
                 <div class="idollar"><input type="number" id="retSS" value="24000" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate();calc()" style="font-size:.93rem"></div>
               </div>
               <div>
-                <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Pension / retirement-account income / yr</label>
+                <label for="retPen" style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Pension / retirement-account income / yr</label>
                 <div class="idollar"><input type="number" id="retPen" value="0" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate();calc()" style="font-size:.93rem"></div>
               </div>
               <div>
-                <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Wages or other income / yr (optional)</label>
+                <label for="retOther" style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Wages or other income / yr (optional)</label>
                 <div class="idollar"><input type="number" id="retOther" value="0" min="0" step="500" oninput="_retFieldsTouched=true;updateRetRate();calc()" style="font-size:.93rem"></div>
               </div>
             </div>
             <p style="font-size:.76rem;color:var(--muted);margin:-2px 0 8px;line-height:1.4">SS and pension start filled in from what you entered above — change them here only if you expect different amounts by the time you retire. Keep continued work or consulting income in "Wages or other" — a few states, including Michigan, shelter pension income differently than wages. If your income above includes dividends, interest, or rental income that continues in retirement, enter that portion in "Wages or other" as well.</p>
             <div style="margin-bottom:8px">
-              <label style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Annual IRA / 401(k) withdrawal</label>
+              <label for="retWd" style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Annual IRA / 401(k) withdrawal</label>
               <div id="retWdHint" style="display:none;font-size:.76rem;color:var(--muted);margin-bottom:4px;line-height:1.4"></div>
               <div class="idollar"><input type="number" id="retWd" value="0" min="0" step="500" oninput="_retWdUserSet=true;updateRetRate()" style="font-size:.93rem"></div>
             </div>
@@ -1074,7 +1074,7 @@
         </details>
     </div>
     <div class="field">
-      <div class="flr"><label>Pay Conversion Taxes From</label><button class="tb" onclick="toggleTip(‘taxsrc’)">ⓘ</button></div>
+      <div class="flr"><label for="taxSource">Pay Conversion Taxes From</label><button class="tb" onclick="toggleTip(‘taxsrc’)">ⓘ</button></div>
       <select id="taxSource" onchange="calc()">
         <option value="outside">Pay from outside savings ✓ Recommended for most</option>
         <option value="inside">Take taxes from the IRA itself (reduces converted amount)</option>
