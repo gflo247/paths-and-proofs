@@ -58,7 +58,7 @@
 .share-link-row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .5rem; }
 .share-link-box { flex: 1; min-width: 160px; padding: 6px 10px; font: inherit; font-size: .85rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: inherit; }
 .share-copy-btn { padding: 6px 14px; font: inherit; font-size: .85rem; font-weight: 600; border: 1px solid var(--accent); border-radius: 20px; background: transparent; color: var(--accent); cursor: pointer; white-space: nowrap; }
-.share-copy-btn:hover { background: var(--accent); color: #fff; }
+@media (hover:hover) { .share-copy-btn:hover { background: var(--accent); color: #fff; } }
 .share-note { font-size: .78rem; color: var(--muted); line-height: 1.5; }
 
 /* Theme toggle — shared sun/moon button. Fixed top-right by default; static when
@@ -77,7 +77,6 @@
 [data-theme="dark"] .theme-toggle .ic-sun { display: none; }
 [data-theme="dark"] .theme-toggle .ic-moon { display: inline-block; }
 .theme-toggle:focus:not(:focus-visible) { outline: none; }
-.theme-toggle:focus-visible { outline: 2px solid var(--accent, #2c6e6a); outline-offset: 2px; }
 .page-header .theme-toggle { position: static; top: auto; right: auto; z-index: auto; flex-shrink: 0; }
 
 /* Desktop two-column layout companion: slightly larger summary text helps the
