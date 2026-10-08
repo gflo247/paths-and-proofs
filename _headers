@@ -1,0 +1,27 @@
+# Paths and Proofs — security headers for Cloudflare Pages
+# More-specific paths override the same header from broader paths.
+#
+# script-src strategy:
+#   Landing / SS / Life Insurance: static inline scripts → sha256 hashes, no unsafe-inline
+#   Relocation / Medicare: generated data blob inline scripts → unsafe-inline (hashes would
+#     go stale on every npm run gen; wire gen-headers into npm run gen to harden later)
+#   Roth: 93 inline event handlers → unsafe-inline (refactor required to remove)
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=()
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+
+# Landing page — two static inline scripts (lock drawer + theme toggle)
+/
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-Qg20vlzzblJw/WEqDVwkTw191kNa7JXud/c5CPZu6O4=' 'sha256-cTDVdBCHnalVGbV1N9IqXaoBvNTxGffnZ+1eARKVRuk='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+
+# Social Security — one static inline module script
+/social-security-couples/
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-B7O7FgjWvCvbYgqSyXNG2RlK4+T8h0B3zLA7E93xuXM='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+
+# Life Insurance — one static inline module script
+/life-insurance/
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-MnzIZP+yg7zZb2GRAEJFHGbQzLLbAM0/1VD0dxarVsM='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
