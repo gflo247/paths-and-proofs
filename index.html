@@ -78,7 +78,7 @@
   }
   .home-lock-btn:hover { border-color:var(--teal); }
   .home-lock-btn:focus,
-  .home-lock-btn:focus-visible { outline:none; }
+  .home-lock-btn:focus-visible { outline:none !important; }
   .home-lock-btn[aria-expanded="true"] { border-color:var(--teal); }
   .home-lock-btn .privacy-drawer { display:none; }
   .home-lock-btn[aria-expanded="true"] .privacy-drawer {
@@ -107,7 +107,7 @@
   .theme-toggle.is-dark .ic-sun { display:none; }
   .theme-toggle.is-dark .ic-moon { display:inline-block; }
   .theme-toggle:focus,
-  .theme-toggle:focus-visible { outline:none; }
+  .theme-toggle:focus-visible { outline:none !important; }
 
   * { box-sizing:border-box; }
   html { -webkit-text-size-adjust:100%; }
@@ -407,6 +407,7 @@
       var open = lockBtn.getAttribute('aria-expanded') === 'true';
       lockBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
       lockBtn.blur();
+      setTimeout(function () { lockBtn.blur(); }, 0);
       e.stopPropagation();
     });
     var drawer = lockBtn.querySelector('.privacy-drawer');
@@ -433,6 +434,8 @@
     btn.addEventListener('click', function () {
       root.setAttribute('data-theme', isDark() ? 'light' : 'dark');
       sync();
+      btn.blur();
+      setTimeout(function () { btn.blur(); }, 0);
     });
     sync();
   })();
