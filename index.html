@@ -77,8 +77,7 @@
     font-family:inherit; font-size:0.82rem;
   }
   .home-lock-btn:hover { border-color:var(--teal); }
-  .home-lock-btn:focus,
-  .home-lock-btn:focus-visible { outline:none !important; }
+  .home-lock-btn:focus { outline:none; }
   .home-lock-btn[aria-expanded="true"] { border-color:var(--teal); }
   .home-lock-btn .privacy-drawer { display:none; }
   .home-lock-btn[aria-expanded="true"] .privacy-drawer {
@@ -106,8 +105,7 @@
   .theme-toggle .ic-moon { display:none; }
   .theme-toggle.is-dark .ic-sun { display:none; }
   .theme-toggle.is-dark .ic-moon { display:inline-block; }
-  .theme-toggle:focus,
-  .theme-toggle:focus-visible { outline:none !important; }
+  .theme-toggle:focus { outline:none; }
 
   * { box-sizing:border-box; }
   html { -webkit-text-size-adjust:100%; }
@@ -237,7 +235,7 @@
   }
   footer a { color:var(--muted); }
 
-  :where(a,button):focus-visible { outline:2px solid var(--teal); outline-offset:3px; border-radius:3px; }
+  :where(a,button):not(.home-lock-btn):not(.theme-toggle):focus-visible { outline:2px solid var(--teal); outline-offset:3px; border-radius:3px; }
 
   @media (prefers-reduced-motion:no-preference) {
     .reveal { opacity:0; transform:translateY(8px); animation:rise .6s cubic-bezier(.22,1,.36,1) forwards; }
@@ -407,7 +405,6 @@
       var open = lockBtn.getAttribute('aria-expanded') === 'true';
       lockBtn.setAttribute('aria-expanded', open ? 'false' : 'true');
       lockBtn.blur();
-      setTimeout(function () { lockBtn.blur(); }, 0);
       e.stopPropagation();
     });
     var drawer = lockBtn.querySelector('.privacy-drawer');
@@ -435,7 +432,6 @@
       root.setAttribute('data-theme', isDark() ? 'light' : 'dark');
       sync();
       btn.blur();
-      setTimeout(function () { btn.blur(); }, 0);
     });
     sync();
   })();
