@@ -234,6 +234,8 @@
     text-align:center;
   }
   footer a { color:var(--muted); }
+  .footer-other { margin:10px 0 0; color:var(--faint); font-size:12.5px; }
+  .footer-other a { color:var(--faint); }
 
   a:focus-visible { outline:2px solid var(--teal); outline-offset:3px; border-radius:3px; }
 
@@ -369,8 +371,9 @@
     <p>These are my attempt at something better. Each one runs entirely in your browser — your
       numbers never leave your device — and shows its work, with every rule linked to its source
       so you can check it.</p>
-    <p style="margin-top:14px">
+    <p style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;">
       <a class="pill" href="https://github.com/gflo247" style="text-decoration:none">↗ github.com/gflo247</a>
+      <a class="pill" href="https://trakyodollas.com/" style="text-decoration:none">↗ trakyodollas.com — free expense tracker, same philosophy</a>
     </p>
   </section>
 
@@ -381,6 +384,7 @@
 <footer>
   <p>Paths and Proofs · information to help you think, not financial advice · every tool runs
     locally in your browser.</p>
+  <p class="footer-other">Other decisions: <a href="/espp/">ESPP discount worksheet</a></p>
 </footer>
 <button class="home-lock-btn" type="button" aria-label="Privacy: No account or sign-in. Your numbers stay on your device." aria-expanded="false">
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>

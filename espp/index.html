@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../core/fonts.css">
+<title>ESPP worksheet — Paths and Proofs</title>
+<meta name="description" content="Employee Stock Purchase Plan worksheet: your contribution and offering period worked through in full, with a sensitivity dial for stock price moves and an after-tax comparison of selling immediately versus holding for qualifying treatment.">
+<link rel="canonical" href="https://paths-and-proofs.pages.dev/espp/">
+<link rel="stylesheet" href="../core/tokens.css">
+<link rel="stylesheet" href="../core/components.css">
+<style>
+  /* ESPP-specific chart and status palette — not in site tokens */
+  :root {
+    --series-hysa: #2a78d6;
+    --series-espp: #eb6834;
+    --good:        #006300;
+    --critical:    #d03b3b;
+    --serious:     #ec835a;
+    /* alias so SVG inline styles referencing --ink-muted still resolve */
+    --ink-muted:   var(--muted);
+  }
+  [data-theme="dark"] {
+    --series-hysa: #3987e5;
+    --series-espp: #d95926;
+    --good:        #0ca30c;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding-inline: 16px;
+  }
+
+  .espp-header { max-width: 680px; margin: 20px auto 0; }
+
+  .page { max-width: 680px; margin: 0 auto; padding-block: 32px; display: flex; flex-direction: column; gap: 28px; }
+
+  .eyebrow {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 {
+    font-family: 'Fraunces', 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-size: clamp(26px, 5vw, 34px);
+    line-height: 1.15;
+    margin: 6px 0 10px;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  .dek {
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.55;
+    max-width: 60ch;
+  }
+  .dek b { color: var(--fg); font-weight: 600; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+  }
+
+  h2 {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 16px;
+  }
+
+  .formula-note {
+    color: var(--muted); font-size: 14.5px; line-height: 1.6; margin: 0 0 18px;
+  }
+  .formula-note b { color: var(--fg); font-weight: 600; }
+
+  /* --- Inputs --- */
+  .inputs-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px 16px;
+  }
+  /* Scoped to .page to avoid conflict with components.css .control/.control-input */
+  .page .controls { display: flex; gap: 16px; flex-wrap: wrap; margin: 4px 0 16px; }
+  .field,
+  .page .control { display: flex; flex-direction: column; gap: 6px; }
+  .field-label,
+  .control-label { font-size: 12.5px; color: var(--muted); }
+  .field-input,
+  .page .control-input {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 10px; transition: border-color 0.12s ease;
+  }
+  .field-input:focus-within,
+  .page .control-input:focus-within { border-color: var(--accent); }
+  .field-input .affix,
+  .page .control-input .affix {
+    color: var(--muted);
+    font-family: 'DM Sans', ui-monospace, monospace; font-size: 14px;
+  }
+  .field-input input,
+  .page .control-input input {
+    all: unset; flex: 1; min-width: 0;
+    font-family: 'DM Sans', ui-monospace, monospace;
+    font-size: 15px; color: var(--fg); font-variant-numeric: tabular-nums;
+  }
+  .field-input input::-webkit-outer-spin-button,
+  .field-input input::-webkit-inner-spin-button,
+  .page .control-input input::-webkit-outer-spin-button,
+  .page .control-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .field-input input[type="number"],
+  .page .control-input input[type="number"] { -moz-appearance: textfield; }
+
+  .field-note { margin: 14px 0 0; font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* --- IRS §423(b)(8) cap section --- */
+  .cap-section { margin-top: 16px; }
+  .cap-bar-wrap { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 7px; }
+  .cap-bar-fill {
+    height: 100%; border-radius: 3px; width: 0%;
+    background: var(--accent); transition: width 0.25s ease, background 0.25s ease;
+  }
+  .cap-bar-fill.near { background: var(--serious); }
+  .cap-bar-fill.over { background: var(--critical); }
+  .cap-meta { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .cap-action {
+    margin: 8px 0 0; padding: 9px 13px; border-radius: 8px;
+    font-size: 13px; line-height: 1.5;
+    background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical);
+  }
+  .cap-action b { font-weight: 700; }
+
+  /* --- Stat tiles --- */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stat-tile {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .stat-tile.accent { border-color: color-mix(in srgb, var(--series-espp) 35%, var(--border)); }
+  .stat-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .stat-value {
+    font-family: 'DM Sans', ui-monospace, monospace; font-weight: 700; font-size: 20px;
+    font-variant-numeric: tabular-nums; color: var(--fg);
+  }
+  .stat-sub { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+
+  .diff-caption { text-align: center; margin: 18px 0 0; font-size: 14.5px; color: var(--muted); }
+  .diff-amount {
+    font-family: 'DM Sans', ui-monospace, monospace;
+    font-weight: 700; color: var(--good); font-variant-numeric: tabular-nums;
+  }
+  .diff-amount.negative { color: var(--critical); }
+  .diff-sep { color: var(--muted); margin: 0 6px; }
+  .diff-sub { color: var(--muted); }
+
+  .risk-badge {
+    margin: 14px 0 0; padding: 10px 14px; border-radius: 9px;
+    font-size: 13.5px; line-height: 1.5;
+  }
+  .risk-badge.serious { background: color-mix(in srgb, var(--serious) 16%, transparent); color: var(--serious); }
+  .risk-badge.critical { background: color-mix(in srgb, var(--critical) 16%, transparent); color: var(--critical); }
+  .risk-badge b { font-weight: 700; }
+
+  .note-box {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 9px;
+    padding: 12px 14px; margin: 16px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--muted);
+  }
+
+  /* --- Tax scenarios --- */
+  .scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-top: 4px; }
+  .scenario-tile { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .scenario-tile.accent { border-color: color-mix(in srgb, var(--series-espp) 35%, var(--border)); }
+  .scenario-title { font-size: 13px; font-weight: 700; color: var(--fg); margin-bottom: 2px; }
+  .scenario-sub { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .scenario-tile .stat-value { font-size: 19px; }
+  .scenario-breakdown { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+  /* --- Sensitivity chart --- */
+  .line-chart-wrap { position: relative; margin-top: 4px; }
+  .line-chart-wrap svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .axis-line { stroke: var(--border); stroke-width: 1; }
+  .zero-line { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 3; }
+  .hysa-ref-line { stroke: var(--series-hysa); stroke-width: 1.5; stroke-dasharray: 4 3; }
+  .espp-sens-line { fill: none; stroke: var(--series-espp); stroke-width: 2.5; stroke-linecap: round; }
+  .tick-label { font: 11.5px 'DM Sans', ui-monospace, monospace; fill: var(--muted); }
+  .ref-tag { font: 11px 'DM Sans', ui-monospace, monospace; }
+  .marker-line { stroke: var(--fg); stroke-width: 1.5; }
+  .marker-dot { fill: var(--fg); stroke: var(--surface); stroke-width: 2; }
+  .hover-x { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 3; opacity: 0; }
+  .hover-dot { fill: var(--series-espp); opacity: 0; stroke: var(--surface); stroke-width: 1.5; }
+  .hit-area { fill: transparent; cursor: crosshair; }
+  .line-tooltip {
+    position: absolute; top: 0; pointer-events: none;
+    background: var(--fg); color: var(--bg);
+    font-family: 'DM Sans', ui-monospace, monospace;
+    font-size: 12.5px; line-height: 1.5; white-space: nowrap;
+    padding: 7px 10px; border-radius: 8px;
+    opacity: 0; transform: translate(-50%, -4px); transition: opacity 0.1s ease;
+  }
+
+  .chart-legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .swatch.line { width: 20px; height: 2.5px; border-radius: 2px; }
+  .swatch.dashed { width: 20px; height: 2px; background: repeating-linear-gradient(to right, var(--series-hysa) 0 5px, transparent 5px 8px); }
+
+  /* --- Schedule table --- */
+  details.table-toggle { margin-top: 2px; }
+  details.table-toggle summary { cursor: pointer; font-size: 13px; color: var(--muted); list-style: none; }
+  details.table-toggle summary::-webkit-details-marker { display: none; }
+  details.table-toggle summary::before { content: "▸ "; }
+  details.table-toggle[open] summary::before { content: "▾ "; }
+  .sched-wrap { max-height: 320px; overflow-y: auto; margin-top: 10px; border-top: 1px solid var(--border); }
+  table.data-table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  table.data-table th, table.data-table td {
+    text-align: right; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--border); color: var(--muted);
+    font-family: 'DM Sans', ui-monospace, monospace; font-variant-numeric: tabular-nums;
+  }
+  table.data-table th { position: sticky; top: 0; background: var(--surface); color: var(--muted); font-family: 'Inter', sans-serif; }
+  table.data-table th:first-child, table.data-table td:first-child { text-align: left; font-family: 'Inter', sans-serif; }
+  table.data-table td:last-child, table.data-table th:last-child { color: var(--fg); }
+
+  .page footer {
+    font-size: 12.5px; color: var(--muted); line-height: 1.7;
+    border-top: 1px solid var(--border); padding-top: 18px;
+  }
+
+  @media (max-width: 480px) {
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .stat-tile.accent { grid-column: span 2; }
+  }
+</style>
+</head>
+<body>
+<header class="espp-header">
+<!-- PNP-BRAND-START -->
+<style>
+  .pnp-brand{
+    --pnp-path:#7a8088; --pnp-proof:#924e10; --pnp-ink:#2b3440;
+    display:inline-flex;align-items:center;gap:.55ch;
+    font-family:'Fraunces','Playfair Display',Georgia,'Times New Roman',serif;
+    font-size:1.02rem;font-weight:700;line-height:1;letter-spacing:-.01em;
+    text-decoration:none;color:var(--pnp-ink);
+    padding:.4rem .15rem;margin:0;white-space:nowrap;cursor:pointer;
+    opacity:.9;transition:opacity .15s ease;
+  }
+  .pnp-brand:hover,.pnp-brand:focus-visible{opacity:1;text-decoration:none;}
+  .pnp-brand:focus-visible{outline:2px solid var(--pnp-proof);outline-offset:3px;border-radius:4px;}
+  .pnp-brand .pnp-glyph{display:block;flex-shrink:0;width:30px;height:20px;}
+  .pnp-brand .pnp-path{stroke:var(--pnp-path);stroke-width:2.6;fill:none;stroke-linecap:round;}
+  .pnp-brand .pnp-point{fill:none;stroke:var(--pnp-proof);stroke-width:2.6;}
+  .pnp-brand .pnp-mark{font-style:italic;color:var(--pnp-proof);}
+  .pnp-brand .pnp-amp{font-weight:600;opacity:.5;margin:0 .04ch;}
+  [data-theme="dark"] .pnp-brand{--pnp-path:#7d828c;--pnp-proof:#d9943a;--pnp-ink:#e8eaf0;}
+</style>
+<a class="pnp-brand" href="/" aria-label="Paths &amp; Proofs">
+  <svg class="pnp-glyph" viewBox="0 0 54 34" aria-hidden="true">
+    <path class="pnp-path" d="M2 26 C 22 23, 32 12, 52 7"/>
+    <path class="pnp-path" d="M2 8 C 24 11, 34 22, 52 27"/>
+    <circle class="pnp-point" cx="27" cy="17" r="4.1"/>
+  </svg>
+  <span>Paths <span class="pnp-amp">&amp;</span> <span class="pnp-mark">Proofs</span></span>
+</a>
+<!-- PNP-BRAND-END -->
+</header>
+
+<main>
+<div class="page">
+
+  <div>
+    <div class="eyebrow">Employee Stock Purchase Plan — worksheet</div>
+    <h1>Your contribution, worked through in full</h1>
+    <p class="dek">
+      How much your ESPP contribution actually returns — and whether it beats
+      what you'd earn putting that cash to work elsewhere. Set the benchmark
+      rate to match your real alternative: a savings account, a CD, or an
+      index fund.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Your plan &amp; paycheck</h2>
+    <div class="inputs-grid">
+      <label class="field">
+        <span class="field-label">Annual base salary</span>
+        <span class="field-input"><span class="affix">$</span><input type="number" id="inpSalary" value="200000" min="10000" max="2000000" step="1000" inputmode="decimal"></span>
+      </label>
+      <label class="field">
+        <span class="field-label">Your contribution</span>
+        <span class="field-input"><input type="number" id="inpContribPct" value="10" min="0" max="100" step="0.5" inputmode="decimal"><span class="affix">%</span></span>
+      </label>
+      <label class="field">
+        <span class="field-label">Plan contribution cap</span>
+        <span class="field-input"><input type="number" id="inpCapPct" value="10" min="1" max="100" step="0.5" inputmode="decimal"><span class="affix">%</span></span>
+      </label>
+      <label class="field">
+        <span class="field-label">Offering period</span>
+        <span class="field-input"><input type="number" id="inpMonths" value="6" min="1" max="24" step="1" inputmode="decimal"><span class="affix">mo</span></span>
+      </label>
+      <label class="field">
+        <span class="field-label">Purchase discount</span>
+        <span class="field-input"><input type="number" id="inpDiscount" value="15" min="1" max="50" step="1" inputmode="decimal"><span class="affix">%</span></span>
+      </label>
+      <label class="field">
+        <span class="field-label">Alternative return (APY)</span>
+        <span class="field-input"><input type="number" id="inpApy" value="3" min="0" max="10" step="0.1" inputmode="decimal"><span class="affix">%</span></span>
+      </label>
+    </div>
+    <p class="field-note">3–5% for a high-yield savings account or CD; 7% if you'd invest in a broad index fund instead.</p>
+    <p class="field-note" id="contribNote">Biweekly paycheck deduction: $769 — 13 pay periods over 6 months.</p>
+    <div class="cap-section">
+      <div class="cap-bar-wrap"><div class="cap-bar-fill" id="capBarFill"></div></div>
+      <p class="cap-meta" id="capMeta"></p>
+      <p class="cap-action" id="capAction" hidden></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Outcome at a glance</h2>
+    <div class="stat-grid">
+      <div class="stat-tile">
+        <div class="stat-label">Total contributed</div>
+        <div class="stat-value" id="statContrib">$10,000</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">Savings, drip-fed</div>
+        <div class="stat-value" id="statHysa">$10,081</div>
+        <div class="stat-sub" id="statHysaSub">0.8% return</div>
+      </div>
+      <div class="stat-tile accent">
+        <div class="stat-label">ESPP, at your sell scenario</div>
+        <div class="stat-value" id="statEspp">$11,765</div>
+        <div class="stat-sub" id="statEsppSub">17.6% return</div>
+      </div>
+    </div>
+    <p class="diff-caption" id="diffCaption">
+      <span class="diff-amount" id="diffAmount">+$1,684</span><span class="diff-sep">·</span><span class="diff-sub" id="diffSub">17.6% vs 0.8%</span>
+    </p>
+    <p class="risk-badge" id="riskBadge" hidden></p>
+  </div>
+
+  <div class="card">
+    <h2>What if the stock moves before you sell</h2>
+    <p class="formula-note">
+      The headline return assumes you sell at the same reference price the
+      discount was measured from. Blackout windows and order timing mean the
+      price you actually sell at can differ — set how much, or click the
+      line below.
+    </p>
+    <div class="controls">
+      <label class="control">
+        <span class="control-label">Price move by the time you sell</span>
+        <span class="control-input"><input type="number" id="inpMove" value="0" min="-20" max="20" step="1" inputmode="decimal"><span class="affix">%</span></span>
+      </label>
+    </div>
+    <div class="line-chart-wrap">
+      <svg id="sensSvg" viewBox="0 0 320 210" preserveAspectRatio="none" role="img"
+           aria-label="ESPP return versus price move since the reference price, compared with the savings account return.">
+        <line class="axis-line" x1="44" y1="160" x2="304" y2="160"></line>
+
+        <polygon id="underwaterFill" points="44,160 44,160 44,160 44,160" fill="var(--critical)" opacity="0.14"></polygon>
+
+        <line id="zeroLine" class="zero-line" x1="44" x2="304" y1="160" y2="160"></line>
+        <line id="hysaLine" class="hysa-ref-line" x1="44" x2="304" y1="150" y2="150"></line>
+
+        <!-- Fixed in the top-left corner, deliberately not tied to either
+             line's own height — the line is monotonically increasing, so
+             its left end is always its lowest point and this corner never
+             collides with it, regardless of inputs. -->
+        <text id="hysaLabel" class="tick-label ref-tag" x="48" y="24" text-anchor="start" style="fill:var(--series-hysa)">alternative: 0.8%</text>
+        <text id="zeroLabel" class="tick-label ref-tag" x="48" y="38" text-anchor="start" style="fill:var(--ink-muted)">0%: no gain</text>
+
+        <path id="esppLine" class="espp-sens-line" d="M44,160 L304,30"></path>
+
+        <text class="tick-label" x="44" y="178" text-anchor="start">-20%</text>
+        <text class="tick-label" x="174" y="178" text-anchor="middle">0%</text>
+        <text class="tick-label" x="304" y="178" text-anchor="end">+20%</text>
+        <text class="tick-label" x="174" y="196" text-anchor="middle" fill="var(--muted)">price move since the reference price</text>
+
+        <line id="markerLine" class="marker-line" x1="174" x2="174" y1="10" y2="160"></line>
+        <circle id="markerDot" class="marker-dot" cx="174" cy="95" r="4.5"></circle>
+
+        <line id="hoverX" class="hover-x" x1="44" y1="10" x2="44" y2="160"></line>
+        <circle id="hoverDot" class="hover-dot" cx="44" cy="160" r="4"></circle>
+
+        <rect id="sensHit" class="hit-area" x="44" y="6" width="260" height="154"></rect>
+      </svg>
+      <div class="line-tooltip" id="sensTooltip"></div>
+    </div>
+    <div class="chart-legend">
+      <div class="legend-item"><span class="swatch line" style="background:var(--series-espp)"></span>ESPP return</div>
+      <div class="legend-item"><span class="swatch dashed"></span>Alternative return (reference)</div>
+      <div class="legend-item"><span class="swatch" style="background:var(--critical);opacity:0.5"></span>Below alternative</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Taxes: sell now vs. hold for better treatment</h2>
+    <p class="formula-note">
+      Everything above is pre-tax. Selling right after purchase (what this
+      worksheet assumes by default) is a <b>disqualifying disposition</b>:
+      the discount is taxed as ordinary income — like wages, with nothing
+      withheld at the time — and any price move since purchase is a
+      short-term capital gain or loss, also taxed at ordinary rates. Hold
+      the shares at least <b id="holdYearsNote">1.5 years</b> past purchase
+      (and 2 years past the offering date) and it becomes a <b>qualifying
+      disposition</b> instead: the ordinary income is capped at the
+      original discount, and anything the stock gains beyond that is a
+      long-term capital gain — usually a lower rate.
+    </p>
+    <div class="inputs-grid">
+      <label class="field">
+        <span class="field-label">Ordinary income tax rate (federal)</span>
+        <span class="field-input"><input type="number" id="inpOrdRate" value="30" min="0" max="55" step="1" inputmode="decimal"><span class="affix">%</span></span>
+      </label>
+      <label class="field">
+        <span class="field-label">Long-term capital gains rate (federal)</span>
+        <span class="field-input"><input type="number" id="inpLtcgRate" value="15" min="0" max="40" step="1" inputmode="decimal"><span class="affix">%</span></span>
+      </label>
+      <label class="field">
+        <span class="field-label">State income tax rate</span>
+        <span class="field-input"><input type="number" id="inpStateRate" value="0" min="0" max="13.3" step="0.5" inputmode="decimal"><span class="affix">%</span></span>
+      </label>
+    </div>
+    <p class="field-note" id="stateRateNote">Most states tax capital gains the same as ordinary income, so this is added to both federal rates above. Enter 0 if your state has no income tax, or if you'd rather blend it into the federal boxes yourself.</p>
+    <div class="controls">
+      <label class="control">
+        <span class="control-label">Price move over the holding period, if you hold</span>
+        <span class="control-input"><input type="number" id="inpHoldMove" value="0" min="-50" max="150" step="5" inputmode="decimal"><span class="affix">%</span></span>
+      </label>
+    </div>
+
+    <div class="scenario-grid">
+      <div class="scenario-tile">
+        <div class="scenario-title">Savings</div>
+        <div class="scenario-sub">taxed as interest, every year</div>
+        <div class="stat-value" id="taxHysaAfter">$9,357</div>
+        <div class="scenario-breakdown" id="taxHysaBreakdown">pre-tax: $10,081</div>
+      </div>
+      <div class="scenario-tile accent">
+        <div class="scenario-title">Sell now</div>
+        <div class="scenario-sub" id="sellNowSub">at the 0% move set above</div>
+        <div class="stat-value" id="sellNowAfterTax">$9,235</div>
+        <div class="scenario-breakdown" id="sellNowBreakdown">pre-tax: $11,765 · ordinary income $1,765</div>
+      </div>
+      <div class="scenario-tile accent">
+        <div class="scenario-title">Hold for qualifying treatment</div>
+        <div class="scenario-sub" id="holdSub">at the 0% holding-period move set above</div>
+        <div class="stat-value" id="holdAfterTax">$9,235</div>
+        <div class="scenario-breakdown" id="holdBreakdown">pre-tax: $11,765 · ordinary income $1,765 (capped) · capital gain $0</div>
+      </div>
+    </div>
+
+    <p class="diff-caption" id="taxDiffCaption">
+      <span class="diff-amount" id="taxDiffAmount">+$0</span><span class="diff-sep">·</span><span class="diff-sub" id="taxDiffSub">holding vs. selling now, after tax, at these price assumptions</span>
+    </p>
+
+    <p class="note-box">
+      This isn't a recommendation either way — it's two different trades.
+      Holding means carrying market risk in a single stock, concentrated
+      with your own paycheck, for well over a year with no guarantee the
+      price holds up; the tax benefit only materializes if the stock is
+      flat or higher by the time you sell. Selling immediately gives up
+      that potential tax treatment in exchange for certainty and
+      diversifying out of a single company's stock right away.
+    </p>
+    <p class="field-note">
+      The ordinary-income cap is approximated here as your discount off the
+      reference price used throughout this worksheet. The IRS cap is
+      technically pinned to the plan's offering-date price specifically —
+      if your stock price fell during the offering period, that cap can run
+      larger than shown here. This also assumes a single blended tax rate
+      for wages and short-term gains, ignores FICA, AMT, and the annual
+      capital-loss deduction limit. Check your plan documents or a CPA for
+      the exact figures on a specific grant.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Pay-period schedule</h2>
+    <details class="table-toggle">
+      <summary>View all periods</summary>
+      <div class="sched-wrap">
+        <table class="data-table">
+          <thead><tr><th>Period</th><th>Contribution</th><th>Savings balance</th><th>ESPP contributed</th></tr></thead>
+          <tbody id="schedBody"></tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <footer>
+    Worst-case-sell math at a 0% price move — assumes shares sell at the same
+    reference price the discount was measured from, with no trading
+    restriction in the way. Alternative return reflects a biweekly drip-fed
+    contribution compounding at the stated rate, same cadence as the paycheck
+    deduction.
+    Discount, contribution cap, and offering terms are set by your plan
+    document; confirm current terms before relying on this. Not tax or
+    financial advice.
+  </footer>
+
+</div>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  var inp = {
+    salary: $('inpSalary'), contribPct: $('inpContribPct'), capPct: $('inpCapPct'),
+    months: $('inpMonths'), discount: $('inpDiscount'), apy: $('inpApy'), move: $('inpMove'),
+    ordRate: $('inpOrdRate'), ltcgRate: $('inpLtcgRate'), stateRate: $('inpStateRate'), holdMove: $('inpHoldMove')
+  };
+
+  var el = {
+    contribNote: $('contribNote'),
+    capBarFill: $('capBarFill'), capMeta: $('capMeta'), capAction: $('capAction'),
+    statContrib: $('statContrib'),
+    statHysa: $('statHysa'), statHysaSub: $('statHysaSub'),
+    statEspp: $('statEspp'), statEsppSub: $('statEsppSub'),
+    diffAmount: $('diffAmount'), diffSub: $('diffSub'),
+    riskBadge: $('riskBadge'),
+    holdYearsNote: $('holdYearsNote'),
+    taxHysaAfter: $('taxHysaAfter'), taxHysaBreakdown: $('taxHysaBreakdown'),
+    sellNowSub: $('sellNowSub'), sellNowAfterTax: $('sellNowAfterTax'), sellNowBreakdown: $('sellNowBreakdown'),
+    holdSub: $('holdSub'), holdAfterTax: $('holdAfterTax'), holdBreakdown: $('holdBreakdown'),
+    taxDiffAmount: $('taxDiffAmount'), taxDiffSub: $('taxDiffSub'),
+    svg: $('sensSvg'),
+    underwaterFill: $('underwaterFill'),
+    zeroLine: $('zeroLine'), zeroLabel: $('zeroLabel'),
+    hysaLine: $('hysaLine'), hysaLabel: $('hysaLabel'),
+    esppLine: $('esppLine'),
+    markerLine: $('markerLine'), markerDot: $('markerDot'),
+    hoverX: $('hoverX'), hoverDot: $('hoverDot'),
+    sensHit: $('sensHit'), sensTooltip: $('sensTooltip'),
+    schedBody: $('schedBody')
+  };
+
+  function fmtUSD(v) { return (v < 0 ? '-$' : '$') + Math.round(Math.abs(v)).toLocaleString('en-US'); }
+  function fmtPct(v) { return v.toFixed(1) + '%'; }
+  function clamp(v, lo, hi) { return Math.min(Math.max(v, lo), hi); }
+
+  // --- Schedule engine: mirrors a biweekly paycheck deduction, HYSA
+  // compounding each period on the running balance, ESPP accumulating in
+  // escrow with no growth until purchase. ---
+  function computeSchedule(salary, contribPct, months, apy) {
+    var PERIODS_PER_YEAR = 26;
+    var periods = Math.max(1, Math.round(months / 12 * PERIODS_PER_YEAR));
+    var contribution = salary * (contribPct / 100) / PERIODS_PER_YEAR;
+    var rate = apy / 100 / PERIODS_PER_YEAR;
+    var hysaBal = 0, esppBal = 0;
+    var rows = [];
+    for (var i = 1; i <= periods; i++) {
+      hysaBal = (hysaBal + contribution) * (1 + rate);
+      esppBal += contribution;
+      rows.push({ period: i, contribution: contribution, hysaBal: hysaBal, esppBal: esppBal });
+    }
+    return { periods: periods, contribution: contribution, hysaFinal: hysaBal, esppContributed: esppBal, rows: rows };
+  }
+
+  // ESPP return %, as a function of how far the sell price has moved (in %)
+  // from the reference (look-back) price the discount was measured from.
+  function esppReturnPct(priceMovePct, discountPct) {
+    return ((1 + priceMovePct / 100) / (1 - discountPct / 100) - 1) * 100;
+  }
+
+  var X0 = 44, X1 = 304, YTOP = 10, YBOT = 160;
+  var PMIN = -20, PMAX = 20;
+
+  function xPix(p) { return X0 + (p - PMIN) / (PMAX - PMIN) * (X1 - X0); }
+
+  function recompute() {
+    var salary = parseFloat(inp.salary.value);
+    var contribPct = parseFloat(inp.contribPct.value);
+    var capPct = parseFloat(inp.capPct.value);
+    var months = parseFloat(inp.months.value);
+    var discount = parseFloat(inp.discount.value);
+    var apy = parseFloat(inp.apy.value);
+    var move = parseFloat(inp.move.value);
+
+    if (!isFinite(salary) || salary <= 0) salary = 200000;
+    if (!isFinite(capPct) || capPct <= 0) capPct = 10;
+    capPct = clamp(capPct, 1, 100);
+    if (!isFinite(contribPct) || contribPct < 0) contribPct = capPct;
+    contribPct = clamp(contribPct, 0, capPct);
+    if (!isFinite(months) || months <= 0) months = 6;
+    months = clamp(months, 1, 24);
+    if (!isFinite(discount) || discount <= 0) discount = 15;
+    discount = clamp(discount, 1, 50);
+    if (!isFinite(apy) || apy < 0) apy = 0;
+    apy = clamp(apy, 0, 10);
+    if (!isFinite(move)) move = 0;
+    move = clamp(move, PMIN, PMAX);
+
+    inp.contribPct.value = contribPct;
+    inp.move.value = move;
+
+    var sched = computeSchedule(salary, contribPct, months, apy);
+    var hysaFinal = sched.hysaFinal;
+    var contributed = sched.esppContributed;
+    var hysaReturnPct = contributed > 0 ? (hysaFinal / contributed - 1) * 100 : 0;
+    var esppRet = esppReturnPct(move, discount);
+    var esppFinal = contributed * (1 + esppRet / 100);
+
+    el.contribNote.textContent = 'Biweekly paycheck deduction: ' + fmtUSD(sched.contribution) +
+      ' — ' + sched.periods + ' pay periods over ' + months + ' month' + (months == 1 ? '' : 's') + '.';
+
+    el.statContrib.textContent = fmtUSD(contributed);
+    el.statHysa.textContent = fmtUSD(hysaFinal);
+    el.statHysaSub.textContent = fmtPct(hysaReturnPct) + ' return';
+    el.statEspp.textContent = fmtUSD(esppFinal);
+    el.statEsppSub.textContent = fmtPct(esppRet) + ' return';
+
+    var diff = esppFinal - hysaFinal;
+    el.diffAmount.textContent = (diff >= 0 ? '+' : '') + fmtUSD(diff);
+    el.diffAmount.classList.toggle('negative', diff < 0);
+    el.diffSub.textContent = fmtPct(esppRet) + ' vs ' + fmtPct(hysaReturnPct);
+
+    if (esppFinal < contributed) {
+      el.riskBadge.hidden = false;
+      el.riskBadge.className = 'risk-badge critical';
+      el.riskBadge.innerHTML = '<b>At this price move, the ESPP loses money</b> against your own contributions — ' + fmtPct(esppRet) + ', versus savings at ' + fmtPct(hysaReturnPct) + '.';
+    } else if (esppFinal < hysaFinal) {
+      el.riskBadge.hidden = false;
+      el.riskBadge.className = 'risk-badge serious';
+      el.riskBadge.innerHTML = '<b>At this price move, the ESPP finishes behind savings</b> — ' + fmtPct(esppRet) + ' versus ' + fmtPct(hysaReturnPct) + '.';
+    } else {
+      el.riskBadge.hidden = true;
+    }
+
+    // --- IRC §423(b)(8): $25,000-per-calendar-year FMV purchase limit ---
+    // The limit applies in aggregate across ALL §423 plans from the same
+    // employer in the same calendar year ("under all such plans of his
+    // employer corporation" — IRC §423(b)(8)). When multiple offerings fit
+    // within one year (e.g. two 6-month periods), they share the year's
+    // $25,000 pool, so the effective per-period limit is $25,000 / periodsPerYear.
+    //
+    // For offerings spanning more than one calendar year (months > 12), the
+    // option is outstanding in each year and accrues $25,000 per year (e.g.
+    // a 24-month offering gets $50,000 total). Note: 24-month plans with
+    // multiple 6-month purchase windows may have a higher effective per-window
+    // allowance under some plan designs — participants should check their plan
+    // documents.
+    //
+    // FMV is approximated as contributed / (1 − discount), using the
+    // reference-price simplification consistent with the rest of this
+    // worksheet. If the stock fell during the offering, the true offering-date
+    // FMV cap binds sooner than this shows.
+    var fmvEquivalent = contributed / (1 - discount / 100);
+    var limitYears = Math.max(1, Math.ceil(months / 12));
+    // How many of these offering periods share a calendar year's $25k pool.
+    // For months >= 12 each offering spans the year (or more) and gets its
+    // own $25k-per-year allowance, so periodsPerYear = 1.
+    var periodsPerYear = months >= 12 ? 1 : Math.max(1, Math.round(12 / months));
+    var perPeriodLimit = 25000 * limitYears / periodsPerYear;
+    var capFraction = fmvEquivalent / perPeriodLimit; // >1.0 means over the limit
+
+    // Maximum cash contribution that stays within the per-period FMV limit,
+    // and the contribution rate that produces it at this salary and period.
+    var maxAllowedCash = perPeriodLimit * (1 - discount / 100);
+    var suggestedRate = (maxAllowedCash / (salary * months / 12)) * 100;
+
+    // Cap label: show how the per-period limit is derived so $12,500 doesn't
+    // feel arbitrary — "÷ 2 offerings" makes the split visible.
+    var capLimitLabel = periodsPerYear === 1
+      ? (limitYears > 1
+          ? '$25k/yr × ' + limitYears + ' years'
+          : '$25k annual limit')
+      : '$25k annual limit ÷ ' + periodsPerYear + ' offerings';
+
+    el.capBarFill.style.width = Math.min(capFraction * 100, 100) + '%';
+    el.capBarFill.classList.toggle('near', capFraction > 0.8 && capFraction <= 1);
+    el.capBarFill.classList.toggle('over', capFraction > 1);
+
+    if (capFraction > 1) {
+      var refundCash = (fmvEquivalent - perPeriodLimit) * (1 - discount / 100);
+      el.capMeta.textContent = fmtUSD(Math.round(fmvEquivalent)) + ' in stock value'
+        + ' · ' + fmtUSD(Math.round(perPeriodLimit)) + ' cap this period (' + capLimitLabel + ')';
+      el.capAction.hidden = false;
+      el.capAction.innerHTML = '<b>Plan will refund ~' + fmtUSD(Math.round(refundCash)) + '</b>'
+        + ' — that cash earns 0% in escrow until purchase. Dropping to '
+        + fmtPct(Math.max(0, suggestedRate)) + ' contribution avoids the drag.';
+    } else {
+      el.capMeta.textContent = fmtUSD(Math.round(fmvEquivalent)) + ' in stock value'
+        + ' · ' + fmtUSD(Math.round(perPeriodLimit)) + ' cap this period (' + capLimitLabel + ')'
+        + ' · ' + fmtUSD(Math.round(perPeriodLimit - fmvEquivalent)) + ' headroom';
+      el.capAction.hidden = true;
+    }
+
+    // --- Taxes: sell now (disqualifying) vs. hold (qualifying) ---
+    var ordRate = parseFloat(inp.ordRate.value);
+    if (!isFinite(ordRate) || ordRate < 0) ordRate = 30;
+    ordRate = clamp(ordRate, 0, 55);
+    var ltcgRate = parseFloat(inp.ltcgRate.value);
+    if (!isFinite(ltcgRate) || ltcgRate < 0) ltcgRate = 15;
+    ltcgRate = clamp(ltcgRate, 0, 40);
+    var stateRate = parseFloat(inp.stateRate.value);
+    if (!isFinite(stateRate) || stateRate < 0) stateRate = 0;
+    stateRate = clamp(stateRate, 0, 13.3);
+    var holdMove = parseFloat(inp.holdMove.value);
+    if (!isFinite(holdMove)) holdMove = 0;
+    holdMove = clamp(holdMove, -50, 150);
+    inp.ordRate.value = ordRate; inp.ltcgRate.value = ltcgRate; inp.stateRate.value = stateRate; inp.holdMove.value = holdMove;
+    var ordRateFrac = (ordRate + stateRate) / 100, ltcgRateFrac = (ltcgRate + stateRate) / 100;
+
+    var requiredHoldYears = Math.max(1, 2 - months / 12);
+    el.holdYearsNote.textContent = (requiredHoldYears % 1 === 0 ? requiredHoldYears.toFixed(0) : requiredHoldYears.toFixed(1)) +
+      ' year' + (requiredHoldYears === 1 ? '' : 's');
+
+    // The discount, in dollars, off the reference price — the fixed
+    // ordinary-income amount at a disqualifying disposition, and the
+    // (approximated) cap on ordinary income at a qualifying one. See the
+    // caveat in the card: the true IRS cap is pinned to the offering-date
+    // price, which can exceed this if the stock fell during the offering
+    // period.
+    var discountDollar = contributed * (1 / (1 - discount / 100) - 1);
+
+    var hysaGain = hysaFinal - contributed;
+    var hysaAfterTax = contributed + hysaGain * (1 - ordRateFrac);
+    el.taxHysaAfter.textContent = fmtUSD(hysaAfterTax);
+    el.taxHysaBreakdown.textContent = 'pre-tax: ' + fmtUSD(hysaFinal);
+
+    var sellNowGain = esppFinal - contributed;
+    var sellNowStCapGain = sellNowGain - discountDollar;
+    var sellNowTax = sellNowGain * ordRateFrac;
+    var sellNowAfterTaxVal = contributed + sellNowGain - sellNowTax;
+    el.sellNowSub.textContent = 'at the ' + fmtPct(move) + ' move set above';
+    el.sellNowAfterTax.textContent = fmtUSD(sellNowAfterTaxVal);
+    el.sellNowBreakdown.textContent = 'pre-tax: ' + fmtUSD(esppFinal) + ' · ordinary income ' + fmtUSD(discountDollar) +
+      ' · short-term gain/loss ' + fmtUSD(sellNowStCapGain);
+
+    var holdRet = esppReturnPct(holdMove, discount);
+    var holdFinal = contributed * (1 + holdRet / 100);
+    var holdGain = holdFinal - contributed;
+    var holdOrdIncome = holdGain <= 0 ? 0 : Math.min(holdGain, discountDollar);
+    var holdCapGain = holdGain - holdOrdIncome;
+    var holdTax = holdOrdIncome * ordRateFrac + holdCapGain * ltcgRateFrac;
+    var holdAfterTaxVal = contributed + holdGain - holdTax;
+    el.holdSub.textContent = 'at the ' + fmtPct(holdMove) + ' holding-period move set above';
+    el.holdAfterTax.textContent = fmtUSD(holdAfterTaxVal);
+    el.holdBreakdown.textContent = 'pre-tax: ' + fmtUSD(holdFinal) + ' · ordinary income ' + fmtUSD(holdOrdIncome) +
+      (holdGain > discountDollar ? ' (capped)' : '') + ' · capital gain/loss ' + fmtUSD(holdCapGain);
+
+    var taxDiff = holdAfterTaxVal - sellNowAfterTaxVal;
+    el.taxDiffAmount.textContent = (taxDiff >= 0 ? '+' : '') + fmtUSD(taxDiff);
+    el.taxDiffAmount.classList.toggle('negative', taxDiff < 0);
+    el.taxDiffSub.textContent = 'holding ' + (taxDiff >= 0 ? 'ahead of' : 'behind') + ' selling now, after tax, at these price assumptions';
+
+    // --- Sensitivity chart ---
+    var retAtMin = esppReturnPct(PMIN, discount);
+    var retAtMax = esppReturnPct(PMAX, discount);
+    var yMin = Math.min(retAtMin, retAtMax, hysaReturnPct, 0);
+    var yMax = Math.max(retAtMin, retAtMax, hysaReturnPct, 0);
+    var pad = Math.max((yMax - yMin) * 0.12, 0.5);
+    yMin -= pad; yMax += pad;
+    var yRange = Math.max(yMax - yMin, 0.001);
+    function yPix(v) { return YBOT - (v - yMin) / yRange * (YBOT - YTOP); }
+
+    el.esppLine.setAttribute('d', 'M' + xPix(PMIN) + ',' + yPix(retAtMin) + ' L' + xPix(PMAX) + ',' + yPix(retAtMax));
+
+    el.zeroLine.setAttribute('y1', yPix(0)); el.zeroLine.setAttribute('y2', yPix(0));
+
+    el.hysaLine.setAttribute('y1', yPix(hysaReturnPct)); el.hysaLine.setAttribute('y2', yPix(hysaReturnPct));
+    el.hysaLabel.textContent = 'alternative: ' + fmtPct(hysaReturnPct);
+
+    // Crossover: the price move at which the ESPP return exactly matches
+    // the savings return. Below it, ESPP underperforms savings.
+    var xCross = 100 * ((1 - discount / 100) * (1 + hysaReturnPct / 100) - 1);
+    var xcAdj = clamp(xCross, PMIN, PMAX);
+    var p1 = [xPix(PMIN), yPix(hysaReturnPct)];
+    var p2 = [xPix(xcAdj), yPix(hysaReturnPct)];
+    var p3 = [xPix(xcAdj), yPix(esppReturnPct(xcAdj, discount))];
+    var p4 = [xPix(PMIN), yPix(retAtMin)];
+    el.underwaterFill.setAttribute('points', p1.join(',') + ' ' + p2.join(',') + ' ' + p3.join(',') + ' ' + p4.join(','));
+
+    var markerX = xPix(move);
+    el.markerLine.setAttribute('x1', markerX); el.markerLine.setAttribute('x2', markerX);
+    el.markerDot.setAttribute('cx', markerX); el.markerDot.setAttribute('cy', yPix(esppRet));
+
+    el.svg.setAttribute('aria-label', 'ESPP return versus price move since the reference price, compared with the savings account return of ' +
+      fmtPct(hysaReturnPct) + '. At the current ' + fmtPct(move) + ' price move, the ESPP returns ' + fmtPct(esppRet) + '.');
+
+    // keep closures for hover handler
+    recompute._yPix = yPix;
+    recompute._discount = discount;
+    recompute._hysaReturnPct = hysaReturnPct;
+
+    // --- Schedule table ---
+    var rowsHtml = '';
+    for (var i = 0; i < sched.rows.length; i++) {
+      var r = sched.rows[i];
+      rowsHtml += '<tr><td>' + r.period + '</td><td>' + fmtUSD(r.contribution) + '</td><td>' + fmtUSD(r.hysaBal) + '</td><td>' + fmtUSD(r.esppBal) + '</td></tr>';
+    }
+    el.schedBody.innerHTML = rowsHtml;
+  }
+
+  function priceMoveFromClientX(clientX) {
+    var rect = el.svg.getBoundingClientRect();
+    var vb = el.svg.viewBox.baseVal;
+    var svgX = (clientX - rect.left) * (vb.width / rect.width);
+    svgX = clamp(svgX, X0, X1);
+    return PMIN + (svgX - X0) / (X1 - X0) * (PMAX - PMIN);
+  }
+
+  function showHover(clientX) {
+    var p = priceMoveFromClientX(clientX);
+    var ret = esppReturnPct(p, recompute._discount);
+    var x = xPix(p), y = recompute._yPix(ret);
+    el.hoverX.setAttribute('x1', x); el.hoverX.setAttribute('x2', x);
+    el.hoverDot.setAttribute('cx', x); el.hoverDot.setAttribute('cy', y);
+    el.hoverX.style.opacity = 1; el.hoverDot.style.opacity = 1;
+
+    var wrapRect = el.svg.parentElement.getBoundingClientRect();
+    var vb = el.svg.viewBox.baseVal;
+    var leftPx = (x / vb.width) * wrapRect.width;
+    var topPx = (y / vb.height) * wrapRect.height;
+    el.sensTooltip.style.left = leftPx + 'px';
+    el.sensTooltip.style.top = (topPx - 14) + 'px';
+    var below = ret < recompute._hysaReturnPct ? ' (below savings)' : '';
+    el.sensTooltip.textContent = fmtPct(p) + ' move → ' + fmtPct(ret) + below;
+    el.sensTooltip.style.opacity = 1;
+  }
+
+  function hideHover() {
+    el.hoverX.style.opacity = 0; el.hoverDot.style.opacity = 0; el.sensTooltip.style.opacity = 0;
+  }
+
+  el.sensHit.addEventListener('mousemove', function (e) { showHover(e.clientX); });
+  el.sensHit.addEventListener('mouseleave', hideHover);
+  el.sensHit.addEventListener('touchstart', function (e) { showHover(e.touches[0].clientX); }, { passive: true });
+  el.sensHit.addEventListener('touchmove', function (e) { showHover(e.touches[0].clientX); }, { passive: true });
+  el.sensHit.addEventListener('touchend', hideHover);
+  el.sensHit.addEventListener('click', function (e) {
+    var p = priceMoveFromClientX(e.clientX);
+    inp.move.value = Math.round(p);
+    recompute();
+  });
+
+  Object.keys(inp).forEach(function (k) { inp[k].addEventListener('input', recompute); });
+  recompute();
+})();
+</script>
+<script type="module">
+import { applyOSTheme, installThemeToggle } from '../core/theme.js';
+import '../core/sw-init.js';
+applyOSTheme();
+installThemeToggle();
+</script>
+</body>
+</html>

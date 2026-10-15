@@ -27,6 +27,7 @@ const TARGETS = [
   'relocation/index.html',
   'medicare/index.html',
   'life-insurance/index.html',
+  'espp/index.html',
 ];
 
 // Strip the leading documentation comment block from the canonical source, keeping
