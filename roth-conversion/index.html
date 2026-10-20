@@ -51,7 +51,9 @@
     [data-theme="dark"] .ex-btn.vcls-bad{background:var(--amber-pale)!important;color:var(--ink-amber)!important;border-color:var(--amber)!important;}
     [data-theme="dark"] .ex-btn.vcls-neutral{background:var(--blight)!important;color:var(--text)!important;border-color:#6A7080!important;}
     [data-theme="dark"] .ex-btn.vcls-good{background:var(--sbg)!important;color:var(--ink-green)!important;border-color:var(--success)!important;}
-    [data-theme="dark"] .sb,[data-theme="dark"] .sc,[data-theme="dark"] .ph-num,[data-theme="dark"] .ex-pill,[data-theme="dark"] .tb:hover,[data-theme="dark"] .tb.open{background:#2C4A72;}
+    [data-theme="dark"] .sb,[data-theme="dark"] .sc,[data-theme="dark"] .ph-num,[data-theme="dark"] .ex-pill,[data-theme="dark"] .tb:hover,[data-theme="dark"] .tb.open,[data-theme="dark"] .btn-primary,[data-theme="dark"] .hero-ex-tag-lbl{background:#2C4A72;}
+    [data-theme="dark"] .btn-primary:hover{background:#2A5280;}
+    [data-theme="dark"] .use-rate-btn{background:#2C4A72!important;}
     [data-theme="dark"] .be-wait{background:#3A414C;}
     .theme-btn{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.9);border-radius:8px;padding:5px 7px;cursor:pointer;transition:background .15s,color .15s;}
     @media (hover:hover){.theme-btn:hover{background:rgba(255,255,255,.22);color:#fff;}}
@@ -2034,7 +2036,7 @@ function updateRetRate(){
     out += '<br><span style="font-size:.8rem">'+stD.n+' does not tax IRA withdrawals — state adds 0%</span>';
   }
   out += '</div>';
-  out += '<button onclick="useRetRate('+fedPct+')" style="margin-top:6px;background:var(--navy);color:white;border:none;border-radius:var(--rsm);padding:6px 14px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;display:block">Use '+fedPct+'% as federal rate &uarr;</button>';
+  out += '<button class="use-rate-btn" onclick="useRetRate('+fedPct+')" style="margin-top:6px;background:var(--navy);color:white;border:none;border-radius:var(--rsm);padding:6px 14px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;display:block">Use '+fedPct+'% as federal rate &uarr;</button>';
 
   el.innerHTML = out;
   updateRetWdHint();
