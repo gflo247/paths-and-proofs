@@ -53,6 +53,18 @@ export function drawChart(result, container) {
 
   const g = svg.append('g').attr('transform', `translate(${MARGIN.left},${MARGIN.top})`);
 
+  // Keep a centered label inside [lo, hi] (plot coordinates): it stays centered where
+  // it fits and slides just far enough to stay inside near an edge, where it would
+  // otherwise be cut off. Measuring needs a browser; test DOMs keep it centered.
+  function fitLabel(text, lo = 0, hi = innerW) {
+    const node = text.node();
+    const len = typeof node.getComputedTextLength === 'function' ? node.getComputedTextLength() : 0;
+    if (!len || len > hi - lo) return;
+    const px = Number(text.attr('x'));
+    const left = Math.min(Math.max(px - len / 2, lo), hi - len);
+    if (left !== px - len / 2) text.attr('text-anchor', 'start').attr('x', left);
+  }
+
   // Axes — quiet gridlines, plain labels.
   g.append('g').attr('transform', `translate(0,${innerH})`)
     .call(d3.axisBottom(x).ticks(6).tickFormat((d) => xAxis.format(d)).tickSizeOuter(0))
@@ -65,8 +77,9 @@ export function drawChart(result, container) {
       sel.selectAll('text').attr('fill', ink);
       sel.select('.domain').remove();
     });
-  g.append('text').attr('x', innerW / 2).attr('y', innerH + 38)
-    .attr('text-anchor', 'middle').attr('fill', ink).attr('font-size', desktop ? 14 : 12).text(xAxis.label);
+  fitLabel(g.append('text').attr('x', innerW / 2).attr('y', innerH + 38)
+    .attr('text-anchor', 'middle').attr('fill', ink).attr('font-size', desktop ? 14 : 12).text(xAxis.label),
+    -MARGIN.left, innerW + MARGIN.right);
 
   // Lines — monotone curve avoids overshoot that would misstate money.
   // Per-series curve: 'step' uses d3.curveStepAfter (coverage drops all at once
@@ -93,9 +106,9 @@ export function drawChart(result, container) {
     if (at == null) return;
     g.append('line').attr('x1', x(at)).attr('x2', x(at)).attr('y1', 0).attr('y2', innerH)
       .attr('stroke', ink).attr('stroke-dasharray', '4 4').attr('opacity', 0.6);
-    g.append('text').attr('x', x(at)).attr('y', -4).attr('text-anchor', 'middle')
+    fitLabel(g.append('text').attr('x', x(at)).attr('y', -4).attr('text-anchor', 'middle')
       .attr('fill', ink).attr('font-size', desktop ? 13 : 11)
-      .text(`${xAxis.format(at)}${c.label ? ` — ${c.label}` : ''}`);
+      .text(`${xAxis.format(at)}${c.label ? ` — ${c.label}` : ''}`));
   });
 
   // Markers — optional vertical reference lines at given x positions (e.g. a
@@ -108,8 +121,8 @@ export function drawChart(result, container) {
     g.append('line').attr('x1', x(mk.x)).attr('x2', x(mk.x)).attr('y1', 0).attr('y2', innerH)
       .attr('stroke', mInk).attr('stroke-width', 1).attr('opacity', 0.45);
     if (mk.label) {
-      g.append('text').attr('x', x(mk.x)).attr('y', innerH - 6).attr('text-anchor', 'middle')
-        .attr('fill', mInk).attr('font-size', desktop ? 12 : 10).attr('opacity', 0.85).text(mk.label);
+      fitLabel(g.append('text').attr('x', x(mk.x)).attr('y', innerH - 6).attr('text-anchor', 'middle')
+        .attr('fill', mInk).attr('font-size', desktop ? 12 : 10).attr('opacity', 0.85).text(mk.label));
     }
   });
 
