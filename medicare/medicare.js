@@ -66,14 +66,27 @@ export function compute(values) {
   const stateName = stateRules?.name || values.stateCode;
 
   // Utilization axis: wide enough to show both lines flatten out, whether or not a
-  // crossover exists within this state's numbers.
-  const axisMax = Math.max(values.advantageOOPMax, result.breakevenUtilization ?? 0) * 1.35;
+  // crossover exists within this state's numbers. The axis is care used, the cap is
+  // out-of-pocket dollars: Advantage reaches its cap at cap / coinsurance rate of care.
+  const capReachedAt = values.advantageOOPMax / DEFAULT_COINSURANCE_RATE;
+  const axisMax = Math.max(capReachedAt, result.breakevenUtilization ?? 0) * 1.35;
+  // The chart marks the crossover at the first point where the lines meet, so the exact
+  // breakeven is added as a point (else the label drifts up by up to a grid step), and
+  // so is the cap, to keep that corner sharp.
+  const breakeven = result.breakevenUtilization > 0 ? result.breakevenUtilization : null;
+  const xs = Array.from({ length: CHART_POINTS + 1 }, (_, i) => (axisMax / CHART_POINTS) * i);
+  xs.push(capReachedAt);
+  if (breakeven != null) xs.push(breakeven);
+  xs.sort((a, b) => a - b);
   const medigapPoints = [];
   const advantagePoints = [];
-  for (let i = 0; i <= CHART_POINTS; i++) {
-    const u = (axisMax / CHART_POINTS) * i;
+  for (const u of xs) {
     medigapPoints.push({ x: u, y: result.medigapAnnualCost });
-    advantagePoints.push({ x: u, y: result.advantageAnnualPremium + Math.min(u * DEFAULT_COINSURANCE_RATE, values.advantageOOPMax) });
+    // At the breakeven the two costs are equal by definition; set it exactly so float
+    // rounding can't push the marker to the next point.
+    const advantageCost = u === breakeven ? result.medigapAnnualCost
+      : result.advantageAnnualPremium + Math.min(u * DEFAULT_COINSURANCE_RATE, values.advantageOOPMax);
+    advantagePoints.push({ x: u, y: advantageCost });
   }
 
   const series = [

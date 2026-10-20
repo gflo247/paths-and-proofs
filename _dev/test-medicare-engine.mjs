@@ -203,5 +203,40 @@ function computeMedicareGuaranteedIssueSanity(code) {
   check('all 51 jurisdictions compute without throwing', threw, 0);
 }
 
+// ── Chart: the axis reaches the point where Advantage hits its cap ──
+// The x-axis is care used (Medicare-allowed charges); the cap is out-of-pocket dollars.
+// Advantage's cost-sharing reaches a $9,250 cap at $9,250 / 0.20 = $46,250 of care, so the
+// axis has to pass that point for the line to show its flat top, in both outcomes.
+{
+  globalThis.window = { MEDICARE_STATES: Object.fromEntries(Object.entries(states).filter(([k]) => k !== '_schema')) };
+  const { compute } = await import('../medicare/medicare.js');
+  const { findCrossover } = await import('../core/finance.js');
+  const base = { stateCode: 'OH', medigapMonthlyPremium: 180, partDMonthlyPremium: 45, advantageMonthlyPremium: 0, advantageOOPMax: DEFAULT_ADVANTAGE_OOP_MAX };
+  for (const [label, v] of [['crossover', base], ['Advantage always cheaper', { ...base, medigapMonthlyPremium: 900 }], ['lower cap + premium', { ...base, advantageMonthlyPremium: 20, advantageOOPMax: 4500 }]]) {
+    const r = compute(v);
+    const adv = r.series[1].points;
+    check(`chart (${label}): axis passes where Advantage hits its cap`, adv[adv.length - 1].x >= v.advantageOOPMax / DEFAULT_COINSURANCE_RATE, true);
+    check(`chart (${label}): Advantage line tops out at premium + cap`, Math.max(...adv.map((p) => p.y)), v.advantageMonthlyPremium * 12 + v.advantageOOPMax);
+    // The marker the chart draws (core findCrossover, first grid point at or past the
+    // crossing) must round to the same $k as the exact breakeven.
+    const exact = computeMedigapBreakeven(null, v).breakevenUtilization;
+    if (exact > 0) {
+      const drawn = findCrossover(r.series[0], r.series[1]);
+      check(`chart (${label}): crossover marker reads the exact breakeven ($${Math.round(exact / 1000)}k)`, Math.round(drawn / 1000), Math.round(exact / 1000), 0);
+    }
+  }
+  // Sweep the input ranges: the marker sits exactly on the breakeven, never a step past it.
+  let off = 0, tried = 0;
+  for (let mg = 50; mg <= 1000; mg += 35) for (const pd of [0, 15, 45, 110]) for (const ap of [0, 20, 75]) for (const cap of [1000, 4500, 9250, 13900]) {
+    const v = { ...base, medigapMonthlyPremium: mg, partDMonthlyPremium: pd, advantageMonthlyPremium: ap, advantageOOPMax: cap };
+    const exact = computeMedigapBreakeven(null, v).breakevenUtilization;
+    if (!(exact > 0)) continue;
+    tried++;
+    const r = compute(v);
+    if (Math.abs(findCrossover(r.series[0], r.series[1]) - exact) > 1e-6) off++;
+  }
+  check(`chart: crossover marker exact across ${tried} input combinations`, off, 0, 0);
+}
+
 console.log(pass + fail === 0 ? '\nNo checks ran.' : `\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
