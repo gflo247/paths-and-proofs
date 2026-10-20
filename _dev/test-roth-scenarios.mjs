@@ -232,6 +232,17 @@ console.log('\n─── Group 2: IRMAA tier detection ───');
   const ccSingle = computeConversionCost(0, ctx({ wages: 110000, status: 'single' }));
   ok('2.8 hoh uses single IRMAA thresholds (not a separate table)',
      ccHOH.tierBase === ccSingle.tierBase);
+
+  // 2.9-2.12 Top tier is inclusive: CMS 2026 fact sheet, "Greater than or equal to
+  // $500,000" (individual) / "$750,000" (joint). Every lower boundary is "greater than".
+  const cc9 = computeConversionCost(0, ctx({ wages: 499999 }));
+  ok('2.9 single MAGI=499999: tier 4', cc9.tierBase === 4);
+  const cc10 = computeConversionCost(0, ctx({ wages: 500000 }));
+  ok('2.10 single MAGI=500000 (>= $500k): tier 5', cc10.tierBase === 5);
+  const cc11 = computeConversionCost(0, ctx({ wages: 749999, status: 'mfj', isCouple: true }));
+  ok('2.11 mfj MAGI=749999: tier 4', cc11.tierBase === 4);
+  const cc12 = computeConversionCost(0, ctx({ wages: 750000, status: 'mfj', isCouple: true }));
+  ok('2.12 mfj MAGI=750000 (>= $750k): tier 5', cc12.tierBase === 5);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

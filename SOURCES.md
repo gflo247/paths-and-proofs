@@ -81,11 +81,15 @@ Source: IRS Pub 915 / 26 U.S.C. §86.
 
 ### IRMAA (Medicare) — ✅ verified against CMS 2026 fact sheet
 
-Standard Part B premium $202.90. Part B surcharge tiers:
-284.10 / 405.80 / 527.50 / 649.30 / 689.90. Part D surcharges:
-14.50 / 37.60 / 60.60 / 83.20 / 91.00.
+Standard Part B premium $202.90. Part B total premium by tier:
+284.10 / 405.80 / 527.50 / 649.20 / 689.90. Part D surcharges:
+14.50 / 37.50 / 60.40 / 83.30 / 91.00.
 Thresholds (single): 109k/137k/171k/205k/500k; (MFJ): 218k/274k/342k/410k/750k.
-MFS compressed: ≤109k standard, <391k tier 3, else tier 5.
+Each tier starts *above* its threshold except the top one, which starts *at*
+$500k / $750k ("greater than or equal to"). MFS compressed: ≤109k standard,
+<391k tier 4, ≥391k tier 5.
+> Fixed 2026-10-20: the figures above had drifted from the code (which matched
+> CMS); the top tier was also treated as starting above $500k / $750k.
 Source: [CMS 2026 Parts A&B fact sheet](https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-premiums-deductibles)
 
 ### RMD divisors — ✅ verified against IRS Uniform Lifetime Table
