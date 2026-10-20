@@ -51,7 +51,7 @@ export const inputs = [
   { id: 'spendingContinues', type: 'select', label: 'Share of that spending that would continue after a death',
     options: pctOptions([60, 65, 70, 75, 80, 85, 90, 95, 100]), default: '80', group: 'family' },
   { id: 'supportUntilAge', type: 'number', label: 'Cover living costs until the youngest child turns',
-    min: 16, max: 26, step: 1, default: 22, unit: 'years', group: 'family' },
+    min: 16, max: 26, step: 1, default: 22, unit: 'years', strict: true, group: 'family' },
   { id: 'collegePerChild', type: 'number', label: 'College to set aside per child, total, in today\'s dollars ($0 to skip)',
     min: 0, max: 500000, step: 5000, default: 0, unit: '$', group: 'family' },
 
@@ -103,7 +103,7 @@ export const inputs = [
   { id: 'mortgageBalance', type: 'number', label: 'Mortgage balance',
     min: 0, max: 2000000, step: 5000, default: 380000, unit: '$', group: 'home' },
   { id: 'mortgageRate', type: 'number', label: 'Mortgage interest rate',
-    min: 0, max: 15, step: 0.1, default: 6.5, unit: '%', group: 'home' },
+    min: 0, max: 15, step: 0.1, default: 6.5, unit: '%', strict: true, group: 'home' },
   { id: 'mortgageYearsLeft', type: 'number', label: 'Mortgage years left',
     min: 0, max: 30, step: 1, default: 29, group: 'home' },
   { id: 'otherDebts', type: 'number', label: 'Other debts you\'d want paid off',
