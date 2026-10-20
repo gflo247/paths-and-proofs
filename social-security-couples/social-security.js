@@ -191,7 +191,7 @@ export const inputs = [
     help: 'The full-retirement-age estimate on the higher earner\u2019s Social Security statement.',
   },
   {
-    id: 'birthYearHigh', type: 'number',
+    id: 'birthYearHigh', type: 'number', strict: true,
     label: 'Higher earner: birth year',
     min: 1924, max: 1970, step: 1, default: 1960,
     help: 'Determines full retirement age (FRA). Born 1960 or later: FRA is 67. Born 1943\u20131954: FRA is 66. Born 1955\u20131959: FRA is 66y2mo to 66y10mo (steps up 2 months per birth year).',
@@ -215,7 +215,7 @@ export const inputs = [
     help: 'The lower earner\u2019s own estimate. If it is under half the higher earner\u2019s, a spousal top-up applies.',
   },
   {
-    id: 'birthYearLow', type: 'number',
+    id: 'birthYearLow', type: 'number', strict: true,
     label: 'Lower earner: birth year',
     min: 1924, max: 1970, step: 1, default: 1960,
     help: 'Determines full retirement age (FRA). Born 1960 or later: FRA is 67. Born 1943\u20131954: FRA is 66. Born 1955\u20131959: FRA is 66y2mo to 66y10mo (steps up 2 months per birth year).',

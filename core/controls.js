@@ -13,6 +13,10 @@ function formatValue(control, v) {
   return control.unit ? `${v} ${control.unit}` : `${v}`;
 }
 
+function inRange(c, n) {
+  return Number.isFinite(n) && !(c.min != null && n < c.min) && !(c.max != null && n > c.max);
+}
+
 function buildOneControl(c, values, onChange) {
   // custom:true means the PAGE renders and wires this control itself (e.g.
   // Relocation's from/to local-tax selectors, which need conditional
@@ -72,11 +76,26 @@ function buildOneControl(c, values, onChange) {
       if (c.step != null) input.step = c.step;
       input.value = values[c.id];
       if (input.type === 'number') input.inputMode = 'decimal';
-      input.addEventListener('input', () => {
+      input.addEventListener('input', (e) => {
+        // A strict control waits while the field is empty or out of range (the "19"
+        // on the way to "1964", or a typo like "19622"), and keeps that keystroke
+        // from bubbling, so page-level listeners that read the field directly
+        // (the Social Security heatmap) don't compute with it either.
+        if (c.strict && (input.value === '' || !inRange(c, Number(input.value)))) { e.stopPropagation(); return; }
         if (input.value === '') return;          // wait for a real value, don't flash zero
         values[c.id] = Number(input.value);
         readout.textContent = formatValue(c, values[c.id]);
         onChange();
+      });
+      // On commit (blur / Enter), snap a strict control's emptied or out-of-range
+      // entry into range (share-link.js clamps the same way) and replay it as a
+      // normal input, so the field, the results and page listeners agree.
+      if (c.strict) input.addEventListener('change', () => {
+        if (input.value !== '' && inRange(c, Number(input.value))) return;
+        const v = input.value === '' ? values[c.id]
+          : Math.min(c.max ?? Infinity, Math.max(c.min ?? -Infinity, Number(input.value)));
+        input.value = v;
+        if (v !== values[c.id]) input.dispatchEvent(new Event('input', { bubbles: true }));
       });
     }
   }

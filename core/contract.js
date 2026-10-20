@@ -15,6 +15,9 @@
  * @property {string} [unit]    e.g. '$', '%', 'years'
  * @property {string} [help]    One-line plain-English explanation.
  * @property {{value:string,label:string}[]} [options]   Required when type is 'select'.
+ * @property {boolean} [strict]   Number inputs only: typed values outside
+ *   [min, max] are ignored until in range, and snapped into range on commit.
+ *   For inputs the engine can't model outside the range (birth years).
  * @property {string} [group]   Id of the group this input belongs to (see groups).
  * @property {boolean} [custom]   The page renders and wires this control itself
  *   (conditional visibility, non-standard markup) instead of core/controls.js
