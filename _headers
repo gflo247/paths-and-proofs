@@ -1,5 +1,8 @@
 # Paths and Proofs — security headers for Cloudflare Pages
-# More-specific paths override the same header from broader paths.
+# A request gets the headers of EVERY rule it matches, applied in file order, and a
+# header set by two rules is comma-joined. For Content-Security-Policy that means the
+# browser enforces both policies, so a page rule below can only tighten /*. Loosening a
+# directive needs "! Content-Security-Policy" first, in a rule placed after /* (see /sw.js).
 #
 # script-src strategy:
 #   Landing / SS / Life Insurance: static inline scripts → sha256 hashes, no unsafe-inline
@@ -27,3 +30,9 @@
 # Life Insurance — one static inline module script
 /life-insurance/
   Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-MnzIZP+yg7zZb2GRAEJFHGbQzLLbAM0/1VD0dxarVsM='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+
+# Service worker — the worker runs under its own script's CSP, and /*'s connect-src 'none'
+# blocks its cache.addAll() and fetch(), so every install fails. Replace, don't append.
+/sw.js
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'none'; connect-src 'self'
