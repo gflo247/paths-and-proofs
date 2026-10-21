@@ -75,7 +75,7 @@ export const inputs = [
   { id: 'sex', type: 'select', label: 'Sex (for life expectancy)', default: 'female',
     options: [{ value: 'female', label: 'Female' }, { value: 'male', label: 'Male' }] },
   { id: 'socialSecurity', type: 'number', label: 'Social Security per year',      min: 0, max: 120000, step: 500,  default: 30000, unit: '$' },
-  { id: 'iraWithdrawal',  type: 'number', label: 'IRA / 401(k) withdrawal per year', min: 0, max: 500000, step: 1000, default: 40000, unit: '$' },
+  { id: 'iraWithdrawal',  type: 'number', label: 'Individual Retirement Account (IRA) / 401(k) withdrawal per year', min: 0, max: 500000, step: 1000, default: 40000, unit: '$' },
   { id: 'pension',        type: 'number', label: 'Pension per year',             min: 0, max: 300000, step: 1000, default: 20000, unit: '$' },
   { id: 'capGains',       type: 'number', label: 'Capital gains per year',       min: 0, max: 500000, step: 1000, default: 10000, unit: '$' },
   { id: 'moveCost',       type: 'number', label: 'One-time cost to move',        min: 0, max: 200000, step: 1000, default: 15000, unit: '$',
@@ -265,7 +265,7 @@ export function compute(values) {
     const survStr = isMFJ
       ? `roughly ${survPct}% odds that at least one of you lives to see it (same-age assumption)`
       : `roughly ${survPct}% odds of living to see that payback`;
-    note += ` SSA mortality tables give ${survStr}.`;
+    note += ` Social Security Administration (SSA) mortality tables give ${survStr}.`;
   }
 
   const context = {
