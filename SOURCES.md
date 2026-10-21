@@ -31,8 +31,9 @@ annually inflation-adjusted figures, so they change rarely (only by statute).
 | Spousal benefit cap | 50% of partner's FRA amount, no delayed credits | [SSA spousal](https://www.ssa.gov/benefits/retirement/planner/applying7.html) | ✅ |
 | Own + spousal benefit together (dual entitlement) | own benefit plus the spousal excess (half the partner's PIA minus own PIA), not the larger of the two; the excess is reduced only for months of spousal entitlement before FRA, counted from when the spousal benefit starts (once the partner has filed) | [CFR 404.411(d)](https://www.ssa.gov/OP_Home/cfr20/404/404-0411.htm), [CFR 404.407(a)](https://www.ssa.gov/OP_Home/cfr20/404/404-0407.htm), [POMS RS 00615.020](https://secure.ssa.gov/POMS.NSF/LNX/0300615020) (Method C) | ✅ |
 | Delayed credits under dual entitlement | left out of the combined amount; they count only if they lift the own benefit above it, so at or after FRA the check is the larger of the own benefit and the full spousal amount | [POMS RS 00615.694](https://secure.ssa.gov/POMS.NSF/LNX/0300615694) (worked example: $400 own + $300 excess = $700) | ✅ |
-| Survivor full retirement age (born 1960) | 66 years 8 months — a separate, younger table than worker/spousal FRA | independently corroborated via [ssa.tools](https://ssa.tools/guides/survivor-benefits) and [Adara Wealth](https://www.adarawealth.com/blog/critical-ages-on-the-social-security-benefits-timeline), both citing SSA's own survivor NRA table (direct ssa.gov fetch 403s in this environment) | ✅ |
-| Survivor's own age-based reduction | 0% at survivor FRA, scaling linearly to 28.5% at age 60 | [CFR 404.410(c)(1)](https://www.law.cornell.edu/cfr/text/20/404.410) — exact formula quoted: months of entitlement prior to FRA × 0.285, divided by months from age 60 to FRA | ✅ |
+| Survivor full retirement age (born 1960) | 66 years 8 months — a separate, younger table than worker/spousal FRA | [POMS RS 00615.301](https://secure.ssa.gov/POMS.NSF/LNX/0300615301) B.2 chart ("1/2/60 - 1/1/61: 66 + 8"; the whole table matches `survivorFraFromBirthYear()`); earlier corroborated via [ssa.tools](https://ssa.tools/guides/survivor-benefits) and [Adara Wealth](https://www.adarawealth.com/blog/critical-ages-on-the-social-security-benefits-timeline) when ssa.gov wasn't reachable | ✅ |
+| Survivor's own age-based reduction | 0% at survivor FRA, scaling linearly to 28.5% at age 60; set by the months of entitlement before FRA, so fixed when the survivor benefit starts | [CFR 404.410(c)(1)](https://www.ssa.gov/OP_Home/cfr20/404/404-0410.htm) — exact formula quoted: months of entitlement prior to FRA × 0.285, divided by months from age 60 to FRA; [POMS RS 00615.301](https://secure.ssa.gov/POMS.NSF/LNX/0300615301) B.1.c ("entitled beginning 7/2002 ... RF is 37") | ✅ |
+| When the survivor benefit starts | at the death (or 60), or at survivor FRA for the full amount, whichever is worth more for the lifespan; a survivor with no benefit of their own who was getting spouse's benefits (age 62 to FRA) is converted at the death with no application, while one with their own retirement benefit must elect a reduced survivor benefit or is paid in full at FRA | [POMS RS 00207.005](https://secure.ssa.gov/POMS.NSF/LNX/0300207005) C | ✅ |
 | RIB-LIM (widow/widower limit) | when the deceased claimed before their own FRA, a cap applied after the survivor's own age reduction: the survivor gets the smaller of their age-reduced benefit and the larger of the deceased's actual reduced benefit or 82.5% of PIA | [CFR 404.338(c)](https://www.ssa.gov/OP_Home/cfr20/404/404-0338.htm), [POMS RS 00615.320](https://secure.ssa.gov/POMS.NSF/LNX/0300615320) A.3 ("applies when the WIB after ... reduction for age is more than BOTH") | ✅ |
 
 Survivor rule fixed 2026-08-26 (commits b7e5b11, 68e59eb/167831c) — the tool
@@ -58,6 +59,16 @@ deceased had claimed early: on a $3,000 PIA claimed at 62, a survivor aged 60
 got $1,770 instead of $2,145, and one aged 63 got $2,087 instead of $2,475.
 Survivors at or past their FRA are unchanged. Tests:
 `_dev/test-ss-survivor.mjs`.
+
+Survivor reduction timing fixed 2026-10-21 — the tool recomputed the
+survivor's age reduction from their age in each month, so a survivor who
+started at 62 saw it shrink to zero by FRA: a reduced benefit early AND the
+full amount later, which Social Security never pays. The reduction is now
+fixed when the survivor benefit starts, and a survivor under FRA at the death
+takes the better of starting then or waiting for the full amount (rows above).
+Only first deaths before the survivor's FRA change: for a higher earner who
+dies at 65 ($3,000 / $1,200 PIAs, waiting to 70 vs claiming at 62, 0%
+discount) the breakeven goes from 79 to 85. Tests: `_dev/test-ss-survivor.mjs`.
 
 **Scope note (honest limitation):** uses each person's birth year to derive
 their actual worker/spousal FRA from the SSA table (added 2026-08-26); does

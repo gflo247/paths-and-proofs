@@ -149,7 +149,12 @@
     <p>This models a married couple: two benefit amounts, two claiming ages, the spousal
       benefit (a lower earner can draw up to 50% of the higher earner's full-retirement-age
       amount), and the survivor rule (when one spouse dies, the survivor keeps the larger of
-      the two checks). It does not account for the earnings test if you keep working before
+      the two checks). If the first death comes before the survivor's own full retirement age,
+      the survivor can start a reduced survivor benefit right away (the reduction is permanent)
+      or wait for the full amount at full retirement age; the model takes whichever pays more
+      for each lifespan shown. The exception: a survivor with no benefit of their own who was
+      already getting a spousal benefit is switched to the reduced amount automatically.
+      It does not account for the earnings test if you keep working before
       full retirement age, income tax on benefits, or divorced-spouse benefits — each can
       move the answer.</p>
     <p><strong>Full retirement age by birth year.</strong> The "higher earner: birth year"

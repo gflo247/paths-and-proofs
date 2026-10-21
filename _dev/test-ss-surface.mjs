@@ -130,11 +130,16 @@ const c60_80 = findCell(surf_base, 60, 80);
 check('computeSurface: hd=60, ld=90 — margin=0 (higher earner died unfiled under both strategies)', c60_90.margin, 0, 1);
 check('computeSurface: hd=60, ld=80 — margin=0 (same; independent of lower earner lifespan)', c60_80.margin, 0, 1);
 
-// hd=62: planEarly filed at 62 (RIB-LIM floors survivor to 82.5% PIA),
-// planDelay didn't file (base=100% PIA). Lower earner gets ~17.5% more PIA
-// per month for ~28 survivor years → delay wins by a meaningful, positive margin.
+// hd=62: planEarly filed at 62 (RIB-LIM caps the survivor at 82.5% PIA),
+// planDelay didn't file (base=100% PIA). The survivor (62) is under survivor
+// FRA, so since the 2026-10-21 survivor-reduction fix each plan's survivor
+// picks the better of a reduced benefit now or the full one at 66y8m: in
+// planDelay, waiting for $3,000 (living on their own $840 meanwhile); in
+// planEarly, $3,000 less 19.95% = $2,401.50 now (the cap only adds $73.50/mo
+// at FRA). Delay still wins, by about $39k at 2% (it was ~$133k when the
+// reduction shrank to zero by FRA).
 const c62_90 = findCell(surf_base, 62, 90);
-checkTrue('computeSurface: hd=62, ld=90 — delay wins (RIB-LIM vs full-PIA survivor base)', c62_90.margin > 50000);
+checkTrue('computeSurface: hd=62, ld=90 — delay wins (RIB-LIM vs full-PIA survivor base)', c62_90.margin > 30000 && c62_90.margin < 50000);
 
 // For a high-earner-dominant couple (piaHigh >> piaLow), the LOWER-RIGHT
 // (higher earner lives long, lower earner dies young) produces a LARGER delay

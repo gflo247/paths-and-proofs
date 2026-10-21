@@ -173,9 +173,13 @@ export function dualEntitledBenefit(ownBenefit, ownPia, partnerPia, spousalStart
 
 /**
  * A survivor's monthly benefit inherited from a deceased spouse's earnings
- * record, at the survivor's current age. The BASE amount depends on whether
- * the deceased ever actually filed for their own benefit before dying --
- * CFR 404.338(a)-(c) draws a hard line at the moment of filing:
+ * record, for a survivor benefit that started at survivorStartAge. The age
+ * reduction is set by the months of entitlement before the survivor's full
+ * retirement age (CFR 404.410(c)(1); POMS RS 00615.301 B.1.c), so it is fixed
+ * when the benefit starts and does not shrink as the survivor gets older.
+ * The BASE amount depends on whether the deceased ever actually filed for
+ * their own benefit before dying -- CFR 404.338(a)-(c) draws a hard line at
+ * the moment of filing:
  *
  *   A. The deceased filed before dying (deceasedDeathAge >= deceasedClaimAge --
  *      the default when deceasedDeathAge is omitted): the base is the
@@ -211,7 +215,7 @@ export function dualEntitledBenefit(ownBenefit, ownPia, partnerPia, spousalStart
  * earliest survivor-claiming age of 60. This reduction is orthogonal to
  * whether the deceased filed -- it always applies.
  */
-export function survivorBenefit(deceasedPia, deceasedClaimAge, survivorCurrentAge, deceasedDeathAge = Infinity, survivorFra = SURVIVOR_FULL_RETIREMENT_AGE, deceasedFra = FULL_RETIREMENT_AGE) {
+export function survivorBenefit(deceasedPia, deceasedClaimAge, survivorStartAge, deceasedDeathAge = Infinity, survivorFra = SURVIVOR_FULL_RETIREMENT_AGE, deceasedFra = FULL_RETIREMENT_AGE) {
   const hasFiled = deceasedDeathAge >= deceasedClaimAge;
   let base;
   let ribLim = Infinity;
@@ -225,7 +229,7 @@ export function survivorBenefit(deceasedPia, deceasedClaimAge, survivorCurrentAg
       : deceasedPia;
   }
 
-  const age = Math.max(60, Math.min(survivorCurrentAge, survivorFra));
+  const age = Math.max(60, Math.min(survivorStartAge, survivorFra));
   const monthsEarly = Math.round((survivorFra - age) * 12);
   const monthsInWindow = Math.round((survivorFra - 60) * 12);
   const reduction = monthsInWindow > 0 ? (0.285 * monthsEarly) / monthsInWindow : 0;
@@ -329,8 +333,16 @@ const AGE_END = 100;    // chart horizon
  * survivorBenefit \u2014 reduced for the survivor\u2019s own age, then capped by RIB-LIM,
  * not simply whatever the deceased happened to be receiving). This survivor
  * rule is what ties the higher earner\u2019s delay decision to the second death.
+ *
+ * The survivor benefit starts at the death (or at 60, if the survivor is
+ * younger), and its age reduction is fixed from then on. With survivorWaits,
+ * a survivor still under their survivor FRA at the death instead lives on
+ * their own benefit until then and starts the survivor benefit unreduced at
+ * FRA. The present-value functions take whichever of the two is worth more,
+ * except where Social Security switches the survivor over automatically (see
+ * convertedAtDeath).
  */
-export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lowCurrentAge, highDeathAge = Infinity, lowDeathAge = Infinity) {
+export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lowCurrentAge, highDeathAge = Infinity, lowDeathAge = Infinity, survivorWaits = false) {
   const highFra = fraFromBirthYear(values.birthYearHigh ?? 1960);
   const lowFra  = fraFromBirthYear(values.birthYearLow  ?? 1960);
   const highSurvivorFra = survivorFraFromBirthYear(values.birthYearHigh ?? 1960);
@@ -369,8 +381,10 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
     // benefit yet -- survivorBenefit()'s own age-reduction formula clamps up
     // to 60 rather than gating this, so callers must check it explicitly.
     // Survivor is high (their survivorFra); deceased is low (their fra).
+    const start = survivorStartAge(highCurrentAge, lowDeathAge + ageGap, highSurvivorFra, survivorWaits);
+    if (start === null) return highWorker;   // waiting for the full amount at FRA
     const inherited = highCurrentAge >= SURVIVOR_MIN_CLAIM_AGE
-      ? survivorBenefit(values.piaLow, values.claimLow, highCurrentAge, lowDeathAge, highSurvivorFra, lowFra)
+      ? survivorBenefit(values.piaLow, values.claimLow, start, lowDeathAge, highSurvivorFra, lowFra)
       : 0;
     return Math.max(highWorker, inherited);
   }
@@ -378,12 +392,44 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
     // High has died; low survives and may inherit a survivor benefit off high's
     // record, subject to the same SURVIVOR_MIN_CLAIM_AGE eligibility floor.
     // Survivor is low (their survivorFra); deceased is high (their fra).
+    const start = survivorStartAge(lowCurrentAge, highDeathAge - ageGap, lowSurvivorFra, survivorWaits);
+    if (start === null) return lowWorker;    // waiting for the full amount at FRA
     const inherited = lowCurrentAge >= SURVIVOR_MIN_CLAIM_AGE
-      ? survivorBenefit(values.piaHigh, values.claimHigh, lowCurrentAge, highDeathAge, lowSurvivorFra, highFra)
+      ? survivorBenefit(values.piaHigh, values.claimHigh, start, highDeathAge, lowSurvivorFra, highFra)
       : 0;
     return Math.max(lowWorker, inherited);
   }
   return 0;
+}
+
+// The survivor's age when their survivor benefit starts: at the death, or at
+// SURVIVOR_MIN_CLAIM_AGE if they were younger then; with `waits`, at their
+// survivor FRA instead if the death came before it (null until then). Without
+// a known death age (Infinity, as in direct calls that pass only today's
+// ages), today's age stands in for the age at death.
+function survivorStartAge(ageNow, ageAtDeath, survivorFra, waits) {
+  const start = Math.max(SURVIVOR_MIN_CLAIM_AGE, Number.isFinite(ageAtDeath) ? ageAtDeath : ageNow);
+  if (!waits || start >= survivorFra) return start;
+  return ageNow >= survivorFra ? survivorFra : null;
+}
+
+/**
+ * Whether Social Security switches the survivor to survivor benefits at the
+ * death, leaving no choice to wait. POMS RS 00207.005 C: a spouse aged 62
+ * through the month before FRA who was getting spouse's benefits on the
+ * deceased's record is converted with no application -- but one who also has
+ * their own retirement benefit must elect reduced survivor benefits
+ * (Certificate of Election) or is paid in full at FRA. So only a survivor with
+ * no benefit of their own, already drawing a spousal benefit, can't wait.
+ * https://secure.ssa.gov/POMS.NSF/LNX/0300207005
+ */
+export function convertedAtDeath(values, survivorIsLow, survivorAgeAtDeath, deceasedAgeAtDeath) {
+  const own = survivorIsLow ? values.piaLow : values.piaHigh;
+  const partner = survivorIsLow ? values.piaHigh : values.piaLow;
+  const ownClaim = survivorIsLow ? values.claimLow : values.claimHigh;
+  const partnerClaim = survivorIsLow ? values.claimHigh : values.claimLow;
+  const gettingSpousal = own * 2 < partner && survivorAgeAtDeath >= ownClaim && deceasedAgeAtDeath >= partnerClaim;
+  return own <= 0 && gettingSpousal && survivorAgeAtDeath >= 62;
 }
 
 /**
@@ -421,6 +467,16 @@ function planValueBySecondDeath(values, firstDeathAge, firstIsHigh, ageGap) {
   const highDeathAge = firstIsHigh ? firstDeathAge + ageGap : Infinity;
   const lowDeathAge = firstIsHigh ? Infinity : firstDeathAge;
 
+  // A death before the survivor's own survivor FRA leaves the survivor a
+  // choice: start the survivor benefit now, reduced for life, or live on their
+  // own benefit and start it unreduced at FRA. For each lifespan on the x-axis,
+  // take whichever is worth more -- unless Social Security switches them over
+  // automatically (convertedAtDeath).
+  const survivorAgeAtDeath = firstIsHigh ? firstDeathAge : firstDeathAge + ageGap;
+  const survivorFra = survivorFraFromBirthYear((firstIsHigh ? values.birthYearLow : values.birthYearHigh) ?? 1960);
+  const mayWait = Math.max(SURVIVOR_MIN_CLAIM_AGE, survivorAgeAtDeath) < survivorFra
+    && !convertedAtDeath(values, firstIsHigh, survivorAgeAtDeath, firstIsHigh ? highDeathAge : lowDeathAge);
+
   // The x-axis is the SECOND death \u2014 only defined at or after the first death.
   // For each second-death age, sum the FULL household timeline from age 62:
   // both-alive years first, then the survivor years. No leading zeros \u2014 the
@@ -428,7 +484,7 @@ function planValueBySecondDeath(values, firstDeathAge, firstIsHigh, ageGap) {
   return grid
     .filter((secondDeathAge) => secondDeathAge >= firstDeathAge)
     .map((secondDeathAge) => {
-      let pv = 0;
+      let pv = 0, pvWait = 0;
       const monthsTotal = Math.round((secondDeathAge - AGE_START) * 12);
       for (let m = 0; m < monthsTotal; m++) {
         // The clock is the LOWER earner's own age; the higher earner's own
@@ -442,8 +498,13 @@ function planValueBySecondDeath(values, firstDeathAge, firstIsHigh, ageGap) {
         const lAlive = firstIsHigh ? true : m < firstDeathMonth;
         const monthly = householdMonthly(values, hAlive, lAlive, highAge, lowAge, highDeathAge, lowDeathAge);
         pv += i === 0 ? monthly : monthly / Math.pow(1 + i, m);
+        if (mayWait) {
+          const waiting = hAlive && lAlive ? monthly
+            : householdMonthly(values, hAlive, lAlive, highAge, lowAge, highDeathAge, lowDeathAge, true);
+          pvWait += i === 0 ? waiting : waiting / Math.pow(1 + i, m);
+        }
       }
-      return { x: secondDeathAge, y: pv };
+      return { x: secondDeathAge, y: mayWait ? Math.max(pv, pvWait) : pv };
     });
 }
 
@@ -720,7 +781,16 @@ export function computeSurface(values, stepYears = 2) {
     const months = Math.round((lastAge - AGE_START) * 12);
     const highDeathMonth = Math.round((highDeathAgeOnClock - AGE_START) * 12);
     const lowDeathMonth = Math.round((lowDeathAgeOnClock - AGE_START) * 12);
-    let pv = 0;
+    // Same survivor choice as planValueBySecondDeath: start the survivor
+    // benefit at the death, or wait for the full amount at survivor FRA,
+    // whichever is worth more -- unless converted automatically.
+    const highDiesFirst = highDeathAgeOnClock < lowDeathAgeOnClock;
+    const survivorAgeAtDeath = highDiesFirst ? highDeathAgeOnClock : lowDeathAge + ageGap;
+    const survivorFra = survivorFraFromBirthYear((highDiesFirst ? plan.birthYearLow : plan.birthYearHigh) ?? 1960);
+    const mayWait = highDeathAgeOnClock !== lowDeathAgeOnClock
+      && Math.max(SURVIVOR_MIN_CLAIM_AGE, survivorAgeAtDeath) < survivorFra
+      && !convertedAtDeath(plan, highDiesFirst, survivorAgeAtDeath, highDiesFirst ? highDeathAge : lowDeathAge);
+    let pv = 0, pvWait = 0;
     for (let m = 0; m < months; m++) {
       const lowAge = AGE_START + m / 12;
       const highAge = lowAge + ageGap;
@@ -728,8 +798,13 @@ export function computeSurface(values, stepYears = 2) {
       const lAlive = m < lowDeathMonth;
       const monthly = householdMonthly(plan, hAlive, lAlive, highAge, lowAge, highDeathAge, lowDeathAge);
       pv += i === 0 ? monthly : monthly / Math.pow(1 + i, m);
+      if (mayWait) {
+        const waiting = hAlive && lAlive ? monthly
+          : householdMonthly(plan, hAlive, lAlive, highAge, lowAge, highDeathAge, lowDeathAge, true);
+        pvWait += i === 0 ? waiting : waiting / Math.pow(1 + i, m);
+      }
     }
-    return pv;
+    return mayWait ? Math.max(pv, pvWait) : pv;
   }
 
   const ages = [];

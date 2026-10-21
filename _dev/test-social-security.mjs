@@ -191,7 +191,15 @@ check(
   // plan the lower earner now gets $840 + 65% of the $300 excess = $1,035, not
   // $975, for the 36 months both are alive (+$2,160). The wait plan is
   // unchanged (the higher earner dies at 65, before filing at 70, so no top-up).
-  check('compute(): lifeHigh=65 (died before FRA, before filing) gives the corrected breakeven age', parseFloat(headline(r1).replace('age ', '')), 79);
+  // 85 since the survivor-reduction fix (2026-10-21), was 79: the survivor's
+  // reduction no longer shrinks to zero by FRA. In the wait plan the survivor
+  // (65) either takes $3,000 less 7.125% = $2,786.25 for life, or lives on
+  // their own $840 for 20 months and gets the full $3,000 from 66y8m -- worth
+  // more past about 82. The claim-at-62 plan pays the $2,475 cap right away.
+  // Claiming at 62 leads by $2,295/mo x 36 = $82,620 at the death; waiting
+  // then gains $525/mo less the $43,200 cost of waiting, so it catches up after
+  // 239.7 months: age 85.
+  check('compute(): lifeHigh=65 (died before FRA, before filing) gives the corrected breakeven age', parseFloat(headline(r1).replace('age ', '')), 85);
 
   const case1b = { piaHigh: 3000, claimHigh: 70, claimHighEarly: 62, piaLow: 1200, claimLow: 62, lifeHigh: 68, lifeLow: 90, discountRate: 0 };
   const r1b = compute(case1b);
@@ -219,7 +227,12 @@ check(
   // the start, since $3,000 reduced for age is above it; before, the age
   // reduction was taken off the cap for the 20 months to survivor FRA:
   // $2,475 x 0.285/80 x (20 + 19 + ... + 1).
-  check('computeSurface(): cell in the 60-70 range reflects the died-before-filing fix', cell.margin, 72635.625, 0.5);
+  // 31,680 since the survivor-reduction fix (2026-10-21): $40,955.63 less, all
+  // in the wait plan. Its survivor (65) now does best waiting for the full
+  // $3,000 at 66y8m: $840 x 20 + $3,000 x 280 = $856,800, where the shrinking
+  // reduction used to pay $897,755.63. The claim-at-62 plan's survivor still
+  // gets the $2,475 cap from the start ($742,500 either way).
+  check('computeSurface(): cell in the 60-70 range reflects the died-before-filing fix', cell.margin, 31680, 0.5);
 
   const degenerate = cells.find((c) => c.highDeath === 60 && c.lowDeath === 60);
   check('computeSurface(): both dying before AGE_START gives margin 0, not NaN/crash', degenerate.margin, 0);
