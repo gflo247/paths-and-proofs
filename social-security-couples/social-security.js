@@ -33,6 +33,16 @@
 //     https://www.ssa.gov/OP_Home/cfr20/404/404-0338.htm
 //   - 50% spousal cap, no delayed credits on spousal benefits:
 //     https://www.ssa.gov/benefits/retirement/planner/applying7.html
+//   - Own benefit plus a spousal benefit (dual entitlement): paid as the own
+//     benefit plus the spousal "excess" (half the partner's PIA minus your own
+//     PIA), not the larger of the two -- CFR 404.411(d) and 404.407(a), POMS
+//     RS 00615.020 (Method C). The excess is reduced only for months of
+//     spousal entitlement before FRA (CFR 404.410(b)), and delayed credits are
+//     left out of the combined amount (POMS RS 00615.694). See
+//     dualEntitledBenefit().
+//     https://www.ssa.gov/OP_Home/cfr20/404/404-0411.htm
+//     https://www.ssa.gov/OP_Home/cfr20/404/404-0407.htm
+//     https://secure.ssa.gov/POMS.NSF/LNX/0300615694
 
 import { presentValueOfStream, findCrossover } from '../core/finance.js';
 
@@ -110,13 +120,53 @@ export function workerBenefit(primaryInsuranceAmount, claimAge, fra = FULL_RETIR
  * no matter how long claiming is delayed. Source: CFR 404.410(b).
  */
 export function spousalBenefit(partnerPrimaryInsuranceAmount, claimAge, fra = FULL_RETIREMENT_AGE) {
-  const unreduced = partnerPrimaryInsuranceAmount * 0.5;
-  if (claimAge >= fra) return unreduced;   // no credits past FRA
-  const monthsEarly = Math.round((fra - claimAge) * 12);
+  return partnerPrimaryInsuranceAmount * 0.5 * spousalReductionFactor(claimAge, fra);
+}
+
+// The share of a spousal amount still paid after the spousal early-claim
+// reduction (CFR 404.410(b)), for a spousal benefit that starts at startAge.
+function spousalReductionFactor(startAge, fra) {
+  if (startAge >= fra) return 1;   // no credits past FRA
+  const monthsEarly = Math.round((fra - startAge) * 12);
   const reduction =
     (Math.min(monthsEarly, 36) * (25 / 36) +
      Math.max(monthsEarly - 36, 0) * (5 / 12)) / 100;
-  return unreduced * (1 - reduction);
+  return 1 - reduction;
+}
+
+/**
+ * What someone entitled to both their own retirement benefit and a spousal
+ * benefit is actually paid each month. It is NOT simply the larger of the two:
+ *
+ *   - Own benefit started before full retirement age: CFR 404.411(d) cuts the
+ *     spousal benefit by the own benefit's early-claim reduction plus an
+ *     early-claim reduction on the "excess" (half the partner's PIA minus your
+ *     own PIA), then CFR 404.407(a) subtracts the reduced own benefit. Net:
+ *     the reduced own benefit plus the reduced excess (POMS RS 00615.020,
+ *     Method C).
+ *   - The excess is reduced only for months of spousal entitlement before full
+ *     retirement age (CFR 404.410(b)), counted from when the spousal benefit
+ *     actually starts -- once the partner has filed -- not from the own claim
+ *     age. A spousal start at or after full retirement age leaves the excess
+ *     unreduced even when the own benefit was taken early (the worked example
+ *     in POMS RS 00615.694: $400 own + $300 excess = $700).
+ *   - Delayed retirement credits are left out of the combined amount and only
+ *     count if they lift the own benefit above it (POMS RS 00615.694). So once
+ *     the own claim is at or after full retirement age, this is the larger of
+ *     the own benefit and the full spousal amount.
+ *
+ * @param {number} ownBenefit       own monthly benefit at the own claim age
+ *                                  (already reduced, or with delayed credits)
+ * @param {number} ownPia           own primary insurance amount (PIA)
+ * @param {number} partnerPia       the partner's PIA
+ * @param {number} spousalStartAge  this person's age when the spousal benefit
+ *                                  starts (the later of the two filings)
+ * @param {number} fra              this person's full retirement age
+ */
+export function dualEntitledBenefit(ownBenefit, ownPia, partnerPia, spousalStartAge, fra = FULL_RETIREMENT_AGE) {
+  const excess = Math.max(0, partnerPia * 0.5 - ownPia);
+  const combined = Math.min(ownBenefit, ownPia) + excess * spousalReductionFactor(spousalStartAge, fra);
+  return Math.max(ownBenefit, combined);
 }
 
 /**
@@ -257,15 +307,16 @@ const AGE_END = 100;    // chart horizon
 
 /**
  * Household monthly income at a given calendar age of each person, for one
- * claiming plan. While both are alive, each person receives the LARGER of their
- * own worker benefit and their spousal benefit (the spousal top-up rule \u2014 you
- * get the bigger of the two, never both). This is symmetric under CFR
- * 404.410(b): EITHER spouse can draw a spousal benefit off the OTHER\u2019s
- * record, not just the lower earner off the higher earner\u2019s. It is usually
- * the lower earner\u2019s top-up that binds, but not always \u2014 e.g. the higher
- * earner claiming very early can reduce their own worker benefit below half
- * of the lower earner\u2019s full-retirement-age amount. Each side\u2019s spousal
- * benefit requires the OTHER person to have already filed.
+ * claiming plan. While both are alive, each person receives their own worker
+ * benefit plus any spousal top-up once BOTH have filed (see
+ * dualEntitledBenefit: the top-up is the excess of half the partner\u2019s PIA
+ * over your own PIA, reduced only for months it is paid before full
+ * retirement age -- not simply the larger of the two benefits). This is
+ * symmetric: EITHER spouse can draw a spousal benefit off the OTHER\u2019s record,
+ * though only someone whose own PIA is under half their partner\u2019s has an
+ * excess to draw. The top-up starts when the later of the two files, so its
+ * reduction depends on each person\u2019s age at that moment, not on their own
+ * claim age.
  *
  * After the first death, the spousal relationship ends and a survivor
  * relationship replaces it: the survivor keeps the LARGER of their own worker
@@ -286,16 +337,18 @@ export function householdMonthly(values, highAlive, lowAlive, highCurrentAge, lo
   const highHasFiled = highCurrentAge >= values.claimHigh;
   const lowHasFiled = lowCurrentAge >= values.claimLow;
 
-  // Spousal top-up, gated on the OTHER person having filed. Symmetric: either
-  // spouse can draw off the other's record.
-  const lowSpousal = (lowCurrentAge >= values.claimLow && highHasFiled)
-    ? spousalBenefit(values.piaHigh, values.claimLow, lowFra)
-    : 0;
-  const highSpousal = (highCurrentAge >= values.claimHigh && lowHasFiled)
-    ? spousalBenefit(values.piaLow, values.claimHigh, highFra)
-    : 0;
-  const lowOwn = Math.max(lowWorker, lowSpousal);     // larger of own vs spousal
-  const highOwn = Math.max(highWorker, highSpousal);  // larger of own vs spousal
+  // Spousal top-up, once BOTH have filed: it starts when the later of the two
+  // files, at each person's own age at that moment. Symmetric: either spouse
+  // can draw off the other's record.
+  const ageGap = highCurrentAge - lowCurrentAge;   // positive = higher earner older
+  const lowSpousalStart = Math.max(values.claimLow, values.claimHigh - ageGap);
+  const highSpousalStart = Math.max(values.claimHigh, values.claimLow + ageGap);
+  const lowOwn = lowHasFiled && highHasFiled
+    ? dualEntitledBenefit(lowWorker, values.piaLow, values.piaHigh, lowSpousalStart, lowFra)
+    : lowWorker;
+  const highOwn = highHasFiled && lowHasFiled
+    ? dualEntitledBenefit(highWorker, values.piaHigh, values.piaLow, highSpousalStart, highFra)
+    : highWorker;
 
   // The two benefit streams actually being paid right now, while both live.
   const highBenefit = highOwn;
@@ -491,42 +544,57 @@ export function compute(values) {
     headlineValue = 'claiming early wins';
   }
 
-  // Monthly figures for the summary cards. Spousal top-up is symmetric (CFR
-  // 404.410(b)) -- usually the lower earner's top-up binds, but the higher
-  // earner claiming very early can also dip below half the lower earner's
-  // full-retirement-age amount, so both sides check it the same way.
+  // Monthly figures for the summary cards, once both of you have filed, from
+  // the same rule the chart uses (dualEntitledBenefit). The spousal top-up
+  // starts when the later of you files, so the lower earner's check depends on
+  // WHEN the higher earner claims, not just on their own claim age -- one card
+  // per strategy whenever a top-up applies. Symmetric: the higher earner's
+  // cards check for a top-up off the lower earner's record the same way.
   const highFra = fraFromBirthYear(values.birthYearHigh ?? 1960);
   const lowFra  = fraFromBirthYear(values.birthYearLow  ?? 1960);
-  const highOwnDelay    = workerBenefit(values.piaHigh, delayAge, highFra);
-  const highOwnEarly    = workerBenefit(values.piaHigh, earlyAge, highFra);
-  const highSpousalDelay = spousalBenefit(values.piaLow, delayAge, highFra);
-  const highSpousalEarly = spousalBenefit(values.piaLow, earlyAge, highFra);
-  const highGetsSpousalDelay = highSpousalDelay > highOwnDelay;
-  const highGetsSpousalEarly = highSpousalEarly > highOwnEarly;
+  const lowWorker = workerBenefit(values.piaLow, values.claimLow, lowFra);
+  const checksIfHigherClaimsAt = (highClaim) => {
+    const highWorker = workerBenefit(values.piaHigh, highClaim, highFra);
+    return {
+      highWorker,
+      high: dualEntitledBenefit(highWorker, values.piaHigh, values.piaLow, Math.max(highClaim, values.claimLow + ageGap), highFra),
+      low: dualEntitledBenefit(lowWorker, values.piaLow, values.piaHigh, Math.max(values.claimLow, highClaim - ageGap), lowFra),
+      // The lower earner files first and draws only their own benefit until then.
+      lowWaitsForTopUp: highClaim - ageGap > values.claimLow,
+    };
+  };
+  const delay = checksIfHigherClaimsAt(delayAge);
+  const early = checksIfHigherClaimsAt(earlyAge);
+  const dollars = (n) => `$${n.toFixed(0)}`;
+  const TOP_UP = '(spousal top-up applies)';
 
-  const lowOwn = workerBenefit(values.piaLow, values.claimLow, lowFra);
-  const lowSpousalAtClaim = spousalBenefit(values.piaHigh, values.claimLow, lowFra);
-  const lowGetsSpousal = lowSpousalAtClaim > lowOwn;
+  const lowTopUp = delay.low > lowWorker || early.low > lowWorker;
+  const lowSameEitherWay = dollars(delay.low) === dollars(early.low) && !delay.lowWaitsForTopUp && !early.lowWaitsForTopUp;
+  const lowCards = !lowTopUp
+    ? [{ label: 'Lower earner\u2019s monthly check (their own benefit is larger)', value: dollars(lowWorker) }]
+    : lowSameEitherWay
+      ? [{ label: `Lower earner\u2019s monthly check ${TOP_UP}`, value: dollars(delay.low) }]
+      : [[delay, `waits to ${delayAge}`], [early, `claims at ${earlyAge}`]].map(([plan, choice]) => ({
+          label: `Lower earner\u2019s monthly check if the higher earner ${choice} `
+            + (!plan.lowWaitsForTopUp ? TOP_UP
+              : lowWorker > 0 ? `(their own ${dollars(lowWorker)} until then)` : '(nothing until then)'),
+          value: dollars(plan.low),
+        }));
 
   const summary = [
     {
-      label: highGetsSpousalDelay
-        ? `Higher earner\u2019s monthly check if they wait to ${delayAge} (spousal top-up applies)`
+      label: delay.high > delay.highWorker
+        ? `Higher earner\u2019s monthly check if they wait to ${delayAge} ${TOP_UP}`
         : `Higher earner\u2019s monthly check if they wait to ${delayAge}`,
-      value: `$${Math.max(highOwnDelay, highSpousalDelay).toFixed(0)}`,
+      value: dollars(delay.high),
     },
     {
-      label: highGetsSpousalEarly
-        ? `Higher earner\u2019s monthly check if they claim at ${earlyAge} (spousal top-up applies)`
+      label: early.high > early.highWorker
+        ? `Higher earner\u2019s monthly check if they claim at ${earlyAge} ${TOP_UP}`
         : `Higher earner\u2019s monthly check if they claim at ${earlyAge}`,
-      value: `$${Math.max(highOwnEarly, highSpousalEarly).toFixed(0)}`,
+      value: dollars(early.high),
     },
-    {
-      label: lowGetsSpousal
-        ? 'Lower earner\u2019s monthly check (spousal top-up applies)'
-        : 'Lower earner\u2019s monthly check (their own benefit is larger)',
-      value: `$${Math.max(lowOwn, lowSpousalAtClaim).toFixed(0)}`,
-    },
+    ...lowCards,
     {
       label: headlineLabel,
       value: headlineValue,

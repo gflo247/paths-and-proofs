@@ -29,6 +29,8 @@ annually inflation-adjusted figures, so they change rarely (only by statute).
 | Spousal early reduction, beyond 36 mo | 5/12 of 1%/mo | [CFR 404.410(b)](https://www.ssa.gov/OP_Home/cfr20/404/404-0410.htm) | ✅ |
 | Delayed retirement credit | 2/3 of 1%/mo (8%/yr), stops at 70 | [CFR 404.313](https://www.ssa.gov/OP_Home/cfr20/404/404-0313.htm) | ✅ |
 | Spousal benefit cap | 50% of partner's FRA amount, no delayed credits | [SSA spousal](https://www.ssa.gov/benefits/retirement/planner/applying7.html) | ✅ |
+| Own + spousal benefit together (dual entitlement) | own benefit plus the spousal excess (half the partner's PIA minus own PIA), not the larger of the two; the excess is reduced only for months of spousal entitlement before FRA, counted from when the spousal benefit starts (once the partner has filed) | [CFR 404.411(d)](https://www.ssa.gov/OP_Home/cfr20/404/404-0411.htm), [CFR 404.407(a)](https://www.ssa.gov/OP_Home/cfr20/404/404-0407.htm), [POMS RS 00615.020](https://secure.ssa.gov/POMS.NSF/LNX/0300615020) (Method C) | ✅ |
+| Delayed credits under dual entitlement | left out of the combined amount; they count only if they lift the own benefit above it, so at or after FRA the check is the larger of the own benefit and the full spousal amount | [POMS RS 00615.694](https://secure.ssa.gov/POMS.NSF/LNX/0300615694) (worked example: $400 own + $300 excess = $700) | ✅ |
 | Survivor full retirement age (born 1960) | 66 years 8 months — a separate, younger table than worker/spousal FRA | independently corroborated via [ssa.tools](https://ssa.tools/guides/survivor-benefits) and [Adara Wealth](https://www.adarawealth.com/blog/critical-ages-on-the-social-security-benefits-timeline), both citing SSA's own survivor NRA table (direct ssa.gov fetch 403s in this environment) | ✅ |
 | Survivor's own age-based reduction | 0% at survivor FRA, scaling linearly to 28.5% at age 60 | [CFR 404.410(c)(1)](https://www.law.cornell.edu/cfr/text/20/404.410) — exact formula quoted: months of entitlement prior to FRA × 0.285, divided by months from age 60 to FRA | ✅ |
 | RIB-LIM (widow/widower limit) | survivor's benefit floors at the larger of the deceased's actual reduced benefit or 82.5% of PIA, when the deceased claimed before their own FRA | SSA POMS GN 00615.320 | ✅ |
@@ -37,6 +39,17 @@ Survivor rule fixed 2026-08-26 (commits b7e5b11, 68e59eb/167831c) — the tool
 previously just kept `Math.max(highBenefit, lowBenefit)` with no RIB-LIM or
 age-reduction applied at all, despite an old header comment claiming CFR
 404.410 governed "survivor reduction." See `roth-ss-survivor-benefit-fix.md`.
+
+Dual-entitlement rule fixed 2026-10-21 — while both spouses were alive, the
+tool paid each the larger of their own benefit and the spousal benefit, with
+the spousal reduction keyed to the lower earner's own claim age. SSA pays the
+own benefit plus the spousal excess, reduced only for months it is paid before
+FRA, counted from when the spousal benefit actually starts (rows above). On
+the page's first example ($3,000 / $800 PIAs, lower earner claiming at 62) the
+lower earner's check was $975 under both strategies; it is $1,015 if the
+higher earner claims at 62 and $1,260 from when they file at 70, and the
+headline goes from "breakeven 87" to "waiting wins". Claims at or after FRA
+are unchanged. Tests: `_dev/test-ss-dual-entitlement.mjs`.
 
 **Scope note (honest limitation):** assumes FRA 67 (born 1960+) for worker/
 spousal benefits; does not model the earnings test, benefit taxation, or

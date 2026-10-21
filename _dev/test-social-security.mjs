@@ -37,6 +37,9 @@ function checkEqual(label, actual, expected) {
   if (ok) pass++;
   else { fail++; console.log(`FAIL  ${label}  (got=${JSON.stringify(actual)}, expected=${JSON.stringify(expected)})`); }
 }
+// The headline card's value, found by its role rather than its position: the
+// lower earner gets one card per strategy when a spousal top-up applies.
+const headline = (result) => result.summary.find((s) => s.primary).value;
 
 // Sanity: the survivor FRA table is a real, different table from worker/spousal FRA.
 check('SURVIVOR_FULL_RETIREMENT_AGE is 66y8mo, not 67', SURVIVOR_FULL_RETIREMENT_AGE, 66 + 8 / 12);
@@ -177,11 +180,18 @@ check(
 {
   const case1 = { piaHigh: 3000, claimHigh: 70, claimHighEarly: 62, piaLow: 1200, claimLow: 62, lifeHigh: 65, lifeLow: 90, discountRate: 0 };
   const r1 = compute(case1);
-  check('compute(): lifeHigh=65 (died before FRA, before filing) gives the corrected breakeven age', parseFloat(r1.summary[3].value.replace('age ', '')), 78);
+  // 79 since the dual-entitlement fix (2026-10-21), was 78: in the claim-at-62
+  // plan the lower earner now gets $840 + 65% of the $300 excess = $1,035, not
+  // $975, for the 36 months both are alive (+$2,160). The wait plan is
+  // unchanged (the higher earner dies at 65, before filing at 70, so no top-up).
+  check('compute(): lifeHigh=65 (died before FRA, before filing) gives the corrected breakeven age', parseFloat(headline(r1).replace('age ', '')), 79);
 
   const case1b = { piaHigh: 3000, claimHigh: 70, claimHighEarly: 62, piaLow: 1200, claimLow: 62, lifeHigh: 68, lifeLow: 90, discountRate: 0 };
   const r1b = compute(case1b);
-  check('compute(): lifeHigh=68 (died after FRA, before filing) gives the corrected breakeven age', parseFloat(r1b.summary[3].value.replace('age ', '')), 86);
+  // Still 86 after the dual-entitlement fix, now as an exact tie at 86 (which
+  // findCrossover counts for waiting): claim-at-62 is $3,135/mo for 72 months
+  // then $2,475; waiting is $840/mo, then $3,240. 2,295 x 72 = 765 x 216.
+  check('compute(): lifeHigh=68 (died after FRA, before filing) gives the corrected breakeven age', parseFloat(headline(r1b).replace('age ', '')), 86);
 }
 
 // computeSurface(): a grid cell in the newly-opened 60-70 range reflects the
@@ -193,7 +203,11 @@ check(
   const { ages, cells } = computeSurface(plan, 5);
   if (!ages.includes(60)) { fail++; console.log('FAIL  computeSurface(): ages grid should now start at 60'); } else pass++;
   const cell = cells.find((c) => c.highDeath === 65 && c.lowDeath === 90);
-  check('computeSurface(): cell in the 60-70 range reflects the died-before-filing fix', cell.margin, 76647.234375, 0.5);
+  // 74,487 since the dual-entitlement fix (2026-10-21), was 76,647: $2,160 less,
+  // the claim-at-62 plan's extra $60/mo ($1,035 vs $975) for the 36 months both
+  // are alive. The wait plan is unchanged (no top-up: the higher earner dies
+  // before filing).
+  check('computeSurface(): cell in the 60-70 range reflects the died-before-filing fix', cell.margin, 74487.234375, 0.5);
 
   const degenerate = cells.find((c) => c.highDeath === 60 && c.lowDeath === 60);
   check('computeSurface(): both dying before AGE_START gives margin 0, not NaN/crash', degenerate.margin, 0);
@@ -237,13 +251,15 @@ const values = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62 };
   if (inherited <= ownHigh) { fail++; console.log('FAIL  test setup: expected the inherited survivor benefit to be the larger branch'); } else pass++;
 }
 
-// Both alive: unaffected by this fix, should still just sum each person's own
-// worker-vs-spousal max (the pre-existing rule, untouched by this change).
+// Both alive: each person's own benefit plus any spousal top-up (dual
+// entitlement, CFR 404.411(d) + 404.407(a); fixed 2026-10-21, this used to
+// expect the larger of own vs spousal). Both filed at 62: the lower earner gets
+// $840 + 65% of the $300 excess = $1,035.
 {
   const got = householdMonthly(values, true, true, 65, 65);
-  const lowOwn = Math.max(workerBenefit(1200, 62), spousalBenefit(3000, 62));
-  const expected = workerBenefit(3000, 62) + lowOwn;
-  check('householdMonthly: both alive unaffected by the survivor fix', got, expected);
+  const lowCheck = workerBenefit(1200, 62) + (3000 / 2 - 1200) * 0.65;
+  const expected = workerBenefit(3000, 62) + lowCheck;
+  check('householdMonthly: both alive pays the own benefit plus the reduced spousal excess', got, expected);
 }
 
 // Both dead: unaffected, still zero.
@@ -258,15 +274,16 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 {
   const values3 = { piaHigh: 800, claimHigh: 62, piaLow: 3000, claimLow: 70 };
   const highWorker = workerBenefit(800, 62);
-  const highSpousal = spousalBenefit(3000, 62);
-  if (highSpousal <= highWorker) { fail++; console.log('FAIL  test setup: expected highSpousal to be the larger branch'); } else pass++;
+  const highExcess = 3000 / 2 - 800;   // $700: this field's own PIA is under half the other's
+  if (highExcess <= 0) { fail++; console.log('FAIL  test setup: expected the high-earner field to have a spousal excess'); } else pass++;
 
-  // Both alive, both filed (ages past both claim ages): high side's own
-  // worker benefit must lose to the spousal top-up off low's record.
+  // Both alive, both filed (ages past both claim ages). The top-up starts at
+  // 70, when low files, which is after FRA, so the $700 excess is unreduced
+  // even though high's own benefit was taken at 62 (dual entitlement, fixed
+  // 2026-10-21; the same pattern as POMS RS 00615.694's worked example):
+  // $560 + $700 = $1,260. Low has no excess, so gets their own benefit.
   const gotBothFiled = householdMonthly(values3, true, true, 75, 75);
-  const lowWorkerAt70 = workerBenefit(3000, 70);
-  const lowSpousalOff800 = spousalBenefit(800, 70);
-  const expectedBothFiled = Math.max(highWorker, highSpousal) + Math.max(lowWorkerAt70, lowSpousalOff800);
+  const expectedBothFiled = (highWorker + highExcess) + workerBenefit(3000, 70);
   check('householdMonthly: high earner field gets the spousal top-up when it is larger', gotBothFiled, expectedBothFiled);
 
   // Gating: high has filed (75 >= 62) but low has NOT filed yet (65 < 70) --
@@ -291,8 +308,12 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 {
   const values4 = { piaHigh: 800, claimHigh: 70, claimHighEarly: 62, piaLow: 3000, claimLow: 62, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
   const result = compute(values4);
-  const expectedAt70 = Math.max(workerBenefit(800, 70), spousalBenefit(3000, 70));
-  const expectedAt62 = Math.max(workerBenefit(800, 62), spousalBenefit(3000, 62));
+  // The high-earner field has an $800 PIA against $3,000 (a $700 excess).
+  // Waiting to 70: delayed credits are left out of the combined amount, so the
+  // check is the larger of $992 and $800 + $700 (POMS RS 00615.694). Claiming
+  // at 62, with the partner filing at 62 too: $560 + 65% of $700 = $1,015.
+  const expectedAt70 = Math.max(workerBenefit(800, 70), 800 + 700);
+  const expectedAt62 = workerBenefit(800, 62) + 700 * 0.65;
   check('compute(): "wait to 70" card reflects the high-earner spousal top-up', parseFloat(result.summary[0].value.replace('$', '')), expectedAt70);
   check('compute(): "claim at 62" card reflects the high-earner spousal top-up', parseFloat(result.summary[1].value.replace('$', '')), expectedAt62);
   if (!result.summary[0].label.includes('spousal top-up applies')) {
@@ -316,7 +337,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
   // low-dies-first is truly worse at age 96. The shown headline must be 96.
   const case1 = { piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0 };
   const r1 = compute(case1);
-  check('compute(): shows the worse breakeven age across both death orders (96, not 85)', parseFloat(r1.summary[3].value.replace('age ', '')), 96);
+  check('compute(): shows the worse breakeven age across both death orders (96, not 85)', parseFloat(headline(r1).replace('age ', '')), 96);
 
   // A more extreme case from the same sweep: high-dies-first alone would show
   // a breakeven near the far edge of the chart (age 100); low-dies-first is
@@ -325,7 +346,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
   // deceptively optimistic breakeven age.
   const case2 = { piaHigh: 500, claimHigh: 70, claimHighEarly: 62, piaLow: 800, claimLow: 62, lifeHigh: 95, lifeLow: 75, discountRate: 0 };
   const r2 = compute(case2);
-  checkEqual('compute(): shows "claiming early wins" when that is the true worst case', r2.summary[3].value, 'claiming early wins');
+  checkEqual('compute(): shows "claiming early wins" when that is the true worst case', headline(r2), 'claiming early wins');
 }
 
 // Regression: a normally-labeled household (piaHigh > piaLow, the common
@@ -336,7 +357,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 {
   const normal = { piaHigh: 3200, claimHigh: 70, claimHighEarly: 62, piaLow: 1400, claimLow: 62, lifeHigh: 84, lifeLow: 87, discountRate: 2 };
   const r = compute(normal);
-  checkEqual('compute(): normally-labeled household is unaffected by the fix', r.summary[3].value, 'waiting wins');
+  checkEqual('compute(): normally-labeled household is unaffected by the fix', headline(r), 'waiting wins');
 }
 
 // --- Real age gap between spouses (2026-08-26 feature) ----------------------
@@ -379,7 +400,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 {
   const withGap = { piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0, birthYearHigh: 1959, birthYearLow: 1960 };
   const r = compute(withGap);
-  check('compute(): breakeven age reflects birth-year-derived gap', parseFloat(r.summary[3].value.replace('age ', '')), 92);
+  check('compute(): breakeven age reflects birth-year-derived gap', parseFloat(headline(r).replace('age ', '')), 92);
   check('compute(): marker reflects birth-year-derived gap', r.markers[0].x, 76);
 }
 
@@ -390,7 +411,7 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 {
   const noGap = { piaHigh: 1100, claimHigh: 70, claimHighEarly: 62, piaLow: 1400, claimLow: 62, lifeHigh: 72, lifeLow: 75, discountRate: 0 };
   const r = compute(noGap);
-  check('compute(): ageGap-omitted breakeven age unchanged from pre-feature value', parseFloat(r.summary[3].value.replace('age ', '')), 96);
+  check('compute(): ageGap-omitted breakeven age unchanged from pre-feature value', parseFloat(headline(r).replace('age ', '')), 96);
   check('compute(): ageGap-omitted marker unchanged from pre-feature value', r.markers[0].x, 75);
 }
 
@@ -417,7 +438,12 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
     pvEarly += householdMonthly(planEarly, hAlive, lAlive, highAge, lowAge);
   }
   check('computeSurface(): cell margin matches independent hand-derivation with ageGap', cell.margin, pvDelay - pvEarly);
-  check('computeSurface(): age-gap sanity -- margin is a large, specific number, not a placeholder', cell.margin, 190140, 1);
+  // 191,280 since the dual-entitlement fix (2026-10-21), was 190,140 (+$1,140).
+  // Waiting: the top-up starts at 65 (the higher earner, 5 years older, files
+  // at 70), 24 months before FRA: $840 + 83.33% of $300 = $1,090, not $975,
+  // for 60 months (+$6,900). Claiming at 62: $1,035, not $975, for 96 months
+  // (+$5,760).
+  check('computeSurface(): age-gap sanity -- margin is a large, specific number, not a placeholder', cell.margin, 191280, 1);
 }
 
 // --- buildVerdict() + outcome field -----------------------------------------

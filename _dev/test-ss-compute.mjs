@@ -141,16 +141,19 @@ check('5.3 householdMonthly: age 61, high dead low alive → survivorBenefit(pia
   0.01);
 
 // ── Group 6: spousal top-up binding vs. not binding ──────────────────────────
-// The spousal benefit is 50% of partner's PIA. If the lower earner's own
-// worker benefit is already above that, no top-up — own benefit wins.
+// The spousal top-up is the excess of half the partner's PIA over your own PIA,
+// paid on top of your own benefit (dual entitlement, CFR 404.411(d) and
+// 404.407(a)) and reduced only for months it starts before FRA. If your own
+// PIA is already at least half the partner's, there is no top-up.
 
 // Case A: piaLow (800) < piaHigh/2 (1500) → spousal top-up binds
+// The higher earner (8 years older) files at 70, when the lower earner is 62:
 // lowWorker = workerBenefit(800, 62) = 800 * 0.70 = 560
-// lowSpousal = spousalBenefit(3000, 62) = 1500 * 0.65 = 975
-// lowOwn = max(560, 975) = 975
+// excess = 1500 - 800 = 700, reduced 35% for a start at 62 = 455
+// lowOwn = 560 + 455 = 1015 (it was max(560, 975) = 975 before the 2026-10-21 fix)
 const vTopUp = { piaHigh: 3000, claimHigh: 70, piaLow: 800, claimLow: 62 };
-const expectedTopUp = Math.max(workerBenefit(800, 62), spousalBenefit(3000, 62));
-check('6.1 spousal top-up binds: lowOwn = max(workerBenefit, spousalBenefit)',
+const expectedTopUp = workerBenefit(800, 62) + (1500 - 800) * 0.65;
+check('6.1 spousal top-up binds: lowOwn = own benefit + reduced spousal excess',
   householdMonthly(vTopUp, true, true, 70, 62) - workerBenefit(3000, 70),
   expectedTopUp, 0.01);
 
@@ -174,13 +177,15 @@ check('6.3 near-equal PIAs: own benefit wins for lower earner at FRA',
   workerBenefit(2400, 67), 0.01);
 
 // Case D: high earner's spousal top-up binds.
-// piaHigh=1200, claimHigh=62: highWorker=1200*0.70=840, highSpousal=spousalBenefit(3000,62)=975.
-// highOwn = max(840, 975) = 975 (spousal wins). This path (highSpousal > highWorker) is
-// distinct from cases A–C where only the low earner's spousal path was exercised.
+// piaHigh=1200, claimHigh=62: highWorker=1200*0.70=840. The other spouse (3
+// years younger) files at 67, when this one is 70 -- after FRA -- so the $300
+// excess (1500 - 1200) is unreduced: highOwn = 840 + 300 = 1140 (it was
+// max(840, 975) = 975 before the 2026-10-21 fix). This path is distinct from
+// cases A–C where only the low earner's spousal path was exercised.
 const vHighTopUp = { piaHigh: 1200, claimHigh: 62, piaLow: 3000, claimLow: 67 };
-check('6.4 high earner spousal top-up binds: highOwn = spousalBenefit(piaLow, claimHigh)',
+check('6.4 high earner spousal top-up binds: highOwn = own benefit + unreduced excess',
   householdMonthly(vHighTopUp, true, true, 70, 67) - workerBenefit(3000, 67),
-  spousalBenefit(3000, 62), 0.01);
+  workerBenefit(1200, 62) + (1500 - 1200), 0.01);
 
 // ── Group 7: survivor under SURVIVOR_MIN_CLAIM_AGE ───────────────────────────
 // A widow(er) under 60 cannot claim ANY survivor benefit. householdMonthly()

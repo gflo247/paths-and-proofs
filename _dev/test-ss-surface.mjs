@@ -111,8 +111,12 @@ checkTrue('computeSurface: delay margin shrinks from 0% to 2% discount', m_r2 < 
 checkTrue('computeSurface: delay margin shrinks from 2% to 5% discount', m_r5 < m_r2);
 checkTrue('computeSurface: at 5% discount, delay premium is materially smaller than at 0%',
   m_r0 - m_r5 > 50000); // a couple's 28yr SS stream — time value should be large
+// 193,680 since the dual-entitlement fix (2026-10-21), was 174,240 (+$19,440).
+// Waiting: from 70 the lower earner gets $840 + the full $300 excess = $1,140,
+// not $975, for 240 months (+$39,600). Claiming at 62: $840 + 65% of $300 =
+// $1,035, not $975, for 336 months (+$20,160).
 check('computeSurface: r=0 discount rate matches exact undiscounted sum (i===0 branch)',
-  m_r0, 174240, 500); // matches known value from spot-check run
+  m_r0, 193680, 500);
 
 // ── Group 4: computeSurface — surface structure (heatmap integrity) ───────────
 // Key invariants that must hold for the colored cells to mean what the labels say.
