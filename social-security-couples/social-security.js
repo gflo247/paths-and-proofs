@@ -22,10 +22,12 @@
 //   - Full retirement age for SURVIVOR benefits is a separate, younger table:
 //     66 years 8 months for the same 1960 birth cohort.
 //     https://www.ssa.gov/survivor/full-retirement-age-survivor
-//   - RIB-LIM (the widow(er) limit): a survivor's benefit floors at the
-//     larger of the deceased's actual reduced benefit or 82.5% of their PIA,
-//     whenever the deceased claimed before their own full retirement age.
-//     SSA POMS GN 00615.320
+//   - RIB-LIM (the widow(er) limit): whenever the deceased claimed before
+//     their own full retirement age, the survivor's benefit -- after the
+//     survivor's own age reduction -- is capped at the larger of the
+//     deceased's actual reduced benefit or 82.5% of their PIA.
+//     CFR 404.338(c); SSA POMS RS 00615.320
+//     https://secure.ssa.gov/POMS.NSF/LNX/0300615320
 //   - If the deceased died WITHOUT ever filing, RIB-LIM and the early-claim
 //     reduction never apply at all -- the survivor's base is 100% of PIA
 //     (death before the deceased's own full retirement age) or PIA plus
@@ -176,14 +178,15 @@ export function dualEntitledBenefit(ownBenefit, ownPia, partnerPia, spousalStart
  * CFR 404.338(a)-(c) draws a hard line at the moment of filing:
  *
  *   A. The deceased filed before dying (deceasedDeathAge >= deceasedClaimAge --
- *      the default when deceasedDeathAge is omitted): RIB-LIM applies, SSA
- *      POMS GN 00615.320. The base is the LARGER of what the deceased was
- *      actually receiving (already reduced, if they claimed before their own
- *      full retirement age) or 82.5% of PIA. Applying this as an
- *      unconditional max() is deliberate, not a missing gate: if the deceased
- *      delayed past their own full retirement age, their actual benefit
- *      already exceeds 82.5% of PIA, so the max() is a no-op exactly when
- *      RIB-LIM shouldn't apply.
+ *      the default when deceasedDeathAge is omitted): the base is the
+ *      deceased's PIA, or what they were actually receiving if delayed
+ *      credits made that larger (POMS RS 00615.301 A.3). If they claimed
+ *      before their own full retirement age, RIB-LIM then CAPS the survivor's
+ *      benefit -- after the survivor's own age reduction below -- at the
+ *      larger of what the deceased was actually receiving or 82.5% of PIA
+ *      (CFR 404.338(c); POMS RS 00615.320 A.3: the limit applies only when the
+ *      age-reduced benefit is more than both). It is a ceiling, not a base
+ *      the age reduction is applied to.
  *   B. The deceased died WITHOUT ever filing: CFR 404.338(c)'s early-claim
  *      reduction never triggers at all -- it only applies "if the insured
  *      chooses to receive old-age benefits before full retirement age," which
@@ -200,20 +203,22 @@ export function dualEntitledBenefit(ownBenefit, ownPia, partnerPia, spousalStart
  *   dying the month after, because filing itself is what the regulation uses
  *   to trigger the early-claim reduction. That is the actual shape of the law.
  *
- * On top of whichever base applies: the survivor's OWN age-based reduction,
- * CFR 404.410(c)(1) -- a third, proportional formula distinct from the
- * stepped worker/spousal ones above -- 0% at the survivor's own full
- * retirement age (a separate, younger table than worker/spousal FRA -- see
- * SURVIVOR_FULL_RETIREMENT_AGE), scaling linearly to 28.5% at the earliest
- * survivor-claiming age of 60. This reduction is orthogonal to whether the
- * deceased filed -- it always applies.
+ * Applied to whichever base applies (before any RIB-LIM cap): the survivor's
+ * OWN age-based reduction, CFR 404.410(c)(1) -- a third, proportional formula
+ * distinct from the stepped worker/spousal ones above -- 0% at the survivor's
+ * own full retirement age (a separate, younger table than worker/spousal FRA
+ * -- see SURVIVOR_FULL_RETIREMENT_AGE), scaling linearly to 28.5% at the
+ * earliest survivor-claiming age of 60. This reduction is orthogonal to
+ * whether the deceased filed -- it always applies.
  */
 export function survivorBenefit(deceasedPia, deceasedClaimAge, survivorCurrentAge, deceasedDeathAge = Infinity, survivorFra = SURVIVOR_FULL_RETIREMENT_AGE, deceasedFra = FULL_RETIREMENT_AGE) {
   const hasFiled = deceasedDeathAge >= deceasedClaimAge;
   let base;
+  let ribLim = Infinity;
   if (hasFiled) {
     const deceasedActual = workerBenefit(deceasedPia, deceasedClaimAge, deceasedFra);
-    base = Math.max(deceasedActual, deceasedPia * 0.825);
+    base = Math.max(deceasedPia, deceasedActual);
+    if (deceasedActual < deceasedPia) ribLim = Math.max(deceasedActual, deceasedPia * 0.825);
   } else {
     base = deceasedDeathAge >= deceasedFra
       ? workerBenefit(deceasedPia, Math.min(deceasedDeathAge, 70), deceasedFra)
@@ -225,7 +230,7 @@ export function survivorBenefit(deceasedPia, deceasedClaimAge, survivorCurrentAg
   const monthsInWindow = Math.round((survivorFra - 60) * 12);
   const reduction = monthsInWindow > 0 ? (0.285 * monthsEarly) / monthsInWindow : 0;
 
-  return base * (1 - reduction);
+  return Math.min(base * (1 - reduction), ribLim);
 }
 
 export const meta = {
@@ -321,7 +326,7 @@ const AGE_END = 100;    // chart horizon
  * After the first death, the spousal relationship ends and a survivor
  * relationship replaces it: the survivor keeps the LARGER of their own worker
  * benefit and a survivor benefit inherited from the deceased\u2019s record (see
- * survivorBenefit \u2014 RIB-LIM-floored and reduced for the survivor\u2019s own age,
+ * survivorBenefit \u2014 reduced for the survivor\u2019s own age, then capped by RIB-LIM,
  * not simply whatever the deceased happened to be receiving). This survivor
  * rule is what ties the higher earner\u2019s delay decision to the second death.
  */

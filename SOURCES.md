@@ -33,7 +33,7 @@ annually inflation-adjusted figures, so they change rarely (only by statute).
 | Delayed credits under dual entitlement | left out of the combined amount; they count only if they lift the own benefit above it, so at or after FRA the check is the larger of the own benefit and the full spousal amount | [POMS RS 00615.694](https://secure.ssa.gov/POMS.NSF/LNX/0300615694) (worked example: $400 own + $300 excess = $700) | ✅ |
 | Survivor full retirement age (born 1960) | 66 years 8 months — a separate, younger table than worker/spousal FRA | independently corroborated via [ssa.tools](https://ssa.tools/guides/survivor-benefits) and [Adara Wealth](https://www.adarawealth.com/blog/critical-ages-on-the-social-security-benefits-timeline), both citing SSA's own survivor NRA table (direct ssa.gov fetch 403s in this environment) | ✅ |
 | Survivor's own age-based reduction | 0% at survivor FRA, scaling linearly to 28.5% at age 60 | [CFR 404.410(c)(1)](https://www.law.cornell.edu/cfr/text/20/404.410) — exact formula quoted: months of entitlement prior to FRA × 0.285, divided by months from age 60 to FRA | ✅ |
-| RIB-LIM (widow/widower limit) | survivor's benefit floors at the larger of the deceased's actual reduced benefit or 82.5% of PIA, when the deceased claimed before their own FRA | SSA POMS GN 00615.320 | ✅ |
+| RIB-LIM (widow/widower limit) | when the deceased claimed before their own FRA, a cap applied after the survivor's own age reduction: the survivor gets the smaller of their age-reduced benefit and the larger of the deceased's actual reduced benefit or 82.5% of PIA | [CFR 404.338(c)](https://www.ssa.gov/OP_Home/cfr20/404/404-0338.htm), [POMS RS 00615.320](https://secure.ssa.gov/POMS.NSF/LNX/0300615320) A.3 ("applies when the WIB after ... reduction for age is more than BOTH") | ✅ |
 
 Survivor rule fixed 2026-08-26 (commits b7e5b11, 68e59eb/167831c) — the tool
 previously just kept `Math.max(highBenefit, lowBenefit)` with no RIB-LIM or
@@ -51,17 +51,23 @@ higher earner claims at 62 and $1,260 from when they file at 70, and the
 headline goes from "breakeven 87" to "waiting wins". Claims at or after FRA
 are unchanged. Tests: `_dev/test-ss-dual-entitlement.mjs`.
 
+Widow's-limit order fixed 2026-10-21 — the tool took the survivor's own age
+reduction off the RIB-LIM amount. RIB-LIM is a cap on the age-reduced benefit
+(row above), so a survivor under their FRA was shortchanged whenever the
+deceased had claimed early: on a $3,000 PIA claimed at 62, a survivor aged 60
+got $1,770 instead of $2,145, and one aged 63 got $2,087 instead of $2,475.
+Survivors at or past their FRA are unchanged. Tests:
+`_dev/test-ss-survivor.mjs`.
+
 **Scope note (honest limitation):** uses each person's birth year to derive
 their actual worker/spousal FRA from the SSA table (added 2026-08-26); does
 not model the earnings test, benefit taxation, or divorced-spouse benefits;
 models a real age gap between spouses via birth-year inputs (added 2026-08-26).
-The main chart shows only the "higher earner dies first" case — confirmed
-(2026-08-26, ~5,500-combination sweep) that this
-is the more conservative of the two orderings (RIB-LIM only floors an
-*inherited* benefit, never a survivor's own), never overstating delay's
-payoff but understating it by up to a decade of breakeven age in some cases;
-the reverse case appears in the heatmap. All of this is stated in the on-page
-disclaimer.
+The main chart computes both death orders and shows whichever is more
+conservative for the inputs (since 2026-08-26: RIB-LIM only limits an
+*inherited* benefit, never a survivor's own, so the two orders can give
+different answers); the heatmap shows every combination of both lifespans.
+All of this is stated in the on-page disclaimer.
 
 ---
 

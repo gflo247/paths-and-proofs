@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Regression test for the survivor-benefit fix to social-security/social-security.js
-// (2026-08-26): RIB-LIM (the widow(er) limit, SSA POMS GN 00615.320) and the
+// (2026-08-26): RIB-LIM (the widow(er) limit, SSA POMS RS 00615.320) and the
 // survivor's own age-based reduction (CFR 404.410(c)(1)) were both completely
 // unimplemented before this fix -- householdMonthly() simply kept
 // Math.max(highBenefit, lowBenefit), which understated the survivor benefit any
@@ -95,27 +95,34 @@ check(
   3000 * 0.825
 );
 
-// At the earliest survivor-claiming age (60): the maximum 28.5% reduction, applied
-// on top of the RIB-LIM base (not on top of the deceased's unreduced PIA).
-{
-  const base = 3000 * 0.825; // RIB-LIM floor, since claimAge=62 < FRA
-  check(
-    'Survivor age reduction is 28.5% at age 60 (max), stacked on the RIB-LIM base',
-    survivorBenefit(3000, 62, 60),
-    base * (1 - 0.285)
-  );
-}
+// At the earliest survivor-claiming age (60): the maximum 28.5% reduction,
+// applied to the deceased's PIA, THEN capped by RIB-LIM (CFR 404.338(c); POMS
+// RS 00615.320 A.3: the limit applies only when the age-reduced benefit is
+// more than both 82.5% of PIA and the deceased's reduced benefit). Fixed
+// 2026-10-21: this used to apply the 28.5% to the $2,475 cap ($1,769.63).
+check(
+  'Survivor age reduction is 28.5% at age 60 (max), on the PIA, under the RIB-LIM cap',
+  survivorBenefit(3000, 62, 60),
+  Math.min(3000 * (1 - 0.285), 3000 * 0.825)   // $2,145
+);
 
 // Midpoint: age 63y4mo is exactly halfway between 60 and survivor FRA (66y8mo) ->
-// reduction should be exactly half of 28.5% = 14.25%.
+// reduction exactly half of 28.5% = 14.25%: $3,000 x 0.8575 = $2,572.50, which
+// is over the $2,475 cap, so the cap is what's paid.
 {
   const midpointAge = (60 + SURVIVOR_FULL_RETIREMENT_AGE) / 2;
-  const base = 3000 * 0.825;
   check(
-    'Survivor age reduction is exactly half (14.25%) at the age midpoint',
+    'Survivor age reduction is exactly half (14.25%) at the age midpoint, capped by RIB-LIM',
     survivorBenefit(3000, 62, midpointAge),
-    base * (1 - 0.1425),
+    Math.min(3000 * (1 - 0.1425), 3000 * 0.825),
     0.5 // month-rounding tolerance
+  );
+  // Same midpoint, deceased claimed at FRA (no RIB-LIM): the reduction shows.
+  check(
+    'Survivor age reduction is exactly half (14.25%) at the age midpoint, no cap when the deceased claimed at FRA',
+    survivorBenefit(3000, 67, midpointAge),
+    3000 * (1 - 0.1425),
+    0.5
   );
 }
 
@@ -207,7 +214,12 @@ check(
   // the claim-at-62 plan's extra $60/mo ($1,035 vs $975) for the 36 months both
   // are alive. The wait plan is unchanged (no top-up: the higher earner dies
   // before filing).
-  check('computeSurface(): cell in the 60-70 range reflects the died-before-filing fix', cell.margin, 74487.234375, 0.5);
+  // 72,636 since the widow's-limit order fix (2026-10-21): another $1,851.61
+  // less. In the claim-at-62 plan the survivor (65) gets the $2,475 cap from
+  // the start, since $3,000 reduced for age is above it; before, the age
+  // reduction was taken off the cap for the 20 months to survivor FRA:
+  // $2,475 x 0.285/80 x (20 + 19 + ... + 1).
+  check('computeSurface(): cell in the 60-70 range reflects the died-before-filing fix', cell.margin, 72635.625, 0.5);
 
   const degenerate = cells.find((c) => c.highDeath === 60 && c.lowDeath === 60);
   check('computeSurface(): both dying before AGE_START gives margin 0, not NaN/crash', degenerate.margin, 0);
@@ -390,7 +402,10 @@ check('householdMonthly: both dead is still 0', householdMonthly(values, false, 
 {
   const v = { piaHigh: 3000, claimHigh: 62, piaLow: 1200, claimLow: 62 };
   check('householdMonthly: survivor benefit withheld below SURVIVOR_MIN_CLAIM_AGE', householdMonthly(v, true, false, 42, 62), 0);
-  check('householdMonthly: survivor benefit resumes exactly at SURVIVOR_MIN_CLAIM_AGE', householdMonthly(v, true, false, SURVIVOR_MIN_CLAIM_AGE, 62), 707.85, 0.01);
+  // $858 since the widow's-limit order fix (2026-10-21), was $707.85: low's
+  // $1,200 PIA reduced 28.5% at 60 is $858, under the $990 cap (82.5% of PIA,
+  // which beats low's $840 early benefit). It used to take 28.5% off the $990.
+  check('householdMonthly: survivor benefit resumes exactly at SURVIVOR_MIN_CLAIM_AGE', householdMonthly(v, true, false, SURVIVOR_MIN_CLAIM_AGE, 62), 858, 0.01);
 }
 
 // compute(): a nonzero age gap (derived from birth years) shifts the breakeven
@@ -660,20 +675,22 @@ check('workerBenefit: default fra still 67 (backward compat)', workerBenefit(300
 // This test catches a swap of highSurvivorFra and lowSurvivorFra in the
 // survivorBenefit() call for the "high survives, low died" branch.
 {
-  const vSurv = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 62,
+  // Low claims at FRA (67) here, not early: with an early claim the widow's
+  // limit (a cap applied after the age reduction, since 2026-10-21) would hide
+  // a ~1.8% reduction and this test could no longer see a swap.
+  const vSurv = { piaHigh: 3000, claimHigh: 70, piaLow: 1200, claimLow: 67,
                   birthYearHigh: 1955, birthYearLow: 1960 };
   // High survives, low died. High's claimHigh=70, current age=66.25 (not yet filed).
-  // survivor base: RIB-LIM on low's early claim (62), using lowFra=67:
-  //   workerBenefit(1200, 62, 67) = 1200*0.7 = 840; RIB-LIM floor = 1200*0.825 = 990 -> base=990
-  // highSurvivorFra = survivorFraFromBirthYear(1955) = 66; age=66.25 >= 66 -> 0% reduction -> inherited=990
-  const inherited = survivorBenefit(1200, 62, 66.25, Infinity,
+  // survivor base: low claimed at their FRA (67), so no RIB-LIM: base = PIA = 1200
+  // highSurvivorFra = survivorFraFromBirthYear(1955) = 66; age=66.25 >= 66 -> 0% reduction -> inherited=1200
+  const inherited = survivorBenefit(1200, 67, 66.25, Infinity,
     survivorFraFromBirthYear(1955), fraFromBirthYear(1960));
-  check('survivorBenefit: survivor age 66.25 with survivorFra=66 -> 0% reduction (already past FRA)', inherited, 990);
+  check('survivorBenefit: survivor age 66.25 with survivorFra=66 -> 0% reduction (already past FRA)', inherited, 1200);
   const got = householdMonthly(vSurv, true, false, 66.25, 66.25);
-  check('householdMonthly: mismatched birth years, high survives -- uses highSurvivorFra=66 (0% reduction at 66.25)', got, 990);
+  check('householdMonthly: mismatched birth years, high survives -- uses highSurvivorFra=66 (0% reduction at 66.25)', got, 1200);
 
   // Confirm the wrong value if survivorFra=66.667 were used instead (proves the test discriminates).
-  const wrongInherited = survivorBenefit(1200, 62, 66.25, Infinity,
+  const wrongInherited = survivorBenefit(1200, 67, 66.25, Infinity,
     survivorFraFromBirthYear(1960), fraFromBirthYear(1960));
   if (wrongInherited === inherited) {
     fail++; console.log('FAIL  test setup: wrong survivorFra gives same result -- test cannot discriminate swap');
