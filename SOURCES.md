@@ -51,11 +51,12 @@ higher earner claims at 62 and $1,260 from when they file at 70, and the
 headline goes from "breakeven 87" to "waiting wins". Claims at or after FRA
 are unchanged. Tests: `_dev/test-ss-dual-entitlement.mjs`.
 
-**Scope note (honest limitation):** assumes FRA 67 (born 1960+) for worker/
-spousal benefits; does not model the earnings test, benefit taxation, or
-divorced-spouse benefits; models both spouses as always the same current age
-(no age gap between spouses). The main chart shows only the "higher earner
-dies first" case — confirmed (2026-08-26, ~5,500-combination sweep) that this
+**Scope note (honest limitation):** uses each person's birth year to derive
+their actual worker/spousal FRA from the SSA table (added 2026-08-26); does
+not model the earnings test, benefit taxation, or divorced-spouse benefits;
+models a real age gap between spouses via birth-year inputs (added 2026-08-26).
+The main chart shows only the "higher earner dies first" case — confirmed
+(2026-08-26, ~5,500-combination sweep) that this
 is the more conservative of the two orderings (RIB-LIM only floors an
 *inherited* benefit, never a survivor's own), never overstating delay's
 payoff but understating it by up to a decade of breakeven age in some cases;
