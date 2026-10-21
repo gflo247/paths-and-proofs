@@ -28,8 +28,8 @@ const PRECACHE = [
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(PRECACHE)));
-  // Do NOT skipWaiting here — new SW waits until user clicks Refresh
-  // in the banner, preventing mid-session disruption.
+  // No skipWaiting here: core/sw-init.js asks for it once the new SW is
+  // installed, and reloads the page only if the person hasn't touched it.
 });
 
 self.addEventListener('activate', e => {
@@ -42,7 +42,7 @@ self.addEventListener('activate', e => {
   );
 });
 
-// User clicked "Refresh" in the update banner — activate immediately.
+// Sent by core/sw-init.js when a new SW has installed — activate immediately.
 self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
