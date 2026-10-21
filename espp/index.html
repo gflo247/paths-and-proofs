@@ -304,13 +304,14 @@
       </label>
       <label class="field">
         <span class="field-label">Purchase discount</span>
-        <span class="field-input"><input type="number" id="inpDiscount" value="15" min="1" max="50" step="1" inputmode="decimal"><span class="affix">%</span></span>
+        <span class="field-input"><input type="number" id="inpDiscount" value="15" min="1" max="15" step="1" inputmode="decimal"><span class="affix">%</span></span>
       </label>
       <label class="field">
         <span class="field-label">Alternative return (APY)</span>
         <span class="field-input"><input type="number" id="inpApy" value="3" min="0" max="10" step="0.1" inputmode="decimal"><span class="affix">%</span></span>
       </label>
     </div>
+    <p class="field-note">IRC §423 qualified plans cannot offer a purchase discount greater than 15% (§423(b)(6)). A higher discount means the plan is not a §423 plan, and the disqualifying/qualifying-disposition tax treatment on this page does not apply.</p>
     <p class="field-note">3–5% for a high-yield savings account or CD; 7% if you'd invest in a broad index fund instead.</p>
     <p class="field-note" id="contribNote">Biweekly paycheck deduction: $769 — 13 pay periods over 6 months.</p>
     <div class="cap-section">
@@ -598,13 +599,14 @@
     if (!isFinite(months) || months <= 0) months = 6;
     months = clamp(months, 1, 24);
     if (!isFinite(discount) || discount <= 0) discount = 15;
-    discount = clamp(discount, 1, 50);
+    discount = clamp(discount, 1, 15);
     if (!isFinite(apy) || apy < 0) apy = 0;
     apy = clamp(apy, 0, 10);
     if (!isFinite(move)) move = 0;
     move = clamp(move, PMIN, PMAX);
 
     put(inp.contribPct, contribPct);
+    put(inp.discount, discount);
     put(inp.move, move);
 
     var sched = computeSchedule(salary, contribPct, months, apy);

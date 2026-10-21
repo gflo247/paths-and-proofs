@@ -48,6 +48,9 @@ ok('typing a new cap doesn\'t lower the contribution on the way', $('inpContribP
 type('inpCapPct', '5');   // $200,000 salary, 6-month offering: 5% is $5,000
 ok('a lower cap caps the math while typing', $('statContrib').textContent === '$5,000', $('statContrib').textContent);
 ok('and clamps the contribution field on commit', commit('inpCapPct') === '5' && $('inpContribPct').value === '5', JSON.stringify($('inpContribPct').value));
+// §423 discount cap: anything over 15% is a non-qualified plan; cap enforces the statutory limit.
+ok('discount: an over-cap entry is left alone while typing', type('inpDiscount', '25') === '25', JSON.stringify($('inpDiscount').value));
+ok('discount: commit clamps it to 15', commit('inpDiscount') === '15', JSON.stringify($('inpDiscount').value));
 ok('no script errors', errors.length === 0, JSON.stringify(errors));
 
 console.log(`\n${passed} passed, ${failed} failed`);
