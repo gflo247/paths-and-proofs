@@ -355,7 +355,7 @@
     <div class="controls">
       <label class="control">
         <span class="control-label">Price move by the time you sell</span>
-        <span class="control-input"><input type="number" id="inpMove" value="0" min="-20" max="20" step="1" inputmode="decimal"><span class="affix">%</span></span>
+        <span class="control-input"><input type="number" id="inpMove" value="0" min="-20" max="20" step="1"><span class="affix">%</span></span>
       </label>
     </div>
     <div class="line-chart-wrap">
@@ -431,7 +431,7 @@
     <div class="controls">
       <label class="control">
         <span class="control-label">Price move over the holding period, if you hold</span>
-        <span class="control-input"><input type="number" id="inpHoldMove" value="0" min="-50" max="150" step="5" inputmode="decimal"><span class="affix">%</span></span>
+        <span class="control-input"><input type="number" id="inpHoldMove" value="0" min="-50" max="150" step="5"><span class="affix">%</span></span>
       </label>
     </div>
 
@@ -575,7 +575,13 @@
 
   function xPix(p) { return X0 + (p - PMIN) / (PMAX - PMIN) * (X1 - X0); }
 
-  function recompute() {
+  function recompute(e) {
+    // Don't rewrite fields while someone is typing: writing a normalized value back
+    // mid-keystroke eats input ("4." becomes "4", a lone "-" becomes "0"), and a
+    // cross-field clamp would keep the "1" on the way to "15". The math always
+    // uses the clamped values; the fields are normalized on commit (change).
+    var typing = !!(e && e.type === 'input');
+    function put(field, v) { if (!typing) field.value = v; }
     var salary = parseFloat(inp.salary.value);
     var contribPct = parseFloat(inp.contribPct.value);
     var capPct = parseFloat(inp.capPct.value);
@@ -598,8 +604,8 @@
     if (!isFinite(move)) move = 0;
     move = clamp(move, PMIN, PMAX);
 
-    inp.contribPct.value = contribPct;
-    inp.move.value = move;
+    put(inp.contribPct, contribPct);
+    put(inp.move, move);
 
     var sched = computeSchedule(salary, contribPct, months, apy);
     var hysaFinal = sched.hysaFinal;
@@ -706,7 +712,7 @@
     var holdMove = parseFloat(inp.holdMove.value);
     if (!isFinite(holdMove)) holdMove = 0;
     holdMove = clamp(holdMove, -50, 150);
-    inp.ordRate.value = ordRate; inp.ltcgRate.value = ltcgRate; inp.stateRate.value = stateRate; inp.holdMove.value = holdMove;
+    put(inp.ordRate, ordRate); put(inp.ltcgRate, ltcgRate); put(inp.stateRate, stateRate); put(inp.holdMove, holdMove);
     var ordRateFrac = (ordRate + stateRate) / 100, ltcgRateFrac = (ltcgRate + stateRate) / 100;
 
     var requiredHoldYears = Math.max(1, 2 - months / 12);
@@ -842,7 +848,10 @@
     recompute();
   });
 
-  Object.keys(inp).forEach(function (k) { inp[k].addEventListener('input', recompute); });
+  Object.keys(inp).forEach(function (k) {
+    inp[k].addEventListener('input', recompute);
+    inp[k].addEventListener('change', recompute);
+  });
   recompute();
 })();
 </script>
