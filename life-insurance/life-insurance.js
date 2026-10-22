@@ -120,7 +120,7 @@ export const inputs = [
   { id: 'discountRate', type: 'number', label: 'Discount rate (inflation-adjusted growth rate of savings)',
     min: 0, max: 6, step: 0.5, default: 2, unit: '%', group: 'assumptions',
     help: 'An inflation-adjusted rate for valuing future costs in today\'s dollars. 2% is roughly the historical real return on safe investments.' },
-  { id: 'inflation', type: 'number', label: 'Inflation (used to convert future mortgage balances to today\'s dollars)',
+  { id: 'inflation', type: 'number', label: 'Inflation (converts future mortgage balances and fixed policy payouts to today\'s dollars)',
     min: 0, max: 8, step: 0.5, default: 2.5, unit: '%', group: 'assumptions' },
   { id: 'takeHomeShare', type: 'number', label: 'Share of pay left after taxes and paycheck deductions',
     min: 40, max: 100, step: 5, default: 75, unit: '%', group: 'assumptions',
@@ -217,7 +217,10 @@ export function compute(values) {
   const needArr2 = secondary.map(r => r.need);
   const maxNeed2 = Math.max(0, ...needArr2);
 
-  const pol = fitPolicies(needArr, lastNeedYear);
+  // Policies pay fixed dollars; size them for each year's need after inflation.
+  const rawInflation = Number(values.inflation);
+  const inflation = (Number.isFinite(rawInflation) ? rawInflation : 2.5) / 100;
+  const pol = fitPolicies(needArr, lastNeedYear, inflation);
 
   const decPrefix = scenario === 'you' ? 'you' : 'spouse';
   const decAge = Number(values[decPrefix + 'Age']) || 35;
@@ -234,15 +237,17 @@ export function compute(values) {
   // Series 2: with suggested coverage, if need exists.
   if (maxNeed > 0 && pol.singlePolicy) {
     const bestPol = pol.ladder || { short: null, long: pol.singlePolicy };
+    // The chart is in today's dollars, so each payout is shown at what it would
+    // be worth then: the fixed face, less inflation.
     const coveragePoints = primary.map(r => {
-      let coverage = r.have;
+      let face = 0;
       if (pol.ladder) {
-        if (r.t < pol.ladder.short.term) coverage += pol.ladder.short.face;
-        if (r.t < pol.ladder.long.term) coverage += pol.ladder.long.face;
+        if (r.t < pol.ladder.short.term) face += pol.ladder.short.face;
+        if (r.t < pol.ladder.long.term) face += pol.ladder.long.face;
       } else {
-        if (r.t < pol.singlePolicy.term) coverage += pol.singlePolicy.face;
+        if (r.t < pol.singlePolicy.term) face += pol.singlePolicy.face;
       }
-      return { x: decAge + r.t, y: coverage };
+      return { x: decAge + r.t, y: r.have + face / Math.pow(1 + inflation, r.t) };
     });
     series.push({ name: 'With suggested policies', color: '#98c379', curve: 'step', points: coveragePoints });
   }

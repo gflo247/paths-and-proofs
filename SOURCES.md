@@ -1508,11 +1508,22 @@ ranges.
 | Spending continuation share | 80% | ⚠️ Common financial planning assumption; actual varies by household |
 | Take-home share of gross pay | 75% | ⚠️ Rough after-tax-and-deductions estimate |
 | Discount rate | 2% | ⚠️ Roughly the historical real return on safe investments |
-| Inflation | 2.5% | ⚠️ Long-run CPI average; used only for mortgage-balance conversion |
+| Inflation | 2.5% | ⚠️ Long-run CPI average; converts future mortgage balances and fixed term-policy payouts to today's dollars |
 | Minimum face amount | $100,000 | ⚠️ Reflects common insurer minimums |
 | Ladder minimum savings threshold | 15% | ⚠️ Judgment call: each extra policy carries its own fee and can miss a price break |
 | Retirement age | 65 | ⚠️ Common planning assumption |
 | "10 times pay" rule of thumb | 10x gross salary | ⚠️ Widely cited in consumer finance; shown for comparison, not as a recommendation |
+
+Policy sizing fixed for inflation 2026-10-22 — needs are in today's dollars,
+but a term policy pays a fixed dollar amount. Faces were sized and charted as
+if they kept today's value, so a suggested ladder's long policy came up short
+in the years after the short one ended ($88,227 at year 15 in the "Two
+earners, preschooler" example, at 2.5% inflation), and existing term policies
+counted at full face in every year. Faces are now sized against each year's
+need in that year's dollars, existing term policies are deflated, and the
+"with suggested policies" line shows payouts in today's dollars. Employer
+coverage (usually tied to pay) is still held at today's value. Tests:
+`_dev/test-life-inflation.mjs`.
 
 ---
 

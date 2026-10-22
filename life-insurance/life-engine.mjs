@@ -254,9 +254,12 @@ export function scenarioByYear(inputs, deceased) {
     const collegeSavingsApplied = Math.min(collegeSavings, collegeNeeds);
     let haveTotal = savings + collegeSavingsApplied + havePV;
 
-    // Deceased's individual term coverage.
+    // Deceased's individual term coverage. A term policy pays a fixed dollar
+    // amount, so in today's dollars it's worth less the later the death.
+    // (Employer coverage below is usually tied to pay, which tends to keep up
+    // with inflation, so it stays at today's value.)
     if (termCoverage > 0 && t < termYearsLeft) {
-      haveTotal += termCoverage;
+      haveTotal += termCoverage / Math.pow(1 + inflation, t);
     }
 
     // Employer coverage.
@@ -296,8 +299,14 @@ function roundFace(amt) {
 /**
  * Suggest one-policy and two-policy ladder options.
  *
- * @param {number[]} needByYear  need(t) for t = 0..N.
+ * Needs are in today's dollars, but a term policy pays a fixed dollar amount.
+ * So each face is sized against what each year's need will cost in that
+ * year's dollars, need(t) x (1 + inflation)^t; otherwise inflation leaves the
+ * policy short in its later years.
+ *
+ * @param {number[]} needByYear  need(t) for t = 0..N, in today's dollars.
  * @param {number} lastNeedYear  Last t with need > 0, or -1 if none.
+ * @param {number} [inflation=0] Yearly inflation as a fraction (0.025 = 2.5%).
  * @returns {{
  *   maxNeed: number,
  *   singlePolicy: {term: number, face: number, tailUncovered: boolean} | null,
@@ -306,7 +315,7 @@ function roundFace(amt) {
  *   smallNeed: boolean
  * }}
  */
-export function fitPolicies(needByYear, lastNeedYear) {
+export function fitPolicies(needByYear, lastNeedYear, inflation = 0) {
   const maxNeed = Math.max(0, ...needByYear);
   if (maxNeed <= 0 || lastNeedYear < 0) {
     return { maxNeed: 0, singlePolicy: null, ladder: null, smallNeed: false };
@@ -314,6 +323,8 @@ export function fitPolicies(needByYear, lastNeedYear) {
 
   const smallNeed = maxNeed < MIN_FACE;
   const termNeeded = lastNeedYear + 1; // coverage must last through lastNeedYear
+  // Each year's need in that year's dollars: what a fixed-dollar face must cover.
+  const due = needByYear.map((n, t) => n * Math.pow(1 + inflation, t));
 
   // ── One policy ──
   let singleTerm = TERMS.find(t => t >= termNeeded) || 30;
@@ -322,8 +333,8 @@ export function fitPolicies(needByYear, lastNeedYear) {
 
   // Face = rounded max need over that term.
   let singleMaxNeed = 0;
-  for (let t = 0; t < Math.min(singleTerm, needByYear.length); t++) {
-    if (needByYear[t] > singleMaxNeed) singleMaxNeed = needByYear[t];
+  for (let t = 0; t < Math.min(singleTerm, due.length); t++) {
+    if (due[t] > singleMaxNeed) singleMaxNeed = due[t];
   }
   const singleFace = roundFace(singleMaxNeed);
   const singleCoverageYears = singleFace * singleTerm;
@@ -345,21 +356,21 @@ export function fitPolicies(needByYear, lastNeedYear) {
 
       // Long face = rounded max need over [ts, tl).
       let longMax = 0;
-      for (let t = ts; t < Math.min(tl, needByYear.length); t++) {
-        if (needByYear[t] > longMax) longMax = needByYear[t];
+      for (let t = ts; t < Math.min(tl, due.length); t++) {
+        if (due[t] > longMax) longMax = due[t];
       }
       // Also need to cover through lastNeedYear if tl is capped.
       if (termNeeded > tl) {
-        for (let t = tl; t < needByYear.length; t++) {
-          if (needByYear[t] > longMax) longMax = needByYear[t];
+        for (let t = tl; t < due.length; t++) {
+          if (due[t] > longMax) longMax = due[t];
         }
       }
       const longFace = roundFace(longMax);
 
       // Short face = rounded max(0, max need over [0, ts) - longFace).
       let shortMax = 0;
-      for (let t = 0; t < Math.min(ts, needByYear.length); t++) {
-        if (needByYear[t] > shortMax) shortMax = needByYear[t];
+      for (let t = 0; t < Math.min(ts, due.length); t++) {
+        if (due[t] > shortMax) shortMax = due[t];
       }
       const shortRaw = Math.max(0, shortMax - longFace);
       if (shortRaw <= 0) continue; // no short policy needed
