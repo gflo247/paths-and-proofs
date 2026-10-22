@@ -149,10 +149,35 @@ export function computeStateIncomeTax(rules, status, income) {
   breakdown.penTaxable = penTaxable;
   breakdown.taxableSS = tSS; // set once here since resolveRetirementIncome's ssTaxableOverride (CO) may overwrite tSS above
 
+  // --- Standard deduction (computed early — needed by the stacked CG treatment) ---
+  // Each state's taxRules.standardDeduction encodes the state's own standard
+  // deduction (or the federal deduction for states that conform), an optional
+  // age-65 add-on per qualifying filer, and an optional exemption credit applied
+  // after brackets. States without this field get no deduction (status quo).
+  const nonCG = wages + iraTaxable + penTaxable + tSS;
+  const sd = rules.standardDeduction ?? null;
+  let deductible = 0;
+  if (sd?.deduction) {
+    // Use nonCG as the pre-deduction income proxy for the phase-out test; capGains
+    // may or may not fold in (depends on treatment), but nonCG is always known here.
+    let base = sd.deduction[status] ?? sd.deduction.single ?? 0;
+    if (sd.deduction.phaseout) {
+      const { threshold, rate } = sd.deduction.phaseout;
+      base = Math.max(0, base - Math.max(0, nonCG - threshold) * rate);
+    }
+    deductible += base;
+  }
+  if (sd?.age65AddOn) {
+    const addOn = status === 'mfj'
+      ? sd.age65AddOn.joint * ((age >= 65 ? 1 : 0) + (spouseAge != null && spouseAge >= 65 ? 1 : 0))
+      : (sd.age65AddOn.single ?? 0) * (age >= 65 ? 1 : 0);
+    deductible += addOn;
+  }
+  breakdown.deductible = deductible;
+
   // --- Capital gains ---
   // The capital gains input is long-term gains; every preferential rule below (the
   // percentage exclusions, AZ, VT, MT, HI) applies only to long-term gains.
-  const nonCG = wages + iraTaxable + penTaxable + tSS;
   const cg = rules.capitalGains;
   let cgOrdinary = 0, cgSeparateTax = 0;
   if (cg.treatment === "ordinary") cgOrdinary = capGains;
@@ -173,10 +198,12 @@ export function computeStateIncomeTax(rules, status, income) {
   else if (cg.treatment === "stacked") {
     // Gains taxed on their own rate ladder, stacked on top of the rest of taxable income:
     // each dollar of gain is taxed at the ladder rate for the band it lands in once the
-    // other income is counted first. MT (MCA 15-30-2103(2)): 3.0% / 4.1% on the same bands
-    // as ordinary income. HI (HRS 235-51(f)): the regular rates, capped at 7.25%.
+    // other income is counted first. The base is post-deduction (taxable income, not gross).
+    // MT (MCA 15-30-2103(2)): 3.0% / 4.1% on the same bands as ordinary income.
+    // HI (HRS 235-51(f)): the regular rates, capped at 7.25%.
     const ladder = cg.ladderByStatus[status] || cg.ladderByStatus.single;
-    cgSeparateTax = bracketTax(nonCG + capGains, ladder) - bracketTax(nonCG, ladder);
+    const taxableBase = Math.max(0, nonCG - deductible);
+    cgSeparateTax = bracketTax(taxableBase + capGains, ladder) - bracketTax(taxableBase, ladder);
   }
   else throw new Error(`relo-engine: unknown capitalGains.treatment "${cg.treatment}"`);
   breakdown.cgOrdinary = cgOrdinary;
@@ -185,10 +212,26 @@ export function computeStateIncomeTax(rules, status, income) {
   // --- Ordinary income → brackets ---
   const ordinary = nonCG + cgOrdinary;
   breakdown.ordinaryIncome = ordinary;
-  const incomeTax = bracketTax(ordinary, brackets);
+  const taxableOrdinary = Math.max(0, ordinary - deductible);
+
+  const incomeTax = bracketTax(taxableOrdinary, brackets);
   breakdown.bracketTax = incomeTax;
 
-  const tax = incomeTax + cgSeparateTax;
+  // --- Exemption credit (subtracted from tax AFTER brackets) ---
+  let exemptionCreditAmt = 0;
+  if (sd?.exemptionCredit) {
+    const ec = sd.exemptionCredit;
+    const filerCount = status === 'mfj' ? 2 : 1;
+    exemptionCreditAmt += (ec.perFiler ?? 0) * filerCount;
+    if (ec.age65Bonus) {
+      const aged65Count = (age >= 65 ? 1 : 0) +
+        (status === 'mfj' && spouseAge != null && spouseAge >= 65 ? 1 : 0);
+      exemptionCreditAmt += ec.age65Bonus * aged65Count;
+    }
+  }
+  breakdown.exemptionCredit = exemptionCreditAmt;
+
+  const tax = Math.max(0, incomeTax - exemptionCreditAmt) + cgSeparateTax;
   return { tax: Math.round(tax), breakdown };
 }
 

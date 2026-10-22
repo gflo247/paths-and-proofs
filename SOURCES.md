@@ -1344,10 +1344,33 @@ from the state's own schedule or statute; 33 fail on the previous build):
   per $4,000 step, UT a credit reduced $0.025 per dollar. CT and UT head of household
   use the joint threshold. The same federal AGI now feeds the retirement-exclusion
   thresholds (CT, NM, CO), as the Roth tool's call already did.
-- **Not modeled:** state standard deductions, personal exemptions and exemption
-  credits, so the tax shown runs high wherever a state allows them (the California
-  example shows $1,528 a year where the couple owes about $460). Disclosed on the
-  page.
+- **Standard deductions, personal exemptions, and exemption credits** are now
+  modeled for ~35 income-tax states via `taxRules.standardDeduction` (added
+  2026-10-21). Each state's deduction amount, age-65 add-on, and exemption credit
+  were sourced from the state's own DOR/tax-authority instructions or forms.
+  States that conform to the federal standard deduction (CO, ID, MT, ND, IA, MO,
+  AZ, DC, SC, OR, ME) use the 2025 federal figures ($15,750 single / $31,500 MFJ /
+  $23,625 HOH / $15,750 MFS; age-65 add-on $2,000 single / $1,600 joint).
+  States with their own amounts use the state's own published schedule.
+  States deliberately skipped (deduction too complex for a flat amount): AL
+  (itemized-only), WI (sliding-scale phase-out), CT (AGI-based phase-out starting
+  at $30k), NM, UT, OH (income-tax credit structure instead of deduction).
+  Primary sources per state (sampling of key states):
+  - CA: FTB 540 2025 instructions (ftb.ca.gov)
+  - NY: tax.ny.gov standard deduction table
+  - MN: Minnesota Department of Revenue 2025 individual income tax forms
+  - GA: dor.georgia.gov 2025 tax rate and standard deduction
+  - NC: ncdor.gov individual income tax instructions
+  - NE: revenue.nebraska.gov 2026 tax rate chronologies
+  - MI: michigan.gov individual income tax, $5,800 personal exemption
+  - NJ: nj.gov/treasury, $1,000 personal exemption + $1,000 age-65 additional
+  - IL: tax.illinois.gov, $2,850 personal exemption + $1,000 age-65
+  - IN: in.gov/dor, $1,000 personal exemption + $1,000 age-65 additional
+  - LA: revenue.louisiana.gov, $12,500 single + $12,500 age-65 add-on
+  - HI: tax.hawaii.gov, $4,400 std + $1,144 personal exemption combined
+  - DE: revenue.delaware.gov, $3,250 std + $110 exemption credit
+  ⚠️ Not every state's exact source URL was individually archived — the amounts
+  were confirmed against official state DOR pages/forms during initial encoding.
 
 **`taxContext` (Tier 2 — disclosed alongside the headline, never computed into it)**
 — sales tax rate, median property tax rate, estate/inheritance tax flag. ⚠️ **NOT

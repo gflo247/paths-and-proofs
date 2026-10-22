@@ -112,7 +112,10 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 65, "cap": 6000}
+      {
+       "minAge": 65,
+       "cap": 6000
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -276,6 +279,18 @@
     "minDeduction": null,
     "maxGainEligible": null,
     "sourceRestricted": false
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15750,
+     "mfj": 31500,
+     "mfs": 15750,
+     "hoh": 23625
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1600
+    }
    }
   },
   "taxContext": {
@@ -426,7 +441,10 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 59.5, "cap": 6000}
+      {
+       "minAge": 59.5,
+       "cap": 6000
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -443,6 +461,14 @@
     "minDeduction": null,
     "maxGainEligible": null,
     "sourceRestricted": false
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 2470,
+     "mfj": 4940,
+     "mfs": 2470,
+     "hoh": 2470
+    }
    }
   },
   "taxContext": {
@@ -696,6 +722,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 5706,
+     "mfj": 11412,
+     "mfs": 5706,
+     "hoh": 11412
+    },
+    "exemptionCredit": {
+     "perFiler": 153,
+     "age65Bonus": 153
+    }
    }
   },
   "taxContext": {
@@ -771,8 +809,14 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 55, "cap": 20000},
-      {"minAge": 65, "cap": 24000}
+      {
+       "minAge": 55,
+       "cap": 20000
+      },
+      {
+       "minAge": 65,
+       "cap": 24000
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -786,6 +830,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15750,
+     "mfj": 31500,
+     "mfs": 15750,
+     "hoh": 23625
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1600
+    }
    }
   },
   "taxContext": {
@@ -995,28 +1051,88 @@
      "iraWeightPct": 0.75,
      "steps": {
       "single": [
-       {"upTo": 74999, "pct": 1},
-       {"upTo": 77499, "pct": 0.85},
-       {"upTo": 79999, "pct": 0.70},
-       {"upTo": 82499, "pct": 0.55},
-       {"upTo": 84999, "pct": 0.40},
-       {"upTo": 87499, "pct": 0.25},
-       {"upTo": 89999, "pct": 0.10},
-       {"upTo": 94999, "pct": 0.05},
-       {"upTo": 99999, "pct": 0.025},
-       {"upTo": null, "pct": 0}
+       {
+        "upTo": 74999,
+        "pct": 1
+       },
+       {
+        "upTo": 77499,
+        "pct": 0.85
+       },
+       {
+        "upTo": 79999,
+        "pct": 0.7
+       },
+       {
+        "upTo": 82499,
+        "pct": 0.55
+       },
+       {
+        "upTo": 84999,
+        "pct": 0.4
+       },
+       {
+        "upTo": 87499,
+        "pct": 0.25
+       },
+       {
+        "upTo": 89999,
+        "pct": 0.1
+       },
+       {
+        "upTo": 94999,
+        "pct": 0.05
+       },
+       {
+        "upTo": 99999,
+        "pct": 0.025
+       },
+       {
+        "upTo": null,
+        "pct": 0
+       }
       ],
       "joint": [
-       {"upTo": 99999, "pct": 1},
-       {"upTo": 104999, "pct": 0.85},
-       {"upTo": 109999, "pct": 0.70},
-       {"upTo": 114999, "pct": 0.55},
-       {"upTo": 119999, "pct": 0.40},
-       {"upTo": 124999, "pct": 0.25},
-       {"upTo": 129999, "pct": 0.10},
-       {"upTo": 139999, "pct": 0.05},
-       {"upTo": 149999, "pct": 0.025},
-       {"upTo": null, "pct": 0}
+       {
+        "upTo": 99999,
+        "pct": 1
+       },
+       {
+        "upTo": 104999,
+        "pct": 0.85
+       },
+       {
+        "upTo": 109999,
+        "pct": 0.7
+       },
+       {
+        "upTo": 114999,
+        "pct": 0.55
+       },
+       {
+        "upTo": 119999,
+        "pct": 0.4
+       },
+       {
+        "upTo": 124999,
+        "pct": 0.25
+       },
+       {
+        "upTo": 129999,
+        "pct": 0.1
+       },
+       {
+        "upTo": 139999,
+        "pct": 0.05
+       },
+       {
+        "upTo": 149999,
+        "pct": 0.025
+       },
+       {
+        "upTo": null,
+        "pct": 0
+       }
       ]
      }
     }
@@ -1217,7 +1333,10 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 60, "cap": 12500}
+      {
+       "minAge": 60,
+       "cap": 12500
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -1230,6 +1349,17 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 3250,
+     "mfj": 6500,
+     "mfs": 3250,
+     "hoh": 3250
+    },
+    "exemptionCredit": {
+     "perFiler": 110
+    }
    }
   },
   "taxContext": {
@@ -1373,8 +1503,14 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 62, "cap": 35000},
-      {"minAge": 65, "cap": 65000}
+      {
+       "minAge": 62,
+       "cap": 35000
+      },
+      {
+       "minAge": 65,
+       "cap": 65000
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -1387,6 +1523,14 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 12000,
+     "mfj": 24000,
+     "mfs": 12000,
+     "hoh": 12000
+    }
    }
   },
   "taxContext": {
@@ -1804,6 +1948,18 @@
       }
      ]
     }
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 5544,
+     "mfj": 11088,
+     "mfs": 5544,
+     "hoh": 7568
+    },
+    "age65AddOn": {
+     "single": 1144,
+     "joint": 1144
+    }
    }
   },
   "taxContext": {
@@ -1897,6 +2053,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15750,
+     "mfj": 31500,
+     "mfs": 15750,
+     "hoh": 23625
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1600
+    }
    }
   },
   "taxContext": {
@@ -1969,6 +2137,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 2850,
+     "mfj": 5700,
+     "mfs": 2850,
+     "hoh": 2850
+    },
+    "age65AddOn": {
+     "single": 1000,
+     "joint": 1000
+    }
    }
   },
   "taxContext": {
@@ -2048,6 +2228,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 1000,
+     "mfj": 2000,
+     "mfs": 1000,
+     "hoh": 1000
+    },
+    "age65AddOn": {
+     "single": 1000,
+     "joint": 1000
+    }
    }
   },
   "taxContext": {
@@ -2122,6 +2314,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15750,
+     "mfj": 31500,
+     "mfs": 15750,
+     "hoh": 23625
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1600
+    }
    }
   },
   "taxContext": {
@@ -2215,6 +2419,14 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 3605,
+     "mfj": 8240,
+     "mfs": 4120,
+     "hoh": 6180
+    }
    }
   },
   "taxContext": {
@@ -2285,7 +2497,10 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 0, "cap": 31110}
+      {
+       "minAge": 0,
+       "cap": 31110
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -2298,6 +2513,14 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 3270,
+     "mfj": 3270,
+     "mfs": 3270,
+     "hoh": 3270
+    }
    }
   },
   "taxContext": {
@@ -2369,7 +2592,10 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 65, "cap": 12000}
+      {
+       "minAge": 65,
+       "cap": 12000
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -2382,6 +2608,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 12500,
+     "mfj": 25000,
+     "mfs": 12500,
+     "hoh": 25000
+    },
+    "age65AddOn": {
+     "single": 12500,
+     "joint": 12500
+    }
    }
   },
   "taxContext": {
@@ -2513,6 +2751,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15000,
+     "mfj": 30000,
+     "mfs": 15000,
+     "hoh": 22500
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1600
+    }
    }
   },
   "taxContext": {
@@ -2771,6 +3021,14 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 3350,
+     "mfj": 6700,
+     "mfs": 3350,
+     "hoh": 6700
+    }
    }
   },
   "taxContext": {
@@ -2863,6 +3121,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 4400,
+     "mfj": 8800,
+     "mfs": 4400,
+     "hoh": 6800
+    },
+    "age65AddOn": {
+     "single": 700,
+     "joint": 700
+    }
    }
   },
   "taxContext": {
@@ -2950,6 +3220,14 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 5800,
+     "mfj": 11600,
+     "mfs": 5800,
+     "hoh": 5800
+    }
    }
   },
   "taxContext": {
@@ -3093,6 +3371,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 14950,
+     "mfj": 29900,
+     "mfs": 14950,
+     "hoh": 22500
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1550
+    }
    }
   },
   "taxContext": {
@@ -3187,6 +3477,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 8300,
+     "mfj": 16600,
+     "mfs": 8300,
+     "hoh": 12900
+    },
+    "age65AddOn": {
+     "single": 1500,
+     "joint": 1500
+    }
    }
   },
   "taxContext": {
@@ -3404,6 +3706,18 @@
     "minDeduction": null,
     "maxGainEligible": null,
     "sourceRestricted": false
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15750,
+     "mfj": 31500,
+     "mfs": 15750,
+     "hoh": 23625
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1600
+    }
    }
   },
   "taxContext": {
@@ -3540,6 +3854,18 @@
       }
      ]
     }
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15750,
+     "mfj": 31500,
+     "mfs": 15750,
+     "hoh": 23625
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1600
+    }
    }
   },
   "taxContext": {
@@ -3653,6 +3979,21 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 8600,
+     "mfj": 17200,
+     "mfs": 8600,
+     "hoh": 12600
+    },
+    "age65AddOn": {
+     "single": 2050,
+     "joint": 1700
+    },
+    "exemptionCredit": {
+     "perFiler": 171
+    }
    }
   },
   "taxContext": {
@@ -4002,16 +4343,42 @@
      "thresholdExcludesSS": true,
      "steps": {
       "single": [
-       {"upTo": 100000, "pct": 1, "capped": true},
-       {"upTo": 125000, "pct": 0.375},
-       {"upTo": 150000, "pct": 0.1875},
-       {"upTo": null, "pct": 0}
+       {
+        "upTo": 100000,
+        "pct": 1,
+        "capped": true
+       },
+       {
+        "upTo": 125000,
+        "pct": 0.375
+       },
+       {
+        "upTo": 150000,
+        "pct": 0.1875
+       },
+       {
+        "upTo": null,
+        "pct": 0
+       }
       ],
       "joint": [
-       {"upTo": 100000, "pct": 1, "capped": true},
-       {"upTo": 125000, "pct": 0.5},
-       {"upTo": 150000, "pct": 0.25},
-       {"upTo": null, "pct": 0}
+       {
+        "upTo": 100000,
+        "pct": 1,
+        "capped": true
+       },
+       {
+        "upTo": 125000,
+        "pct": 0.5
+       },
+       {
+        "upTo": 150000,
+        "pct": 0.25
+       },
+       {
+        "upTo": null,
+        "pct": 0
+       }
       ]
      }
     }
@@ -4021,6 +4388,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 1000,
+     "mfj": 2000,
+     "mfs": 1000,
+     "hoh": 1000
+    },
+    "age65AddOn": {
+     "single": 1000,
+     "joint": 1000
+    }
    }
   },
   "taxContext": {
@@ -4206,26 +4585,80 @@
      "hohMapsToJoint": true,
      "steps": {
       "single": [
-       {"upTo": 18000, "amt": 8000},
-       {"upTo": 19500, "amt": 7000},
-       {"upTo": 21000, "amt": 6000},
-       {"upTo": 22500, "amt": 5000},
-       {"upTo": 24000, "amt": 4000},
-       {"upTo": 25500, "amt": 3000},
-       {"upTo": 27000, "amt": 2000},
-       {"upTo": 28500, "amt": 1000},
-       {"upTo": null, "amt": 0}
+       {
+        "upTo": 18000,
+        "amt": 8000
+       },
+       {
+        "upTo": 19500,
+        "amt": 7000
+       },
+       {
+        "upTo": 21000,
+        "amt": 6000
+       },
+       {
+        "upTo": 22500,
+        "amt": 5000
+       },
+       {
+        "upTo": 24000,
+        "amt": 4000
+       },
+       {
+        "upTo": 25500,
+        "amt": 3000
+       },
+       {
+        "upTo": 27000,
+        "amt": 2000
+       },
+       {
+        "upTo": 28500,
+        "amt": 1000
+       },
+       {
+        "upTo": null,
+        "amt": 0
+       }
       ],
       "joint": [
-       {"upTo": 30000, "amt": 8000},
-       {"upTo": 33000, "amt": 7000},
-       {"upTo": 36000, "amt": 6000},
-       {"upTo": 39000, "amt": 5000},
-       {"upTo": 42000, "amt": 4000},
-       {"upTo": 45000, "amt": 3000},
-       {"upTo": 48000, "amt": 2000},
-       {"upTo": 51000, "amt": 1000},
-       {"upTo": null, "amt": 0}
+       {
+        "upTo": 30000,
+        "amt": 8000
+       },
+       {
+        "upTo": 33000,
+        "amt": 7000
+       },
+       {
+        "upTo": 36000,
+        "amt": 6000
+       },
+       {
+        "upTo": 39000,
+        "amt": 5000
+       },
+       {
+        "upTo": 42000,
+        "amt": 4000
+       },
+       {
+        "upTo": 45000,
+        "amt": 3000
+       },
+       {
+        "upTo": 48000,
+        "amt": 2000
+       },
+       {
+        "upTo": 51000,
+        "amt": 1000
+       },
+       {
+        "upTo": null,
+        "amt": 0
+       }
       ]
      }
     }
@@ -4308,28 +4741,76 @@
    "nyc": {
     "bracketsByStatus": {
      "single": [
-      { "rate": 0.03078, "upTo": 12000 },
-      { "rate": 0.03762, "upTo": 25000 },
-      { "rate": 0.03819, "upTo": 50000 },
-      { "rate": 0.03876, "upTo": null }
+      {
+       "rate": 0.03078,
+       "upTo": 12000
+      },
+      {
+       "rate": 0.03762,
+       "upTo": 25000
+      },
+      {
+       "rate": 0.03819,
+       "upTo": 50000
+      },
+      {
+       "rate": 0.03876,
+       "upTo": null
+      }
      ],
      "mfj": [
-      { "rate": 0.03078, "upTo": 21600 },
-      { "rate": 0.03762, "upTo": 45000 },
-      { "rate": 0.03819, "upTo": 90000 },
-      { "rate": 0.03876, "upTo": null }
+      {
+       "rate": 0.03078,
+       "upTo": 21600
+      },
+      {
+       "rate": 0.03762,
+       "upTo": 45000
+      },
+      {
+       "rate": 0.03819,
+       "upTo": 90000
+      },
+      {
+       "rate": 0.03876,
+       "upTo": null
+      }
      ],
      "mfs": [
-      { "rate": 0.03078, "upTo": 12000 },
-      { "rate": 0.03762, "upTo": 25000 },
-      { "rate": 0.03819, "upTo": 50000 },
-      { "rate": 0.03876, "upTo": null }
+      {
+       "rate": 0.03078,
+       "upTo": 12000
+      },
+      {
+       "rate": 0.03762,
+       "upTo": 25000
+      },
+      {
+       "rate": 0.03819,
+       "upTo": 50000
+      },
+      {
+       "rate": 0.03876,
+       "upTo": null
+      }
      ],
      "hoh": [
-      { "rate": 0.03078, "upTo": 14400 },
-      { "rate": 0.03762, "upTo": 30000 },
-      { "rate": 0.03819, "upTo": 60000 },
-      { "rate": 0.03876, "upTo": null }
+      {
+       "rate": 0.03078,
+       "upTo": 14400
+      },
+      {
+       "rate": 0.03762,
+       "upTo": 30000
+      },
+      {
+       "rate": 0.03819,
+       "upTo": 60000
+      },
+      {
+       "rate": 0.03876,
+       "upTo": null
+      }
      ]
     },
     "source": "NY Form IT-201-I (2025 instructions, the latest published year), p.40, \"New York City tax rate schedule\""
@@ -4505,7 +4986,10 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 59.5, "cap": 20000}
+      {
+       "minAge": 59.5,
+       "cap": 20000
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -4520,6 +5004,14 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 8000,
+     "mfj": 16050,
+     "mfs": 8000,
+     "hoh": 11200
+    }
    }
   },
   "taxContext": {
@@ -4592,6 +5084,14 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 12750,
+     "mfj": 25500,
+     "mfs": 12750,
+     "hoh": 19125
+    }
    }
   },
   "taxContext": {
@@ -4709,6 +5209,18 @@
     "minDeduction": null,
     "maxGainEligible": null,
     "sourceRestricted": false
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15750,
+     "mfj": 31500,
+     "mfs": 15750,
+     "hoh": 23625
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1600
+    }
    }
   },
   "taxContext": {
@@ -4973,7 +5485,10 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 65, "cap": 10000}
+      {
+       "minAge": 65,
+       "cap": 10000
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -4986,6 +5501,14 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 6350,
+     "mfj": 12700,
+     "mfs": 6350,
+     "hoh": 9350
+    }
    }
   },
   "taxContext": {
@@ -5035,20 +5558,44 @@
    "metro": {
     "bracketsByStatus": {
      "single": [
-      { "rate": 0, "upTo": 125000 },
-      { "rate": 0.01, "upTo": null }
+      {
+       "rate": 0,
+       "upTo": 125000
+      },
+      {
+       "rate": 0.01,
+       "upTo": null
+      }
      ],
      "mfj": [
-      { "rate": 0, "upTo": 200000 },
-      { "rate": 0.01, "upTo": null }
+      {
+       "rate": 0,
+       "upTo": 200000
+      },
+      {
+       "rate": 0.01,
+       "upTo": null
+      }
      ],
      "mfs": [
-      { "rate": 0, "upTo": 125000 },
-      { "rate": 0.01, "upTo": null }
+      {
+       "rate": 0,
+       "upTo": 125000
+      },
+      {
+       "rate": 0.01,
+       "upTo": null
+      }
      ],
      "hoh": [
-      { "rate": 0, "upTo": 200000 },
-      { "rate": 0.01, "upTo": null }
+      {
+       "rate": 0,
+       "upTo": 200000
+      },
+      {
+       "rate": 0.01,
+       "upTo": null
+      }
      ]
     },
     "source": "Official 2025 Form MET-40 (Rev. 01/21/2026), Metro Supportive Housing Services Personal Income Tax Return, Full-Year Resident -- 'Tax (line 5 x 1%)', 'Metro SHS income threshold exemption ($125K for single; $200K for joint)'. Filing-status grouping (single/MFS -> single; MFJ/HOH/qualifying surviving spouse -> joint) confirmed from the same form's own filing-status checkboxes."
@@ -5056,24 +5603,60 @@
    "multnomah": {
     "bracketsByStatus": {
      "single": [
-      { "rate": 0, "upTo": 125000 },
-      { "rate": 0.015, "upTo": 250000 },
-      { "rate": 0.03, "upTo": null }
+      {
+       "rate": 0,
+       "upTo": 125000
+      },
+      {
+       "rate": 0.015,
+       "upTo": 250000
+      },
+      {
+       "rate": 0.03,
+       "upTo": null
+      }
      ],
      "mfj": [
-      { "rate": 0, "upTo": 200000 },
-      { "rate": 0.015, "upTo": 400000 },
-      { "rate": 0.03, "upTo": null }
+      {
+       "rate": 0,
+       "upTo": 200000
+      },
+      {
+       "rate": 0.015,
+       "upTo": 400000
+      },
+      {
+       "rate": 0.03,
+       "upTo": null
+      }
      ],
      "mfs": [
-      { "rate": 0, "upTo": 125000 },
-      { "rate": 0.015, "upTo": 250000 },
-      { "rate": 0.03, "upTo": null }
+      {
+       "rate": 0,
+       "upTo": 125000
+      },
+      {
+       "rate": 0.015,
+       "upTo": 250000
+      },
+      {
+       "rate": 0.03,
+       "upTo": null
+      }
      ],
      "hoh": [
-      { "rate": 0, "upTo": 200000 },
-      { "rate": 0.015, "upTo": 400000 },
-      { "rate": 0.03, "upTo": null }
+      {
+       "rate": 0,
+       "upTo": 200000
+      },
+      {
+       "rate": 0.015,
+       "upTo": 400000
+      },
+      {
+       "rate": 0.03,
+       "upTo": null
+      }
      ]
     },
     "source": "Official 'Updated 1/05/26' 2026 Multnomah County Preschool For All Personal Income Tax Tables (multco.us) -- rate/threshold reconstructed by walking the table's implied marginal rate across every income band and cross-checked exactly against its own stated formulas ('$9,375 plus 3% of excess over $500,000' single, '$6,000 plus 3% of excess over $500,000' joint). Applies ON TOP of Metro's tax for Multnomah County residents -- Multnomah is a subset of Metro's 3-county district, not a separate/exclusive choice."
@@ -5167,6 +5750,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15750,
+     "mfj": 31500,
+     "mfs": 15750,
+     "hoh": 23625
+    },
+    "age65AddOn": {
+     "single": 1200,
+     "joint": 1000
+    }
    }
   },
   "taxContext": {
@@ -5382,6 +5977,14 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 10900,
+     "mfj": 21800,
+     "mfs": 10900,
+     "hoh": 16350
+    }
    }
   },
   "taxContext": {
@@ -5486,6 +6089,18 @@
     "minDeduction": null,
     "maxGainEligible": null,
     "sourceRestricted": false
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15000,
+     "mfj": 30000,
+     "mfs": 15000,
+     "hoh": 22500
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1600
+    }
    }
   },
   "taxContext": {
@@ -5931,6 +6546,18 @@
     "minDeduction": 5000,
     "maxGainEligible": null,
     "sourceRestricted": false
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 7650,
+     "mfj": 15300,
+     "mfs": 7650,
+     "hoh": 11450
+    },
+    "age65AddOn": {
+     "single": 1250,
+     "joint": 1250
+    }
    }
   },
   "taxContext": {
@@ -6079,6 +6706,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 9680,
+     "mfj": 19360,
+     "mfs": 9680,
+     "hoh": 9680
+    },
+    "age65AddOn": {
+     "single": 800,
+     "joint": 800
+    }
    }
   },
   "taxContext": {
@@ -6313,7 +6952,10 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 65, "cap": 8000}
+      {
+       "minAge": 65,
+       "cap": 8000
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -6327,6 +6969,14 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 2000,
+     "mfj": 4000,
+     "mfs": 2000,
+     "hoh": 2000
+    }
    }
   },
   "taxContext": {
@@ -6458,7 +7108,10 @@
      "capJoint": null,
      "cliffType": "ageTieredCap",
      "perPersonTiers": [
-      {"minAge": 67, "cap": 24000}
+      {
+       "minAge": 67,
+       "cap": 24000
+      }
      ],
      "cliffAGI": null,
      "fullBelowAGI": null,
@@ -6737,6 +7390,18 @@
    },
    "capitalGains": {
     "treatment": "ordinary"
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15000,
+     "mfj": 30000,
+     "mfs": 15000,
+     "hoh": 22500
+    },
+    "age65AddOn": {
+     "single": 2000,
+     "joint": 1600
+    }
    }
   },
   "taxContext": {
