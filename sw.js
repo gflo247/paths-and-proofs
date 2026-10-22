@@ -1,8 +1,14 @@
-// Bump CACHE_NAME on every deploy that touches CSS or any PRECACHE entry —
-// this is what tells browsers to fetch and install the new version.
-const CACHE_NAME = '2026-10-21e';
+// Bump CACHE_NAME when the PRECACHE list changes (a file added, renamed or
+// removed), or when a font or the vendored d3 changes -- this is what tells
+// browsers to fetch and install the new version. Pages, styles and scripts are
+// network-first, so their edits reach people without a bump; the cached copies
+// are only used offline, and every online load refreshes them.
+// `npm run verify` (_dev/check-precache.mjs) checks that every file a page
+// loads is listed here and that every listed file exists.
+const CACHE_NAME = '2026-10-21f';
 
 const PRECACHE = [
+  // Pages
   '/',
   '/404.html',
   '/roth-conversion/',
@@ -11,10 +17,31 @@ const PRECACHE = [
   '/relocation/',
   '/medicare/',
   '/life-insurance/',
+  // Styles
   '/core/page.css',
   '/core/tokens.css',
   '/core/components.css',
   '/core/fonts.css',
+  // Scripts the pages load (without these, a cached page opens offline with no calculator)
+  '/core/app.js',
+  '/core/bootstrap.js',
+  '/core/chart.js',
+  '/core/contract.js',
+  '/core/controls.js',
+  '/core/finance.js',
+  '/core/retirement-rules.js',
+  '/core/share-link.js',
+  '/core/summary.js',
+  '/core/sw-init.js',
+  '/core/theme.js',
+  '/social-security-couples/social-security.js',
+  '/relocation/relocation.js',
+  '/relocation/relo-engine.mjs',
+  '/medicare/medicare.js',
+  '/medicare/medicare-engine.mjs',
+  '/life-insurance/life-insurance.js',
+  '/life-insurance/life-engine.mjs',
+  // Vendor and fonts: cache-first (see below)
   '/core/vendor/d3.min.js',
   '/core/fonts/fraunces-latin-wght-normal.woff2',
   '/core/fonts/fraunces-latin-wght-italic.woff2',
@@ -47,24 +74,36 @@ self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
+// Fonts and the vendored d3 only change with a CACHE_NAME bump: cache-first.
+const cacheFirst = path => path.startsWith('/core/fonts/') || path.startsWith('/core/vendor/');
+
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (url.origin !== location.origin) return; // don't intercept CDN
+  if (url.origin !== location.origin || e.request.method !== 'GET') return; // don't intercept CDN or non-GET
 
-  // Navigation requests (HTML): network-first so users always get latest content.
-  // Falls back to cache when offline: serve the cached page if it exists, otherwise
-  // serve the cached 404 page (better than a blank screen for broken URLs offline).
-  if (e.request.mode === 'navigate') {
-    e.respondWith(
-      fetch(e.request).catch(() =>
-        caches.match(e.request).then(r => r || caches.match('/404.html'))
-      )
-    );
+  if (cacheFirst(url.pathname)) {
+    e.respondWith(caches.match(e.request).then(cached => cached || fetch(e.request)));
     return;
   }
 
-  // CSS and other same-origin assets: cache-first.
+  // Pages, styles and scripts: network-first, so people always get the latest
+  // and a page never runs with older styles or scripts than its HTML. Each
+  // successful response refreshes the cached copy, which is used only when the
+  // network fails: the cached page if there is one, otherwise the cached 404
+  // page for a navigation (better than a blank screen offline).
+  const navigate = e.request.mode === 'navigate';
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    fetch(e.request)
+      .then(res => {
+        if (res.status === 200 && res.type === 'basic') {
+          const copy = res.clone();
+          e.waitUntil(caches.open(CACHE_NAME).then(c => c.put(e.request, copy)));
+        }
+        return res;
+      })
+      .catch(() =>
+        caches.match(e.request, { ignoreSearch: navigate })
+          .then(r => r || (navigate ? caches.match('/404.html') : Response.error()))
+      )
   );
 });
