@@ -42,15 +42,24 @@ taxRules: {
   // for those threshold lookups (MFS & HoH use single-level phase-out thresholds).
 
   socialSecurity:
-    { taxed: false }                                  // FL, NJ, MD, PA, WA, ...
+    { taxed: false }                                  // FL, NJ, MD, PA, WA, AR, ...
     | { taxed: true,
-        // SS is taxable, but exempt below an AGI threshold, phasing in above.
+        // What a state can tax is the federally taxable part of the benefit (IRS Pub 915
+        // worksheet), and its thresholds test FEDERAL AGI (other income + that part).
+        // Exempt at or below the threshold; above it, taxable per phaseOut.
         exemptBelowAGI: { single: <num>, joint: <num> },
-        phaseInAboveAGI: { single: <num>, joint: <num> } | null,
-        // What fraction of SS benefits becomes taxable once fully phased in (state rule).
-        // Most SS-taxing states cap inclusion at the federal 0.85; some differ.
-        maxTaxableFraction: <0..1>                     // CT, MN, ...
-      },
+        hohMapsToJoint: <bool>,                        // CT, NM, UT: HoH uses the joint threshold
+        phaseOut: null                                  // hard threshold (CT, NM, RI)
+          | { type: "linear", width: <num> }            // VT: straight line over $10,000
+          | { type: "stepped", step: <num>, pctPerStep: <0..1> }  // MN: 10% per $4,000 or fraction
+          | { type: "creditReduction", perDollar: <num> },        // UT: credit less $0.025/$; flat-rate states only
+        // Cap on the taxable share of the benefit (CT 0.25); 0.85 elsewhere, which the
+        // federal figure never exceeds.
+        maxTaxableFraction: <0..1>,
+        ssAgeGate: <num>                                // RI: exemption needs full retirement age
+      }
+    | { taxed: true, followsFederalFormula: true }      // MT
+    | { taxed: true, sharesRetirementCap: true, ... }   // CO (resolved in core/retirement-rules.js),
 
   // IRA / 401(k) / Roth-conversion WITHDRAWAL income.
   retirementIncome: {
@@ -97,6 +106,10 @@ taxRules: {
     | { treatment: "separateTax",                        // WA: own excise, ignores brackets
         exemptBelow: <num>,                              // WA 278000
         ladder: [ {rate, upTo}, ... ] }                  // WA 7% to 1M, 9.9% above
+    | { treatment: "stacked",                            // MT 3.0%/4.1%, HI capped at 7.25%
+        ladderByStatus: { single|mfj|mfs|hoh: [ {rate, upTo}, ... ] } }
+                                                         // gains taxed on their own ladder,
+                                                         // positioned on top of other income
 }
 ```
 
@@ -106,7 +119,8 @@ Given a filing status and an income vector {ss, iraWithdrawal, pension, capGains
 
 1. Start `ordinaryIncome = wages + iraWithdrawal (if taxable per rules) + pension (if taxable)
    + taxableSS + capGains (unless capGains has its own treatment)`.
-2. Apply `socialSecurity` rule → `taxableSS`.
+2. Apply `socialSecurity` rule → `taxableSS` (from the federally taxable part of the
+   benefit, thresholds tested on federal AGI).
 3. Apply `retirementIncome` rule to `iraWithdrawal`:
    - "taxed" → fully in. "ageExempt" & age≥gate → out. "exclusion" → subtract the
      allowed exclusion (after cliff/phaseout math; and only if NOT excludesIRA).
@@ -116,12 +130,16 @@ Given a filing status and an income vector {ss, iraWithdrawal, pension, capGains
    - "excludedPct" → (1 - pct) × capGains added to ordinaryIncome.
    - "separateTax" → capGains taxed on its OWN ladder (above exemptBelow), NOT in brackets;
      and excluded from ordinaryIncome entirely.
+   - "stacked" → capGains taxed on its own ladder, each dollar at the rate for the band it
+     lands in once the other income is counted first; excluded from ordinaryIncome.
 6. Run `ordinaryIncome` through `bracketsByStatus[status]` → income tax.
-7. Add any separateTax cap-gains tax. Result = state income tax (Tier 1).
+7. Add any separateTax / stacked cap-gains tax. Result = state income tax (Tier 1), before
+   state standard deductions, personal exemptions and exemption credits (not modeled).
 
-Note: cliff/phaseout tests use AGI ≈ the full income vector total (the same quantity the
-state uses), which is why a large IRA withdrawal can itself trip NJ's cliff — the tool
-models that interaction rather than hand-waving it.
+Note: cliff/phaseout tests use federal AGI — the income vector with only the federally
+taxable part of Social Security (NJ and VA back Social Security out entirely, via
+thresholdExcludesSS) — which is why a large IRA withdrawal can itself trip NJ's cliff; the
+tool models that interaction rather than hand-waving it.
 
 ## `taxContext` (Tier 2 — disclosed, optionally estimated, never in headline)
 

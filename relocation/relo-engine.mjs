@@ -33,30 +33,55 @@ function bracketTax(amount, brackets) {
   return tax;
 }
 
-// Taxable Social Security under a state's threshold/phase-in rule.
+// Taxable Social Security under a state's threshold/phase-out rule.
+// Every Social Security-taxing state starts from FEDERAL adjusted gross income, which
+// includes only the federally taxable part of the benefit (the IRS Pub 915 worksheet,
+// federalTaxableSS) — not 85% of every benefit, and not the whole benefit. So both the
+// amount a state can tax (`base`) and the income its thresholds are tested against
+// (`fedAGI`) are the federal figures. Fixed 2026-10-21: this used to tax 85% of the
+// benefit and test thresholds against income plus the WHOLE benefit, which overstated
+// the tax for anyone below the federal 85% tier and tripped thresholds early.
 // qualAge: the age used to test a state's OWN age-gate on its SS exemption (RI is the
 // first state confirmed to need one — see ssAgeGate below). Separate from `age`/
 // `spouseAge` used elsewhere in this file for per-spouse-summed cliffs (ageTieredCap
 // etc.) — this is a single all-or-nothing eligibility test, not a per-person amount to
 // sum, so the caller passes in whichever single age value is appropriate (see call site).
-function taxableSS(ssRule, ssBenefit, agiProxy, status, otherIncome, rawStatus, qualAge) {
+// flatRate: the state's single bracket rate, needed only by the credit-style phase-out
+// (UT), which is defined in tax dollars rather than in income.
+function taxableSS(ssRule, ssBenefit, otherIncome, bucket, rawStatus, qualAge, flatRate) {
   if (!ssRule.taxed || ssBenefit <= 0) return 0;
-  if (ssRule.followsFederalFormula) return federalTaxableSS(ssBenefit, otherIncome, rawStatus);
-  const maxTaxable = ssBenefit * (ssRule.maxTaxableFraction ?? 0.85);
+  const fedTaxable = federalTaxableSS(ssBenefit, otherIncome, rawStatus);
+  if (ssRule.followsFederalFormula) return fedTaxable;
+  // CT: never more than 25% of the benefit (maxTaxableFraction). For the others the
+  // field is 0.85, which the federal figure never exceeds.
+  const base = Math.min(fedTaxable, ssBenefit * (ssRule.maxTaxableFraction ?? 0.85));
   // RI: the SS exemption requires reaching Social Security full retirement age, a
   // SEPARATE gate from the AGI threshold below (confirmed via RI DOT's own Retirement
   // Income Guide, Section 3, Example #2: a 63/65-year-old joint-filing couple under the
   // AGI threshold was still denied the exemption because neither had reached FRA).
-  // Below the gate, SS is fully taxable (up to maxTaxableFraction) regardless of AGI.
-  if (ssRule.ssAgeGate != null && qualAge < ssRule.ssAgeGate) return maxTaxable;
-  const exempt = ssRule.exemptBelowAGI[status];
-  if (agiProxy <= exempt) return 0;
-  if (!ssRule.phaseInAboveAGI) return maxTaxable; // hard threshold (CT-style: above => taxable)
-  // Linear phase-in across a band (approximation of the state's worksheet).
-  const start = ssRule.phaseInAboveAGI[status];
-  const band = Math.max(1, exempt * 0.2); // representative phase-in width
-  const frac = Math.min(1, Math.max(0, (agiProxy - start) / band));
-  return maxTaxable * frac;
+  // Below the gate, the federally taxable amount stays taxable regardless of AGI.
+  if (ssRule.ssAgeGate != null && qualAge < ssRule.ssAgeGate) return base;
+  const fedAGI = otherIncome + fedTaxable;
+  const exempt = ssRule.exemptBelowAGI[bucket];
+  if (fedAGI <= exempt) return 0;
+  const po = ssRule.phaseOut;
+  if (!po) return base; // hard threshold (CT, NM, RI: above it, the whole base is taxable)
+  const excess = fedAGI - exempt;
+  // VT (32 V.S.A. 5830e): the excluded share falls in a straight line to zero over the
+  // next $10,000 of federal AGI.
+  if (po.type === 'linear') return base * Math.min(1, excess / po.width);
+  // MN (Minn. Stat. 290.0132 subd. 26(c)): the subtraction is "reduced by ten percent for
+  // each $4,000 of adjusted gross income, or fraction thereof" over the threshold.
+  if (po.type === 'stepped') return base * Math.min(1, Math.ceil(excess / po.step) * po.pctPerStep);
+  // UT (Utah Code 59-10-1042): Social Security stays in income, offset by a credit of
+  // (flat rate x that Social Security), reduced by $0.025 per dollar of modified AGI over
+  // the threshold. For a flat-rate state that's the same as taxing only
+  // perDollar x excess / rate of the benefit, up to the whole base.
+  if (po.type === 'creditReduction') {
+    if (!(flatRate > 0)) throw new Error('relo-engine: creditReduction Social Security phase-out needs a flat-rate state');
+    return Math.min(base, (po.perDollar * excess) / flatRate);
+  }
+  throw new Error(`relo-engine: unknown socialSecurity.phaseOut.type "${po.type}"`);
 }
 
 export function computeStateIncomeTax(rules, status, income) {
@@ -72,9 +97,17 @@ export function computeStateIncomeTax(rules, status, income) {
   const brackets = rules.bracketsByStatus[status] || rules.bracketsByStatus.single;
   const breakdown = {};
 
-  // AGI proxy: the quantity states use for cliff/threshold tests. Full vector total
-  // (a big IRA withdrawal can itself trip a cliff — we model that).
-  const agiProxy = ss + iraWithdrawal + pension + capGains + wages;
+  // Income other than Social Security, and FEDERAL adjusted gross income: the other income
+  // plus only the federally taxable part of the benefit (IRS Pub 915 worksheet). Federal
+  // AGI is what the states' own threshold tests use (CT, NM, RI, CO, MN, VT, UT); a big IRA
+  // withdrawal can itself trip a cliff, and we model that. NJ and VA test income WITHOUT
+  // Social Security (thresholdExcludesSS), which resolveRetirementIncome backs out using
+  // ssForThreshold. Fixed 2026-10-21: this used to add the WHOLE benefit, overstating
+  // federal AGI by the untaxed part and tripping thresholds early (the Roth tool already
+  // passes a federal-AGI figure the same way).
+  const otherIncome = iraWithdrawal + pension + capGains + wages;
+  const fedTaxableSS = federalTaxableSS(ss, otherIncome, status);
+  const fedAGI = otherIncome + fedTaxableSS;
 
   // --- Social Security ---
   // NM groups Head of Household with Married Filing Jointly for its SS exemption
@@ -97,9 +130,10 @@ export function computeStateIncomeTax(rules, status, income) {
   // together (alongside iraTaxable/penTaxable) by resolveRetirementIncome below, via its
   // ssTaxableOverride return value, rather than here. `let` since that override overwrites
   // this.
+  const flatRate = brackets.length === 1 ? brackets[0].rate : null;
   let tSS = rules.socialSecurity.sharesRetirementCap
     ? 0
-    : taxableSS(rules.socialSecurity, ss, agiProxy, ssStatus, agiProxy - ss, status, ssQualAge);
+    : taxableSS(rules.socialSecurity, ss, otherIncome, ssStatus, status, ssQualAge, flatRate);
 
   // --- IRA / 401k / conversion withdrawal, and Pension ---
   // The whole retirement-income-exclusion dispatch (pooling, per-cliffType math, the
@@ -107,7 +141,8 @@ export function computeStateIncomeTax(rules, status, income) {
   // module's own header comment. ssTaxableOverride is non-null only for CO; every
   // other state leaves tSS exactly as computed above.
   const { iraTaxable, penTaxable, ssTaxableOverride } = resolveRetirementIncome(rules, status, {
-    age, spouseAge, ira: iraWithdrawal, pension, agiProxy, ss,
+    age, spouseAge, ira: iraWithdrawal, pension, agiProxy: fedAGI, ss,
+    ssForThreshold: fedTaxableSS, otherIncomeForSS: otherIncome,
   });
   if (ssTaxableOverride != null) tSS = ssTaxableOverride;
   breakdown.iraTaxable = iraTaxable;
@@ -115,31 +150,40 @@ export function computeStateIncomeTax(rules, status, income) {
   breakdown.taxableSS = tSS; // set once here since resolveRetirementIncome's ssTaxableOverride (CO) may overwrite tSS above
 
   // --- Capital gains ---
+  // The capital gains input is long-term gains; every preferential rule below (the
+  // percentage exclusions, AZ, VT, MT, HI) applies only to long-term gains.
+  const nonCG = wages + iraTaxable + penTaxable + tSS;
   const cg = rules.capitalGains;
   let cgOrdinary = 0, cgSeparateTax = 0;
   if (cg.treatment === "ordinary") cgOrdinary = capGains;
   else if (cg.treatment === "excludedPct") {
     // sourceRestricted breaks (NM/CO/ID/LA/OK) apply ONLY to in-state real-estate/business
-    // gains, NOT to a retiree's publicly-traded portfolio. For this tool's use case we treat
-    // them as fully ordinary (the realistic outcome) and disclose the nuance in the UI.
-    if (cg.sourceRestricted) {
-      cgOrdinary = capGains;
-    } else {
-      const eligible = cg.maxGainEligible != null ? Math.min(capGains, cg.maxGainEligible) : capGains;
-      let deduction = eligible * cg.exclusionPct;
-      if (cg.minDeduction != null) deduction = Math.max(deduction, Math.min(cg.minDeduction, capGains));
-      cgOrdinary = Math.max(0, capGains - deduction);
-    }
+    // gains, NOT to a retiree's publicly-traded portfolio, so their percentage is not
+    // applied. A flat minDeduction that covers ANY capital gain still is (NM: "100% of your
+    // net capital gains, not to exceed $2,500", 2025 PIT-ADJ line 16; fixed 2026-10-21).
+    const eligible = cg.maxGainEligible != null ? Math.min(capGains, cg.maxGainEligible) : capGains;
+    let deduction = cg.sourceRestricted ? 0 : eligible * cg.exclusionPct;
+    if (cg.minDeduction != null) deduction = Math.max(deduction, Math.min(cg.minDeduction, capGains));
+    cgOrdinary = Math.max(0, capGains - deduction);
   }
   else if (cg.treatment === "separateTax") {
     const taxableCG = Math.max(0, capGains - cg.exemptBelow);
     cgSeparateTax = bracketTax(taxableCG, cg.ladder);
   }
+  else if (cg.treatment === "stacked") {
+    // Gains taxed on their own rate ladder, stacked on top of the rest of taxable income:
+    // each dollar of gain is taxed at the ladder rate for the band it lands in once the
+    // other income is counted first. MT (MCA 15-30-2103(2)): 3.0% / 4.1% on the same bands
+    // as ordinary income. HI (HRS 235-51(f)): the regular rates, capped at 7.25%.
+    const ladder = cg.ladderByStatus[status] || cg.ladderByStatus.single;
+    cgSeparateTax = bracketTax(nonCG + capGains, ladder) - bracketTax(nonCG, ladder);
+  }
+  else throw new Error(`relo-engine: unknown capitalGains.treatment "${cg.treatment}"`);
   breakdown.cgOrdinary = cgOrdinary;
   breakdown.cgSeparateTax = cgSeparateTax;
 
   // --- Ordinary income → brackets ---
-  const ordinary = wages + iraTaxable + penTaxable + tSS + cgOrdinary;
+  const ordinary = nonCG + cgOrdinary;
   breakdown.ordinaryIncome = ordinary;
   const incomeTax = bracketTax(ordinary, brackets);
   breakdown.bracketTax = incomeTax;

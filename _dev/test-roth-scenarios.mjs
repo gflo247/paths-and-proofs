@@ -516,12 +516,13 @@ console.log('\n─── Group 6: State edge cases ───');
   // 6.5 MS: ex:true with EXAGE=59.5 — taxable BEFORE the gate
   // curAge=55, $50k conversion: exQualifies = stD.ex && exQualAge(55) >= exAge(59.5)
   // = true && 55>=59.5 = false → NOT exempt → cvtTxSt = taxableCvt * stD.cr
-  // stD.cr for MS = 0.044 → cvtTxSt = 50000*0.044 = 2200
+  // stD.cr for MS = 0.04 (TY2026 rate; MS DOR: "Tax Year 2026 ... 4%") → cvtTxSt = 50000*0.04 = 2000
+  // (was 0.044 → 2200, the TY2025 rate mislabeled as 2026; fixed 2026-10-21)
   const ccMS_young = computeConversionCost(50000, ctx({
     wages: 0, stateCode: 'MS', curAge: 55,
   }));
-  near('6.5 MS: age=55 (below 59.5 gate): cvtTxSt=2200 (4.4% applies)',
-       ccMS_young.cvtTxSt, 2200);
+  near('6.5 MS: age=55 (below 59.5 gate): cvtTxSt=2000 (4% applies)',
+       ccMS_young.cvtTxSt, 2000);
 
   // 6.6 MS: curAge=60 (above 59.5 gate) — exempt
   const ccMS_old = computeConversionCost(50000, ctx({

@@ -247,9 +247,9 @@ function ctx({ wages = 0, pension = 0, nii = 0, ltcg = 0, ss = 0,
   near('5.2 IA couple age=56/55: exempt (min=55 meets threshold exactly) → cvtTxSt=0', c2.cvtTxSt, 0);
 
   // 5.3 MS single: age=58 < EXAGE.MS=59.5 → NOT exempt (early-distribution rule).
-  // cvtTxSt = 20000 * MS.cr = 20000 * 0.044 = 880.
+  // cvtTxSt = 20000 * MS.cr = 20000 * 0.04 = 800 (TY2026 rate 4%; was 0.044 → 880 before 2026-10-21).
   const c3 = computeConversionCost(20000, ctx({ stateCode: 'MS', curAge: 58 }));
-  near('5.3 MS single age=58 (<59.5): NOT exempt → cvtTxSt=880', c3.cvtTxSt, 880);
+  near('5.3 MS single age=58 (<59.5): NOT exempt → cvtTxSt=800', c3.cvtTxSt, 800);
 
   // 5.4 MS single: age=59.5 (exactly at EXAGE.MS gate) → exempt.
   // cvtTxSt = 0.

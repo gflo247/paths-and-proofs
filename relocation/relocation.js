@@ -4,13 +4,15 @@
 // of tax savings does it take to pay that move back? The crossover is the payback
 // period — where cumulative tax savings overtake the one-time cost of moving.
 //
-// SCOPE (deliberate): the crossover is INCOME TAX ONLY, computed to the dollar from
-// the primary-source-verified bracket data. Property tax, sales tax, and estate tax
-// are shown as disclosed CONTEXT beside the result, never folded into the headline —
-// they need per-household assumptions we can't verify, and folding unverifiable
-// guesses into a "proof" would break what makes this trustworthy. When the annual
-// difference is small, the tool says so plainly: income tax should not drive the
-// decision, and the context beside it may matter more.
+// SCOPE (deliberate): the crossover is INCOME TAX ONLY, computed from the
+// primary-source-verified bracket and income-treatment data. State standard
+// deductions, personal exemptions and exemption credits are not modeled yet, so the
+// tax shown runs high wherever a state allows them (disclosed on the page). Property
+// tax, sales tax, and estate tax are shown as disclosed CONTEXT beside the result,
+// never folded into the headline — they need per-household assumptions we can't
+// verify, and folding unverifiable guesses into a "proof" would break what makes this
+// trustworthy. When the annual difference is small, the tool says so plainly: income
+// tax should not drive the decision, and the context beside it may matter more.
 
 import { computeStateIncomeTax, computeLocalTax } from './relo-engine.mjs';
 import { findCrossover } from '../core/finance.js';
@@ -77,7 +79,8 @@ export const inputs = [
   { id: 'socialSecurity', type: 'number', label: 'Social Security per year',      min: 0, max: 120000, step: 500,  default: 30000, unit: '$' },
   { id: 'iraWithdrawal',  type: 'number', label: 'Individual Retirement Account (IRA) / 401(k) withdrawal per year', min: 0, max: 500000, step: 1000, default: 40000, unit: '$' },
   { id: 'pension',        type: 'number', label: 'Pension per year',             min: 0, max: 300000, step: 1000, default: 20000, unit: '$' },
-  { id: 'capGains',       type: 'number', label: 'Capital gains per year',       min: 0, max: 500000, step: 1000, default: 10000, unit: '$' },
+  { id: 'capGains',       type: 'number', label: 'Capital gains per year',       min: 0, max: 500000, step: 1000, default: 10000, unit: '$',
+    help: 'Long-term gains, on investments held more than a year. Several states tax these at a lower rate than other income.' },
   { id: 'moveCost',       type: 'number', label: 'One-time cost to move',        min: 0, max: 200000, step: 1000, default: 15000, unit: '$',
     help: 'Everything the move itself costs — movers, travel, and any costs to sell one home and buy another.' },
   { id: 'discountRate', type: 'slider', label: 'Discount rate (real return)',

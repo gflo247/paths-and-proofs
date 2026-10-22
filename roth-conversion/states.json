@@ -223,6 +223,7 @@
     }
    ],
    "ssTreatment": "Social Security exempt. Flat 2.5% on IRA/conversion income.",
+   "bracketsNote": "Flat 2.5%. Capital gains: Arizona lets you subtract 25% of net long-term capital gain from assets acquired after December 31, 2011 (2025 Form 140 instructions, lines 20-24); Relocation applies it to the capital gains entered (added 2026-10-21).",
    "incomeTax": true,
    "source": "https://azdor.gov/"
   },
@@ -270,7 +271,11 @@
     "sameAs": "retirementIncome"
    },
    "capitalGains": {
-    "treatment": "ordinary"
+    "treatment": "excludedPct",
+    "exclusionPct": 0.25,
+    "minDeduction": null,
+    "maxGainEligible": null,
+    "sourceRestricted": false
    }
   },
   "taxContext": {
@@ -310,14 +315,14 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security exempt below $100k federal AGI (taxable above, modified federal method). $6,000-per-person retirement exemption covers traditional IRA but only at 59.5+; early distributions excluded. Genuinely per-individual (AR DOR confirms it does not transfer between spouses) -- a joint return with both spouses 59.5+ gets $12,000, not a flat $6,000. Net-income two-table system: filers over ~$94,700 use a compressed schedule.",
+   "ssTreatment": "Social Security and Railroad Retirement benefits are not taxable in Arkansas at any income (AR DFA Subject 209, Nontaxable Income, item 8). Fixed 2026-10-21: this was modeled as taxable above $100k AGI, which no Arkansas source supports. $6,000-per-person retirement exemption covers traditional IRA but only at 59.5+; early distributions excluded. Genuinely per-individual (AR DOR confirms it does not transfer between spouses) -- a joint return with both spouses 59.5+ gets $12,000, not a flat $6,000. Net-income two-table system: filers over ~$94,700 use a compressed schedule.",
    "incomeTax": true,
    "source": "https://tax.thomsonreuters.com/news/arkansas-cuts-individual-and-corporate-income-tax-rates/"
   },
   "roth": {
    "cr": 0.037,
    "ex": false,
-   "note": "Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000-per-person retirement exemption covers traditional IRA income at 59.5+ (early distributions do not qualify) -- genuinely per-spouse, not a flat joint cap, so a joint return with both spouses 59.5+ shelters $12,000, not $6,000 (this calculator previously applied none of this exclusion at all). Social Security is exempt below $100k AGI; a large conversion could push past that."
+   "note": "Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000-per-person retirement exemption covers traditional IRA income at 59.5+ (early distributions do not qualify) -- genuinely per-spouse, not a flat joint cap, so a joint return with both spouses 59.5+ shelters $12,000, not $6,000 (this calculator previously applied none of this exclusion at all). Social Security is not taxed by Arkansas."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -411,13 +416,7 @@
     ]
    },
    "socialSecurity": {
-    "taxed": true,
-    "exemptBelowAGI": {
-     "single": 100000,
-     "joint": 100000
-    },
-    "phaseInAboveAGI": null,
-    "maxTaxableFraction": 0.85
+    "taxed": false
    },
    "retirementIncome": {
     "treatment": "exclusion",
@@ -973,7 +972,7 @@
      "single": 75000,
      "joint": 100000
     },
-    "phaseInAboveAGI": null,
+    "hohMapsToJoint": true,
     "maxTaxableFraction": 0.25
    },
    "retirementIncome": {
@@ -1408,47 +1407,47 @@
    "brackets": [
     {
      "rate": 0.014,
-     "upTo": 2400
-    },
-    {
-     "rate": 0.032,
-     "upTo": 4800
-    },
-    {
-     "rate": 0.055,
      "upTo": 9600
     },
     {
-     "rate": 0.064,
+     "rate": 0.032,
      "upTo": 14400
     },
     {
-     "rate": 0.068,
+     "rate": 0.055,
      "upTo": 19200
     },
     {
-     "rate": 0.072,
+     "rate": 0.064,
      "upTo": 24000
     },
     {
-     "rate": 0.076,
+     "rate": 0.068,
      "upTo": 36000
     },
     {
-     "rate": 0.079,
+     "rate": 0.072,
      "upTo": 48000
     },
     {
-     "rate": 0.0825,
-     "upTo": 150000
+     "rate": 0.076,
+     "upTo": 125000
     },
     {
-     "rate": 0.09,
+     "rate": 0.079,
      "upTo": 175000
     },
     {
+     "rate": 0.0825,
+     "upTo": 225000
+    },
+    {
+     "rate": 0.09,
+     "upTo": 275000
+    },
+    {
      "rate": 0.1,
-     "upTo": 200000
+     "upTo": 325000
     },
     {
      "rate": 0.11,
@@ -1456,61 +1455,61 @@
     }
    ],
    "ssTreatment": "Social Security and employer-funded PENSIONS fully exempt (HRS 235-7(a)(3)), but traditional IRA/401(k) income is fully taxable — a conversion is IRA income, so Hawaii taxes it. A pension-holder should not assume the conversion is also exempt.",
-   "bracketsNote": "Single-filer, Act 46 current schedule, exact thresholds from Tax Foundation of Hawaii (HRS Ch.235): 12 brackets 1.4%-11%, 11% top over $200k. Act 46 widens thresholds in stages through 2031, so upper edges shift in TY2027/2029. MFJ thresholds ~2x.",
+   "bracketsNote": "Single-filer, Act 46 (SLH 2024) schedule for taxable years beginning after December 31, 2024, from HI DOTAX's own Tax Rate Schedules page (updated Jan 20, 2026): 1.4% to $9,600 ... 7.6% to $125,000 ... 11% over $325,000 single; married filing jointly bands are double, head of household 1.5x. Act 46 widens the bands again in later years. Fixed 2026-10-21: this table held the pre-2025 schedule (11% over $200,000 single). Net capital gain is taxed at no more than 7.25% (HRS 235-51(f)), modeled as a stacked ladder.",
    "incomeTax": true,
    "source": "https://tax.hawaii.gov/"
   },
   "roth": {
-   "cr": 0.0825,
+   "cr": 0.076,
    "ex": false,
-   "note": "Graduated 1.4% to 11% across twelve brackets; the 11% top only applies above $200k single / $400k joint, and Act 46 (2024) is widening the brackets in stages through 2031. A typical conversion lands in the 8.25% band ($48k-$150k single, used here). Hawaii fully exempts pensions and Social Security, but traditional IRA and 401(k) income is fully taxable — a Roth conversion is IRA income, so Hawaii taxes it."
+   "note": "Graduated 1.4% to 11% across twelve brackets; under the schedule for tax years after 2024 the 11% top only applies above $325k single / $650k joint, and Act 46 (2024) widens the brackets again in later years. A typical conversion lands in the 7.6% band ($48k-$125k single, used here). Hawaii fully exempts pensions and Social Security, but traditional IRA and 401(k) income is fully taxable — a Roth conversion is IRA income, so Hawaii taxes it."
   },
   "taxRules": {
    "bracketsByStatus": {
     "single": [
      {
       "rate": 0.014,
-      "upTo": 2400
-     },
-     {
-      "rate": 0.032,
-      "upTo": 4800
-     },
-     {
-      "rate": 0.055,
       "upTo": 9600
      },
      {
-      "rate": 0.064,
+      "rate": 0.032,
       "upTo": 14400
      },
      {
-      "rate": 0.068,
+      "rate": 0.055,
       "upTo": 19200
      },
      {
-      "rate": 0.072,
+      "rate": 0.064,
       "upTo": 24000
      },
      {
-      "rate": 0.076,
+      "rate": 0.068,
       "upTo": 36000
      },
      {
-      "rate": 0.079,
+      "rate": 0.072,
       "upTo": 48000
      },
      {
-      "rate": 0.0825,
-      "upTo": 150000
+      "rate": 0.076,
+      "upTo": 125000
      },
      {
-      "rate": 0.09,
+      "rate": 0.079,
       "upTo": 175000
      },
      {
+      "rate": 0.0825,
+      "upTo": 225000
+     },
+     {
+      "rate": 0.09,
+      "upTo": 275000
+     },
+     {
       "rate": 0.1,
-      "upTo": 200000
+      "upTo": 325000
      },
      {
       "rate": 0.11,
@@ -1520,47 +1519,47 @@
     "mfj": [
      {
       "rate": 0.014,
-      "upTo": 4800
-     },
-     {
-      "rate": 0.032,
-      "upTo": 9600
-     },
-     {
-      "rate": 0.055,
       "upTo": 19200
      },
      {
-      "rate": 0.064,
+      "rate": 0.032,
       "upTo": 28800
      },
      {
-      "rate": 0.068,
+      "rate": 0.055,
       "upTo": 38400
      },
      {
-      "rate": 0.072,
+      "rate": 0.064,
       "upTo": 48000
      },
      {
-      "rate": 0.076,
+      "rate": 0.068,
       "upTo": 72000
      },
      {
-      "rate": 0.079,
+      "rate": 0.072,
       "upTo": 96000
      },
      {
-      "rate": 0.0825,
-      "upTo": 300000
+      "rate": 0.076,
+      "upTo": 250000
      },
      {
-      "rate": 0.09,
+      "rate": 0.079,
       "upTo": 350000
      },
      {
+      "rate": 0.0825,
+      "upTo": 450000
+     },
+     {
+      "rate": 0.09,
+      "upTo": 550000
+     },
+     {
       "rate": 0.1,
-      "upTo": 400000
+      "upTo": 650000
      },
      {
       "rate": 0.11,
@@ -1570,47 +1569,47 @@
     "mfs": [
      {
       "rate": 0.014,
-      "upTo": 2400
-     },
-     {
-      "rate": 0.032,
-      "upTo": 4800
-     },
-     {
-      "rate": 0.055,
       "upTo": 9600
      },
      {
-      "rate": 0.064,
+      "rate": 0.032,
       "upTo": 14400
      },
      {
-      "rate": 0.068,
+      "rate": 0.055,
       "upTo": 19200
      },
      {
-      "rate": 0.072,
+      "rate": 0.064,
       "upTo": 24000
      },
      {
-      "rate": 0.076,
+      "rate": 0.068,
       "upTo": 36000
      },
      {
-      "rate": 0.079,
+      "rate": 0.072,
       "upTo": 48000
      },
      {
-      "rate": 0.0825,
-      "upTo": 150000
+      "rate": 0.076,
+      "upTo": 125000
      },
      {
-      "rate": 0.09,
+      "rate": 0.079,
       "upTo": 175000
      },
      {
+      "rate": 0.0825,
+      "upTo": 225000
+     },
+     {
+      "rate": 0.09,
+      "upTo": 275000
+     },
+     {
       "rate": 0.1,
-      "upTo": 200000
+      "upTo": 325000
      },
      {
       "rate": 0.11,
@@ -1620,47 +1619,47 @@
     "hoh": [
      {
       "rate": 0.014,
-      "upTo": 3600
-     },
-     {
-      "rate": 0.032,
-      "upTo": 7200
-     },
-     {
-      "rate": 0.055,
       "upTo": 14400
      },
      {
-      "rate": 0.064,
+      "rate": 0.032,
       "upTo": 21600
      },
      {
-      "rate": 0.068,
+      "rate": 0.055,
       "upTo": 28800
      },
      {
-      "rate": 0.072,
+      "rate": 0.064,
       "upTo": 36000
      },
      {
-      "rate": 0.076,
+      "rate": 0.068,
       "upTo": 54000
      },
      {
-      "rate": 0.079,
+      "rate": 0.072,
       "upTo": 72000
      },
      {
-      "rate": 0.0825,
-      "upTo": 225000
+      "rate": 0.076,
+      "upTo": 187500
      },
      {
-      "rate": 0.09,
+      "rate": 0.079,
       "upTo": 262500
      },
      {
+      "rate": 0.0825,
+      "upTo": 337500
+     },
+     {
+      "rate": 0.09,
+      "upTo": 412500
+     },
+     {
       "rate": 0.1,
-      "upTo": 300000
+      "upTo": 487500
      },
      {
       "rate": 0.11,
@@ -1682,7 +1681,129 @@
     "exclusion": null
    },
    "capitalGains": {
-    "treatment": "ordinary"
+    "treatment": "stacked",
+    "ladderByStatus": {
+     "single": [
+      {
+       "rate": 0.014,
+       "upTo": 9600
+      },
+      {
+       "rate": 0.032,
+       "upTo": 14400
+      },
+      {
+       "rate": 0.055,
+       "upTo": 19200
+      },
+      {
+       "rate": 0.064,
+       "upTo": 24000
+      },
+      {
+       "rate": 0.068,
+       "upTo": 36000
+      },
+      {
+       "rate": 0.072,
+       "upTo": 48000
+      },
+      {
+       "rate": 0.0725,
+       "upTo": null
+      }
+     ],
+     "mfj": [
+      {
+       "rate": 0.014,
+       "upTo": 19200
+      },
+      {
+       "rate": 0.032,
+       "upTo": 28800
+      },
+      {
+       "rate": 0.055,
+       "upTo": 38400
+      },
+      {
+       "rate": 0.064,
+       "upTo": 48000
+      },
+      {
+       "rate": 0.068,
+       "upTo": 72000
+      },
+      {
+       "rate": 0.072,
+       "upTo": 96000
+      },
+      {
+       "rate": 0.0725,
+       "upTo": null
+      }
+     ],
+     "mfs": [
+      {
+       "rate": 0.014,
+       "upTo": 9600
+      },
+      {
+       "rate": 0.032,
+       "upTo": 14400
+      },
+      {
+       "rate": 0.055,
+       "upTo": 19200
+      },
+      {
+       "rate": 0.064,
+       "upTo": 24000
+      },
+      {
+       "rate": 0.068,
+       "upTo": 36000
+      },
+      {
+       "rate": 0.072,
+       "upTo": 48000
+      },
+      {
+       "rate": 0.0725,
+       "upTo": null
+      }
+     ],
+     "hoh": [
+      {
+       "rate": 0.014,
+       "upTo": 14400
+      },
+      {
+       "rate": 0.032,
+       "upTo": 21600
+      },
+      {
+       "rate": 0.055,
+       "upTo": 28800
+      },
+      {
+       "rate": 0.064,
+       "upTo": 36000
+      },
+      {
+       "rate": 0.068,
+       "upTo": 54000
+      },
+      {
+       "rate": 0.072,
+       "upTo": 72000
+      },
+      {
+       "rate": 0.0725,
+       "upTo": null
+      }
+     ]
+    }
    }
   },
   "taxContext": {
@@ -1702,11 +1823,16 @@
    "name": "Idaho",
    "brackets": [
     {
+     "rate": 0,
+     "upTo": 4811
+    },
+    {
      "rate": 0.053,
      "upTo": null
     }
    ],
    "ssTreatment": "Social Security exempt. Flat 5.3% (HB40 2025, retroactive) on IRA/conversion income.",
+   "bracketsNote": "TY2025 Idaho State Tax Commission rate schedule (latest published): 0% on the first $4,811 (single, married filing separately) or $9,622 (married filing jointly; Idaho Code 63-3024(2) treats head of household and surviving spouse returns as joint), 5.3% above. Fixed 2026-10-21: this table had no 0% band.",
    "incomeTax": true,
    "source": "https://tax.idaho.gov/"
   },
@@ -1719,11 +1845,19 @@
    "bracketsByStatus": {
     "single": [
      {
+      "rate": 0,
+      "upTo": 4811
+     },
+     {
       "rate": 0.053,
       "upTo": null
      }
     ],
     "mfj": [
+     {
+      "rate": 0,
+      "upTo": 9622
+     },
      {
       "rate": 0.053,
       "upTo": null
@@ -1731,11 +1865,19 @@
     ],
     "mfs": [
      {
+      "rate": 0,
+      "upTo": 4811
+     },
+     {
       "rate": 0.053,
       "upTo": null
      }
     ],
     "hoh": [
+     {
+      "rate": 0,
+      "upTo": 9622
+     },
      {
       "rate": 0.053,
       "upTo": null
@@ -2934,9 +3076,10 @@
      "single": 86410,
      "joint": 110780
     },
-    "phaseInAboveAGI": {
-     "single": 86410,
-     "joint": 110780
+    "phaseOut": {
+     "type": "stepped",
+     "step": 4000,
+     "pctPerStep": 0.1
     },
     "maxTaxableFraction": 0.85
    },
@@ -2973,20 +3116,20 @@
      "upTo": 10000
     },
     {
-     "rate": 0.044,
+     "rate": 0.04,
      "upTo": null
     }
    ],
    "ssTreatment": "Social Security fully exempt. Mississippi exempts QUALIFIED retirement income (IRA, 401k, pension) once retirement requirements met (generally 59.5) — so a conversion at 59.5+ is MS-tax-free (roth.ex=true). An EARLY distribution before 59.5 does NOT qualify and is taxed at the flat rate.",
-   "bracketsNote": "Flat 4.4% above a $10k 0%-bracket for 2026 (stepping down toward 3.75% in coming years under the 2022 phasedown). roth.cr 4.4% is the rate that would apply pre-exemption.",
+   "bracketsNote": "Flat 4% on taxable income over $10,000 for TY2026 (MS DOR: \"Tax Year 2025 ... 4.4%\", \"Tax Year 2026 ... 4%\", \"Tax Year 2027 ... 3.75%\"). Fixed 2026-10-21: this was 4.4%, the TY2025 rate, labeled as 2026. roth.cr 4% is the rate that would apply pre-exemption. A married couple filing a combined return can each use their own $10,000 0% band (MS DOR's own example); this table applies one, the conservative case.",
    "incomeTax": true,
    "source": "https://www.dor.ms.gov/"
   },
   "roth": {
-   "cr": 0.044,
+   "cr": 0.04,
    "ex": true,
    "exMinAge": 59.5,
-   "note": "Mississippi exempts qualified retirement income — IRA, 401(k), and pension — once you have met the plan's retirement requirements (generally age 59.5). A conversion at 59.5+ is therefore MS-tax-free; an EARLY distribution before then does not qualify and is taxed at the flat rate (4.4% for 2026, stepping down toward 3.75%). Social Security is fully exempt."
+   "note": "Mississippi exempts qualified retirement income — IRA, 401(k), and pension — once you have met the plan's retirement requirements (generally age 59.5). A conversion at 59.5+ is therefore MS-tax-free; an EARLY distribution before then does not qualify and is taxed at the flat rate (4% for 2026, 3.75% for 2027). Social Security is fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -2996,7 +3139,7 @@
       "upTo": 10000
      },
      {
-      "rate": 0.044,
+      "rate": 0.04,
       "upTo": null
      }
     ],
@@ -3006,7 +3149,7 @@
       "upTo": 10000
      },
      {
-      "rate": 0.044,
+      "rate": 0.04,
       "upTo": null
      }
     ],
@@ -3016,7 +3159,7 @@
       "upTo": 10000
      },
      {
-      "rate": 0.044,
+      "rate": 0.04,
       "upTo": null
      }
     ],
@@ -3026,7 +3169,7 @@
       "upTo": 10000
      },
      {
-      "rate": 0.044,
+      "rate": 0.04,
       "upTo": null
      }
     ]
@@ -3289,14 +3432,14 @@
     }
    ],
    "ssTreatment": "On the SS-taxing list: Montana taxes Social Security following the federal formula, so a conversion that raises income pulls more benefits into tax. IRA/conversion income taxable; Montana REPEALED its broader pension/IRA deduction for 2025, leaving only a small (~$5,500) qualified-retirement-income deduction. No sales tax.",
-   "bracketsNote": "Single-filer two-bracket HB337 schedule: 4.7% to ~$20,500, 5.65% above (5.65% for 2026, falling to 5.4% in 2027). MFJ second bracket starts ~$41,000. Source: Tax Foundation 2026 / MT DOR HB337.",
+   "bracketsNote": "TY2026 HB 337 schedule (MT DOR; MCA 15-30-2103): 4.7% on the first $47,500 single or married filing separately, $71,250 head of household, $95,000 married filing jointly or surviving spouse; 5.65% above (5.4% top with wider bands for 2027). Net long-term capital gains are taxed separately at 3.0% / 4.1% on the same bands, stacked on top of other taxable income (MCA 15-30-2103(2)). Fixed 2026-10-21: head of household used the single $47,500 band, capital gains were taxed as ordinary income, and this note quoted the old ~$20,500 threshold.",
    "incomeTax": true,
    "source": "https://mtrevenue.gov/"
   },
   "roth": {
    "cr": 0.0565,
    "ex": false,
-   "note": "Two brackets (4.7% / 5.65% for 2026, top rate falling to 5.4% in 2027); the 5.65% rate starts at just ~$20,500 single / ~$41,000 joint, so most conversion income is taxed at 5.65%. IRA and conversion income is taxable; Montana repealed its broader retirement deduction and now allows only a small (~$5,500) qualified-retirement-income deduction. Montana also taxes Social Security on the federal formula, so a conversion can pull more of your benefits into tax. No sales tax."
+   "note": "Two brackets (4.7% / 5.65% for 2026, top rate falling to 5.4% in 2027); the 5.65% rate starts at $47,500 single / $95,000 joint for 2026, and conversion income above that is taxed at 5.65% (used here). IRA and conversion income is taxable; Montana repealed its broader retirement deduction and now allows only a small (~$5,500) qualified-retirement-income deduction. Montana also taxes Social Security on the federal formula, so a conversion can pull more of your benefits into tax. No sales tax."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -3333,7 +3476,7 @@
     "hoh": [
      {
       "rate": 0.047,
-      "upTo": 47500
+      "upTo": 71250
      },
      {
       "rate": 0.0565,
@@ -3354,7 +3497,49 @@
     "sameAs": "retirementIncome"
    },
    "capitalGains": {
-    "treatment": "ordinary"
+    "treatment": "stacked",
+    "ladderByStatus": {
+     "single": [
+      {
+       "rate": 0.03,
+       "upTo": 47500
+      },
+      {
+       "rate": 0.041,
+       "upTo": null
+      }
+     ],
+     "mfj": [
+      {
+       "rate": 0.03,
+       "upTo": 95000
+      },
+      {
+       "rate": 0.041,
+       "upTo": null
+      }
+     ],
+     "mfs": [
+      {
+       "rate": 0.03,
+       "upTo": 47500
+      },
+      {
+       "rate": 0.041,
+       "upTo": null
+      }
+     ],
+     "hoh": [
+      {
+       "rate": 0.03,
+       "upTo": 71250
+      },
+      {
+       "rate": 0.041,
+       "upTo": null
+      }
+     ]
+    }
    }
   },
   "taxContext": {
@@ -4002,7 +4187,6 @@
      "single": 100000,
      "joint": 150000
     },
-    "phaseInAboveAGI": null,
     "maxTaxableFraction": 0.85,
     "hohMapsToJoint": true
    },
@@ -4051,7 +4235,7 @@
    },
    "capitalGains": {
     "treatment": "excludedPct",
-    "exclusionPct": 0.5,
+    "exclusionPct": 0.4,
     "minDeduction": 2500,
     "maxGainEligible": 1000000,
     "sourceRestricted": true
@@ -4074,23 +4258,23 @@
    "name": "New York",
    "brackets": [
     {
-     "rate": 0.04,
+     "rate": 0.039,
      "upTo": 8500
     },
     {
-     "rate": 0.045,
+     "rate": 0.044,
      "upTo": 11700
     },
     {
-     "rate": 0.0525,
+     "rate": 0.0515,
      "upTo": 13900
     },
     {
-     "rate": 0.055,
+     "rate": 0.054,
      "upTo": 80650
     },
     {
-     "rate": 0.06,
+     "rate": 0.059,
      "upTo": 215400
     },
     {
@@ -4111,14 +4295,14 @@
     }
    ],
    "ssTreatment": "Social Security and all government pensions (federal/state/local) fully exempt. Private IRA/401(k)/conversion income taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20k for 2026 — proposed increases NOT enacted) -- genuinely per-INDIVIDUAL (\"one spouse can't claim the other spouse's unused exclusion\"), so a joint return with both spouses 59.5+ shelters $40,000, not a flat $20,000. A conversion above the per-person cap is taxable. NYC residents add 3.078%-3.876% city tax; Yonkers adds a surcharge.",
-   "bracketsNote": "Single-filer. The 2026 state budget CUT rates in the lower five brackets (income under ~$215,400); aggregators report a mix of pre- and post-cut figures. These reflect the post-cut ladder (NerdWallet/Wealthvieu): 4/4.5/5.25/5.5/6/6.85/9.65/10.3/10.9. The old 6.25% mid-bracket was replaced — roth.cr refreshed 6.25%->6% to match the current band a typical conversion lands in. High brackets (6.85%+) unchanged, extended through 2032.",
+   "bracketsNote": "Single-filer. TY2026 schedule (Form IT-2105-I 2026; DTF: \"We revised the 2026 New York State personal income tax rate schedules to reflect certain income tax rate reductions\"): the five lowest rates are 0.1 point lower for 2026 — 3.9/4.4/5.15/5.4/5.9 — then 6.85/9.65/10.3/10.9; thresholds unchanged. Fixed 2026-10-21: this table held the TY2025 rates (4/4.5/5.25/5.5/6) while this note called them post-cut. roth.cr 5.9% (the $80,650-$215,400 single band a typical conversion lands in). High brackets (6.85%+) unchanged, extended through 2032.",
    "incomeTax": true,
    "source": "https://www.tax.ny.gov/"
   },
   "roth": {
-   "cr": 0.06,
+   "cr": 0.059,
    "ex": false,
-   "note": "Graduated 4% to 10.9% (the 10.9% top only applies above $25M; 6% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the mid-brackets). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse's age, which could silently zero out the shelter or wrongly double it depending on which spouse's age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don't use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax."
+   "note": "Graduated 3.9% to 10.9% for 2026 (the 10.9% top only applies above $25M; 5.9% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the five lowest rates by 0.1 point). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse's age, which could silently zero out the shelter or wrongly double it depending on which spouse's age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don't use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax."
   },
   "localTax": {
    "nyc": {
@@ -4159,23 +4343,23 @@
    "bracketsByStatus": {
     "single": [
      {
-      "rate": 0.04,
+      "rate": 0.039,
       "upTo": 8500
      },
      {
-      "rate": 0.045,
+      "rate": 0.044,
       "upTo": 11700
      },
      {
-      "rate": 0.0525,
+      "rate": 0.0515,
       "upTo": 13900
      },
      {
-      "rate": 0.055,
+      "rate": 0.054,
       "upTo": 80650
      },
      {
-      "rate": 0.06,
+      "rate": 0.059,
       "upTo": 215400
      },
      {
@@ -4197,23 +4381,23 @@
     ],
     "mfj": [
      {
-      "rate": 0.04,
+      "rate": 0.039,
       "upTo": 17150
      },
      {
-      "rate": 0.045,
+      "rate": 0.044,
       "upTo": 23600
      },
      {
-      "rate": 0.0525,
+      "rate": 0.0515,
       "upTo": 27900
      },
      {
-      "rate": 0.055,
+      "rate": 0.054,
       "upTo": 161550
      },
      {
-      "rate": 0.06,
+      "rate": 0.059,
       "upTo": 323200
      },
      {
@@ -4235,23 +4419,23 @@
     ],
     "mfs": [
      {
-      "rate": 0.04,
+      "rate": 0.039,
       "upTo": 8500
      },
      {
-      "rate": 0.045,
+      "rate": 0.044,
       "upTo": 11700
      },
      {
-      "rate": 0.0525,
+      "rate": 0.0515,
       "upTo": 13900
      },
      {
-      "rate": 0.055,
+      "rate": 0.054,
       "upTo": 80650
      },
      {
-      "rate": 0.06,
+      "rate": 0.059,
       "upTo": 215400
      },
      {
@@ -4273,23 +4457,23 @@
     ],
     "hoh": [
      {
-      "rate": 0.04,
+      "rate": 0.039,
       "upTo": 12800
      },
      {
-      "rate": 0.045,
+      "rate": 0.044,
       "upTo": 17650
      },
      {
-      "rate": 0.0525,
+      "rate": 0.0515,
       "upTo": 20900
      },
      {
-      "rate": 0.055,
+      "rate": 0.054,
       "upTo": 107650
      },
      {
-      "rate": 0.06,
+      "rate": 0.059,
       "upTo": 269300
      },
      {
@@ -5086,7 +5270,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "On the SS-taxing list: SS exempt below $107,000 single / $133,500 joint federal AGI (latest published, Tax Year 2025 — inflation-adjusted annually, RI DOT's Retirement Income Guide, Pub 2026-01), taxed above. BOTH the SS exemption and the retirement-income modification also require the taxpayer to have reached Social Security full retirement age (66-67 depending on birth year, modeled here as 67) — an AGE gate on top of the AGI threshold, modeled in the Relocation tool as ssAgeGate (joint returns require the YOUNGER spouse to also clear it, since a household-level SS benefit can't be split per spouse). Rhode Island's retirement-income modification (up to $50,000 per person, up from $20,000 starting Tax Year 2025) covers ONLY 401(k)/403(b)/annuity/pension income and EXPLICITLY EXCLUDES all IRAs (traditional, Roth, SEP, SIMPLE). A Roth conversion is IRA income, so it gets NO shelter and is fully taxable. IRA-exclusion-trap family (cf. ME, MD) — RI is the most explicit, naming Roth. Hard all-or-nothing income cliff: $1 over the limit forfeits the entire exclusion. Military pensions fully exempt (no income or age requirement).",
+   "ssTreatment": "On the SS-taxing list: SS exempt below $107,000 single / $133,500 joint federal AGI (latest published, Tax Year 2025 — inflation-adjusted annually, RI DOT's Retirement Income Guide, Pub 2026-01), taxed above. BOTH the SS exemption and the retirement-income modification also require the taxpayer to have reached Social Security full retirement age (66-67 depending on birth year, modeled here as 67) — an AGE gate on top of the AGI threshold, modeled in the Relocation tool as ssAgeGate (joint returns require the YOUNGER spouse to also clear it, since a household-level SS benefit can't be split per spouse). Rhode Island's retirement-income modification (up to $50,000 per person, up from $20,000 starting Tax Year 2025) covers ONLY 401(k)/403(b)/annuity/pension income and EXPLICITLY EXCLUDES all IRAs (traditional, Roth, SEP, SIMPLE). A Roth conversion is IRA income, so it gets NO shelter and is fully taxable. IRA-exclusion-trap family (cf. ME, MD) — RI is the most explicit, naming Roth. Hard all-or-nothing income cliff: federal AGI over $107,000 single, head of household or married filing separately, or $133,500 joint (Tax Year 2025, the same thresholds as Social Security) forfeits the entire modification; Relocation applies that cliff (fixed 2026-10-21: it was described here but not applied). The modification is per person (up to $100,000 combined for a joint return when both spouses qualify on their own income); Relocation, which has no per-spouse income split, applies one $50,000. Military pensions fully exempt (no income or age requirement).",
    "bracketsNote": "Same thresholds all filing statuses (no MFJ doubling); inflation-indexed. 5.99% top over $186,450. roth.cr 4.75% representative (typical conversion lands in middle band). Source: RI Division of Taxation 2026.",
    "incomeTax": true,
    "source": "https://tax.ri.gov/"
@@ -5161,7 +5345,6 @@
      "single": 107000,
      "joint": 133500
     },
-    "phaseInAboveAGI": null,
     "maxTaxableFraction": 0.85,
     "ssAgeGate": 67
    },
@@ -5172,7 +5355,10 @@
      "capSingle": 50000,
      "capJoint": 50000,
      "cliffType": "hard",
-     "cliffAGI": null,
+     "cliffAGI": {
+      "single": 107000,
+      "joint": 133500
+     },
      "fullBelowAGI": null,
      "zeroByAGI": null,
      "excludesIRA": true
@@ -5185,7 +5371,10 @@
      "capSingle": 50000,
      "capJoint": 50000,
      "cliffType": "hard",
-     "cliffAGI": null,
+     "cliffAGI": {
+      "single": 107000,
+      "joint": 133500
+     },
      "fullBelowAGI": null,
      "zeroByAGI": null,
      "excludesIRA": false
@@ -5532,42 +5721,43 @@
    "name": "Utah",
    "brackets": [
     {
-     "rate": 0.045,
+     "rate": 0.0445,
      "upTo": null
     }
    ],
-   "ssTreatment": "On the SS-taxing list. Utah's mechanism is technically a nonrefundable CREDIT (taxable SS x 4.5%, reduced $0.025 per dollar AGI exceeds the threshold), not a plain exclusion — but since UT's flat rate is also 4.5%, the credit exactly offsets the state tax on taxable SS below the threshold, making an exclusion model mathematically equivalent. Thresholds raised by 2025 SB0071: $54,000 single/HOH, $90,000 joint (up from $45,000/$75,000; MFS separately raised to $45,000, not modeled — single/joint two-bucket simplification).",
+   "ssTreatment": "On the SS-taxing list. Utah keeps the federally taxable part of Social Security in income and offsets it with a nonrefundable CREDIT equal to the tax rate times that Social Security, reduced by $0.025 for each dollar of modified AGI over $54,000 single, $90,000 joint OR head of household, $45,000 married filing separately (Utah Code 59-10-1042, as amended 2025). The Relocation engine applies this credit and its phase-out as written (creditReduction), testing the threshold against federal AGI. Fixed 2026-10-21: head of household previously used the $54,000 single threshold, and the credit's phase-out was approximated by a generic band. MFS's $45,000 is not separately modeled (single-bucket simplification).",
+   "bracketsNote": "Flat 4.45% for taxable years beginning on or after January 1, 2026 (S.B. 60, 2026 General Session, Utah Code 59-10-104(2)(b); was 4.5%). Fixed 2026-10-21.",
    "incomeTax": true,
    "source": "https://incometax.utah.gov/"
   },
   "roth": {
-   "cr": 0.045,
+   "cr": 0.0445,
    "ex": false,
-   "note": "Flat 4.5% (recently cut), applied to IRA and conversion income. Utah is one of the few states that taxes Social Security, though a phased credit offsets it for lower incomes; the flat structure means a conversion is taxed at the same rate at any size. A small retirement credit applies but phases out as income rises."
+   "note": "Flat 4.45% for 2026 (cut from 4.5%), applied to IRA and conversion income. Utah is one of the few states that taxes Social Security, though a phased credit offsets it for lower incomes; the flat structure means a conversion is taxed at the same rate at any size. A small retirement credit applies but phases out as income rises."
   },
   "taxRules": {
    "bracketsByStatus": {
     "single": [
      {
-      "rate": 0.045,
+      "rate": 0.0445,
       "upTo": null
      }
     ],
     "mfj": [
      {
-      "rate": 0.045,
+      "rate": 0.0445,
       "upTo": null
      }
     ],
     "mfs": [
      {
-      "rate": 0.045,
+      "rate": 0.0445,
       "upTo": null
      }
     ],
     "hoh": [
      {
-      "rate": 0.045,
+      "rate": 0.0445,
       "upTo": null
      }
     ]
@@ -5578,9 +5768,10 @@
      "single": 54000,
      "joint": 90000
     },
-    "phaseInAboveAGI": {
-     "single": 54000,
-     "joint": 90000
+    "hohMapsToJoint": true,
+    "phaseOut": {
+     "type": "creditReduction",
+     "perDollar": 0.025
     },
     "maxTaxableFraction": 0.85
    },
@@ -5629,8 +5820,8 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "On the SS-taxing list: SS fully exempt below $55,000 single/HOH/MFS or $70,000 joint AGI (2025, latest published; confirmed via VT Dept of Taxes), phasing out over a $10,000-wide band above that ($0 exemption at $65,000 single / $80,000 joint). Private IRA/401(k)/conversion income fully taxable; only a small $10,000 deduction for certain government/pension retirement income (income-limited, excludes most IRA). A conversion can also push past the SS-exemption threshold, taxing more benefits that year. Military retirement deduction up to $10k. IMPORTANT: MFS and HOH each have their own distinct bracket schedule (narrower than single for MFS, wider for HOH) — confirmed against the official 2025 VT Tax Rate Schedules; do not clone single's thresholds for these statuses.",
-   "bracketsNote": "Single-filer; 8.75% top over $249,700. roth.cr 6.6% representative (typical conversion lands in the 6.6% band, $49,400-$119,700). Inflation-indexed annually; figures confirmed against the 2025 VT Tax Rate Schedules (latest published; 2026 annual schedule not yet located, only 2026 withholding tables). MFJ top starts $304,000; MFS (narrower) $152,000; HOH (wider) $276,850 — all four statuses have genuinely distinct thresholds in VT, unlike most states. Source: tax.vermont.gov.",
+   "ssTreatment": "On the SS-taxing list: SS fully exempt below $55,000 single/HOH/MFS or $70,000 joint AGI (2025, latest published; confirmed via VT Dept of Taxes), phasing out in a straight line over the next $10,000 of federal AGI ($0 exemption at $65,000 single / $80,000 joint), per 32 V.S.A. 5830e(a); the exemption applies to the federally taxable part of the benefit. Relocation now models that $10,000 band exactly (2026-10-21; it used a generic band before). Private IRA/401(k)/conversion income fully taxable; only a small $10,000 deduction for certain government/pension retirement income (income-limited, excludes most IRA). A conversion can also push past the SS-exemption threshold, taxing more benefits that year. Military retirement deduction up to $10k. IMPORTANT: MFS and HOH each have their own distinct bracket schedule (narrower than single for MFS, wider for HOH) — confirmed against the official 2025 VT Tax Rate Schedules; do not clone single's thresholds for these statuses.",
+   "bracketsNote": "Single-filer; 8.75% top over $249,700. roth.cr 6.6% representative (typical conversion lands in the 6.6% band, $49,400-$119,700). Inflation-indexed annually; figures confirmed against the 2025 VT Tax Rate Schedules (latest published; 2026 annual schedule not yet located, only 2026 withholding tables). MFJ top starts $304,000; MFS (narrower) $152,000; HOH (wider) $276,850 — all four statuses have genuinely distinct thresholds in VT, unlike most states. Source: tax.vermont.gov. Capital gains: the flat exclusion, $5,000 or the gain if less (Schedule IN-153 instructions, 2025), covers any net adjusted capital gain; the 40% exclusion excludes publicly traded stocks and bonds, so Relocation applies only the flat one (added 2026-10-21; its cap at 40% of federal taxable income is not modeled).",
    "incomeTax": true,
    "source": "https://tax.vermont.gov/"
   },
@@ -5720,9 +5911,9 @@
      "single": 55000,
      "joint": 70000
     },
-    "phaseInAboveAGI": {
-     "single": 55000,
-     "joint": 70000
+    "phaseOut": {
+     "type": "linear",
+     "width": 10000
     },
     "maxTaxableFraction": 0.85
    },
@@ -5735,7 +5926,11 @@
     "sameAs": "retirementIncome"
    },
    "capitalGains": {
-    "treatment": "ordinary"
+    "treatment": "excludedPct",
+    "exclusionPct": 0,
+    "minDeduction": 5000,
+    "maxGainEligible": null,
+    "sourceRestricted": false
    }
   },
   "taxContext": {
@@ -6007,7 +6202,7 @@
     }
    ],
    "ssTreatment": "Social Security FULLY exempt for all residents as of 2026 (phase-out completed). Private IRA/401(k)/conversion income taxable; seniors 65+ get an $8,000 modification. Military retirement fully exempt. West Virginia is cutting income tax most years via revenue triggers, so rates keep falling.",
-   "bracketsNote": "Single-filer 2026 schedule after SB 392 (2026 session, 5% across-the-board cut, top 4.82%->4.58% eff Jan 1 2026). Exact rates 2.11/2.81/3.16/4.22/4.58 per Thomson Reuters citing the enacted law. Many secondary sources still show the stale 5.12% (two cuts behind) or 4.82% (one behind). roth.cr refreshed to 4.58%. Source: WV State Tax Dept / SB 392.",
+   "bracketsNote": "Single-filer 2026 schedule after SB 392 (2026 session, 5% across-the-board cut, top 4.82%->4.58% eff Jan 1 2026). Exact rates 2.11/2.81/3.16/4.22/4.58 per Thomson Reuters citing the enacted law. Many secondary sources still show the stale 5.12% (two cuts behind) or 4.82% (one behind). roth.cr refreshed to 4.58%. Source: WV State Tax Dept / SB 392. Married filing separately uses half-width bands ($5,000 / $12,500 / $20,000 / $30,000) per the WV Tax Division's 2026 table (fixed 2026-10-21; MFS used the single bands).",
    "incomeTax": true,
    "source": "https://tax.wv.gov/"
   },
@@ -6065,19 +6260,19 @@
     "mfs": [
      {
       "rate": 0.0211,
-      "upTo": 10000
+      "upTo": 5000
      },
      {
       "rate": 0.0281,
-      "upTo": 25000
+      "upTo": 12500
      },
      {
       "rate": 0.0316,
-      "upTo": 40000
+      "upTo": 20000
      },
      {
       "rate": 0.0422,
-      "upTo": 60000
+      "upTo": 30000
      },
      {
       "rate": 0.0458,

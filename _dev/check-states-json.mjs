@@ -307,9 +307,65 @@ const LOCAL_TAX_STATUSES = ['single', 'mfj', 'mfs', 'hoh'];
   }
 }
 
+// --- 8. Social Security and capital gains rule shapes (G7) ---
+// Added 2026-10-21. relocation/relo-engine.mjs throws on a Social Security phase-out
+// type or a capital gains treatment it doesn't know (a silent fallback would quietly
+// drop income), so catch a typo or an unsupported shape here, at build time, rather
+// than as a broken Relocation page.
+for (const code of htmlCodes) {
+  const tr = json[code]?.taxRules;
+  if (!tr) continue;
+  const ss = tr.socialSecurity;
+  if (!ss || typeof ss.taxed !== 'boolean') {
+    diffs.push(`${code}: taxRules.socialSecurity.taxed must be a boolean`);
+  } else if (ss.taxed && !ss.sharesRetirementCap && !ss.followsFederalFormula) {
+    const ex = ss.exemptBelowAGI;
+    if (!ex || typeof ex.single !== 'number' || typeof ex.joint !== 'number') {
+      diffs.push(`${code}: socialSecurity.exemptBelowAGI needs numeric single and joint thresholds`);
+    }
+    if ('phaseInAboveAGI' in ss) {
+      diffs.push(`${code}: socialSecurity.phaseInAboveAGI is no longer read by the engine — describe the phase-out with socialSecurity.phaseOut`);
+    }
+    const po = ss.phaseOut;
+    if (po != null) {
+      if (po.type === 'linear') {
+        if (!(po.width > 0)) diffs.push(`${code}: socialSecurity.phaseOut (linear) needs a positive width`);
+      } else if (po.type === 'stepped') {
+        if (!(po.step > 0) || !(po.pctPerStep > 0 && po.pctPerStep <= 1)) diffs.push(`${code}: socialSecurity.phaseOut (stepped) needs step > 0 and 0 < pctPerStep <= 1`);
+      } else if (po.type === 'creditReduction') {
+        if (!(po.perDollar > 0)) diffs.push(`${code}: socialSecurity.phaseOut (creditReduction) needs perDollar > 0`);
+        const flat = ['single', 'mfj', 'mfs', 'hoh'].every((s) => tr.bracketsByStatus?.[s]?.length === 1);
+        if (!flat) diffs.push(`${code}: socialSecurity.phaseOut (creditReduction) is only defined for a flat-rate state`);
+      } else {
+        diffs.push(`${code}: socialSecurity.phaseOut.type "${po.type}" is not one the engine knows (linear | stepped | creditReduction)`);
+      }
+    }
+  }
+
+  const cg = tr.capitalGains;
+  const t = cg?.treatment;
+  if (t === 'ordinary') {
+    // nothing else to check
+  } else if (t === 'excludedPct') {
+    if (!(cg.exclusionPct >= 0 && cg.exclusionPct <= 1)) diffs.push(`${code}: capitalGains.exclusionPct must be between 0 and 1`);
+    if (cg.minDeduction != null && !(cg.minDeduction >= 0)) diffs.push(`${code}: capitalGains.minDeduction must be >= 0 when present`);
+    if (cg.maxGainEligible != null && !(cg.maxGainEligible > 0)) diffs.push(`${code}: capitalGains.maxGainEligible must be > 0 when present`);
+    if (cg.sourceRestricted != null && typeof cg.sourceRestricted !== 'boolean') diffs.push(`${code}: capitalGains.sourceRestricted must be a boolean when present`);
+  } else if (t === 'separateTax') {
+    if (!(cg.exemptBelow >= 0)) diffs.push(`${code}: capitalGains.exemptBelow must be >= 0`);
+    checkBracketLadder(`${code}.taxRules.capitalGains.ladder`, cg.ladder);
+  } else if (t === 'stacked') {
+    for (const status of LOCAL_TAX_STATUSES) {
+      checkBracketLadder(`${code}.taxRules.capitalGains.ladderByStatus.${status}`, cg.ladderByStatus?.[status]);
+    }
+  } else {
+    diffs.push(`${code}: capitalGains.treatment "${t}" is not one the engine knows (ordinary | excludedPct | separateTax | stacked)`);
+  }
+}
+
 if (diffs.length) {
   fail(`${diffs.length} field mismatch(es):\n  ` + diffs.join('\n  '));
 }
 
-const reloNote = reloStates ? `, relocation taxRules validated on ${reloStates} states (G1-G4)` : '';
+const reloNote = reloStates ? `, relocation taxRules validated on ${reloStates} states (G1-G4, G7)` : '';
 console.log(`states.json guard OK: 51 states (50 + DC), roth blocks match HTML exactly${reloNote}.`);

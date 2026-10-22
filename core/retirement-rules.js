@@ -12,12 +12,13 @@
 // rix-table dispatch entirely rather than sharing this logic).
 //
 // resolveRetirementIncome's `agiProxy` and `ss` parameters are ALWAYS caller-supplied,
-// NEVER computed in here — Roth uses a precise, taxable-SS-derived AGI figure; the
-// Relocation tool uses a cruder full-benefit-sum proxy. This is an intentional,
-// documented precision difference between the two tools, not an oversight — collapsing
-// it inside this module would silently change one tool's accuracy. Do not "fix" this.
+// NEVER computed in here — computing them inside this module would silently change one
+// tool's figures. Both callers now pass a federal-AGI figure built from the taxable part
+// of Social Security: Roth from its own federal calculation, Relocation from
+// federalTaxableSS (since 2026-10-21; before that Relocation summed the gross benefit,
+// which overstated federal AGI and tripped CT/NM/CO thresholds early).
 //
-// State-level Social Security taxability (the exemptBelowAGI/phaseInAboveAGI/
+// State-level Social Security taxability (the exemptBelowAGI/phaseOut/
 // followsFederalFormula/ssAgeGate machinery) stays OUT of this module and is NOT
 // exported — the Roth calculator never models state-level SS taxability at all (only
 // the federal SS torpedo zone), so there is no second caller for that logic. The one
@@ -122,25 +123,25 @@ function allowedExclusion(excl, isIRA, agiProxy, status, cap, actualAmount) {
 //   which independently derives the real federally-taxable portion internally).
 // ssForThreshold: the SS figure to back OUT of agiProxy for thresholdExcludesSS states
 //   (NJ, VA) — MUST match whatever SS figure is already baked INTO the caller's own
-//   agiProxy, or the threshold test silently uses the wrong precision. Defaults to
-//   `ss` (correct for Relocation, whose agiProxy sums the gross benefit) — Roth passes
-//   its own precise taxable-SS figure here instead, since Roth's agiProxy is built from
-//   that, not the gross benefit. Currently no state combines thresholdExcludesSS with
-//   netAgainstSS/sharesCapWithSS (which both need the true gross `ss`), so this only
-//   ever matters for one purpose per state today — kept as a separate parameter anyway
-//   so a future state combining both wouldn't be silently wrong.
+//   agiProxy, or the threshold test silently uses the wrong precision. Defaults to `ss`
+//   (correct for a caller whose agiProxy sums the gross benefit); both current callers
+//   pass the taxable-SS figure their agiProxy is built from. Currently no state combines
+//   thresholdExcludesSS with netAgainstSS/sharesCapWithSS (which both need the true
+//   gross `ss`), so this only ever matters for one purpose per state today — kept as a
+//   separate parameter anyway so a future state combining both wouldn't be silently
+//   wrong.
 // otherIncomeForSS: income EXCLUDING Social Security entirely, for CO's own internal
-//   federalTaxableSS recomputation (sharesCapWithSS). Defaults to `agiProxy - ss`,
-//   which is exact for Relocation (its agiProxy is built by adding the raw ss benefit,
-//   so subtracting it back out is lossless) — but WRONG for Roth, whose agiProxy is
-//   built from a PRE-COMPUTED taxable-SS figure (ssBase/ssWith), not the raw benefit,
+//   federalTaxableSS recomputation (sharesCapWithSS). Defaults to `agiProxy - ss`, which
+//   is exact only for a caller whose agiProxy adds the raw ss benefit (both current
+//   callers pass their own non-SS income instead) — and WRONG for Roth, whose agiProxy
+//   is built from a PRE-COMPUTED taxable-SS figure (ssBase/ssWith), not the raw benefit,
 //   so `agiProxy - ss` doesn't recover the true non-SS income and can silently zero out
 //   CO's SS subtraction in the federal formula's 50% phase-in zone (confirmed: at
-//   $20,000 of true other income, the default derivation gives $0 instead of the
-//   correct $2,500 — a 100% error). Roth passes its own precise `income+nii` here
-//   instead — the same non-SS-income figure this tool already uses to derive
-//   ssBase/ssWith for the federal SS torpedo calc (ltcg is excluded from both,
-//   consistent with this tool's existing provisional-income convention).
+//   $20,000 of true other income, the default derivation gives $0 instead of the correct
+//   $2,500 — a 100% error). Roth passes its own precise `income+nii` here instead — the
+//   same non-SS-income figure this tool already uses to derive ssBase/ssWith for the
+//   federal SS torpedo calc (ltcg is excluded from both, consistent with this tool's
+//   existing provisional-income convention).
 // Returns { iraTaxable, penTaxable, ssTaxableOverride }. ssTaxableOverride is null for
 // every state except when rules.retirementIncome.exclusion.sharesCapWithSS is true (CO
 // today, the only state with this flag) — callers MUST check for a non-null override

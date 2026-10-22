@@ -333,10 +333,14 @@ function check(label, actual, expected, tolerance = 1) {
   const ri = states.RI.taxRules;
   check('RI socialSecurity.ssAgeGate is set to 67', ri.socialSecurity.ssAgeGate, 67);
 
-  // 63yo, single, AGI well under the $107k threshold: still fully taxable (85%) — not
-  // yet at FRA. Previously this returned $0 (the age gate wasn't checked at all).
+  // 63yo, single, AGI well under the $107k threshold: not yet at FRA, so RI taxes the
+  // Social Security that's in federal AGI — the federally taxable amount, not 85% of the
+  // benefit (fixed 2026-10-21; this used to expect 30000 * 0.85 = 25,500). Federal worksheet
+  // (IRS Pub 915): provisional income = 20,000 + 30,000/2 = 35,000, over the $34,000 second
+  // base: min(15,000, (34,000-25,000)*0.5 = 4,500) + 0.85*(35,000-34,000) = 5,350, under the
+  // 0.85*30,000 = 25,500 cap. Previously this returned $0 (the age gate wasn't checked at all).
   const notFRA = computeStateIncomeTax(ri, 'single', { ss: 30000, wages: 20000, age: 63 });
-  check('RI single, age 63 (not FRA), AGI under threshold: still fully taxable', notFRA.breakdown.taxableSS, 30000 * 0.85);
+  check('RI single, age 63 (not FRA), AGI under threshold: the federally taxable amount stays taxable', notFRA.breakdown.taxableSS, 5350);
 
   // 67yo (FRA), same income: fully exempt.
   const atFRA = computeStateIncomeTax(ri, 'single', { ss: 30000, wages: 20000, age: 67 });
@@ -344,8 +348,10 @@ function check(label, actual, expected, tolerance = 1) {
 
   // Joint, one spouse at FRA and one not: the younger spouse's age controls (no
   // per-spouse SS split available) — still fully taxable.
+  // Federal worksheet, joint: provisional = 20,000 + 15,000 = 35,000, between the $32,000
+  // and $44,000 bases: min(15,000, (35,000-32,000)*0.5) = 1,500 (was expected 25,500).
   const jointYoungerNotFRA = computeStateIncomeTax(ri, 'mfj', { ss: 30000, wages: 20000, age: 68, spouseAge: 63 });
-  check('RI joint, younger spouse not FRA: still fully taxable', jointYoungerNotFRA.breakdown.taxableSS, 30000 * 0.85);
+  check('RI joint, younger spouse not FRA: the federally taxable amount stays taxable', jointYoungerNotFRA.breakdown.taxableSS, 1500);
 
   // Joint, both at FRA, AGI under the joint threshold: fully exempt.
   const jointBothFRA = computeStateIncomeTax(ri, 'mfj', { ss: 30000, wages: 20000, age: 68, spouseAge: 67 });

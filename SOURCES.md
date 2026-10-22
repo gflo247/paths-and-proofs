@@ -362,6 +362,10 @@ user's own state when accuracy matters to them.
   [WV Tax Division — SS modification](https://tax.wv.gov/Individuals/SeniorCitizens/Pages/SeniorCitizenSocialSecurityModification.aspx).
   So WV is correctly **not** in the eight-state SS disclosure, and the SS tool is
   correct for WV.
+  > **Fixed 2026-10-21 (Relocation):** married filing separately uses half-width
+  > bands ($5,000 / $12,500 / $20,000 / $30,000) per the same
+  > [WV Tax Division page](https://tax.wv.gov/Individuals/Pages/PersonalIncomeTaxReductionBill.aspx);
+  > the MFS table had the single bands.
 
 #### New York — ✅ fully verified June 2026
 
@@ -371,6 +375,12 @@ user's own state when accuracy matters to them.
   $161,550–$323,200 band) better reflects where a meaningful conversion lands.
   Source: [NY Dept. of Taxation & Finance](https://www.tax.ny.gov/) tax rate
   schedules.
+  > **Fixed 2026-10-21: rates a year stale.** The tables held the TY2025 rates
+  > (4/4.5/5.25/5.5/6%) while the bracket note called them post-cut. TY2026 schedule
+  > from [Form IT-2105-I (2026)](https://www.tax.ny.gov/pdf/2026/inc/it2105i_2026.pdf),
+  > which DTF says reflects ["certain income tax rate reductions"](https://www.tax.ny.gov/bus/wt/rate.htm):
+  > 3.9/4.4/5.15/5.4/5.9%, then 6.85/9.65/10.3/10.9%, same thresholds. `roth.cr`
+  > 6% → 5.9% (the $80,650–$215,400 single band).
 - **$20,000 private retirement exclusion (age 59½+): CONFIRMED CORRECT — not
   changed.** Bills S2571/A259 proposed raising this to $25k (2025)/$30k (2026)/etc.,
   and several secondary guides reported those figures as if enacted. They were
@@ -593,6 +603,9 @@ on the conversion). Audited against primary sources. **Two were actively wrong**
 #### Mississippi — ✅ `ex:true` kept; rate fixed; age condition added
 
 - **Rate fixed 4.7% → 4.4%** (2026; stepping down toward 3.75%).
+  > **Fixed 2026-10-21: 4.4% was the TY2025 rate.** [MS DOR](https://www.dor.ms.gov/general-information)
+  > lists 4.4% for tax year 2025, 4% for 2026 and 3.75% for 2027, on taxable income
+  > over $10,000. Brackets and `roth.cr` now 4%.
 - MS exempts retirement income **once plan retirement requirements are met
   (generally 59½)**. Per MS DOR, "early distributions are not considered
   retirement income and may be subject to tax." So a conversion at 59½+ is exempt
@@ -740,6 +753,13 @@ impact remaining `ex:false` fixes.
 - Note adds a real interaction: a conversion raises income and can **shrink MN's
   Social Security subtraction**, pulling more benefits into MN tax. (MN is on the
   eight-state SS disclosure — consistent.)
+  > **Fixed 2026-10-21 (Relocation):** the subtraction now phases out as the statute
+  > says, "reduced by ten percent for each $4,000 of adjusted gross income, or
+  > fraction thereof" over the threshold
+  > ([Minn. Stat. 290.0132 subd. 26(c)](https://www.revisor.mn.gov/statutes/cite/290.0132)),
+  > tested on federal AGI. It used a generic band about half as wide, tested on income
+  > plus the whole benefit. (MFS still uses the single threshold — the engine's
+  > two-bucket simplification.)
 
 #### Hawaii — ✅ rate fixed June 2026 (largest overstatement corrected)
 
@@ -748,6 +768,13 @@ impact remaining `ex:false` fixes.
   rates, phasing through 2031; effective rate is ~7.1% at $75k, ~9.5% at $300k. A
   typical conversion lands near 8%. Source:
   [HI DOR / Act 46](https://files.hawaii.gov/tax/forms/2024/n11ins.pdf).
+  > **Fixed 2026-10-21: the bracket tables were the pre-2025 schedule.** Act 46's
+  > schedule for tax years after 2024 ([HI DOTAX Tax Rate Schedules](https://tax.hawaii.gov/forms/d_25table-on/d_25table-on_p13/))
+  > runs 1.4% to $9,600 … 7.6% to $125,000 … 11% over $325,000 single (joint bands
+  > double, head of household 1.5×); the tables held 1.4% to $2,400 … 11% over
+  > $200,000. `roth.cr` 8.25% → 7.6% (the $48,000–$125,000 single band). Relocation
+  > also caps net capital gain at 7.25%, stacked on top of other income, per
+  > [HRS 235-51(f)](https://www.capitol.hawaii.gov/hrscurrent/Vol04_Ch0201-0257/HRS0235/HRS_0235-0051.htm).
 - `ex:false` correct, with a key distinction now in the note: Hawaii **fully
   exempts pensions (employer-funded) and Social Security**, but traditional IRA/
   401(k) income — and thus a Roth conversion — **is fully taxable** (HRS
@@ -790,6 +817,11 @@ impact remaining `ex:false` fixes.
   > fixed the same pass.
 - **CT taxes Social Security** above the same AGI thresholds — consistent with
   its place on the eight-state SS disclosure list.
+  > **Fixed 2026-10-21 (Relocation):** head of household now uses the $100,000 joint
+  > Social Security threshold ([CT DRS](https://portal.ct.gov/drs/individuals/connecticut-tax-tips-for-senior-citizens)),
+  > and the Social Security and pension tiers are tested on federal AGI, which counts
+  > only the taxable part of the benefit (they were tested on income plus the whole
+  > benefit).
 
 #### Vermont — ✅ rate fixed June 2026
 
@@ -798,8 +830,16 @@ impact remaining `ex:false` fixes.
   [VT Dept. of Taxes](https://tax.vermont.gov/) 2026 brackets.
 - `ex:false` correct — no broad retirement exclusion (only a small $10k deduction
   for certain pension/government income, not IRA conversions). Note adds the SS
-  interaction: a conversion can push past VT's SS-exemption thresholds ($65k joint
+  interaction: a conversion can push past VT's SS-exemption thresholds ($70k joint
   / $55k single). VT is on the eight-state SS disclosure list — consistent.
+  > **Fixed 2026-10-21 (Relocation):** the Social Security exemption now phases out in
+  > a straight line over the next $10,000 of federal AGI ($55,000 → $65,000 single,
+  > $70,000 → $80,000 joint, [32 V.S.A. 5830e](https://legislature.vermont.gov/statutes/section/32/151/05830e)),
+  > applied to the federally taxable part of the benefit; it used a generic band on
+  > 85% of the benefit (and this entry said $65k joint). Capital gains get the flat
+  > exclusion, $5,000 or the gain if less
+  > ([IN-153 instructions, 2025](https://tax.vermont.gov/sites/tax/files/documents/IN-153-Instr-2025.pdf));
+  > the 40% exclusion excludes publicly traded stocks and bonds, so it isn't applied.
 
 #### Wisconsin — ✅ rate fixed June 2026; per-spouse mechanic clarified 2026-07-28
 
@@ -900,12 +940,26 @@ IRA-specific deduction traps (RI, like ME).
   > the SS exemption's $100k/$150k, a genuinely different NM statute). Both
   > corrected the same pass; verified against NM TRD's own worked example
   > ($35k joint AGI, both 65+ → $12,000 excluded, i.e. $6,000 tier × 2).
+  > **Fixed 2026-10-21 (Relocation):** the flat capital gains deduction, "100% of
+  > your net capital gains, not to exceed $2,500"
+  > ([2025 PIT-ADJ instructions](https://realfile.tax.newmexico.gov/2025pit-adj-ins.pdf),
+  > line 16), applies to any gain, so Relocation now takes it from portfolio gains
+  > too; the 40% business-sale alternative stays unapplied (`exclusionPct` corrected
+  > from 0.5 to 0.4). The Social Security and $8,000-deduction thresholds are now
+  > tested on federal AGI, which counts only the taxable part of the benefit.
 
 #### Montana — ✅ rate fixed June 2026
 
 - **Rate 5.9% → 5.65%** (HB337: 5.65% for 2026, 5.4% in 2027). Two brackets; 5.65%
   starts at just ~$20,500 single / ~$41,000 joint, so most conversion income is at
   5.65%. Source: [MT DOR HB337](https://revenue.mt.gov/news/recent-news/HB-337).
+  > **Fixed 2026-10-21:** the 2026 bands are 4.7% on the first $47,500 single /
+  > $71,250 head of household / $95,000 joint (same MT DOR page;
+  > [MCA 15-30-2103](https://mca.legmt.gov/bills/mca/title_0150/chapter_0300/part_0210/section_0030/0150-0300-0210-0030.html)),
+  > not ~$20,500 / ~$41,000, and head of household had the single band. Long-term
+  > capital gains are taxed at 3.0% / 4.1% on the same bands, stacked on top of other
+  > income (15-30-2103(2)); Relocation taxed them as ordinary income. `roth.cr`
+  > unchanged (5.65%).
 - `ex:false` correct. Note updated: MT **repealed its broader pension/IRA deduction**
   for 2025, leaving only a ~$5,500 qualified-retirement-income deduction; MT taxes
   SS on the federal formula (on SS list). No sales tax.
@@ -953,6 +1007,14 @@ IRA-specific deduction traps (RI, like ME).
   > review confirmed RI's guide states the per-spouse-partial clause explicitly for
   > the PENSION modification but doesn't repeat it for SS specifically, so this is
   > inferred, not directly sourced).
+  > **Fixed 2026-10-21 (Relocation):** the pension/annuity modification's federal AGI
+  > cliff — $107,000 single, head of household or MFS, $133,500 joint
+  > ([Pub 2026-01](https://tax.ri.gov/sites/g/files/xkgbur541/files/2026-02/PUB_2026-01_Retirement_Income_Guide.pdf),
+  > Tax Year 2025) — is now applied; `cliffAGI` was null, so the modification applied
+  > at any income. Below full retirement age, Relocation now taxes the federally
+  > taxable part of Social Security, not 85% of the benefit. Still simplified: the
+  > modification is per person (up to $100,000 combined for a joint return when both
+  > spouses qualify on their own income); Relocation applies one $50,000.
 
 #### Kansas — ✅ rate fixed + SS note updated June 2026
 
@@ -1073,9 +1135,13 @@ line-targeted `set-state.mjs` helper (see Tooling note below).
   Removed the old note's "verify locally" hedge with primary sources.
 - $6,000 retirement exemption **covers traditional IRA but only at 59½+** (early
   distributions disqualified); AR DFA confirms a Roth conversion is taxable in the
-  conversion year. SS exempt below $100k AGI (generous threshold — AR is not on the
-  eight-state SS list). Source:
+  conversion year. Social Security is not taxed at all. Source:
   [AR DFA Subject 206](https://www.arkansas.gov/dfa/income_tax/documents/206-PensionsandAnnuities.pdf).
+  > **Fixed 2026-10-21:** this entry and `states.json` said Social Security was
+  > exempt only below $100k AGI, and Relocation taxed 85% of benefits above it. No
+  > Arkansas source supports a threshold:
+  > [AR DFA Subject 209](https://dfa.arkansas.gov/wp-content/uploads/209-NontaxableIncome.pdf)
+  > lists Social Security and Railroad Retirement as nontaxable income.
 - Full brackets: 0% to ~$5,500, graduated to 3.9% >~$25,700 (separate flatter
   schedule for net income >$94,700).
   > **Fixed 2026-08-24 (commit 136d868): the $6,000 exemption above was never**
@@ -1093,6 +1159,11 @@ rates from 2025–26 cuts. Rates cross-checked against the Tax Foundation 2026 S
 Income Tax Rates report and state sources.
 
 - **Idaho** — **5.695% → 5.3%** (HB40, 2025, retroactive). SS exempt. Flat.
+  > **Fixed 2026-10-21: the 0% band was missing.** [ISTC's 2025 rate schedule](https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/):
+  > 0% on the first $4,811 single / $9,622 married, 5.3% above;
+  > [Idaho Code 63-3024(2)](https://legislature.idaho.gov/statutesrules/idstat/title63/t63ch30/sect63-3024/)
+  > treats head of household as a joint return. Worth $255 single / $510 joint a year
+  > in Relocation; `roth.cr` unchanged.
 - **Kentucky** — **4% → 3.5%** (Jan 1 2026 revenue trigger). SS exempt; modest
   retirement exclusion. Flat.
   > **Fixed 2026-08-24 (commit 136d868): the "modest retirement exclusion" above**
@@ -1111,6 +1182,13 @@ Income Tax Rates report and state sources.
 - **Utah** — **4.65% → 4.5%** (recently cut). On the eight-state SS list (taxes SS
   with a phased credit); small retirement credit phases out with income. Flat.
   Cross-checked against SS disclosure — consistent.
+  > **Fixed 2026-10-21:** 4.45% for tax years from 2026
+  > ([S.B. 60, 2026 GS](https://le.utah.gov/Session/2026/bills/enrolled/SB0060.pdf),
+  > 59-10-104(2)(b)); `roth.cr` 4.5% → 4.45%. Relocation's Social Security credit now
+  > follows [59-10-1042](https://le.utah.gov/xcode/Title59/Chapter10/59-10-S1042.html)
+  > as written — the rate times the taxable Social Security, less $0.025 per dollar of
+  > modified AGI over $54,000 single or $90,000 joint **and head of household** —
+  > replacing a generic phase-in band; head of household had the $54,000 threshold.
 - **Colorado** — **4.4% confirmed.** Pension/annuity subtraction ($20k at 55–64,
   $24k at 65+) covers IRA/conversion income but **excludes pre-59½ early
   distributions** (CO DOR, primary source). Fully exempts SS at 65+ (on SS list;
@@ -1175,6 +1253,10 @@ Income Tax Rates report and state sources.
 - **North Dakota** — **2.5% top confirmed** (0% bottom bracket; among the lowest
   conversion taxes anywhere). SS exempt.
 - **Arizona** — **2.5% flat confirmed** (lowest flat rate nationally). SS exempt.
+  > **Added 2026-10-21 (Relocation):** Arizona's 25% subtraction of net long-term
+  > capital gain from assets acquired after 2011
+  > ([2025 Form 140 instructions](https://azdor.gov/sites/default/files/document/FORMS_INDIVIDUAL_2025_140i.pdf),
+  > lines 20–24) is now applied; gains were taxed in full.
 
 ### ✅ AUDIT COMPLETE — all 50 states + DC primary-sourced (June 2026)
 
@@ -1221,7 +1303,7 @@ you live" estimate the user can override), but noted for completeness.
 
 ## Relocation (`relocation/relo-engine.mjs`, `relocation/SCHEMA.md`)
 
-The state-vs-state income-tax comparison is computed to the dollar from two layers
+The state-vs-state income-tax comparison is computed from two layers
 inside `roth-conversion/states.json`, both keyed alongside (not inside) each state's
 existing `facts` block:
 
@@ -1246,6 +1328,26 @@ states this suite covers (MI, GA, WI, NM, SC, VA, WV, NJ, CT, plus the states wh
 figures the suite cross-checks against Roth's own already-verified numbers); ⚠️ for
 the rest of the 51, which use the general flat-exclusion shape without a dedicated
 regression check per state.
+
+**2026-10-21 pass — `_dev/test-relo-state-data.mjs`** (34 checks, each worked by hand
+from the state's own schedule or statute; 33 fail on the previous build):
+- **Data:** NY, MS and UT rates moved to TY2026; HI to its schedule for tax years
+  after 2024; ID's 0% band added; MT's head-of-household band and WV's MFS bands
+  corrected; AR Social Security made nontaxable; RI's pension cliff applied (each
+  state's entry above has the details and sources).
+- **Capital gains:** a new `stacked` treatment taxes gains on their own ladder on top
+  of other income (MT 3.0% / 4.1%, HI capped at 7.25%); AZ's 25% and VT's $5,000
+  exclusions added; NM's $2,500 flat deduction now applies to portfolio gains.
+- **Social Security:** the engine now starts from federal AGI and the federally
+  taxable part of the benefit (it used 85% of the benefit and income plus the whole
+  benefit), with each state's own phase-out: VT a straight line over $10,000, MN 10%
+  per $4,000 step, UT a credit reduced $0.025 per dollar. CT and UT head of household
+  use the joint threshold. The same federal AGI now feeds the retirement-exclusion
+  thresholds (CT, NM, CO), as the Roth tool's call already did.
+- **Not modeled:** state standard deductions, personal exemptions and exemption
+  credits, so the tax shown runs high wherever a state allows them (the California
+  example shows $1,528 a year where the couple owes about $460). Disclosed on the
+  page.
 
 **`taxContext` (Tier 2 — disclosed alongside the headline, never computed into it)**
 — sales tax rate, median property tax rate, estate/inheritance tax flag. ⚠️ **NOT
