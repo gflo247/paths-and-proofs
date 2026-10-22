@@ -288,8 +288,8 @@
      "hoh": 23625
     },
     "age65AddOn": {
-     "single": 2000,
-     "joint": 1600
+     "unmarried": 2100,
+     "married": 2100
     }
    }
   },
@@ -468,6 +468,14 @@
      "mfj": 4940,
      "mfs": 2470,
      "hoh": 2470
+    },
+    "exemptionCredit": {
+     "perFiler": 29,
+     "hohExtra": 29,
+     "ageBonus": {
+      "age": 65,
+      "amount": 29
+     }
     }
    }
   },
@@ -732,7 +740,10 @@
     },
     "exemptionCredit": {
      "perFiler": 153,
-     "age65Bonus": 153
+     "ageBonus": {
+      "age": 65,
+      "amount": 153
+     }
     }
    }
   },
@@ -839,9 +850,10 @@
      "hoh": 23625
     },
     "age65AddOn": {
-     "single": 2000,
-     "joint": 1600
-    }
+     "unmarried": 2000,
+     "married": 1600
+    },
+    "federalSeniorDeduction": true
    }
   },
   "taxContext": {
@@ -1357,8 +1369,16 @@
      "mfs": 3250,
      "hoh": 3250
     },
+    "age65AddOn": {
+     "unmarried": 2500,
+     "married": 2500
+    },
     "exemptionCredit": {
-     "perFiler": 110
+     "perFiler": 110,
+     "ageBonus": {
+      "age": 60,
+      "amount": 110
+     }
     }
    }
   },
@@ -1957,8 +1977,8 @@
      "hoh": 7568
     },
     "age65AddOn": {
-     "single": 1144,
-     "joint": 1144
+     "unmarried": 1144,
+     "married": 1144
     }
    }
   },
@@ -2062,9 +2082,10 @@
      "hoh": 23625
     },
     "age65AddOn": {
-     "single": 2000,
-     "joint": 1600
-    }
+     "unmarried": 2000,
+     "married": 1600
+    },
+    "federalSeniorDeduction": true
    }
   },
   "taxContext": {
@@ -2146,8 +2167,38 @@
      "hoh": 2850
     },
     "age65AddOn": {
-     "single": 1000,
-     "joint": 1000
+     "unmarried": 1000,
+     "married": 1000
+    },
+    "phaseOut": {
+     "type": "bands",
+     "basis": "federalAGI",
+     "bands": {
+      "single": [
+       {
+        "over": 250000,
+        "factor": 0
+       }
+      ],
+      "mfj": [
+       {
+        "over": 500000,
+        "factor": 0
+       }
+      ],
+      "mfs": [
+       {
+        "over": 250000,
+        "factor": 0
+       }
+      ],
+      "hoh": [
+       {
+        "over": 250000,
+        "factor": 0
+       }
+      ]
+     }
     }
    }
   },
@@ -2237,8 +2288,8 @@
      "hoh": 1000
     },
     "age65AddOn": {
-     "single": 1000,
-     "joint": 1000
+     "unmarried": 1000,
+     "married": 1000
     }
    }
   },
@@ -2323,8 +2374,17 @@
      "hoh": 23625
     },
     "age65AddOn": {
-     "single": 2000,
-     "joint": 1600
+     "unmarried": 2000,
+     "married": 1600
+    },
+    "federalSeniorDeduction": true,
+    "exemptionCredit": {
+     "perFiler": 40,
+     "hohExtra": 40,
+     "ageBonus": {
+      "age": 65,
+      "amount": 20
+     }
     }
    }
   },
@@ -2422,10 +2482,14 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 3605,
-     "mfj": 8240,
-     "mfs": 4120,
-     "hoh": 6180
+     "single": 12765,
+     "mfj": 26560,
+     "mfs": 13280,
+     "hoh": 17660
+    },
+    "age65AddOn": {
+     "unmarried": 850,
+     "married": 700
     }
    }
   },
@@ -2516,10 +2580,17 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 3270,
-     "mfj": 3270,
-     "mfs": 3270,
-     "hoh": 3270
+     "single": 3360,
+     "mfj": 3360,
+     "mfs": 3360,
+     "hoh": 3360
+    },
+    "exemptionCredit": {
+     "perFiler": 0,
+     "ageBonus": {
+      "age": 65,
+      "amount": 40
+     }
     }
    }
   },
@@ -2615,10 +2686,6 @@
      "mfj": 25000,
      "mfs": 12500,
      "hoh": 25000
-    },
-    "age65AddOn": {
-     "single": 12500,
-     "joint": 12500
     }
    }
   },
@@ -2648,11 +2715,15 @@
     },
     {
      "rate": 0.0715,
+     "upTo": 1000000
+    },
+    {
+     "rate": 0.0915,
      "upTo": null
     }
    ],
    "ssTreatment": "Social Security fully exempt. Maine has a pension income deduction (up to ~$48k, AGI-phaseout over $125k single / $250k joint) — BUT it specifically EXCLUDES Roth conversions (along with 457(f) and early-penalty distributions). So a Roth conversion gets NO shelter and is fully taxable. The old tool note wrongly implied the deduction applied; this is the IRA-exclusion-trap family (cf. RI, MD).",
-   "bracketsNote": "Single-filer, Maine Revenue Services official 2026 schedule (published 09/15/2025): 5.8% <$27,400, 6.75% to $64,850, 7.15% above. MFJ thresholds ~2x. Inflation-indexed annually. Conversion-exclusion from the pension deduction confirmed via Maine guidance during audit.",
+   "bracketsNote": "Single-filer, Maine Revenue Services official 2026 schedule (published 09/15/2025): 5.8% <$27,400, 6.75% to $64,850, 7.15% above. MFJ thresholds ~2x. Inflation-indexed annually. Conversion-exclusion from the pension deduction confirmed via Maine guidance during audit. 2026 also adds a 2% surcharge on Maine taxable income over $1,000,000 single ($750,000 married filing separately, $1,500,000 joint and head of household), modeled as a 9.15% top band (added 2026-10-22).",
    "incomeTax": true,
    "source": "https://www.maine.gov/revenue/taxes/income-estate-tax/individual-income-tax-1040me"
   },
@@ -2674,6 +2745,10 @@
      },
      {
       "rate": 0.0715,
+      "upTo": 1000000
+     },
+     {
+      "rate": 0.0915,
       "upTo": null
      }
     ],
@@ -2688,6 +2763,10 @@
      },
      {
       "rate": 0.0715,
+      "upTo": 1500000
+     },
+     {
+      "rate": 0.0915,
       "upTo": null
      }
     ],
@@ -2702,6 +2781,10 @@
      },
      {
       "rate": 0.0715,
+      "upTo": 750000
+     },
+     {
+      "rate": 0.0915,
       "upTo": null
      }
     ],
@@ -2716,6 +2799,10 @@
      },
      {
       "rate": 0.0715,
+      "upTo": 1500000
+     },
+     {
+      "rate": 0.0915,
       "upTo": null
      }
     ]
@@ -2754,14 +2841,49 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 15000,
-     "mfj": 30000,
-     "mfs": 15000,
-     "hoh": 22500
+     "single": 15700,
+     "mfj": 31400,
+     "mfs": 15700,
+     "hoh": 23550
     },
     "age65AddOn": {
-     "single": 2000,
-     "joint": 1600
+     "unmarried": 2050,
+     "married": 1650
+    },
+    "phaseOut": {
+     "type": "linear",
+     "basis": "stateAGI",
+     "start": {
+      "single": 102250,
+      "mfj": 204550,
+      "mfs": 102250,
+      "hoh": 153400
+     },
+     "width": {
+      "single": 75000,
+      "mfj": 150000,
+      "mfs": 75000,
+      "hoh": 112500
+     }
+    },
+    "exemption": {
+     "perPerson": 5300,
+     "phaseOut": {
+      "type": "linear",
+      "basis": "stateAGI",
+      "start": {
+       "single": 341000,
+       "mfj": 409150,
+       "mfs": 204575,
+       "hoh": 375050
+      },
+      "width": {
+       "single": 125000,
+       "mfj": 125000,
+       "mfs": 62500,
+       "hoh": 125000
+      }
+     }
     }
    }
   },
@@ -3028,6 +3150,75 @@
      "mfj": 6700,
      "mfs": 3350,
      "hoh": 6700
+    },
+    "age65AddOn": {
+     "unmarried": 1000,
+     "married": 1000
+    },
+    "exemption": {
+     "perPerson": 3200,
+     "phaseOut": {
+      "type": "bands",
+      "basis": "federalAGI",
+      "bands": {
+       "single": [
+        {
+         "over": 100000,
+         "factor": 0.5
+        },
+        {
+         "over": 125000,
+         "factor": 0.25
+        },
+        {
+         "over": 150000,
+         "factor": 0
+        }
+       ],
+       "mfj": [
+        {
+         "over": 150000,
+         "factor": 0.5
+        },
+        {
+         "over": 175000,
+         "factor": 0.25
+        },
+        {
+         "over": 200000,
+         "factor": 0
+        }
+       ],
+       "mfs": [
+        {
+         "over": 100000,
+         "factor": 0.5
+        },
+        {
+         "over": 125000,
+         "factor": 0.25
+        },
+        {
+         "over": 150000,
+         "factor": 0
+        }
+       ],
+       "hoh": [
+        {
+         "over": 150000,
+         "factor": 0.5
+        },
+        {
+         "over": 175000,
+         "factor": 0.25
+        },
+        {
+         "over": 200000,
+         "factor": 0
+        }
+       ]
+      }
+     }
     }
    }
   },
@@ -3130,8 +3321,8 @@
      "hoh": 6800
     },
     "age65AddOn": {
-     "single": 700,
-     "joint": 700
+     "unmarried": 700,
+     "married": 700
     }
    }
   },
@@ -3374,14 +3565,14 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 14950,
-     "mfj": 29900,
-     "mfs": 14950,
-     "hoh": 22500
+     "single": 15300,
+     "mfj": 30600,
+     "mfs": 15300,
+     "hoh": 23000
     },
     "age65AddOn": {
-     "single": 2000,
-     "joint": 1550
+     "unmarried": 2000,
+     "married": 1600
     }
    }
   },
@@ -3483,11 +3674,11 @@
      "single": 8300,
      "mfj": 16600,
      "mfs": 8300,
-     "hoh": 12900
+     "hoh": 11400
     },
     "age65AddOn": {
-     "single": 1500,
-     "joint": 1500
+     "unmarried": 1500,
+     "married": 1500
     }
    }
   },
@@ -3715,8 +3906,8 @@
      "hoh": 23625
     },
     "age65AddOn": {
-     "single": 2000,
-     "joint": 1600
+     "unmarried": 2000,
+     "married": 1600
     }
    }
   },
@@ -3863,9 +4054,10 @@
      "hoh": 23625
     },
     "age65AddOn": {
-     "single": 2000,
-     "joint": 1600
-    }
+     "unmarried": 7660,
+     "married": 7260
+    },
+    "federalSeniorDeduction": true
    }
   },
   "taxContext": {
@@ -3982,17 +4174,17 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 8600,
-     "mfj": 17200,
-     "mfs": 8600,
-     "hoh": 12600
+     "single": 8850,
+     "mfj": 17700,
+     "mfs": 8850,
+     "hoh": 12950
     },
     "age65AddOn": {
-     "single": 2050,
-     "joint": 1700
+     "unmarried": 2050,
+     "married": 1700
     },
     "exemptionCredit": {
-     "perFiler": 171
+     "perFiler": 176
     }
    }
   },
@@ -4397,8 +4589,8 @@
      "hoh": 1000
     },
     "age65AddOn": {
-     "single": 1000,
-     "joint": 1000
+     "unmarried": 1000,
+     "married": 1000
     }
    }
   },
@@ -4672,6 +4864,18 @@
     "minDeduction": 2500,
     "maxGainEligible": 1000000,
     "sourceRestricted": true
+   },
+   "standardDeduction": {
+    "deduction": {
+     "single": 15750,
+     "mfj": 31500,
+     "mfs": 15750,
+     "hoh": 23625
+    },
+    "age65AddOn": {
+     "unmarried": 2000,
+     "married": 1600
+    }
    }
   },
   "taxContext": {
@@ -5218,9 +5422,10 @@
      "hoh": 23625
     },
     "age65AddOn": {
-     "single": 2000,
-     "joint": 1600
-    }
+     "unmarried": 2000,
+     "married": 1600
+    },
+    "federalSeniorDeduction": true
    }
   },
   "taxContext": {
@@ -5504,10 +5709,10 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 6350,
-     "mfj": 12700,
-     "mfs": 6350,
-     "hoh": 9350
+     "single": 7350,
+     "mfj": 14700,
+     "mfs": 7350,
+     "hoh": 10350
     }
    }
   },
@@ -5753,14 +5958,47 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 15750,
-     "mfj": 31500,
-     "mfs": 15750,
-     "hoh": 23625
+     "single": 2900,
+     "mfj": 5800,
+     "mfs": 2900,
+     "hoh": 4650
     },
     "age65AddOn": {
-     "single": 1200,
-     "joint": 1000
+     "unmarried": 1200,
+     "married": 1000
+    },
+    "exemptionCredit": {
+     "perFiler": 260,
+     "phaseOut": {
+      "type": "bands",
+      "basis": "federalAGI",
+      "bands": {
+       "single": [
+        {
+         "over": 100000,
+         "factor": 0
+        }
+       ],
+       "mfj": [
+        {
+         "over": 200000,
+         "factor": 0
+        }
+       ],
+       "mfs": [
+        {
+         "over": 100000,
+         "factor": 0
+        }
+       ],
+       "hoh": [
+        {
+         "over": 200000,
+         "factor": 0
+        }
+       ]
+      }
+     }
     }
    }
   },
@@ -5980,10 +6218,104 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 10900,
-     "mfj": 21800,
-     "mfs": 10900,
-     "hoh": 16350
+     "single": 16450,
+     "mfj": 32900,
+     "mfs": 16450,
+     "hoh": 22050
+    },
+    "phaseOut": {
+     "type": "bands",
+     "basis": "federalAGI",
+     "bands": {
+      "single": [
+       {
+        "over": 261000,
+        "factor": 0.8
+       },
+       {
+        "over": 268450,
+        "factor": 0.6
+       },
+       {
+        "over": 275900,
+        "factor": 0.4
+       },
+       {
+        "over": 283350,
+        "factor": 0.2
+       },
+       {
+        "over": 290800,
+        "factor": 0
+       }
+      ],
+      "mfj": [
+       {
+        "over": 261000,
+        "factor": 0.8
+       },
+       {
+        "over": 268450,
+        "factor": 0.6
+       },
+       {
+        "over": 275900,
+        "factor": 0.4
+       },
+       {
+        "over": 283350,
+        "factor": 0.2
+       },
+       {
+        "over": 290800,
+        "factor": 0
+       }
+      ],
+      "mfs": [
+       {
+        "over": 261000,
+        "factor": 0.8
+       },
+       {
+        "over": 268450,
+        "factor": 0.6
+       },
+       {
+        "over": 275900,
+        "factor": 0.4
+       },
+       {
+        "over": 283350,
+        "factor": 0.2
+       },
+       {
+        "over": 290800,
+        "factor": 0
+       }
+      ],
+      "hoh": [
+       {
+        "over": 261000,
+        "factor": 0.8
+       },
+       {
+        "over": 268450,
+        "factor": 0.6
+       },
+       {
+        "over": 275900,
+        "factor": 0.4
+       },
+       {
+        "over": 283350,
+        "factor": 0.2
+       },
+       {
+        "over": 290800,
+        "factor": 0
+       }
+      ]
+     }
     }
    }
   },
@@ -6097,9 +6429,21 @@
      "mfs": 15000,
      "hoh": 22500
     },
-    "age65AddOn": {
-     "single": 2000,
-     "joint": 1600
+    "phaseOut": {
+     "type": "linear",
+     "basis": "federalAGI",
+     "start": {
+      "single": 40000,
+      "mfj": 80000,
+      "mfs": 40000,
+      "hoh": 60000
+     },
+     "width": {
+      "single": 55000,
+      "mfj": 110000,
+      "mfs": 55000,
+      "hoh": 82500
+     }
     }
    }
   },
@@ -6549,14 +6893,14 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 7650,
-     "mfj": 15300,
-     "mfs": 7650,
-     "hoh": 11450
+     "single": 12950,
+     "mfj": 25900,
+     "mfs": 12950,
+     "hoh": 16750
     },
     "age65AddOn": {
-     "single": 1250,
-     "joint": 1250
+     "unmarried": 1250,
+     "married": 1250
     }
    }
   },
@@ -6715,8 +7059,8 @@
      "hoh": 9680
     },
     "age65AddOn": {
-     "single": 800,
-     "joint": 800
+     "unmarried": 800,
+     "married": 800
     }
    }
   },
@@ -7393,14 +7737,14 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 15000,
-     "mfj": 30000,
-     "mfs": 15000,
-     "hoh": 22500
+     "single": 16100,
+     "mfj": 32200,
+     "mfs": 16100,
+     "hoh": 24150
     },
     "age65AddOn": {
-     "single": 2000,
-     "joint": 1600
+     "unmarried": 2050,
+     "married": 1650
     }
    }
   },

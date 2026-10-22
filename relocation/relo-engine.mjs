@@ -2,11 +2,12 @@
 // This is the proof that the schema is COMPUTABLE. Pure function, no I/O.
 //
 // computeStateIncomeTax(rules, status, income) -> { tax, breakdown }
-//   status: "single" | "joint"
+//   status: "single" | "mfj" | "mfs" | "hoh"
 //   income: { ss, iraWithdrawal, pension, capGains, wages, age, spouseAge }
 //   (all $ ; age/spouseAge for gates — spouseAge is OPTIONAL and only consulted for
-//   joint returns on states with a genuinely per-spouse mechanic; omitting it is safe
-//   and backward compatible — see the per-person cliffTypes below.)
+//   joint returns; when omitted the spouse is taken to be the filer's age, the
+//   page's same-age assumption — see the per-person cliffTypes and the age-65
+//   deduction counts below.)
 //
 // Retirement-income-exclusion math (tierCapFor/allowedExclusion/splitPooledExclusion
 // and the whole ri/pooled dispatch below) moved to core/retirement-rules.js
@@ -84,6 +85,76 @@ function taxableSS(ssRule, ssBenefit, otherIncome, bucket, rawStatus, qualAge, f
   throw new Error(`relo-engine: unknown socialSecurity.phaseOut.type "${po.type}"`);
 }
 
+// --- Deductions, exemptions and credits (taxRules.standardDeduction) ---
+// The federal enhanced deduction for seniors (IRC 151(d)(5)(C), tax years 2025-2028; IRS
+// Schedule 1-A Part V): $6,000 for each person 65 or older, less 6% of modified AGI over
+// $75,000 ($150,000 joint). The reduction is figured once for the return and each qualifying
+// spouse gets the reduced amount; married filing separately can't claim it. It is part of
+// federal taxable income, so it reaches only the states that start from federal taxable
+// income or adopted it (federalSeniorDeduction: true).
+const SENIOR_DEDUCTION = { perPerson: 6000, rate: 0.06, startJoint: 150000, startOther: 75000 };
+
+// Share (0..1) of an amount left after an income-based phase-out.
+//   linear: falls in a straight line from `start` to zero at `start + width` (ME, SC).
+//   bands:  the factor of the highest band whose `over` the income exceeds (MD's exemption
+//           steps, RI's 20% steps, and hard cutoffs such as OR's credit and IL's exemption).
+function phaseOutFactor(po, status, income) {
+  if (po.type === 'linear') {
+    const excess = income - po.start[status];
+    return excess <= 0 ? 1 : 1 - Math.min(1, excess / po.width[status]);
+  }
+  if (po.type === 'bands') {
+    let factor = 1;
+    for (const b of po.bands[status]) if (income > b.over) factor = b.factor;
+    return factor;
+  }
+  throw new Error(`relo-engine: unknown standardDeduction phaseOut.type "${po.type}"`);
+}
+
+// Returns { deductible, seniorDeduction, credit }: the amount subtracted from income before
+// the brackets, the part of it that is the federal senior deduction, and the credit taken off
+// the bracket tax. `age` is the filer's; on a joint return the spouse counts too, at
+// `spouseAge ?? age` (the same-age default the rest of this engine and the page use).
+// stateAGI is ordinary income before deductions (the state's own AGI); fedAGI is federal AGI.
+function resolveDeductions(sd, status, { age, spouseAge, fedAGI, stateAGI }) {
+  const out = { deductible: 0, seniorDeduction: 0, credit: 0 };
+  if (!sd) return out;
+  const people = status === 'mfj' ? 2 : 1;
+  const married = status === 'mfj' || status === 'mfs';
+  const spAge = spouseAge ?? age;
+  const agedCount = minAge => (age >= minAge ? 1 : 0) + (status === 'mfj' && spAge >= minAge ? 1 : 0);
+  const factor = po => po ? phaseOutFactor(po, status, po.basis === 'federalAGI' ? fedAGI : stateAGI) : 1;
+
+  // Standard deduction (with any personal exemptions folded in) plus the age-65 add-on, which
+  // shares its phase-out. Married filing separately gets the married add-on, as on the
+  // federal return.
+  let base = sd.deduction ? sd.deduction[status] : 0;
+  if (sd.age65AddOn) base += (married ? sd.age65AddOn.married : sd.age65AddOn.unmarried) * agedCount(65);
+  base *= factor(sd.phaseOut);
+
+  // A personal exemption with its own phase-out (ME, MD), per person.
+  const exemption = sd.exemption ? sd.exemption.perPerson * people * factor(sd.exemption.phaseOut) : 0;
+
+  let senior = 0;
+  if (sd.federalSeniorDeduction && status !== 'mfs') {
+    const s = SENIOR_DEDUCTION;
+    const excess = Math.max(0, fedAGI - (status === 'mfj' ? s.startJoint : s.startOther));
+    senior = Math.max(0, s.perPerson - s.rate * excess) * agedCount(65);
+  }
+  out.deductible = base + exemption + senior;
+  out.seniorDeduction = senior;
+
+  // Credits taken off the bracket tax: per filer, an extra one for head of household (AR, IA),
+  // and an age bonus per person at the state's age (65; DE uses 60).
+  const ec = sd.exemptionCredit;
+  if (ec) {
+    let credit = (ec.perFiler ?? 0) * people + (status === 'hoh' ? (ec.hohExtra ?? 0) : 0);
+    if (ec.ageBonus) credit += ec.ageBonus.amount * agedCount(ec.ageBonus.age);
+    out.credit = credit * factor(ec.phaseOut);
+  }
+  return out;
+}
+
 export function computeStateIncomeTax(rules, status, income) {
   const { ss = 0, iraWithdrawal = 0, pension = 0, capGains = 0, wages = 0, age = 67, spouseAge } = income;
   // `status` is one of: single | mfj | mfs | hoh (four filing statuses, for brackets).
@@ -149,35 +220,11 @@ export function computeStateIncomeTax(rules, status, income) {
   breakdown.penTaxable = penTaxable;
   breakdown.taxableSS = tSS; // set once here since resolveRetirementIncome's ssTaxableOverride (CO) may overwrite tSS above
 
-  // --- Standard deduction (computed early — needed by the stacked CG treatment) ---
-  // Each state's taxRules.standardDeduction encodes the state's own standard
-  // deduction (or the federal deduction for states that conform), an optional
-  // age-65 add-on per qualifying filer, and an optional exemption credit applied
-  // after brackets. States without this field get no deduction (status quo).
-  const nonCG = wages + iraTaxable + penTaxable + tSS;
-  const sd = rules.standardDeduction ?? null;
-  let deductible = 0;
-  if (sd?.deduction) {
-    // Use nonCG as the pre-deduction income proxy for the phase-out test; capGains
-    // may or may not fold in (depends on treatment), but nonCG is always known here.
-    let base = sd.deduction[status] ?? sd.deduction.single ?? 0;
-    if (sd.deduction.phaseout) {
-      const { threshold, rate } = sd.deduction.phaseout;
-      base = Math.max(0, base - Math.max(0, nonCG - threshold) * rate);
-    }
-    deductible += base;
-  }
-  if (sd?.age65AddOn) {
-    const addOn = status === 'mfj'
-      ? sd.age65AddOn.joint * ((age >= 65 ? 1 : 0) + (spouseAge != null && spouseAge >= 65 ? 1 : 0))
-      : (sd.age65AddOn.single ?? 0) * (age >= 65 ? 1 : 0);
-    deductible += addOn;
-  }
-  breakdown.deductible = deductible;
-
   // --- Capital gains ---
   // The capital gains input is long-term gains; every preferential rule below (the
-  // percentage exclusions, AZ, VT, MT, HI) applies only to long-term gains.
+  // percentage exclusions, AZ, VT, MT, HI) applies only to long-term gains. The stacked
+  // treatment (MT, HI) is figured after the deductions below, which it depends on.
+  const nonCG = wages + iraTaxable + penTaxable + tSS;
   const cg = rules.capitalGains;
   let cgOrdinary = 0, cgSeparateTax = 0;
   if (cg.treatment === "ordinary") cgOrdinary = capGains;
@@ -195,52 +242,56 @@ export function computeStateIncomeTax(rules, status, income) {
     const taxableCG = Math.max(0, capGains - cg.exemptBelow);
     cgSeparateTax = bracketTax(taxableCG, cg.ladder);
   }
-  else if (cg.treatment === "stacked") {
+  else if (cg.treatment !== "stacked") throw new Error(`relo-engine: unknown capitalGains.treatment "${cg.treatment}"`);
+
+  // --- Deductions, exemptions and credits ---
+  // Ordinary income before deductions is the state's own AGI here (gains included for the
+  // stacked states, whose gains are part of AGI and only taxed at their own rates).
+  const ordinary = nonCG + cgOrdinary;
+  const stateAGI = ordinary + (cg.treatment === "stacked" ? capGains : 0);
+  const { deductible, seniorDeduction, credit } = resolveDeductions(rules.standardDeduction, status,
+    { age, spouseAge, fedAGI, stateAGI });
+  breakdown.deductible = deductible;
+  breakdown.seniorDeduction = seniorDeduction;
+
+  if (cg.treatment === "stacked") {
     // Gains taxed on their own rate ladder, stacked on top of the rest of taxable income:
     // each dollar of gain is taxed at the ladder rate for the band it lands in once the
-    // other income is counted first. The base is post-deduction (taxable income, not gross).
+    // other income is counted first. Deductions come off the other income first; any left
+    // over reduces the gains (as on the federal capital gains worksheet).
     // MT (MCA 15-30-2103(2)): 3.0% / 4.1% on the same bands as ordinary income.
     // HI (HRS 235-51(f)): the regular rates, capped at 7.25%.
     const ladder = cg.ladderByStatus[status] || cg.ladderByStatus.single;
     const taxableBase = Math.max(0, nonCG - deductible);
-    cgSeparateTax = bracketTax(taxableBase + capGains, ladder) - bracketTax(taxableBase, ladder);
+    const taxableGain = Math.max(0, capGains - Math.max(0, deductible - nonCG));
+    cgSeparateTax = bracketTax(taxableBase + taxableGain, ladder) - bracketTax(taxableBase, ladder);
   }
-  else throw new Error(`relo-engine: unknown capitalGains.treatment "${cg.treatment}"`);
   breakdown.cgOrdinary = cgOrdinary;
   breakdown.cgSeparateTax = cgSeparateTax;
 
-  // --- Ordinary income → brackets ---
-  const ordinary = nonCG + cgOrdinary;
+  // --- Ordinary income → brackets, then credits ---
   breakdown.ordinaryIncome = ordinary;
-  const taxableOrdinary = Math.max(0, ordinary - deductible);
-
-  const incomeTax = bracketTax(taxableOrdinary, brackets);
+  const taxableIncome = Math.max(0, ordinary - deductible);
+  breakdown.taxableIncome = taxableIncome;
+  const incomeTax = bracketTax(taxableIncome, brackets);
   breakdown.bracketTax = incomeTax;
+  breakdown.exemptionCredit = credit;
 
-  // --- Exemption credit (subtracted from tax AFTER brackets) ---
-  let exemptionCreditAmt = 0;
-  if (sd?.exemptionCredit) {
-    const ec = sd.exemptionCredit;
-    const filerCount = status === 'mfj' ? 2 : 1;
-    exemptionCreditAmt += (ec.perFiler ?? 0) * filerCount;
-    if (ec.age65Bonus) {
-      const aged65Count = (age >= 65 ? 1 : 0) +
-        (status === 'mfj' && spouseAge != null && spouseAge >= 65 ? 1 : 0);
-      exemptionCreditAmt += ec.age65Bonus * aged65Count;
-    }
-  }
-  breakdown.exemptionCredit = exemptionCreditAmt;
-
-  const tax = Math.max(0, incomeTax - exemptionCreditAmt) + cgSeparateTax;
+  // Credits are nonrefundable: they can take the bracket tax to zero, not below.
+  const tax = Math.max(0, incomeTax - credit) + cgSeparateTax;
   return { tax: Math.round(tax), breakdown };
 }
 
 // Local (city/county) tax layered ON TOP of state tax — NY (NYC/Yonkers), OR
 // (Metro/Multnomah), MD/IN (mandatory county tax). A sibling to
 // computeStateIncomeTax, not a parameter on it: 47 states have no localTax at
-// all, and the four that do need the SAME ordinary-income base and state-tax
-// total computeStateIncomeTax already derived (breakdown.ordinaryIncome,
-// stateTax), not a re-derivation of the exclusion math.
+// all, and the four that do need the SAME base and state-tax total
+// computeStateIncomeTax already derived (breakdown.taxableIncome, stateTax), not a
+// re-derivation of the exclusion math. Every one of these is levied on the state's
+// taxable income, after its deductions and exemptions: NYC on New York taxable
+// income, Metro and Multnomah on Oregon taxable income, Maryland's county tax on
+// Maryland taxable net income, Indiana's on Indiana AGI less exemptions. (Fixed
+// 2026-10-22: this used ordinary income before the deductions.)
 //
 // local: RELO[code].localTax — undefined for states without one (safe no-op).
 // localCode: '' | 'nyc' | 'yonkers' | 'metro' | 'multnomah' — the filer's
@@ -248,7 +299,7 @@ export function computeStateIncomeTax(rules, status, income) {
 //   is mandatory and unconditional (no opt-out selector exists for it).
 export function computeLocalTax(local, status, breakdown, stateTax, localCode) {
   if (!local) return 0;
-  const base = breakdown.ordinaryIncome;
+  const base = breakdown.taxableIncome;
   let tax = 0;
 
   if (localCode === 'nyc' && local.nyc) {

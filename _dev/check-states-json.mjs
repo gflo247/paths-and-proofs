@@ -364,74 +364,85 @@ for (const code of htmlCodes) {
 }
 
 // --- 9. Standard deduction shape guard (G8) ---
-// Added 2026-10-21. Validates the optional taxRules.standardDeduction field: the
-// deduction sub-object must have numeric values per filing status (at least single);
-// age65AddOn must have numeric single and joint; exemptionCredit must have numeric
-// perFiler and optional age65Bonus. Catches typos and structural mismatches at build
-// time rather than as silently-wrong tax computations.
+// Added 2026-10-21; rewritten 2026-10-22 for the phase-outs, separate exemptions, the
+// federal senior deduction and the credit extras. Validates the optional
+// taxRules.standardDeduction field strictly: every key must be one the engine reads
+// (a misspelled key would otherwise be silently ignored and the deduction dropped),
+// amounts by filing status need all four statuses, and each phase-out must be a shape
+// relo-engine.mjs knows (it throws on any other).
+const SD_KEYS = ['deduction', 'age65AddOn', 'phaseOut', 'exemption', 'federalSeniorDeduction', 'exemptionCredit'];
+const isAmount = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+function checkKeys(where, obj, allowed) {
+  for (const k of Object.keys(obj)) if (!allowed.includes(k)) diffs.push(`${where}: unknown key "${k}" (allowed: ${allowed.join(', ')})`);
+}
+function checkByStatus(where, obj, test, what) {
+  if (!obj || typeof obj !== 'object') { diffs.push(`${where} must be an object by filing status`); return; }
+  checkKeys(where, obj, LOCAL_TAX_STATUSES);
+  for (const s of LOCAL_TAX_STATUSES) if (!test(obj[s])) diffs.push(`${where}.${s} must be ${what}`);
+}
+function checkPhaseOut(where, po) {
+  if (!po || typeof po !== 'object') { diffs.push(`${where} must be an object`); return; }
+  if (!['federalAGI', 'stateAGI'].includes(po.basis)) diffs.push(`${where}.basis must be "federalAGI" or "stateAGI"`);
+  if (po.type === 'linear') {
+    checkKeys(where, po, ['type', 'basis', 'start', 'width']);
+    checkByStatus(`${where}.start`, po.start, isAmount, 'a non-negative number');
+    checkByStatus(`${where}.width`, po.width, (v) => isAmount(v) && v > 0, 'a positive number');
+  } else if (po.type === 'bands') {
+    checkKeys(where, po, ['type', 'basis', 'bands']);
+    checkByStatus(`${where}.bands`, po.bands, (list) => Array.isArray(list) && list.length > 0
+      && list.every((b, i) => isAmount(b.over) && b.factor >= 0 && b.factor <= 1
+        && Object.keys(b).every((k) => k === 'over' || k === 'factor')
+        && (i === 0 || (b.over > list[i - 1].over && b.factor <= list[i - 1].factor))),
+      'a non-empty list of {over, factor} with rising over and falling factors in [0, 1]');
+  } else {
+    diffs.push(`${where}.type "${po.type}" is not one the engine knows (linear | bands)`);
+  }
+}
 for (const code of htmlCodes) {
   const sd = json[code]?.taxRules?.standardDeduction;
-  if (!sd) continue; // field is optional — states without it are fine
-
-  // deduction: must have at least single, all values numeric
-  if (sd.deduction) {
-    if (typeof sd.deduction !== 'object') {
-      diffs.push(`${code}: standardDeduction.deduction must be an object`);
-    } else {
-      if (typeof sd.deduction.single !== 'number' || sd.deduction.single < 0) {
-        diffs.push(`${code}: standardDeduction.deduction.single must be a non-negative number`);
-      }
-      for (const s of ['mfj', 'mfs', 'hoh']) {
-        if (s in sd.deduction && typeof sd.deduction[s] !== 'number') {
-          diffs.push(`${code}: standardDeduction.deduction.${s} must be a number when present`);
-        }
-      }
-      // phaseout sub-object
-      if (sd.deduction.phaseout) {
-        const po = sd.deduction.phaseout;
-        if (typeof po.threshold !== 'number' || po.threshold < 0) {
-          diffs.push(`${code}: standardDeduction.deduction.phaseout.threshold must be a non-negative number`);
-        }
-        if (typeof po.rate !== 'number' || po.rate <= 0 || po.rate > 1) {
-          diffs.push(`${code}: standardDeduction.deduction.phaseout.rate must be in (0, 1]`);
-        }
-      }
+  if (sd == null) continue; // optional: states without it get no deduction
+  const at = `${code}: standardDeduction`;
+  if (typeof sd !== 'object') { diffs.push(`${at} must be an object`); continue; }
+  checkKeys(at, sd, SD_KEYS);
+  if (!SD_KEYS.some((k) => k in sd)) diffs.push(`${at} is empty`);
+  if ('deduction' in sd) checkByStatus(`${at}.deduction`, sd.deduction, isAmount, 'a non-negative number');
+  if ('age65AddOn' in sd) {
+    const a = sd.age65AddOn;
+    if (!a || typeof a !== 'object') diffs.push(`${at}.age65AddOn must be an object`);
+    else {
+      checkKeys(`${at}.age65AddOn`, a, ['unmarried', 'married']);
+      if (!isAmount(a.unmarried) || !isAmount(a.married)) diffs.push(`${at}.age65AddOn needs non-negative unmarried and married amounts`);
     }
   }
-
-  // age65AddOn: single and joint must be numeric
-  if (sd.age65AddOn) {
-    if (typeof sd.age65AddOn !== 'object') {
-      diffs.push(`${code}: standardDeduction.age65AddOn must be an object`);
-    } else {
-      if (typeof sd.age65AddOn.single !== 'number' || sd.age65AddOn.single < 0) {
-        diffs.push(`${code}: standardDeduction.age65AddOn.single must be a non-negative number`);
-      }
-      if (typeof sd.age65AddOn.joint !== 'number' || sd.age65AddOn.joint < 0) {
-        diffs.push(`${code}: standardDeduction.age65AddOn.joint must be a non-negative number`);
-      }
+  if ('phaseOut' in sd) checkPhaseOut(`${at}.phaseOut`, sd.phaseOut);
+  if ('exemption' in sd) {
+    const e = sd.exemption;
+    if (!e || typeof e !== 'object') diffs.push(`${at}.exemption must be an object`);
+    else {
+      checkKeys(`${at}.exemption`, e, ['perPerson', 'phaseOut']);
+      if (!isAmount(e.perPerson)) diffs.push(`${at}.exemption.perPerson must be a non-negative number`);
+      if ('phaseOut' in e) checkPhaseOut(`${at}.exemption.phaseOut`, e.phaseOut);
     }
   }
-
-  // exemptionCredit: perFiler must be numeric, age65Bonus optional
-  if (sd.exemptionCredit) {
-    if (typeof sd.exemptionCredit !== 'object') {
-      diffs.push(`${code}: standardDeduction.exemptionCredit must be an object`);
-    } else {
-      if (typeof sd.exemptionCredit.perFiler !== 'number' || sd.exemptionCredit.perFiler < 0) {
-        diffs.push(`${code}: standardDeduction.exemptionCredit.perFiler must be a non-negative number`);
-      }
-      if ('age65Bonus' in sd.exemptionCredit) {
-        if (typeof sd.exemptionCredit.age65Bonus !== 'number' || sd.exemptionCredit.age65Bonus < 0) {
-          diffs.push(`${code}: standardDeduction.exemptionCredit.age65Bonus must be a non-negative number when present`);
+  if ('federalSeniorDeduction' in sd && sd.federalSeniorDeduction !== true) {
+    diffs.push(`${at}.federalSeniorDeduction must be true when present (omit it otherwise)`);
+  }
+  if ('exemptionCredit' in sd) {
+    const c = sd.exemptionCredit;
+    if (!c || typeof c !== 'object') diffs.push(`${at}.exemptionCredit must be an object`);
+    else {
+      checkKeys(`${at}.exemptionCredit`, c, ['perFiler', 'hohExtra', 'ageBonus', 'phaseOut']);
+      if (!isAmount(c.perFiler)) diffs.push(`${at}.exemptionCredit.perFiler must be a non-negative number`);
+      if ('hohExtra' in c && !isAmount(c.hohExtra)) diffs.push(`${at}.exemptionCredit.hohExtra must be a non-negative number`);
+      if ('ageBonus' in c) {
+        const b = c.ageBonus;
+        if (!b || typeof b !== 'object' || !isAmount(b.amount) || !(b.age >= 50 && b.age <= 100)
+          || !Object.keys(b).every((k) => k === 'age' || k === 'amount')) {
+          diffs.push(`${at}.exemptionCredit.ageBonus must be {age, amount} with an age between 50 and 100`);
         }
       }
+      if ('phaseOut' in c) checkPhaseOut(`${at}.exemptionCredit.phaseOut`, c.phaseOut);
     }
-  }
-
-  // At least one of deduction, age65AddOn, or exemptionCredit must be present
-  if (!sd.deduction && !sd.age65AddOn && !sd.exemptionCredit) {
-    diffs.push(`${code}: standardDeduction exists but has no deduction, age65AddOn, or exemptionCredit — empty entry`);
   }
 }
 

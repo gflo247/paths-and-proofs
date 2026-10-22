@@ -133,28 +133,31 @@ function check(label, actual, expected, tolerance = 1) {
 // --- Vermont: flat capital gains exclusion, $5,000 or the gain if less (IN-153, 2025);
 //     Social Security exclusion phases out in a straight line over $10,000 of federal AGI
 //     (32 V.S.A. 5830e(a)) ---
-// VT standard deduction: single $7,650, mfj $15,300. Age 65 add-on: $1,250.
+// VT standard deduction: single $7,650, mfj $15,300; personal exemption $5,300 each; age 65
+// add-on $1,250 (IN-111 2025).
 {
   // Single, $20,000 gain: after $5,000 CG exclusion = $15,000 ordinary. Minus $7,650
-  // deduction = $7,350. VT 3.35% x $7,350 = $246.23 -> $246.
-  check('VT single, $20,000 gain after deduction: 3.35% x 7,350 = $246',
-    tax('VT', 'single', { capGains: 20000, age: 50 }).tax, 246);
+  // deduction and the $5,300 exemption = $2,050. VT 3.35% x $2,050 = $68.68 -> $69.
+  check('VT single, $20,000 gain after deduction and exemption: 3.35% x 2,050 = $69',
+    tax('VT', 'single', { capGains: 20000, age: 50 }).tax, 69);
   check('VT single, $3,000 gain: fully excluded',
     tax('VT', 'single', { capGains: 3000, age: 50 }).tax, 0);
   // Joint, SS 30,000, IRA 50,000: taxable SS unchanged (federal AGI-based, deduction doesn't
-  // affect it). Ordinary = 50,000 + 9,182.25 = 59,182.25. Minus $15,300 deduction = $43,882.25.
-  // Minus $2,500 age65 add-on (both 70, 2 × $1,250) = $41,382.25.
-  // VT 3.35% x $41,382.25 = $1,386.31 -> $1,386.
+  // affect it). Ordinary = 50,000 + 9,182.25 = 59,182.25. Minus $15,300 deduction, $10,600 of
+  // exemptions and the $2,500 age 65 add-on (both 70, 2 x $1,250) = $30,782.25.
+  // VT 3.35% x $30,782.25 = $1,031.21 -> $1,031.
   const vt = tax('VT', 'mfj', { ss: 30000, iraWithdrawal: 50000, age: 70, spouseAge: 70 });
   check('VT joint in the phase-out: taxable SS $9,182', vt.breakdown.taxableSS, 9182.25, 0.01);
-  check('VT joint in the phase-out after deduction: tax $1,386', vt.tax, 1386);
+  check('VT joint in the phase-out after deductions: tax $1,031', vt.tax, 1031);
 }
 
 // --- New Mexico: "100% of your net capital gains, not to exceed $2,500" applies to any
 //     gain (2025 PIT-ADJ line 16) ---
+// NM subtracts the federal standard deduction ($15,750 single, PIT-1 2025 line 12); the input
+// wages offset it so taxable income is the $7,500 of gain left after the $2,500.
 {
   check('NM single, $10,000 gain: $2,500 deducted -> 1.5% x 5,500 + 3.2% x 2,000 = $147 (was $227)',
-    tax('NM', 'single', { capGains: 10000, age: 50 }).tax, 147);
+    tax('NM', 'single', { wages: 15750, capGains: 10000, age: 50 }).tax, 147);
 }
 
 // --- West Virginia: married filing separately uses half-width bands (WV Tax Division,
@@ -169,16 +172,16 @@ function check(label, actual, expected, tolerance = 1) {
 // --- Minnesota: the Social Security subtraction is "reduced by ten percent for each $4,000
 //     of adjusted gross income, or fraction thereof" over the threshold
 //     (Minn. Stat. 290.0132 subd. 26(c)) ---
-// MN standard deduction: mfj $29,900. Age 65 add-on: $1,550 per spouse.
+// MN standard deduction (2026): mfj $30,600. Age 65 add-on: $1,600 per spouse.
 {
   // Joint, SS 40,000, IRA 90,000: taxable SS 34,000 (85% tier), federal AGI 124,000, which is
   // 13,220 over $110,780 -> ceil(13,220 / 4,000) = 4 steps -> 40% taxable = 13,600.
-  // Ordinary = 90,000 + 13,600 = 103,600. Minus $29,900 deduction - $3,100 (2 × $1,550 age
-  // 65 add-on, both age 70) = $70,600 taxable. MN brackets: 5.35% × $48,700 + 6.8% ×
-  // ($70,600 - $48,700) = 2,605.45 + 1,489.20 = $4,094.65 -> $4,095.
+  // Ordinary = 90,000 + 13,600 = 103,600. Minus $30,600 deduction - $3,200 (2 x $1,600 age
+  // 65 add-on, both age 70) = $69,800 taxable. MN brackets: 5.35% x $48,700 + 6.8% x
+  // ($69,800 - $48,700) = 2,605.45 + 1,434.80 = $4,040.25 -> $4,040.
   const mn = tax('MN', 'mfj', { ss: 40000, iraWithdrawal: 90000, age: 70, spouseAge: 70 });
   check('MN joint, 4 steps into the phase-out: taxable SS $13,600', mn.breakdown.taxableSS, 13600, 0.01);
-  check('MN joint after deduction: tax $4,095', mn.tax, 4095);
+  check('MN joint after deduction: tax $4,040', mn.tax, 4040);
 }
 
 // --- Connecticut: head of household uses the $100,000 joint Social Security threshold

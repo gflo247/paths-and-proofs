@@ -5,9 +5,12 @@
 // period — where cumulative tax savings overtake the one-time cost of moving.
 //
 // SCOPE (deliberate): the crossover is INCOME TAX ONLY, computed from the
-// primary-source-verified bracket and income-treatment data. State standard
-// deductions, personal exemptions and exemption credits are not modeled yet, so the
-// tax shown runs high wherever a state allows them (disclosed on the page). Property
+// primary-source-verified bracket and income-treatment data, after each state's
+// standard deduction, exemptions, age-65 amounts and exemption credits
+// (taxRules.standardDeduction). AL, CT, OH, UT and WI have none modeled yet, and the
+// federal-income-tax subtractions (AL, MO, OR) aren't figured, so the tax shown runs
+// high there (disclosed on the page). compute() passes no spouseAge: the engine takes
+// the spouse to be the filer's age, the same assumption as the survival odds. Property
 // tax, sales tax, and estate tax are shown as disclosed CONTEXT beside the result,
 // never folded into the headline — they need per-household assumptions we can't
 // verify, and folding unverifiable guesses into a "proof" would break what makes this
