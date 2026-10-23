@@ -96,8 +96,17 @@ Bracket thresholds (top of each band; 37% applies above the 35% top):
 | HOH | 17,700 | 67,450 | 105,700 | 201,750 | 256,200 | 640,600 |
 
 Standard deduction: 16,100 single / 32,200 MFJ / 24,150 HOH / 16,100 MFS — ✅
-Senior deduction (OBBBA, 2025–2028): $6,000/person, 6% phaseout above
-$75k single / $150k MFJ — ✅
+Additional standard deduction at 65 (IRC 63(f)): $2,050 single / HOH, $1,650 per spouse
+65+ on a married return (joint or separate) — ✅
+Senior deduction (OBBBA, 2025–2028): $6,000/person, less 6% of MAGI above
+$75k single / $150k MFJ off each person's $6,000 (gone at $175k single, $250k joint);
+none for MFS — ✅ ([Schedule 1-A](https://www.irs.gov/pub/irs-pdf/f1040s1a.pdf) lines 31–37)
+
+> Fixed 2026-10-22: the tool left out the 63(f) amount (every 65+ filer's federal
+> taxable income ran $1,650–$3,300 high), and took the senior deduction's phase-out off
+> a couple's $12,000 once instead of off each $6,000 (a couple's deduction ran up to
+> $6,000 high between $150k and $350k of MAGI, and a conversion there lost it half as
+> fast as it does). `_dev/test-roth-aged-deduction.mjs`.
 Source: [IRS Rev. Proc. 2025-32](https://www.irs.gov/pub/irs-drop/rp-25-32.pdf) /
 [IRS 2026 inflation adjustments](https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill)
 

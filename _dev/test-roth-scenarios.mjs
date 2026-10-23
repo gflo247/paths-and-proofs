@@ -250,9 +250,10 @@ console.log('\n─── Group 2: IRMAA tier detection ───');
 //
 // seniorDed(inc, status, n):
 //   if n=0 or status='mfs': return 0
-//   full = n * 6000
-//   phase = max(0, inc - (status==='mfj' ? 150000 : 75000)) * 0.06
-//   return max(0, full - phase)
+//   each = max(0, 6000 - max(0, inc - (status==='mfj' ? 150000 : 75000)) * 0.06)
+//   return min(n, status==='mfj' ? 2 : 1) * each
+// (IRS Schedule 1-A lines 33-37: the reduction comes off each person's $6,000. Until
+// 2026-10-22 it came off n*6000 once, which 3.5 below asserted.)
 //
 // Important: `inc` is agiBase (= income+nii+ltcg+ssBase). Tests below use
 // wages=pension (no SS, no NII, no LTCG) so agiBase=income for clarity.
@@ -279,15 +280,19 @@ console.log('\n─── Group 3: Senior deduction phaseout ───');
   const cc4 = computeConversionCost(0, ctx({ wages: 50000, nSr: 1, status: 'mfs', curAge: 66 }));
   near('3.4 mfs nSr=1: srD=0 (MFS unconditionally excluded from senior deduction)', cc4.srD, 0);
 
-  // 3.5 MFJ, both 65+, nSr=2, income=$160k: phaseout = (160000-150000)*0.06=600, full=12000, net=11400
+  // 3.5 MFJ, both 65+, nSr=2, income=$160k: reduction (160000-150000)*0.06 = 600 off each
+  // $6,000 -> 2 x 5,400 = 10,800
   const cc5 = computeConversionCost(0, ctx({ wages: 160000, nSr: 2, status: 'mfj', isCouple: true, curAge: 66 }));
-  near('3.5 mfj nSr=2 inc=160k: srD=11400 (600 phaseout on 12000 full)', cc5.srD, 11400);
+  near('3.5 mfj nSr=2 inc=160k: srD=10800 ($600 off each $6,000)', cc5.srD, 10800);
 
   // 3.6 Confirm the deduction actually changes tiBase (not just srD):
-  // single, income=$74999, nSr=0 vs nSr=1 — tiBase should differ by 6000
+  // single, income=$74999, nSr=0 vs nSr=1 — tiBase should differ by the $6,000 senior
+  // deduction plus the $2,050 additional standard deduction a single filer gets at 65
+  // (IRC 63(f); Rev. Proc. 2025-32), 8,050 in all. Updated 2026-10-22: this was 6,000
+  // when the tool left the 63(f) amount out.
   const cc_no = computeConversionCost(0, ctx({ wages: 74999, nSr: 0, curAge: 66 }));
   const cc_sr = computeConversionCost(0, ctx({ wages: 74999, nSr: 1, curAge: 66 }));
-  near('3.6 nSr=1 vs nSr=0: tiBase differs by exactly 6000', cc_no.tiBase - cc_sr.tiBase, 6000);
+  near('3.6 nSr=1 vs nSr=0: tiBase differs by 6,000 + 2,050 = 8,050', cc_no.tiBase - cc_sr.tiBase, 8050);
 
   // 3.7 phaseout is continuous: income=$80k should give srD = 6000-(80000-75000)*0.06=6000-300=5700
   const cc7 = computeConversionCost(0, ctx({ wages: 80000, nSr: 1, curAge: 66 }));

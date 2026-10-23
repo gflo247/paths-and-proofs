@@ -154,7 +154,9 @@ function ctx({ wages = 0, pension = 0, nii = 0, ltcg = 0, ss = 0,
 // ═══════════════════════════════════════════════════════════════════════════
 // GROUP 3: SENIOR DEDUCTION PHASEOUT BOUNDARY
 //
-// seniorDed(agi, status, n) = max(0, n*6000 - max(0, agi-threshold)*0.06)
+// seniorDed(agi, status, n) = n * max(0, 6000 - max(0, agi-threshold)*0.06)
+// (IRS Schedule 1-A lines 33-37: the reduction comes off each person's $6,000; it was taken
+// off n*6000 once until 2026-10-22, which 3.3 below asserted)
 // single threshold=$75,000 / MFJ threshold=$150,000
 // Phase-out rate: $60 per $1,000 of AGI over threshold (6%).
 //
@@ -177,9 +179,9 @@ function ctx({ wages = 0, pension = 0, nii = 0, ltcg = 0, ss = 0,
 
   // 3.3 MFJ both seniors: threshold=$150k.
   // wages=$149k, nSr=2, cvt=$5k → agiWith=154000.
-  // srDW = max(0, 12000 - (154000-150000)*0.06) = max(0, 12000-240) = 11760.
+  // srDW = 2 * max(0, 6000 - (154000-150000)*0.06) = 2 * (6000-240) = 11520.
   const c3 = computeConversionCost(5000, ctx({ wages: 149000, nSr: 2, status: 'mfj', isCouple: true }));
-  near('3.3 senior ded MFJ: cvt crosses $150k → srDW=11760 (nSr=2, phaseout=$240)', c3.srDW, 11760);
+  near('3.3 senior ded MFJ: cvt crosses $150k → srDW=11520 (nSr=2, $240 off each $6,000)', c3.srDW, 11520);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

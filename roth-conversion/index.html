@@ -703,7 +703,7 @@
     </details>
     <details class="faq-item faq-item-wide">
       <summary>What does this tool model — and what does it simplify?</summary>
-      <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions (IRS Rev. Proc. 2025-32), long-term capital gains and qualified dividend brackets (same source) stacked correctly on top of ordinary income, the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare Income-Related Monthly Adjustment Amount (IRMAA) premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase, including the assumption that today's investment income continues unchanged. Survival modeling ends at age 100. See "What This Calculator Doesn't Model" below for state and capital-gains caveats. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
+      <div class="faq-ans"><strong>Modeled, from primary sources:</strong> 2026 federal brackets and standard deductions, including the extra amount at 65 (IRS Rev. Proc. 2025-32), long-term capital gains and qualified dividend brackets (same source) stacked correctly on top of ordinary income, the 2025–2028 senior deduction including its phase-out and its exclusion for married-filing-separately filers (One Big Beautiful Bill Act), Social Security taxability (IRS Pub 915 worksheet), Medicare Income-Related Monthly Adjustment Amount (IRMAA) premium tiers for all filing statuses (official CMS 2026 rates), Required Minimum Distribution divisors (IRS Pub 590-B), and survival odds (SSA 2023 Period Life Table, exact figures).<br><br><strong>Simplified, on purpose:</strong> Married-filing-separately Social Security taxability assumes you lived with your spouse during the year (the harsher, more common case — filers who lived apart all year get milder treatment this tool doesn't model). The multi-year plan holds income flat within each phase, including the assumption that today's investment income continues unchanged. Survival modeling ends at age 100. See "What This Calculator Doesn't Model" below for state and capital-gains caveats. When simplifying, this tool errs toward overstating your tax, not hiding it.</div>
     </details>
   </div>
 </div>
@@ -757,11 +757,11 @@
         <div class="flr"><label for="seniorDeduction">Are You 65 or Older This Year?</label><button class="tb" onclick="toggleTip(‘senior’)">ⓘ</button></div>
         <select id="seniorDeduction" onchange="calc()">
           <option value="0">Under 65 — standard deduction only</option>
-          <option value="1">Yes, I am 65+ — add $6,000 deduction</option>
-          <option value="2">Yes, both spouses are 65+ — add $12,000</option>
+          <option value="1">Yes, I am 65+ — adds the 65+ deductions</option>
+          <option value="2">Yes, both spouses are 65+ — adds them for each</option>
         </select>
-        <div class="ttip" id="tip-senior"><strong>New for 2026:</strong> A new law gives people 65+ an extra $6,000 tax deduction per qualifying person, on top of the regular standard deduction. This can meaningfully reduce the tax cost of a conversion. Phases out above $75K (single) or $150K (joint). <strong>Not available if married filing separately</strong> — the law requires a joint return, so this selection has no effect if you file separately.</div>
-        <div class="hint" id="seniorMfsNote" style="display:none">Not available for Married Filing Separately — this deduction requires a joint return, so it won’t change your results even if selected.</div>
+        <div class="ttip" id="tip-senior"><strong>New for 2026:</strong> A new law gives people 65+ an extra $6,000 tax deduction per qualifying person, on top of the regular standard deduction. It phases out above $75K (single) or $150K (joint), and is <strong>not available if married filing separately</strong> — the law requires a joint return. Your answer also adds the standard deduction's own long-standing amount at 65, which doesn't phase out: $2,050 if you file single or head of household, $1,650 for each spouse 65+ on a joint return, and $1,650 for you on a separate return. Together they can meaningfully reduce the tax cost of a conversion.</div>
+        <div class="hint" id="seniorMfsNote" style="display:none">Married filing separately: the $6,000 senior deduction requires a joint return, so it doesn’t apply. The standard deduction’s extra $1,650 at 65 still does, and is set from your age above.</div>
       </div>
     <div class="field">
       <div class="flr"><label for="sex">Your Sex</label></div>
@@ -1245,7 +1245,19 @@ const LTCGX={
   hoh:   [{m:66200,r:0},{m:579600,r:.15},{m:1/0,r:.20}],
 };
 const STDD={single:16100,mfj:32200,mfs:16100,hoh:24150};
-function seniorDed(inc,st,n){if(!n||st==='mfs')return 0;const full=n*6000,phase=Math.max(0,inc-(st==='mfj'?150000:75000))*.06;return Math.max(0,full-phase);}
+// Additional standard deduction at 65 or older (IRC 63(f); Rev. Proc. 2025-32, 2026): $2,050 for a
+// single or head-of-household filer, $1,650 for each spouse 65+ on a married return. It is part of the
+// standard deduction (Form 1040 line 12e) and separate from the $6,000 senior deduction (seniorDed).
+// n = the 65+ headcount the senior-deduction input already supplies. Fixed 2026-10-22: this tool used
+// STDD alone, so every 65+ filer's federal deduction ran $1,650 to $3,300 short.
+const AGED_ADD={single:2050,hoh:2050,mfj:1650,mfs:1650};
+function fedStdDed(st,n){const k=Math.min(Math.max(n||0,0),st==='mfj'?2:1);return STDD[st]+k*AGED_ADD[st];}
+// Senior deduction (IRC 151(d)(5)(C); Schedule 1-A Part V, lines 31-37): each person 65+ gets $6,000
+// less 6% of MAGI over $75,000 ($150,000 joint), floored at $0 -- the reduction comes off EACH
+// person's $6,000, so a couple's is gone at $250,000. Fixed 2026-10-22: this took the reduction
+// off the couple's $12,000 once, overstating a couple's deduction by up to $6,000 between $150,000
+// and $350,000 and halving the phase-out's bite on a conversion. n is capped like fedStdDed's.
+function seniorDed(inc,st,n){if(!n||st==='mfs')return 0;const each=Math.max(0,6000-Math.max(0,inc-(st==='mfj'?150000:75000))*.06);return Math.min(n,st==='mfj'?2:1)*each;}
 const RMDD={73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22,79:21.1,80:20.2,81:19.4,82:18.5,83:17.7,84:16.8,85:16,86:15.2,87:14.4,88:13.7,89:12.9,90:12.2,91:11.5,92:10.8,93:10.1,94:9.5,95:8.9,96:8.4,97:7.8,98:7.3,99:6.8,100:6.4};
 const ITIERS=[{lbl:'Standard',mult:'1.0x',B:202.90,D:0},{lbl:'Tier 1',mult:'1.4x',B:284.10,D:14.50},{lbl:'Tier 2',mult:'2.0x',B:405.80,D:37.50},{lbl:'Tier 3',mult:'2.6x',B:527.50,D:60.40},{lbl:'Tier 4',mult:'3.2x',B:649.20,D:83.30},{lbl:'Tier 5',mult:'3.4x',B:689.90,D:91.00}];
 const ITHR={single:[0,109000,137000,171000,205000,500000],mfj:[0,218000,274000,342000,410000,750000],mfs:[0,109000,109000,109000,109000,391000]};
@@ -1954,8 +1966,8 @@ function updateRetRate(){
   if(!el) return;
   if(retSS+retPen+retOther+retWd<=0){ el.innerHTML=''; return; }
 
-  var std     = STDD[status];
   var nSr     = parseInt((document.getElementById('seniorDeduction')||{}).value)||0;
+  var std     = fedStdDed(status, nSr);
   var othInc  = retPen + retOther + retWd;
 
   // Marginal rate: tax difference from adding $1000 more IRA withdrawal.
@@ -2150,7 +2162,7 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
 
     if(retSSV+retPenV+retOtherV>0){
       // Bracket room in retirement (lower income = more room)
-      var gOpts=computeOptTargets(retPenV+retOtherV+retNiiV,retLtcgV,retSSV,status,STDD[status],nSr,nMed,taxableFrac);
+      var gOpts=computeOptTargets(retPenV+retOtherV+retNiiV,retLtcgV,retSSV,status,fedStdDed(status,nSr),nSr,nMed,taxableFrac);
       // Bracket room can legitimately round to $0 (already at the top of the
       // current bracket) while Medicare-safe room is still real — fall back to
       // it instead of silently giving up on the whole golden-window plan.
@@ -4632,7 +4644,7 @@ function computeConversionCost(cvtAmt, ctx){
   const agiWith    = income + nii + ltcg + taxableCvt + ssWith;
   const ordAgiBase = income + nii + ssBase;
   const ordAgiWith = income + nii + taxableCvt + ssWith;
-  const std     = STDD[status];
+  const std     = fedStdDed(status, nSr);
   const srD     = seniorDed(agiBase, status, nSr);
   const srDW    = seniorDed(agiWith, status, nSr);
   const tiBase  = Math.max(0, ordAgiBase - std - srD);
@@ -5125,7 +5137,10 @@ function calc(){
     const syncKey = curAge+'|'+(spouseAge??'')+'|'+status;
     if(syncKey !== _seniorSyncKey){
       const selfSr = curAge>=65 ? 1 : 0;
-      const spouseSr = (isCouple && spouseAge>=65) ? 1 : 0;
+      // Joint returns only: on a separate return the spouse's age adds nothing (no senior
+      // deduction, and IRC 63(f)'s spouse amount needs a spouse with no gross income), so an
+      // MFS count is the filer's own -- it now feeds fedStdDed, not just the inert seniorDed.
+      const spouseSr = (status==='mfj' && spouseAge>=65) ? 1 : 0;
       seniorSelEl.value = String(selfSr+spouseSr);
     }
     _seniorSyncKey = syncKey;
@@ -5202,7 +5217,7 @@ function calc(){
   // the naive gap doesn't account for the conversion itself pushing more
   // Social Security into taxability as it grows — roomTo still supplies
   // curBR (the CURRENT bracket, unaffected by this) above.
-  const brOpt = computeOptTargets(income+pensionIncome+nii, ltcg, ss, status, STDD[status], nSr, nMed, taxableFrac);
+  const brOpt = computeOptTargets(income+pensionIncome+nii, ltcg, ss, status, fedStdDed(status, nSr), nSr, nMed, taxableFrac);
   const brRoomShown = brOpt.bracketState==='ok' ? brOpt.bracketAmt : 0;
   const rothIn  = taxSrc==='inside' ? Math.max(0, cvtAmt-cvtTxTot) : cvtAmt;
 
@@ -5396,7 +5411,7 @@ function calc(){
 
   // ── OPTIMIZER PANEL + THRESHOLD PICKER (needs all SS/IRMAA vars) ──
   (function(){
-    var optTargets=computeOptTargets(income+pensionIncome+nii,ltcg,ss,status,STDD[status],nSr,nMed,taxableFrac);
+    var optTargets=computeOptTargets(income+pensionIncome+nii,ltcg,ss,status,fedStdDed(status,nSr),nSr,nMed,taxableFrac);
     var optEl=document.getElementById('optimizerPanel');
     if(optEl)optEl.innerHTML=buildOptimizerPanel(optTargets,fmt,pct,nMed,ss,cvtAmt);
     var pickerEl=document.getElementById('thresholdPicker');
