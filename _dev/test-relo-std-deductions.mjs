@@ -51,9 +51,14 @@ function check(label, actual, expected, tolerance = 1) {
 //     MO (DOR 4711, 2025 standard deduction table): married filing separately, 1 box = $17,350.
 {
   const r = tax('MO', 'mfs', { wages: 50000, age: 66 });
-  check('MO married filing separately, 66: $17,350 (was $17,750, the unmarried add-on)', r.breakdown.deductible, 17350, 0);
-  // 50,000 - 17,350 = 32,650; MO: 256.035 through $9,191, + 4.7% x 23,459 = 1,358.61.
-  check('MO married filing separately, 66, $50k wages: tax $1,359', r.tax, 1359);
+  // (Since 2026-10-22 `deductible` also holds Missouri's federal tax deduction, tested in
+  // test-relo-federal-tax.mjs; the standard deduction is the rest.)
+  check('MO married filing separately, 66: $17,350 (was $17,750, the unmarried add-on)',
+    r.breakdown.deductible - r.breakdown.federalTaxDeduction, 17350, 0);
+  // Federal tax 50,000 - 17,750 = 32,250 -> 3,622; Missouri AGI $50,000 -> 25% = 905.50.
+  // 50,000 - 17,350 - 905.50 = 31,744.50; MO: 256.035 through $9,191, + 4.7% x 22,553.50 = 1,316.05.
+  // (1,359 before the federal tax deduction.)
+  check('MO married filing separately, 66, $50k wages: tax $1,316', r.tax, 1316);
 }
 
 // 1c. Stacked capital gains (MT, HI): deductions left over after the other income reduce the
@@ -191,8 +196,10 @@ function check(label, actual, expected, tolerance = 1) {
   check('OK single, 60: tax $1,837 (was $1,885)', tax('OK', 'single', { wages: 50000, age: 60 }).tax, 1837);
   check('OK joint: 12,700 + 2 x 1,000 = $14,700', tax('OK', 'mfj', { wages: 80000, age: 60 }).breakdown.deductible, 14700, 0);
   // OR (OR-ESTIMATE 2026; OR-40 2025): Oregon's own $2,900 + $1,200 at 65 (not the federal
-  // $15,750), $260 credit. Taxable 45,900: 216.13 + 462.38 + 8.75% x 34,500 = 3,697.25; less 260.
-  check('OR single, 66: tax $3,437 (was $2,503 on the federal deduction)', tax('OR', 'single', { wages: 50000, age: 66 }).tax, 3437);
+  // $15,750), $260 credit, and (since 2026-10-22) the federal tax subtraction: federal 50,000 -
+  // 18,150 - 6,000 = 25,850 -> 2,854. Taxable 50,000 - 4,100 - 2,854 = 43,046: 216.13 + 462.38 +
+  // 8.75% x 31,646 = 3,447.53; less 260. (3,437 before the subtraction; 2,503 on the federal deduction.)
+  check('OR single, 66: tax $3,188', tax('OR', 'single', { wages: 50000, age: 66 }).tax, 3188);
   // RI (ADV 2025-22, 2026): $11,200 + $5,250 exemption. 3.75% x 33,550 = 1,258.13.
   check('RI single, 60: tax $1,258 (was $1,466)', tax('RI', 'single', { wages: 50000, age: 60 }).tax, 1258);
   check('RI head of household: 16,800 + 5,250 = $22,050', tax('RI', 'hoh', { wages: 50000, age: 60 }).breakdown.deductible, 22050, 0);
@@ -247,10 +254,10 @@ function check(label, actual, expected, tolerance = 1) {
   check('PA: 3.07% x 50,000 = $1,535', tax('PA', 'single', { wages: 50000, age: 60 }).tax, 1535);
 }
 
-// States still without a deduction block (see SOURCES.md for why): PA has none to model; AL, CT,
-// OH, UT and WI are listed on the page as not modeled.
+// States still without a deduction block: PA has none to model. (AL, CT, OH, UT and WI got theirs
+// 2026-10-22; test-relo-state-credits.mjs.)
 {
-  for (const code of ['PA', 'AL', 'CT', 'OH', 'UT', 'WI']) {
+  for (const code of ['PA']) {
     const ok = states[code].taxRules.standardDeduction === undefined;
     if (ok) { pass++; console.log(`ok    ${code} has no standardDeduction`); }
     else { fail++; console.log(`FAIL  ${code} has no standardDeduction (field exists unexpectedly)`); }

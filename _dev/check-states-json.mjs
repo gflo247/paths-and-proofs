@@ -365,13 +365,20 @@ for (const code of htmlCodes) {
 
 // --- 9. Standard deduction shape guard (G8) ---
 // Added 2026-10-21; rewritten 2026-10-22 for the phase-outs, separate exemptions, the
-// federal senior deduction and the credit extras. Validates the optional
-// taxRules.standardDeduction field strictly: every key must be one the engine reads
-// (a misspelled key would otherwise be silently ignored and the deduction dropped),
-// amounts by filing status need all four statuses, and each phase-out must be a shape
-// relo-engine.mjs knows (it throws on any other).
-const SD_KEYS = ['deduction', 'age65AddOn', 'phaseOut', 'exemption', 'federalSeniorDeduction', 'exemptionCredit'];
+// federal senior deduction and the credit extras; extended 2026-10-22 (fix-pack 11) for the
+// steps and rate phase-outs, amount bands, the federal tax subtraction and the credits list.
+// Validates the optional taxRules.standardDeduction field strictly: every key must be one the
+// engine reads (a misspelled key would otherwise be silently ignored and the deduction
+// dropped), amounts by filing status need all four statuses, and each phase-out and credit
+// must be a shape relo-engine.mjs knows (it throws on any other).
+const SD_KEYS = ['deduction', 'age65AddOn', 'phaseOut', 'exemption', 'federalSeniorDeduction',
+  'federalTaxDeduction', 'exemptionCredit', 'credits'];
+const DEDUCTION_BASES = ['federalAGI', 'stateAGI'];
+// Credits are figured after the brackets, so they may also test the state's taxable income and
+// the retirement income left in state AGI (OH).
+const CREDIT_BASES = [...DEDUCTION_BASES, 'stateTaxableIncome', 'retirementIncome'];
 const isAmount = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+const isShare = (v) => isAmount(v) && v <= 1;
 function checkKeys(where, obj, allowed) {
   for (const k of Object.keys(obj)) if (!allowed.includes(k)) diffs.push(`${where}: unknown key "${k}" (allowed: ${allowed.join(', ')})`);
 }
@@ -380,23 +387,86 @@ function checkByStatus(where, obj, test, what) {
   checkKeys(where, obj, LOCAL_TAX_STATUSES);
   for (const s of LOCAL_TAX_STATUSES) if (!test(obj[s])) diffs.push(`${where}.${s} must be ${what}`);
 }
-function checkPhaseOut(where, po) {
+// A band list: thresholds `over` or `atLeast` (exactly one per band), strictly rising, each band
+// with exactly one value key from `valueKeys`; `trend` 'falling' or 'rising' for the values.
+function isBandList(list, valueKeys, valueTest, trend) {
+  if (!Array.isArray(list) || list.length === 0) return false;
+  let prevAt = -Infinity, prevValue = null;
+  for (const b of list) {
+    if (!b || typeof b !== 'object') return false;
+    const thresholds = ['over', 'atLeast'].filter((k) => k in b);
+    const values = valueKeys.filter((k) => k in b);
+    if (thresholds.length !== 1 || values.length !== 1 || Object.keys(b).length !== 2) return false;
+    const at = b[thresholds[0]], value = b[values[0]];
+    if (!isAmount(at) || !valueTest(value) || at <= prevAt) return false;
+    // amount and factor bands can't be compared to each other
+    if (prevValue !== null && prevValue.key === values[0]
+      && (trend === 'falling' ? value > prevValue.v : value < prevValue.v)) return false;
+    prevAt = at; prevValue = { key: values[0], v: value };
+  }
+  return true;
+}
+function checkPhaseOut(where, po, bases = DEDUCTION_BASES) {
   if (!po || typeof po !== 'object') { diffs.push(`${where} must be an object`); return; }
-  if (!['federalAGI', 'stateAGI'].includes(po.basis)) diffs.push(`${where}.basis must be "federalAGI" or "stateAGI"`);
+  if (!bases.includes(po.basis)) diffs.push(`${where}.basis must be one of ${bases.join(', ')}`);
   if (po.type === 'linear') {
     checkKeys(where, po, ['type', 'basis', 'start', 'width']);
     checkByStatus(`${where}.start`, po.start, isAmount, 'a non-negative number');
     checkByStatus(`${where}.width`, po.width, (v) => isAmount(v) && v > 0, 'a positive number');
   } else if (po.type === 'bands') {
     checkKeys(where, po, ['type', 'basis', 'bands']);
-    checkByStatus(`${where}.bands`, po.bands, (list) => Array.isArray(list) && list.length > 0
-      && list.every((b, i) => isAmount(b.over) && b.factor >= 0 && b.factor <= 1
-        && Object.keys(b).every((k) => k === 'over' || k === 'factor')
-        && (i === 0 || (b.over > list[i - 1].over && b.factor <= list[i - 1].factor))),
-      'a non-empty list of {over, factor} with rising over and falling factors in [0, 1]');
+    checkByStatus(`${where}.bands`, po.bands,
+      (list) => isBandList(list, ['factor', 'amount'], (v) => isAmount(v), 'falling')
+        && list.every((b) => !('factor' in b) || isShare(b.factor)),
+      'a non-empty list of {over | atLeast, factor in [0, 1] | amount} with rising thresholds and falling values');
+  } else if (po.type === 'steps') {
+    checkKeys(where, po, ['type', 'basis', 'start', 'step', 'perStep', 'floor']);
+    checkByStatus(`${where}.start`, po.start, isAmount, 'a non-negative number');
+    checkByStatus(`${where}.step`, po.step, (v) => isAmount(v) && v > 0, 'a positive number');
+    checkByStatus(`${where}.perStep`, po.perStep, (v) => isAmount(v) && v > 0, 'a positive number');
+    if ('floor' in po) checkByStatus(`${where}.floor`, po.floor, isAmount, 'a non-negative number');
+  } else if (po.type === 'rate') {
+    checkKeys(where, po, ['type', 'basis', 'rules']);
+    checkByStatus(`${where}.rules`, po.rules, (list) => Array.isArray(list) && list.length > 0
+      && list.every((r) => r && isAmount(r.start) && r.rate > 0 && r.rate <= 1 && (!('amount' in r) || isAmount(r.amount))
+        && Object.keys(r).every((k) => ['start', 'rate', 'amount'].includes(k))),
+      'a non-empty list of {start, rate in (0, 1], amount?}');
   } else {
-    diffs.push(`${where}.type "${po.type}" is not one the engine knows (linear | bands)`);
+    diffs.push(`${where}.type "${po.type}" is not one the engine knows (linear | bands | steps | rate)`);
   }
+}
+function checkAgeAddOn(where, a) {
+  if (!a || typeof a !== 'object') { diffs.push(`${where} must be an object`); return; }
+  checkKeys(where, a, ['unmarried', 'married']);
+  if (!isAmount(a.unmarried) || !isAmount(a.married)) diffs.push(`${where} needs non-negative unmarried and married amounts`);
+}
+function checkCredit(where, c) {
+  if (!c || typeof c !== 'object') { diffs.push(`${where} must be an object`); return; }
+  if (c.type === 'percentOfTax') {
+    checkKeys(where, c, ['type', 'basis', 'bands']);
+    if (!CREDIT_BASES.includes(c.basis)) diffs.push(`${where}.basis must be one of ${CREDIT_BASES.join(', ')}`);
+    checkByStatus(`${where}.bands`, c.bands, (list) => isBandList(list, ['rate'], isShare, 'falling'),
+      'a non-empty list of {over | atLeast, rate in [0, 1]} with rising thresholds and falling rates');
+  } else if (c.type === 'ofDeduction') {
+    checkKeys(where, c, ['type', 'rate', 'deduction', 'age65AddOn', 'phaseOut']);
+    if (!(c.rate > 0 && c.rate <= 1)) diffs.push(`${where}.rate must be in (0, 1]`);
+    checkByStatus(`${where}.deduction`, c.deduction, isAmount, 'a non-negative number');
+    if ('age65AddOn' in c) checkAgeAddOn(`${where}.age65AddOn`, c.age65AddOn);
+  } else if (c.type === 'flat') {
+    checkKeys(where, c, ['type', 'amount', 'per', 'age', 'phaseOut']);
+    if (!isAmount(c.amount)) diffs.push(`${where}.amount must be a non-negative number`);
+    if (!['person', 'return'].includes(c.per)) diffs.push(`${where}.per must be "person" or "return"`);
+    if ('age' in c && !(c.age >= 50 && c.age <= 100)) diffs.push(`${where}.age must be between 50 and 100`);
+  } else if (c.type === 'schedule') {
+    checkKeys(where, c, ['type', 'basis', 'bands', 'phaseOut']);
+    if (!CREDIT_BASES.includes(c.basis)) diffs.push(`${where}.basis must be one of ${CREDIT_BASES.join(', ')}`);
+    checkByStatus(`${where}.bands`, c.bands, (list) => isBandList(list, ['amount'], isAmount, 'rising'),
+      'a non-empty list of {over | atLeast, amount} with rising thresholds and amounts');
+  } else {
+    diffs.push(`${where}.type "${c.type}" is not one the engine knows (percentOfTax | ofDeduction | flat | schedule)`);
+    return;
+  }
+  if ('phaseOut' in c) checkPhaseOut(`${where}.phaseOut`, c.phaseOut, CREDIT_BASES);
 }
 for (const code of htmlCodes) {
   const sd = json[code]?.taxRules?.standardDeduction;
@@ -406,26 +476,38 @@ for (const code of htmlCodes) {
   checkKeys(at, sd, SD_KEYS);
   if (!SD_KEYS.some((k) => k in sd)) diffs.push(`${at} is empty`);
   if ('deduction' in sd) checkByStatus(`${at}.deduction`, sd.deduction, isAmount, 'a non-negative number');
-  if ('age65AddOn' in sd) {
-    const a = sd.age65AddOn;
-    if (!a || typeof a !== 'object') diffs.push(`${at}.age65AddOn must be an object`);
-    else {
-      checkKeys(`${at}.age65AddOn`, a, ['unmarried', 'married']);
-      if (!isAmount(a.unmarried) || !isAmount(a.married)) diffs.push(`${at}.age65AddOn needs non-negative unmarried and married amounts`);
-    }
-  }
+  if ('age65AddOn' in sd) checkAgeAddOn(`${at}.age65AddOn`, sd.age65AddOn);
   if ('phaseOut' in sd) checkPhaseOut(`${at}.phaseOut`, sd.phaseOut);
   if ('exemption' in sd) {
     const e = sd.exemption;
     if (!e || typeof e !== 'object') diffs.push(`${at}.exemption must be an object`);
     else {
-      checkKeys(`${at}.exemption`, e, ['perPerson', 'phaseOut']);
+      checkKeys(`${at}.exemption`, e, ['perPerson', 'hohExtra', 'age65Extra', 'phaseOut']);
       if (!isAmount(e.perPerson)) diffs.push(`${at}.exemption.perPerson must be a non-negative number`);
+      for (const k of ['hohExtra', 'age65Extra']) if (k in e && !isAmount(e[k])) diffs.push(`${at}.exemption.${k} must be a non-negative number`);
       if ('phaseOut' in e) checkPhaseOut(`${at}.exemption.phaseOut`, e.phaseOut);
     }
   }
   if ('federalSeniorDeduction' in sd && sd.federalSeniorDeduction !== true) {
     diffs.push(`${at}.federalSeniorDeduction must be true when present (omit it otherwise)`);
+  }
+  if ('federalTaxDeduction' in sd) {
+    const f = sd.federalTaxDeduction;
+    if (!f || typeof f !== 'object') diffs.push(`${at}.federalTaxDeduction must be an object`);
+    else {
+      checkKeys(`${at}.federalTaxDeduction`, f, ['cap', 'capPhaseOut', 'share', 'includesNIIT']);
+      if ('cap' in f) checkByStatus(`${at}.federalTaxDeduction.cap`, f.cap, isAmount, 'a non-negative number');
+      if ('capPhaseOut' in f) {
+        if (!('cap' in f)) diffs.push(`${at}.federalTaxDeduction.capPhaseOut needs a cap`);
+        checkPhaseOut(`${at}.federalTaxDeduction.capPhaseOut`, f.capPhaseOut);
+      }
+      if ('share' in f) checkPhaseOut(`${at}.federalTaxDeduction.share`, f.share);
+      if ('includesNIIT' in f && f.includesNIIT !== true) diffs.push(`${at}.federalTaxDeduction.includesNIIT must be true when present (omit it otherwise)`);
+    }
+  }
+  if ('credits' in sd) {
+    if (!Array.isArray(sd.credits) || sd.credits.length === 0) diffs.push(`${at}.credits must be a non-empty list`);
+    else sd.credits.forEach((c, i) => checkCredit(`${at}.credits[${i}]`, c));
   }
   if ('exemptionCredit' in sd) {
     const c = sd.exemptionCredit;

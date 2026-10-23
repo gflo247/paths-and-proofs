@@ -6,10 +6,9 @@
 //
 // SCOPE (deliberate): the crossover is INCOME TAX ONLY, computed from the
 // primary-source-verified bracket and income-treatment data, after each state's
-// standard deduction, exemptions, age-65 amounts and exemption credits
-// (taxRules.standardDeduction). AL, CT, OH, UT and WI have none modeled yet, and the
-// federal-income-tax subtractions (AL, MO, OR) aren't figured, so the tax shown runs
-// high there (disclosed on the page). compute() passes no spouseAge: the engine takes
+// standard deduction, exemptions, age-65 amounts and credits, and the federal income
+// tax AL, MO and OR let you subtract, estimated at 2026 federal rates
+// (taxRules.standardDeduction). compute() passes no spouseAge: the engine takes
 // the spouse to be the filer's age, the same assumption as the survival odds. Property
 // tax, sales tax, and estate tax are shown as disclosed CONTEXT beside the result,
 // never folded into the headline — they need per-household assumptions we can't

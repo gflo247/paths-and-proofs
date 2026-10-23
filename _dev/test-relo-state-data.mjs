@@ -48,14 +48,20 @@ function check(label, actual, expected, tolerance = 1) {
 //     (Utah Code 59-10-1042): rate x the Social Security in taxable income, reduced by
 //     $0.025 per dollar of modified AGI over $54,000 single / $90,000 joint or HoH. ---
 {
-  check('UT single, $50,000 taxable: 4.45% = $2,225 (was $2,250 at 4.5%)',
-    tax('UT', 'single', { wages: 50000, age: 50 }).tax, 2225);
+  // Since 2026-10-22 the taxpayer tax credit also applies (test-relo-state-credits.mjs), so the
+  // rate and Social Security checks read the tax before it (bracketTax) and the totals take it off.
+  const s = tax('UT', 'single', { wages: 50000, age: 50 });
+  check('UT single, $50,000 taxable: 4.45% = $2,225 (was $2,250 at 4.5%)', s.breakdown.bracketTax, 2225);
+  // Taxpayer credit 6% x 15,750 - 1.3% x (50,000 - 18,213) = 945 - 413.23 = 531.77.
+  check('UT single, $50,000: less the $531.77 taxpayer credit = $1,693', s.tax, 1693);
   // Joint, SS 40,000, IRA 70,000. Federal worksheet: provisional = 70,000 + 20,000 = 90,000,
   // so taxable SS = min(34,000, 6,000 + 0.85 * 46,000) = 34,000; federal AGI = 104,000.
   // Credit = 0.0445 * 34,000 - 0.025 * (104,000 - 90,000) = 1,513 - 350 = 1,163, so Utah tax
   // = 0.0445 * 104,000 - 1,163 = 3,465. (Before: SS taxed in full at 4.5% -> $4,680.)
   const r = tax('UT', 'mfj', { ss: 40000, iraWithdrawal: 70000, age: 70 });
-  check('UT joint, SS credit partly phased out: tax $3,465', r.tax, 3465);
+  check('UT joint, SS credit partly phased out: tax $3,465 before the taxpayer credit', r.breakdown.bracketTax, 3465);
+  // Taxpayer credit 6% x (31,500 + 2 x 1,600) - 1.3% x (104,000 - 36,426) = 2,082 - 878.46.
+  check('UT joint, less the $1,203.54 taxpayer credit = $2,261', r.tax, 2261);
   // Head of household uses the $90,000 joint threshold: SS 30,000, other income 60,000.
   // Federal taxable SS (single bases): provisional 75,000 -> min(25,500, 4,500 + 0.85 * 41,000)
   // = 25,500; federal AGI 85,500 <= 90,000 -> full credit, no tax on the Social Security.

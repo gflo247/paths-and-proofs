@@ -94,63 +94,205 @@ function taxableSS(ssRule, ssBenefit, otherIncome, bucket, rawStatus, qualAge, f
 // income or adopted it (federalSeniorDeduction: true).
 const SENIOR_DEDUCTION = { perPerson: 6000, rate: 0.06, startJoint: 150000, startOther: 75000 };
 
-// Share (0..1) of an amount left after an income-based phase-out.
-//   linear: falls in a straight line from `start` to zero at `start + width` (ME, SC).
-//   bands:  the factor of the highest band whose `over` the income exceeds (MD's exemption
-//           steps, RI's 20% steps, and hard cutoffs such as OR's credit and IL's exemption).
-function phaseOutFactor(po, status, income) {
-  if (po.type === 'linear') {
-    const excess = income - po.start[status];
-    return excess <= 0 ? 1 : 1 - Math.min(1, excess / po.width[status]);
-  }
-  if (po.type === 'bands') {
-    let factor = 1;
-    for (const b of po.bands[status]) if (income > b.over) factor = b.factor;
-    return factor;
-  }
-  throw new Error(`relo-engine: unknown standardDeduction phaseOut.type "${po.type}"`);
+// `aged`: the number of people on the return 65 or older (the filer, plus the spouse on a joint
+// return).
+function seniorDeductionAmount(status, fedAGI, aged) {
+  if (status === 'mfs') return 0;
+  const s = SENIOR_DEDUCTION;
+  const excess = Math.max(0, fedAGI - (status === 'mfj' ? s.startJoint : s.startOther));
+  return Math.max(0, s.perPerson - s.rate * excess) * aged;
 }
 
-// Returns { deductible, seniorDeduction, credit }: the amount subtracted from income before
-// the brackets, the part of it that is the federal senior deduction, and the credit taken off
-// the bracket tax. `age` is the filer's; on a joint return the spouse counts too, at
-// `spouseAge ?? age` (the same-age default the rest of this engine and the page use).
-// stateAGI is ordinary income before deductions (the state's own AGI); fedAGI is federal AGI.
-function resolveDeductions(sd, status, { age, spouseAge, fedAGI, stateAGI }) {
-  const out = { deductible: 0, seniorDeduction: 0, credit: 0 };
-  if (!sd) return out;
-  const people = status === 'mfj' ? 2 : 1;
+// Federal income tax, for the states that subtract some or all of it (AL, MO, OR —
+// federalTaxDeduction). 2026 figures (IRS Rev. Proc. 2025-32), the same ones the Roth tool uses;
+// _dev/test-relo-federal-tax.mjs fails if the two drift apart. AL's and MO's own figures are for
+// 2025, whose federal tax runs a little higher, so their subtraction can come out a little low and
+// the state tax a little high, never the reverse. Figured on this engine's income vector:
+// ordinary brackets on income less the standard deduction (with the extra amount at 65, IRC
+// 63(f)) and the senior deduction, long-term gains stacked on top at 0/15/20% (the federal
+// capital gains worksheet). No credits, and not the other taxes some states also count (the 10%
+// additional tax on early IRA withdrawals, for one), which errs the same way.
+export const FEDERAL_2026 = {
+  brackets: {
+    single: [{ rate: 0.10, upTo: 12400 }, { rate: 0.12, upTo: 50400 }, { rate: 0.22, upTo: 105700 }, { rate: 0.24, upTo: 201775 }, { rate: 0.32, upTo: 256225 }, { rate: 0.35, upTo: 640600 }, { rate: 0.37, upTo: null }],
+    mfj: [{ rate: 0.10, upTo: 24800 }, { rate: 0.12, upTo: 100800 }, { rate: 0.22, upTo: 211400 }, { rate: 0.24, upTo: 403550 }, { rate: 0.32, upTo: 512450 }, { rate: 0.35, upTo: 768700 }, { rate: 0.37, upTo: null }],
+    mfs: [{ rate: 0.10, upTo: 12400 }, { rate: 0.12, upTo: 50400 }, { rate: 0.22, upTo: 105700 }, { rate: 0.24, upTo: 201775 }, { rate: 0.32, upTo: 256225 }, { rate: 0.35, upTo: 384350 }, { rate: 0.37, upTo: null }],
+    hoh: [{ rate: 0.10, upTo: 17700 }, { rate: 0.12, upTo: 67450 }, { rate: 0.22, upTo: 105700 }, { rate: 0.24, upTo: 201750 }, { rate: 0.32, upTo: 256200 }, { rate: 0.35, upTo: 640600 }, { rate: 0.37, upTo: null }],
+  },
+  gains: {
+    single: [{ rate: 0, upTo: 49450 }, { rate: 0.15, upTo: 545500 }, { rate: 0.20, upTo: null }],
+    mfj: [{ rate: 0, upTo: 98900 }, { rate: 0.15, upTo: 613700 }, { rate: 0.20, upTo: null }],
+    mfs: [{ rate: 0, upTo: 49450 }, { rate: 0.15, upTo: 306850 }, { rate: 0.20, upTo: null }],
+    hoh: [{ rate: 0, upTo: 66200 }, { rate: 0.15, upTo: 579600 }, { rate: 0.20, upTo: null }],
+  },
+  standardDeduction: { single: 16100, mfj: 32200, mfs: 16100, hoh: 24150 },
+  age65AddOn: { unmarried: 2050, married: 1650 }, // per person 65+, IRC 63(f)
+  // Net investment income tax (IRC 1411): 3.8% of investment income (here, the gains) over these
+  // modified AGI amounts, which are set in the statute and not indexed. Only AL counts it.
+  niit: { rate: 0.038, threshold: { single: 200000, mfj: 250000, mfs: 125000, hoh: 200000 } },
+};
+
+function estimateFederalTax(status, { fedAGI, capGains, aged }) {
+  const F = FEDERAL_2026;
   const married = status === 'mfj' || status === 'mfs';
+  const deductions = F.standardDeduction[status] + (married ? F.age65AddOn.married : F.age65AddOn.unmarried) * aged
+    + seniorDeductionAmount(status, fedAGI, aged);
+  const ordinaryTaxable = Math.max(0, fedAGI - capGains - deductions);
+  const taxable = Math.max(0, fedAGI - deductions); // the gains are the slice above ordinaryTaxable
+  const gains = F.gains[status];
+  return {
+    incomeTax: bracketTax(ordinaryTaxable, F.brackets[status]) + bracketTax(taxable, gains) - bracketTax(ordinaryTaxable, gains),
+    niit: F.niit.rate * Math.min(capGains, Math.max(0, fedAGI - F.niit.threshold[status])),
+  };
+}
+
+// A band's threshold: `atLeast` (the income is at or above it) or `over` (strictly above it),
+// whichever the form's own table uses.
+const bandPassed = (band, income) => (band.atLeast != null ? income >= band.atLeast : income > band.over);
+
+// What is left of `amount` after an income-based phase-out (no `po`: all of it).
+//   linear: falls in a straight line from `start` to zero at `start + width` (ME, SC).
+//   bands:  past a band's threshold the amount becomes `factor` times itself, or the band's own
+//           `amount`; the last band passed wins (MD's exemption steps, RI's 20% steps, OH's
+//           exemption by income, OR's federal tax limit, and cutoffs such as OR's credit and
+//           IL's exemption).
+//   steps:  less `perStep` for each `step` of income, or fraction of one, over `start`, down to
+//           `floor` (CT's exemption; AL's standard deduction chart).
+//   rate:   less `rate` per dollar of income over `start`, down to zero. With several rules for a
+//           status, the largest result, a rule with its own `amount` starting from that (WI's
+//           head-of-household deduction meets the single one and then follows it).
+function applyPhaseOut(po, status, income, amount) {
+  if (!po) return amount;
+  if (po.type === 'linear') {
+    const excess = income - po.start[status];
+    return excess <= 0 ? amount : amount * (1 - Math.min(1, excess / po.width[status]));
+  }
+  if (po.type === 'bands') {
+    let out = amount;
+    for (const b of po.bands[status]) if (bandPassed(b, income)) out = b.amount != null ? b.amount : amount * b.factor;
+    return out;
+  }
+  if (po.type === 'steps') {
+    const excess = income - po.start[status];
+    if (excess <= 0) return amount;
+    return Math.max(po.floor ? po.floor[status] : 0, amount - po.perStep[status] * Math.ceil(excess / po.step[status]));
+  }
+  if (po.type === 'rate') {
+    const left = po.rules[status].map((r) => (r.amount ?? amount) - r.rate * Math.max(0, income - r.start));
+    return Math.min(amount, Math.max(0, ...left));
+  }
+  throw new Error(`relo-engine: unknown standardDeduction phase-out type "${po.type}"`);
+}
+
+// The value (`rate` or `amount`) of the last band an income has passed; 0 below the first.
+function bandValue(bands, income, key) {
+  let value = 0;
+  for (const b of bands) if (bandPassed(b, income)) value = b[key];
+  return value;
+}
+
+// Who on the return counts: `age` is the filer's; on a joint return the spouse counts too, at
+// `spouseAge ?? age` (the same-age default the rest of this engine and the page use).
+function household(status, age, spouseAge) {
   const spAge = spouseAge ?? age;
-  const agedCount = minAge => (age >= minAge ? 1 : 0) + (status === 'mfj' && spAge >= minAge ? 1 : 0);
-  const factor = po => po ? phaseOutFactor(po, status, po.basis === 'federalAGI' ? fedAGI : stateAGI) : 1;
+  return {
+    people: status === 'mfj' ? 2 : 1,
+    married: status === 'mfj' || status === 'mfs',
+    agedCount: (minAge) => (age >= minAge ? 1 : 0) + (status === 'mfj' && spAge >= minAge ? 1 : 0),
+  };
+}
+
+// The income a phase-out or credit is tested against. stateAGI is ordinary income before
+// deductions (the state's own AGI); fedAGI is federal AGI. Credits may also test the state's
+// taxable income (OH: "MAGI less exemptions") and retirement income (OH's retirement credit
+// table: the IRA and pension income left in state AGI).
+function basisValue(basis, values) {
+  const v = values[basis];
+  if (v == null) throw new Error(`relo-engine: basis "${basis}" isn't available here`);
+  return v;
+}
+
+// Returns { deductible, seniorDeduction, federalTax, federalTaxDeduction }: the amount subtracted
+// from income before the brackets, and within it the federal senior deduction and the
+// federal-tax subtraction (with the federal tax estimate it came from; 0 for states without one).
+function resolveDeductions(sd, status, { age, spouseAge, fedAGI, stateAGI, capGains }) {
+  const out = { deductible: 0, seniorDeduction: 0, federalTax: 0, federalTaxDeduction: 0 };
+  if (!sd) return out;
+  const { people, married, agedCount } = household(status, age, spouseAge);
+  const phase = (po, amount) => (po ? applyPhaseOut(po, status, basisValue(po.basis, { federalAGI: fedAGI, stateAGI }), amount) : amount);
 
   // Standard deduction (with any personal exemptions folded in) plus the age-65 add-on, which
   // shares its phase-out. Married filing separately gets the married add-on, as on the
   // federal return.
   let base = sd.deduction ? sd.deduction[status] : 0;
   if (sd.age65AddOn) base += (married ? sd.age65AddOn.married : sd.age65AddOn.unmarried) * agedCount(65);
-  base *= factor(sd.phaseOut);
+  base = phase(sd.phaseOut, base);
 
-  // A personal exemption with its own phase-out (ME, MD), per person.
-  const exemption = sd.exemption ? sd.exemption.perPerson * people * factor(sd.exemption.phaseOut) : 0;
-
-  let senior = 0;
-  if (sd.federalSeniorDeduction && status !== 'mfs') {
-    const s = SENIOR_DEDUCTION;
-    const excess = Math.max(0, fedAGI - (status === 'mfj' ? s.startJoint : s.startOther));
-    senior = Math.max(0, s.perPerson - s.rate * excess) * agedCount(65);
+  // A personal exemption kept apart from the deduction: its own phase-out per person (ME, MD,
+  // OH), an extra amount for head of household (AL) or per person 65+ (WI), never phased out.
+  let exemption = 0;
+  const ex = sd.exemption;
+  if (ex) {
+    exemption = phase(ex.phaseOut, ex.perPerson) * people
+      + (status === 'hoh' ? (ex.hohExtra ?? 0) : 0) + (ex.age65Extra ?? 0) * agedCount(65);
   }
-  out.deductible = base + exemption + senior;
-  out.seniorDeduction = senior;
 
-  // Credits taken off the bracket tax: per filer, an extra one for head of household (AR, IA),
-  // and an age bonus per person at the state's age (65; DE uses 60).
+  const senior = sd.federalSeniorDeduction ? seniorDeductionAmount(status, fedAGI, agedCount(65)) : 0;
+
+  // Federal income tax subtracted (AL, MO, OR): the `share` of the federal tax that counts (MO's
+  // percentage by Missouri AGI), up to a `cap` that `capPhaseOut` shrinks (OR's by federal AGI).
+  const f = sd.federalTaxDeduction;
+  if (f) {
+    const t = estimateFederalTax(status, { fedAGI, capGains, aged: agedCount(65) });
+    out.federalTax = t.incomeTax + (f.includesNIIT ? t.niit : 0);
+    out.federalTaxDeduction = phase(f.share, out.federalTax);
+    if (f.cap) out.federalTaxDeduction = Math.min(out.federalTaxDeduction, phase(f.capPhaseOut, f.cap[status]));
+  }
+  out.deductible = base + exemption + senior + out.federalTaxDeduction;
+  out.seniorDeduction = senior;
+  return out;
+}
+
+// Returns { exemptionCredit, credits }: what comes off the bracket tax, from the
+// `exemptionCredit` block and from the `credits` list. Nonrefundable: the caller floors the tax
+// at zero.
+function resolveCredits(sd, status, { age, spouseAge, fedAGI, stateAGI, taxableIncome, incomeTax, retirementIncome }) {
+  const out = { exemptionCredit: 0, credits: 0 };
+  if (!sd) return out;
+  const { people, married, agedCount } = household(status, age, spouseAge);
+  const values = { federalAGI: fedAGI, stateAGI, stateTaxableIncome: taxableIncome, retirementIncome };
+  const phase = (po, amount) => (po ? applyPhaseOut(po, status, basisValue(po.basis, values), amount) : amount);
+
+  // Per filer, an extra one for head of household (AR, IA), and an age bonus per person at the
+  // state's age (65; DE uses 60).
   const ec = sd.exemptionCredit;
   if (ec) {
     let credit = (ec.perFiler ?? 0) * people + (status === 'hoh' ? (ec.hohExtra ?? 0) : 0);
     if (ec.ageBonus) credit += ec.ageBonus.amount * agedCount(ec.ageBonus.age);
-    out.credit = credit * factor(ec.phaseOut);
+    out.exemptionCredit = phase(ec.phaseOut, credit);
+  }
+
+  for (const c of sd.credits ?? []) {
+    let amount;
+    if (c.type === 'percentOfTax') {
+      // CT's personal tax credit: a percentage of the tax, set by income.
+      amount = incomeTax * bandValue(c.bands[status], basisValue(c.basis, values), 'rate');
+    } else if (c.type === 'ofDeduction') {
+      // UT's taxpayer credit: a rate times a deduction amount (the federal standard deduction,
+      // with its extra amount per person 65+), then phased out.
+      amount = c.rate * (c.deduction[status]
+        + (c.age65AddOn ? (married ? c.age65AddOn.married : c.age65AddOn.unmarried) * agedCount(65) : 0));
+    } else if (c.type === 'flat') {
+      // A set amount per person, or once per return; with `age`, only when someone qualifies.
+      const count = c.per === 'person' ? (c.age != null ? agedCount(c.age) : people) : (c.age == null || agedCount(c.age) > 0 ? 1 : 0);
+      amount = c.amount * count;
+    } else if (c.type === 'schedule') {
+      // An amount looked up by income (OH's retirement income credit table).
+      amount = bandValue(c.bands[status], basisValue(c.basis, values), 'amount');
+    } else {
+      throw new Error(`relo-engine: unknown credit type "${c.type}"`);
+    }
+    out.credits += phase(c.phaseOut, amount);
   }
   return out;
 }
@@ -249,10 +391,13 @@ export function computeStateIncomeTax(rules, status, income) {
   // stacked states, whose gains are part of AGI and only taxed at their own rates).
   const ordinary = nonCG + cgOrdinary;
   const stateAGI = ordinary + (cg.treatment === "stacked" ? capGains : 0);
-  const { deductible, seniorDeduction, credit } = resolveDeductions(rules.standardDeduction, status,
-    { age, spouseAge, fedAGI, stateAGI });
+  const sd = rules.standardDeduction;
+  const { deductible, seniorDeduction, federalTax, federalTaxDeduction } = resolveDeductions(sd, status,
+    { age, spouseAge, fedAGI, stateAGI, capGains });
   breakdown.deductible = deductible;
   breakdown.seniorDeduction = seniorDeduction;
+  breakdown.federalTax = federalTax;
+  breakdown.federalTaxDeduction = federalTaxDeduction;
 
   if (cg.treatment === "stacked") {
     // Gains taxed on their own rate ladder, stacked on top of the rest of taxable income:
@@ -275,10 +420,13 @@ export function computeStateIncomeTax(rules, status, income) {
   breakdown.taxableIncome = taxableIncome;
   const incomeTax = bracketTax(taxableIncome, brackets);
   breakdown.bracketTax = incomeTax;
-  breakdown.exemptionCredit = credit;
+  const { exemptionCredit, credits } = resolveCredits(sd, status, { age, spouseAge, fedAGI, stateAGI,
+    taxableIncome, incomeTax, retirementIncome: iraTaxable + penTaxable });
+  breakdown.exemptionCredit = exemptionCredit;
+  breakdown.credits = credits;
 
   // Credits are nonrefundable: they can take the bracket tax to zero, not below.
-  const tax = Math.max(0, incomeTax - credit) + cgSeparateTax;
+  const tax = Math.max(0, incomeTax - exemptionCredit - credits) + cgSeparateTax;
   return { tax: Math.round(tax), breakdown };
 }
 

@@ -112,14 +112,16 @@ taxRules: {
                                                          // positioned on top of other income
 
   // OPTIONAL: state standard deduction, personal exemptions, age add-ons, the federal senior
-  // deduction, phase-outs and exemption credits. States without this key get none. Every key
-  // is optional, but check-states-json.mjs (G8) rejects an unknown key or an empty block.
-  // Figures are each state's latest published year (see SOURCES.md).
+  // deduction, the federal income tax subtraction, phase-outs and credits. States without this
+  // key get none (PA, and the states with no income tax). Every key is optional, but
+  // check-states-json.mjs (G8) rejects an unknown key or an empty block. Figures are each
+  // state's latest published year (see SOURCES.md).
   standardDeduction: {
     // Subtracted from income before the brackets. All four statuses required. For states
     // that use the federal standard deduction (CO, ID, IA, MO, MT, ND, NM), the federal
     // amounts. A personal exemption with no phase-out of its own (or the same one) is folded
-    // in here (MI, IL, IN, NJ, WV, MA, HI, MS, VA, KS, OK, RI, VT).
+    // in here (MI, IL, IN, NJ, WV, MA, HI, MS, VA, KS, OK, RI, VT; CT, whose exemption is all
+    // it has).
     deduction: { single: <num>, mfj: <num>, mfs: <num>, hoh: <num> },
 
     // Per person 65 or older: the filer, plus the spouse on a joint return (spouseAge, or the
@@ -127,33 +129,74 @@ taxRules: {
     // federal return; `unmarried` to single and head of household.
     age65AddOn: { unmarried: <num>, married: <num> },
 
-    // Phase-out of deduction + age65AddOn (PO, below): ME, SC, RI, IL.
+    // Phase-out of deduction + age65AddOn (PO, below): ME, SC, RI, IL, CT, AL, WI.
     phaseOut: PO,
 
-    // A personal exemption with its own phase-out, per person (2 on a joint return): ME, MD.
-    exemption: { perPerson: <num>, phaseOut: PO },
+    // A personal exemption kept apart from the deduction: perPerson (2 on a joint return)
+    // with its own phase-out (ME, MD, OH: phaseOut applies to perPerson), plus hohExtra for
+    // head of household (AL) and age65Extra per person 65+ (WI), never phased out.
+    exemption: { perPerson: <num>, hohExtra: <num>, age65Extra: <num>, phaseOut: PO },
 
     // The federal enhanced deduction for seniors (IRC 151(d)(5)(C), 2025-2028): $6,000 per
-    // person 65+, less 6% of federal AGI over $75,000 ($150,000 joint), none for married
-    // filing separately. Only for states whose taxable income starts from federal taxable
-    // income or that adopted it: CO, ID, IA, MT, ND.
+    // person 65+, less 6% of federal AGI over $75,000 ($150,000 joint) off each person's
+    // $6,000, none for married filing separately. Only for states whose taxable income starts
+    // from federal taxable income or that adopted it: CO, ID, IA, MT, ND.
     federalSeniorDeduction: true,
+
+    // Federal income tax subtracted from income (AL, MO, OR), from the engine's own estimate:
+    // 2026 federal brackets, gains rates, standard deduction with the 65+ amount, and the
+    // senior deduction (FEDERAL_2026, kept equal to the Roth tool's by a test). `share` is the
+    // part that counts, by income (MO: 35% down to 0% by Missouri AGI); `cap` the most that
+    // can be subtracted, which `capPhaseOut` shrinks (OR: $8,750, 80% to 0% from $125,000 of
+    // federal AGI); `includesNIIT` counts the 3.8% net investment income tax (AL).
+    // Default: all of it, no cap.
+    federalTaxDeduction: { share: PO, cap: { single, mfj, mfs, hoh }, capPhaseOut: PO,
+                           includesNIIT: true },
 
     // Credit off the bracket tax (not the separate capital gains tax), floored at $0:
     // perFiler each (2 on a joint return), hohExtra for head of household (AR, IA),
     // ageBonus per person at or over `age` (65; DE uses 60), all scaled by phaseOut (OR).
     exemptionCredit: { perFiler: <num>, hohExtra: <num>, ageBonus: { age: <num>, amount: <num> },
-                       phaseOut: PO }
+                       phaseOut: PO },
+
+    // Other credits off the bracket tax, added together (with exemptionCredit) and floored at
+    // $0 with it. Each may carry its own phaseOut, which (unlike a deduction's) may also test
+    // "stateTaxableIncome" (OH: MAGI less exemptions) or "retirementIncome" (the IRA and pension
+    // income left in state AGI).
+    credits: [
+      { type: "percentOfTax", basis, bands: {single|mfj|mfs|hoh: [ {over | atLeast, rate}, ... ]} },
+          // a share of the bracket tax set by income; none below the first band (CT Table E)
+      { type: "ofDeduction", rate, deduction: {single, mfj, mfs, hoh},
+        age65AddOn: {unmarried, married}, phaseOut: PO },
+          // rate x (deduction + the 65+ amount per person), then phased out (UT: 6% of the
+          // federal standard deduction, less 1.3% of income over a base: a `rate` PO)
+      { type: "flat", amount, per: "person" | "return", age, phaseOut: PO },
+          // a set amount per person or per return; with `age`, per person that age or older,
+          // or once per return if anyone is (OH: $20 an exemption; $50 senior credit)
+      { type: "schedule", basis, bands: {single|mfj|mfs|hoh: [ {over | atLeast, amount}, ... ]},
+        phaseOut: PO }
+          // an amount looked up by income, rising (OH's retirement income credit table)
+    ]
   } | null
 }
 
-// PO — the share of an amount left after an income phase-out. basis: "federalAGI" or
-// "stateAGI" (income before deductions, after the state's own exclusions).
+// PO — what is left of an amount after an income phase-out. basis: "federalAGI" or
+// "stateAGI" (income before deductions, after the state's own exclusions); credits also
+// "stateTaxableIncome" and "retirementIncome".
 //   { type: "linear", basis, start: {single, mfj, mfs, hoh}, width: {single, mfj, mfs, hoh} }
 //       // falls in a straight line from start to zero at start + width (ME, SC)
-//   { type: "bands", basis, bands: {single|mfj|mfs|hoh: [ {over, factor}, ... ]} }
-//       // the factor of the highest band the income is over (MD steps, RI's 20% steps,
+//   { type: "bands", basis, bands: {single|mfj|mfs|hoh: [ {over | atLeast, factor | amount}, ... ]} }
+//       // past a band's threshold (`over`: strictly above; `atLeast`: at or above) the amount
+//       // becomes factor x itself, or the band's own amount; the last band passed wins (MD steps,
+//       // RI's 20% steps, OH's exemption by income, OR's federal tax limit and MO's share, and
 //       // cutoffs such as OR's credit and IL's exemption: one band with factor 0)
+//   { type: "steps", basis, start, step, perStep, floor }       (each {single, mfj, mfs, hoh})
+//       // less perStep for each step of income, or fraction of one, over start, down to floor
+//       // (CT's exemption: $1,000 per $1,000; AL's standard deduction chart)
+//   { type: "rate", basis, rules: {single|mfj|mfs|hoh: [ {start, rate, amount?}, ... ]} }
+//       // less rate per dollar over start, down to zero; with several rules, the largest result,
+//       // a rule with its own amount starting from that, never above the amount itself (WI's
+//       // standard deduction, whose head-of-household formula meets the single one; UT's credit)
 ```
 
 ### Worked semantics (how the engine computes one state's income tax)
@@ -176,16 +219,17 @@ Given a filing status and an income vector {ss, iraWithdrawal, pension, capGains
    - "stacked" → capGains taxed on its own ladder, each dollar at the rate for the band it
      lands in once the other income is counted first; excluded from ordinaryIncome.
 6. Apply `standardDeduction` (if present): `deduction[status]` plus `age65AddOn` per
-   person 65+, scaled by `phaseOut`; plus `exemption.perPerson` per person scaled by its
-   own phase-out; plus the federal senior deduction where flagged. Phase-outs test federal
-   AGI or the state's own AGI (ordinary income before deductions, gains included).
+   person 65+, through `phaseOut`; plus the exemption (`perPerson` per person through its
+   own phase-out, plus its head-of-household and 65+ extras); plus the federal senior
+   deduction where flagged; plus the federal income tax subtraction where present. Phase-outs
+   test federal AGI or the state's own AGI (ordinary income before deductions, gains included).
 7. Taxable income = ordinaryIncome less the deductions, floored at 0. For the stacked
    capital-gains treatment (HI, MT) deductions come off the other income first and any
    left over reduces the gains. Local taxes (NYC, OR Metro/Multnomah, MD and IN county)
    use this taxable income.
 8. Run taxable income through `bracketsByStatus[status]` → income tax, then subtract the
-   `exemptionCredit` (floored at 0). It applies only to that income tax, NOT to
-   cgSeparateTax.
+   `exemptionCredit` and the `credits` (together floored at 0). They apply only to that
+   income tax, NOT to cgSeparateTax.
 9. Add any separateTax / stacked cap-gains tax. Result = state income tax (Tier 1).
 
 Note: cliff/phaseout tests use federal AGI — the income vector with only the federally

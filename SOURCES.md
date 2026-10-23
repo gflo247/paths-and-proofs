@@ -1360,10 +1360,17 @@ from the state's own schedule or statute; 33 fail on the previous build):
 **2026-10-22 pass — deductions, exemptions and credits (`_dev/test-relo-std-deductions.mjs`,
 87 checks, each worked by hand from the state's own form or instructions; 57 fail on the
 2026-10-21 build).** Figures are each state's latest published year: **2026** for ME, MN,
-NE, OR, RI, KY, SC and DC (the state has published them), **2025** for the rest.
+NE, OR, RI, KY, SC, DC and WI (the state has published them), **2025** for the rest.
 Personal exemptions are folded into `deduction` wherever they share its phase-out (or have
 none). Dependents (including a head of household's qualifying person), itemized deductions
 and refundable credits are not modeled anywhere.
+
+**Fix-pack 11 (2026-10-22): the last five states and the federal tax subtractions.** AL, CT,
+OH, UT and WI had no deductions or credits at all (`_dev/test-relo-state-credits.mjs`, 44
+checks, 42 fail before); AL, MO and OR now subtract federal income tax
+(`_dev/test-relo-federal-tax.mjs`, 41 checks). The Relocation page's California preset
+income (joint, both 68) moved from: UT $3,253 to $1,938, WI $665 to $0, CT $400 to $0, AL
+$1,820 to $1,217, OR $4,285 to $3,929, OH $1,209 to $840, MO $1,013 to $985.
 
 Engine (`relocation/relo-engine.mjs`):
 - A joint return with no `spouseAge` counts the spouse at the filer's age, as the rest of
@@ -1371,10 +1378,13 @@ Engine (`relocation/relo-engine.mjs`):
   one age add-on or credit, not two (California preset: $612 shown, $459 owed).
 - Married filing separately takes the *married* age add-on, as on the federal return.
 - Phase-outs: `linear` (ME, SC) and `bands` (MD's exemption steps, RI's 20% steps, and
-  the OR credit and IL exemption cutoffs), on federal AGI or the state's own AGI.
+  the OR credit and IL exemption cutoffs), on federal AGI or the state's own AGI. Added
+  for fix-pack 11: `steps` (CT's exemption, AL's standard deduction chart), `rate` (WI's
+  standard deduction, UT's credit), and bands that set an amount (OH's exemption) or test
+  "at least" (OR's federal tax limit, as its table reads).
 - Federal enhanced deduction for seniors (`federalSeniorDeduction`): $6,000 per person
-  65+, less 6% of modified AGI over $75,000 ($150,000 joint), figured once and given to
-  each qualifying spouse; none for married filing separately (IRC 151(d)(5)(C);
+  65+, less 6% of modified AGI over $75,000 ($150,000 joint) off each person's $6,000;
+  none for married filing separately (IRC 151(d)(5)(C);
   [Schedule 1-A Part V](https://www.irs.gov/pub/irs-pdf/f1040s1a.pdf);
   [IRS publication 6142](https://www.irs.gov/pub/irs-pdf/p6142.pdf)). Applies only where
   the state starts from federal taxable income or adopted it: CO, ID, IA, MT, ND.
@@ -1382,13 +1392,27 @@ Engine (`relocation/relo-engine.mjs`):
   the gains (they were dropped).
 - Local taxes (NYC, OR Metro/Multnomah, MD and IN county) are figured on the state's
   taxable income, after deductions, as each is levied (they used income before them).
+- Federal income tax subtraction (`federalTaxDeduction`, AL, MO, OR; added for fix-pack
+  11): the engine estimates federal income tax from the same income vector with the 2026
+  figures the Roth tool uses (brackets, 0/15/20% gains rates stacked on top, standard
+  deduction with the extra amount at 65, senior deduction; `FEDERAL_2026`, held equal to
+  the Roth tool's by `_dev/test-relo-federal-tax.mjs`). AL's and MO's own figures are 2025,
+  when federal tax ran a little higher, so their subtraction can come out slightly low (the
+  state tax slightly high), never the reverse; likewise for the other federal taxes some
+  states count that the estimate leaves out (the 10% additional tax on early IRA withdrawals).
+- Credits list (`credits`, fix-pack 11): CT's personal credit (a share of the tax by CT AGI),
+  UT's taxpayer credit (6% of the federal standard deduction, phased out), and OH's
+  retirement income, senior and exemption credits, taken off the bracket tax with the
+  exemption credits and floored at zero together.
 
 | State | Year | Figures | Source |
 |---|---|---|---|
+| AL | 2025 | Std by Alabama AGI: $8,500 joint to $25,999, $175 less per $500 to $5,000 from $35,500; single $3,000 less $25, head of family $5,200 less $135, both to $2,500; separate $4,250 to $12,999, $88 less per $250 to $2,500 from $17,750. Exemption $1,500 ($3,000 joint, head of family). All federal income tax, with the net investment income tax | [Form 40 booklet](https://www.revenue.alabama.gov/wp-content/uploads/2026/01/25f40bk.pdf) (chart p. 8–9; worksheet p. 31) |
 | AR | 2025 | Std $2,470 ($4,940 joint); $29 credit each, +$29 head of household, +$29 per 65+ | [AR1000F/NR instructions](https://www.dfa.arkansas.gov/wp-content/uploads/2025_AR1000F_and_AR1000NR_Instructions.pdf) |
 | AZ | 2025 | Std $15,750 / $31,500 / $23,625 HoH; $2,100 per person 65+ (line 38) | [Form 140 instructions](https://azdor.gov/sites/default/files/document/FORMS_INDIVIDUAL_2025_140i.pdf) |
 | CA | 2025 | Std $5,706 / $11,412 (joint, HoH); $153 credit each + $153 per 65+ | [FTB standard deduction](https://www.ftb.ca.gov/file/personal/deductions/index.html), [540 booklet](https://www.ftb.ca.gov/forms/2025/2025-540-booklet.html) |
 | CO | 2025 | Federal std + add-on; senior deduction (flows through federal taxable income) | [DR 0104 booklet](https://tax.colorado.gov/sites/default/files/documents/Book104_2025.pdf), [Legislative Council OBBBA memo](https://content.leg.colorado.gov/sites/default/files/images/lcs_june_2025_forecast_updated_with_obbba_fiscal_impacts.pdf) |
+| CT | 2025 | Exemption $15,000 / $24,000 joint / $12,000 separate / $19,000 HoH, $1,000 less per $1,000 (or part) of CT AGI over $30,000 / $48,000 / $24,000 / $38,000; personal credit 75% down to 1% of the tax by CT AGI, none over $64,500 / $100,500 / $52,500 / $78,500 (statutory, not indexed; the 2% bracket phase-out and recapture, Tables C and D, aren't modeled) | [CGS 12-702, 12-703](https://www.cga.ct.gov/current/pub/chap_229.htm), [CT-1040 TCS 2025](https://portal.ct.gov/-/media/drs/forms/2025/income/ct-1040-tcs_1225.pdf) Tables A and E |
 | DC | 2026 | Std $16,100 / $32,200 / $24,150 HoH; +$2,050 unmarried / $1,650 married per 65+ | [2026 D-40ES](https://otr.cfo.dc.gov/sites/default/files/dc/sites/otr/publication/attachments/2026_D40ES_Book_wLinks04012026.pdf) |
 | DE | 2025 | Std $3,250 ($6,500 joint); +$2,500 per 65+; $110 credit each + $110 per person 60+ | [PIT-RES instructions](https://revenuefiles.delaware.gov/2025/PITForms_Instructions/Instructions/PIT-RES_Instructions_2025-01.pdf) |
 | GA | 2025 | Std $12,000 ($24,000 joint); no age add-on | [IT-511](https://dor.georgia.gov/document/document/2025-it-511-individual-income-tax-booklet/download), [DOR](https://dor.georgia.gov/georgia-standard-deductions-increases) |
@@ -1405,7 +1429,7 @@ Engine (`relocation/relo-engine.mjs`):
 | ME | 2026 | Std $15,700 / $31,400 / $23,550 HoH, +$2,050 / $1,650 per 65+, phased out over Maine AGI from $102,250 single; exemption $5,300 each, phased out from $341,000 single; new 2% surcharge over $1M single (9.15% band) | [rate schedules](https://www.maine.gov/revenue/sites/maine.gov.revenue/files/2026-05/ind_tax_rate_sched_2026_rev.pdf), [std ded worksheet](https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/26_item_stand_%20ded_phaseout_wksht_0.pdf), [exemption worksheet](https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/26_1040es_pers_exempt_phaseout_wksht.pdf) |
 | MI | 2025 | $5,800 each | [Treasury](https://www.michigan.gov/taxes/questions/iit/accordion/filing/what-are-the-current-tax-rate-and-exemption-amounts-1) |
 | MN | 2026 | Std $15,300 / $30,600 / $23,000 HoH; +$2,000 unmarried / $1,600 married per 65+ | [DOR 2026 amounts](https://www.revenue.state.mn.us/sites/default/files/2025-12/inflation-adjusted-amounts-2026.pdf) |
-| MO | 2025 | Federal std + add-on (no senior deduction) | [DOR 4711](https://dor.mo.gov/forms/4711_2025.pdf), [MO-1040 instructions](https://dor.mo.gov/forms/MO-1040%20Instructions_2025.pdf) |
+| MO | 2025 | Federal std + add-on (no senior deduction); federal income tax x 35% / 25% / 15% / 5% / 0% for Missouri AGI to $25,000 / $50,000 / $100,000 / $125,000 / over, at most $5,000 ($10,000 joint) | [DOR 4711](https://dor.mo.gov/forms/4711_2025.pdf), [MO-1040 instructions](https://dor.mo.gov/forms/MO-1040%20Instructions_2025.pdf) (lines 9–13) |
 | MS | 2025 | Exemption $6,000 / $12,000 / $8,000 head of family + std $2,300 / $4,600 / $3,400; +$1,500 per 65+ | [DOR](https://www.dor.ms.gov/general-information) |
 | MT | 2025 | Federal std + add-on + senior deduction, + Montana's $5,660 per person 65+ | [Form 2 instructions](https://revenuefiles.mt.gov/files/Forms/Montana-Individual-Income-Tax-Return-Form-2-Instructions/2025_Montana_Individual_Income_Tax_Return_Form_2_Instructions.pdf), [Pub 1 2026](https://revenuefiles.mt.gov/files/Forms/Publication-1/Publication-1-2026.pdf) |
 | NC | 2025 | Std $12,750 / $25,500 / $19,125 HoH; no age add-on | [NCDOR](https://www.ncdor.gov/taxes-forms/individual-income-tax/filing-topics/north-carolina-standard-deduction-or-north-carolina-itemized-deductions) |
@@ -1413,10 +1437,13 @@ Engine (`relocation/relo-engine.mjs`):
 | NE | 2026 | Std $8,850 / $17,700 / $12,950 HoH; +$2,050 / $1,700 per 65+; $176 credit each | [2026 1040N-ES](https://revenue.nebraska.gov/sites/default/files/doc/tax-forms/2025/f_1040N-ES.pdf) |
 | NJ | 2025 | $1,000 each + $1,000 per 65+ | [Division of Taxation](https://www.nj.gov/treasury/taxation/njit13.shtml) |
 | NM | 2025 | Federal std + add-on (line 12; not the senior deduction) | [PIT-1 instructions](https://realfile.tax.newmexico.gov/2025pit-1-ins.pdf) |
+| OH | 2025 | Exemption each by Ohio MAGI: $2,400 to $40,000, $2,150 to $80,000, $1,900 below $750,000, none above. While MAGI less exemptions is under $100,000: retirement income credit by the pension and IRA income in Ohio AGI ($25 over $500 up to $200 over $8,000, a return) and $50 senior credit (65+, a return); $20 each under $30,000. The joint filing credit needs each spouse's income: not modeled | [IT 1040 booklet](https://dam.assets.ohio.gov/image/upload/v1767095693/tax.ohio.gov/forms/ohio_individual/individual/2025/it1040-booklet.pdf) (exemption table; Schedule of Credits lines 2, 4, 9; Table 2) |
 | NY | 2025 | Std $8,000 / $16,050 / $11,200 HoH | [DTF](https://www.tax.ny.gov/pit/file/standard_deductions.htm) |
 | OK | 2025 | Std $6,350 / $12,700 / $9,350 HoH + $1,000 exemption each | [511 packet](https://oklahoma.gov/content/dam/ok/en/tax/documents/forms/individuals/current/511-Pkt.pdf), [OTC](https://oklahoma.gov/tax/individuals/exemptions.html) |
-| OR | 2026 | Std $2,900 / $5,800 / $4,650 HoH; +$1,200 single, HoH / $1,000 others per 65+; $260 credit each, none above federal AGI $100,000 single ($200,000 joint, HoH) | [OR-ESTIMATE 2026](https://www.oregon.gov/dor/forms/FormsPubs/publication-or-estimate_101-026_2026.pdf), [OR-40 instructions 2025](https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2025.pdf) |
+| OR | 2026 | Std $2,900 / $5,800 / $4,650 HoH; +$1,200 single, HoH / $1,000 others per 65+; $260 credit each, none above federal AGI $100,000 single ($200,000 joint, HoH); federal income tax up to $8,750 ($4,375 separate), the limit 80/60/40/20/0% at federal AGI of $125,000/130,000/135,000/140,000/145,000 or more ($250,000–$290,000 joint, HoH) | [OR-ESTIMATE 2026](https://www.oregon.gov/dor/forms/FormsPubs/publication-or-estimate_101-026_2026.pdf), [OR-40 instructions 2025](https://www.oregon.gov/dor/forms/FormsPubs/form-or-40-inst_101-040-1_2025.pdf) (Table 4), [ORS 316.695(3)](https://www.oregonlegislature.gov/bills_laws/ors/ors316.html) |
 | RI | 2026 | Std $11,200 / $22,400 / $16,800 HoH + $5,250 exemption each, both phased out in 20% steps over federal AGI $261,000-$290,800 | [ADV 2025-22](https://tax.ri.gov/sites/g/files/xkgbur541/files/2025-11/ADV_2025_22_Inflation_Adjustments.pdf), [2025 worksheets](https://tax.ri.gov/sites/g/files/xkgbur541/files/2025-10/2025%20Tax%20Rate%20and%20Worksheets_d.pdf) |
+| UT | 2025 | No deduction: taxpayer credit of 6% x (federal std $15,750 / $31,500 / $23,625 HoH + $2,000 unmarried / $1,600 married per 65+), less 1.3% of Utah income over $18,213 single and separate, $36,426 joint, $27,320 HoH | [TC-40 instructions](https://files.tax.utah.gov/tax/forms/current/tc-40inst.pdf) (lines 11–20), UCA 59-10-1018 |
+| WI | 2026 | Std $13,960 / $25,840 / $12,280 separate / $18,030 HoH, less 12% / 19.778% / 19.778% / 22.515% of Wisconsin income over $20,120 / $29,040 / $13,780 / $20,120 (HoH then follows the single formula from $58,827); exemptions $700 each + $250 per 65+ | [2026 Form 1-ES instructions](https://www.revenue.wi.gov/TaxForms2026/2026-Form1-ES-Inst.pdf) |
 | SC | 2026 | SCIAD $15,000 / $30,000 / $22,500 HoH, phased out on federal AGI (single $40,000-$95,000; joint $80,000-$190,000); replaces the federal deduction and its age add-on | [SCDOR legislation 2026](https://dor.sc.gov/administrative-legislative-regulations-tax-legislation-update-2026), [SCDOR H.4216](https://dor.sc.gov/news/information-about-h-4216) |
 | VA | 2025 | Std $8,750 ($17,500 joint) + $930 exemption each; +$800 per 65+ | [Form 760 instructions](https://www.tax.virginia.gov/sites/default/files/vatax-pdf/2025-760-instructions.pdf) |
 | VT | 2025 | Std $7,650 / $15,300 / $11,450 HoH + $5,300 exemption each; +$1,250 per 65+ | [income booklet](https://tax.vermont.gov/sites/tax/files/documents/Income-Booklet-2025.pdf) |
@@ -1426,14 +1453,10 @@ Federal figures (2025, [IRS Pub 554](https://www.irs.gov/publications/p554)): $1
 $31,500 joint / $23,625 HoH; add-on $2,000 unmarried, $1,600 married, per person 65+.
 
 **Not modeled (disclosed on the page):**
-- AL, CT, OH, UT and WI have no deduction block yet. AL: a sliding standard deduction,
-  $1,500 / $3,000 exemptions and a deduction for federal income tax
-  ([Form 40 booklet](https://www.revenue.alabama.gov/wp-content/uploads/2026/01/25f40bk.pdf));
-  CT: exemptions and credits that phase out from low incomes; OH: exemptions by income
-  band; UT: the taxpayer credit; WI: a sliding standard deduction.
-- Federal income tax subtractions: AL (all of it), MO (35% down to 0% of it by Missouri
-  AGI, up to $5,000 / $10,000; MO-1040 line 13), OR (up to $8,750 for 2026,
-  OR-ESTIMATE). This tool doesn't compute federal tax.
+- OH's joint filing credit (20% down to 5% of the tax, up to $650; it needs each spouse's
+  own income, which the page doesn't ask for). CT's 2% bracket phase-out and benefit
+  recapture (CT-1040 TCS Tables C and D), which start at CT AGI over $56,500 single
+  ($100,500 joint).
 - High-income limits: CA's credit phase-out, MN's standard deduction phase-out (AGI over
   $244,400), CO's deduction addback (federal AGI over $300,000), VT's 3% minimum tax
   (federal AGI over $150,000), MD's 2% tax on capital gains (federal AGI over $350,000).
