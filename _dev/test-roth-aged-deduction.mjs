@@ -15,7 +15,8 @@
 
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { readFileSync } from 'node:fs';
-import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
+import { federalTaxableSS } from '../core/retirement-rules.js';
+import { computeStateAndLocalTax } from '../relocation/relo-engine.mjs';
 
 // Same harness as test-roth-scenarios.mjs.
 const vc = new VirtualConsole();
@@ -27,9 +28,9 @@ globalThis.window = dom.window;
 globalThis.document = dom.window.document;
 globalThis.getComputedStyle = dom.window.getComputedStyle;
 globalThis.matchMedia = () => ({ matches: true });
-globalThis.window.resolveRetirementIncome = resolveRetirementIncome;
+globalThis.window.computeStateAndLocalTax = computeStateAndLocalTax;
 globalThis.window.calcTaxableSS = federalTaxableSS;
-globalThis.resolveRetirementIncome = resolveRetirementIncome;
+globalThis.computeStateAndLocalTax = computeStateAndLocalTax;
 globalThis.calcTaxableSS = federalTaxableSS;
 
 const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.url), 'utf8');

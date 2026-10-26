@@ -3,17 +3,18 @@
   "_comment": "SCHEMA DOCUMENTATION — read before editing. This file is the CANONICAL SOURCE of state tax data for Paths and Proofs. The inline ST={...} table in roth-conversion/index.html is GENERATED from this file by _dev/gen-st-table.mjs (run `npm run gen` after editing). NEVER hand-edit the inline ST table — edit states.json and regenerate. `npm run verify` runs a drift gate (gen-st-table.mjs --check) that fails if the committed HTML table does not match what this file would generate, plus bracket-sanity and cross-layer checks (check-states-json.mjs). The build-time inlining keeps the page fully self-contained (no runtime fetch — nothing leaves the user device) while making JSON-vs-HTML drift structurally impossible.",
   "layering": {
    "facts": "STATUTORY rate structure and tax treatment, INDEPENDENT of any tool. facts.brackets is the actual income-tax bracket table the state levies. This answers \"what is this state's income tax?\" — true regardless of whether you are modeling a conversion, an RMD, wages, or relocation. Future tools should read facts and apply their OWN interpretation.",
-   "roth": "CONVERSION-SPECIFIC interpretation for the Roth conversion tool. roth.cr = representative marginal rate used in the calc; roth.ex = whether a Roth conversion is exempt from state tax; roth.note = user-facing copy. This layer is guard-locked byte-for-byte to the inline ST table in index.html.",
-   "importantWarning": "facts and roth can LEGITIMATELY DIFFER and may look contradictory. Example: Illinois facts.brackets shows 4.95% (its real flat rate) while roth.ex=true (a conversion is exempt). Both are correct — they answer different questions. Do NOT \"fix\" an apparent contradiction by zeroing a facts rate; that would corrupt the rate structure other tools depend on. For ex:true states, roth.cr is the rate that WOULD apply if the exemption did not — the engine zeroes the conversion-year state tax when ex:true AND (no roth.exMinAge is set, OR the filer(s) meet it); below exMinAge the real roth.cr still applies, matching the state's actual early-distribution treatment."
+   "roth": "CONVERSION-SPECIFIC interpretation for the Roth conversion tool. roth.ex = whether a Roth conversion is exempt from state tax (roth.exMinAge: from what age); roth.note = user-facing copy; roth.cr = a representative marginal rate, kept as reference for the notes only (since 2026-10-25 the tool figures state tax with the Relocation engine from taxRules and localTax, not from cr). This layer is guard-locked byte-for-byte to the inline ST table in index.html.",
+   "importantWarning": "facts and roth can LEGITIMATELY DIFFER and may look contradictory. Example: Illinois facts.brackets shows 4.95% (its real flat rate) while roth.ex=true (a conversion is exempt). Both are correct — they answer different questions. Do NOT \"fix\" an apparent contradiction by zeroing a facts rate; that would corrupt the rate structure other tools depend on. For ex:true states the Roth tool counts no state tax on the conversion when the filer(s) meet roth.exMinAge (or there is none); below it the conversion is ordinary taxable income under the state's own rules (taxRules, via the engine), matching the state's early-distribution treatment."
   },
   "fields": {
    "facts.brackets": "Array of {rate, upTo}. rate is a decimal (0.0495 = 4.95%). upTo is the upper income bound of that bracket; the final (open-ended) bracket uses upTo:null. Thresholds strictly ascending. No-income-tax states use a single {rate:0, upTo:null}.",
    "facts.ssTreatment": "Sourced prose on Social Security and retirement-income treatment, including the IRA-include-vs-exclude distinction where relevant.",
    "facts.incomeTax": "Boolean; false for the nine no-income-tax states.",
    "facts.source": "Primary-source URL (state Department of Revenue preferred).",
-   "roth.retDeduction": "OPTIONAL. Present only for states with a large, flat, non-phased-out retirement-income deduction that a Roth conversion competes for (verified against a primary source). {single, mfj, mfs, hoh} — dollar cap per filing status. The engine computes state tax before/with the conversion (mirroring the federal calc) and subtracts min(cap, pension-income + taxable-conversion) from each side before applying roth.cr, so the deduction correctly shelters conversion income only once the user's other retirement income has not already exhausted the cap. Most states have a SMALLER or more complex cap (age-tiered, phased out by AGI, or a whole-income exemption band) that this simple field does NOT model — those states deliberately still use the flat taxableCvt*cr approximation and disclose it in roth.note. Do not add retDeduction to a state without verifying it fits this exact shape (single flat cap, no age gate, no phase-out) against a primary source.",
-   "roth.exMinAge": "OPTIONAL, only meaningful when roth.ex=true. Minimum qualifying age below which the exemption does NOT apply and the conversion is taxed at the real roth.cr instead (an early-distribution rule). Absent means the ex:true exemption is unconditional (e.g. Illinois). For a joint return the engine requires BOTH spouses to meet the age before treating the whole conversion as exempt — a conservative simplification since the tool does not model per-spouse IRA ownership.",
-   "localTax": "OPTIONAL. A top-level key, sibling to facts/roth/taxRules/taxContext -- NOT nested under roth. Moved here 2026-08-27 (was roth.localTax) specifically so it is visible to BOTH Roth (_dev/gen-st-table.mjs) and Relocation (_dev/gen-relo-data.mjs); nested under roth it was invisible to Relocation's generator entirely, which only ever forwarded facts/taxRules/taxContext. NY (added 2026-08-25) and OR (added 2026-08-25) are the only states using the graduated/surcharge shapes so far -- the largest verified US local income taxes that reach retirement/IRA income, not just wages (most other states' local taxes are wage-only and irrelevant to a Roth conversion, or don't reach retirement income at all; see the 2026-08-25 audit notes for the states checked). NY's shape (localTax.nyc/.yonkers): two MUTUALLY EXCLUSIVE options (NYC and Yonkers are different, non-overlapping cities). localTax.nyc.bracketsByStatus is a genuinely graduated 4-tier {rate,upTo} ladder per filing status, applied to the SAME NY-exclusion-adjusted delta the state tax itself uses (NYC taxable income is defined relative to NY taxable income, so it inherits NY's own $20k/59.5+ per-person exclusion). localTax.yonkers.rate is a flat surcharge PERCENTAGE OF THE FILER'S NY STATE TAX LIABILITY ITSELF (mathematically exact, not an approximation, since it's linear). OR's shape (localTax.metro/.multnomah): NOT mutually exclusive -- Multnomah County is a SUBSET of Metro's 3-county district (Multnomah/Washington/Clackamas), so a Multnomah resident owes BOTH taxes, stacked, while a Washington/Clackamas resident inside Metro owes only Metro's. Both localTax.metro.bracketsByStatus and localTax.multnomah.bracketsByStatus are ordinary {rate,upTo} ladders with a deliberate rate:0 FIRST TIER below their threshold (the mechanism that makes a flat-above-a-threshold tax expressible via the same generic bracketTax() walker NYC uses, rather than needing separate logic) -- do not \"clean up\" the leading zero-rate tier, it is load-bearing. Both states use their own OR-specific filing-status grouping (single/MFS -> single bracket; MFJ/HOH/qualifying surviving spouse -> joint bracket, confirmed directly from Form MET-40's own filing-status checkboxes), NOT the project's usual single-vs-hoh-as-its-own-thing convention. NY/OR's local tax is opt-in via a wizard selector (most residents of those states pay $0). A third shape, localTax.county.rate (a flat, unconditional decimal), exists for states where every resident of the state pays it -- see MD/IN."
+   "roth.retDeduction": "OPTIONAL. Michigan only: its flat retirement-income deduction cap {single, mfj, mfs, hoh}, shown in the Roth tool's state breakdown (the tax itself comes from taxRules.retirementIncome, which check-states-json.mjs requires to carry the same caps), and conversionAgeGate: the age from which the deduction covers an IRA distribution, a Roth CONVERSION included (MCL 206.30(8)(a)(ii); MI Treasury: \"if the individual is at least 59 1/2 years of age when the rollover occurs\"); below it the conversion, and the Roth tool's retirement-side IRA withdrawals, are taxed as ordinary income while pension income still uses the cap.",
+   "roth.exMinAge": "OPTIONAL, only meaningful when roth.ex=true. Minimum qualifying age below which the exemption does NOT apply and the conversion is taxed as ordinary income under the state's own rules (an early-distribution rule). Absent means the ex:true exemption is unconditional (e.g. Illinois; Pennsylvania, whose 59 1/2 rule covers ordinary withdrawals but not a full conversion). For a joint return the tool requires BOTH spouses to meet the age before treating the whole conversion as exempt — a conservative simplification since the tool does not model per-spouse IRA ownership.",
+   "localTax": "OPTIONAL. A top-level key, sibling to facts/roth/taxRules/taxContext -- NOT nested under roth. Moved here 2026-08-27 (was roth.localTax) specifically so it is visible to BOTH Roth (_dev/gen-st-table.mjs) and Relocation (_dev/gen-relo-data.mjs); nested under roth it was invisible to Relocation's generator entirely, which only ever forwarded facts/taxRules/taxContext. NY (added 2026-08-25) and OR (added 2026-08-25) are the only states using the graduated/surcharge shapes so far -- the largest verified US local income taxes that reach retirement/IRA income, not just wages (most other states' local taxes are wage-only and irrelevant to a Roth conversion, or don't reach retirement income at all; see the 2026-08-25 audit notes for the states checked). NY's shape (localTax.nyc/.yonkers): two MUTUALLY EXCLUSIVE options (NYC and Yonkers are different, non-overlapping cities). localTax.nyc.bracketsByStatus is a genuinely graduated 4-tier {rate,upTo} ladder per filing status, applied to the SAME NY-exclusion-adjusted delta the state tax itself uses (NYC taxable income is defined relative to NY taxable income, so it inherits NY's own $20k/59.5+ per-person exclusion). localTax.yonkers.rate is a flat surcharge PERCENTAGE OF THE FILER'S NY STATE TAX LIABILITY ITSELF (mathematically exact, not an approximation, since it's linear). OR's shape (localTax.metro/.multnomah): NOT mutually exclusive -- Multnomah County is a SUBSET of Metro's 3-county district (Multnomah/Washington/Clackamas), so a Multnomah resident owes BOTH taxes, stacked, while a Washington/Clackamas resident inside Metro owes only Metro's. Both localTax.metro.bracketsByStatus and localTax.multnomah.bracketsByStatus are ordinary {rate,upTo} ladders with a deliberate rate:0 FIRST TIER below their threshold (the mechanism that makes a flat-above-a-threshold tax expressible via the same generic bracketTax() walker NYC uses, rather than needing separate logic) -- do not \"clean up\" the leading zero-rate tier, it is load-bearing. Both states use their own OR-specific filing-status grouping (single/MFS -> single bracket; MFJ/HOH/qualifying surviving spouse -> joint bracket, confirmed directly from Form MET-40's own filing-status checkboxes), NOT the project's usual single-vs-hoh-as-its-own-thing convention. NY/OR's local tax is opt-in via a wizard selector (most residents of those states pay $0). A third shape, localTax.county.rate (a flat, unconditional decimal), exists for states where every resident of the state pays it -- see MD/IN.",
+   "roth.conversionAsOtherIncome": "OPTIONAL, true when the state's retirement-income provisions that the engine applies to IRA withdrawals do not reach a Roth conversion, so the Roth tool passes the conversion as other ordinary income. Ohio: its retirement income credit counts only distributions \"received ... on account of retirement\" (R.C. 5747.055(A)); Ohio taxes the conversion either way."
   }
  },
  "AL": {
@@ -587,7 +588,7 @@
   "roth": {
    "cr": 0.093,
    "ex": false,
-   "note": "No retirement income exemption — IRA and Roth-conversion income is taxed as regular income through nine progressive brackets (1% to 12.3%), plus a 1% surcharge on income over $1M (13.3% top). The 9.3% bracket used here covers roughly $73k-$371k single income, where most filers land; your rate may be lower or higher. Social Security is not taxed by California."
+   "note": "No retirement income exemption — IRA and Roth-conversion income is taxed as regular income through nine progressive brackets (1% to 12.3%), plus a 1% surcharge on income over $1M (13.3% top). The 9.3% bracket covers roughly $73k-$371k single income, where most filers land; this calculator applies every bracket to your own income. Social Security is not taxed by California."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -818,7 +819,7 @@
   "roth": {
    "cr": 0.044,
    "ex": false,
-   "note": "Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR's own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ (this calculator previously modeled a flat $24,000 at any qualifying age, or applied no cap at all — now fixed to the real age-tiered amounts) — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+, and shares that same $20k/$24k cap with pension/annuity income below that age — but state-level Social Security taxability is out of scope for this calculator specifically (only the federal SS hidden tax zone is modeled here, same as every other state; see the Relocation tool for CO's full state-level SS treatment)."
+   "note": "Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR's own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ (this calculator previously modeled a flat $24,000 at any qualifying age, or applied no cap at all — now fixed to the real age-tiered amounts) — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+, and shares that same $20k/$24k cap with pension/annuity income below that age; this calculator applies Colorado's Social Security rules too, so below 65 a conversion that uses up the cap can leave more of your benefits taxed."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -944,7 +945,7 @@
      "upTo": null
     }
    ],
-   "ssTreatment": "On the SS-taxing list: SS exempt below $75k single / $100k joint AGI, partial above. IRA/pension exemption reaches 100% of PENSION/ANNUITY income under an AGI cliff ($75k/$100k full, phasing to zero at $100k/$150k) — but IRA distributions (including a Roth conversion, which is one) are only 75% eligible for that same percentage, per the official CT-1040 Pension and Annuity Worksheet — never 100%, even below the AGI cliff. A conversion raises AGI and a sizable one blows past the cliff, making it fully taxable (NJ-style). Military/railroad retirement fully exempt. Tax-recapture provision can lift effective rates for high earners.",
+   "ssTreatment": "On the SS-taxing list: SS exempt below $75k single / $100k joint AGI, partial above. Pension, annuity and IRA income (a Roth conversion is an IRA distribution) is sheltered by a stepped percentage set by federal AGI: 100% below $75k single / $100k joint, phasing to zero at $100k/$150k. For 2026 the whole IRA distribution counts (CGS 12-701(a)(20)(B)(xxviii)(III), (xxix)(III)); it was 75% for 2025. A conversion raises AGI and a sizable one blows past the cliff, making it fully taxable (NJ-style). Military/railroad retirement fully exempt. Tax-recapture provision can lift effective rates for high earners.",
    "bracketsNote": "Single-filer thresholds; MFJ ~2x. Source: CT OLR 2026-R-0057 + DRS CT-1040 instructions.",
    "incomeTax": true,
    "source": "https://portal.ct.gov/DRS"
@@ -952,7 +953,7 @@
   "roth": {
    "cr": 0.055,
    "ex": false,
-   "note": "Connecticut shelters a percentage of your actual conversion income, stepping down in ten tiers from a top of $75,000 single / $100,000 joint AGI to $0 by $100,000 single / $150,000 joint AGI, with no age requirement at all (unusual — this applies at any age). Important: a Roth conversion is an IRA distribution, and CT's own Pension and Annuity Worksheet only lets 75% of an IRA distribution into the sheltered amount before that percentage applies — pension/annuity income gets 100%, but IRA money never does, even in the top tier. This calculator applies that 75% factor plus the real stepped table. A Roth conversion also raises AGI and can push you into a lower-percentage tier, so a large conversion shelters a smaller share of itself than a small one. Connecticut also taxes Social Security above those same AGI thresholds; whatever isn't sheltered is taxed at graduated 2%-6.99% rates (about 5.5% is typical for a mid-size conversion)."
+   "note": "Connecticut shelters a share of IRA and pension income, including a Roth conversion, set by your federal adjusted gross income (AGI): all of it below $75,000 single / $100,000 joint, then stepping down in nine more tiers to none at $100,000 single / $150,000 joint. There is no age requirement. For 2026 the whole IRA distribution counts (for 2025 only 75% did). A conversion raises your AGI and can drop you into a lower tier, so a large conversion shelters a smaller share of itself than a small one. Connecticut also taxes Social Security above those same AGI thresholds. Whatever isn't sheltered is taxed at Connecticut's graduated 2% to 6.99% rates, after its personal exemption and personal tax credit."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -1103,7 +1104,6 @@
       "joint": 150000
      },
      "excludesIRA": false,
-     "iraWeightPct": 0.75,
      "steps": {
       "single": [
        {
@@ -1746,7 +1746,7 @@
   "roth": {
    "cr": 0.066,
    "ex": false,
-   "note": "Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k lands at the 6.6% used here (totals under $60k pay 5.55% or less). At 60+, a $12,500-per-person exclusion covers combined pension + IRA income -- genuinely per-spouse, so a joint return with both spouses 60+ shelters $25,000, not a flat $12,500 (this calculator previously applied none of this exclusion at all) — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax."
+   "note": "Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k is taxed at 6.6% (totals under $60k pay 5.55% or less). At 60+, a $12,500-per-person exclusion covers combined pension + IRA income -- genuinely per-spouse, so a joint return with both spouses 60+ shelters $25,000, not a flat $12,500 (this calculator previously applied none of this exclusion at all) — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -2163,7 +2163,7 @@
   "roth": {
    "cr": 0.076,
    "ex": false,
-   "note": "Graduated 1.4% to 11% across twelve brackets; under the schedule for tax years after 2024 the 11% top only applies above $325k single / $650k joint, and Act 46 (2024) widens the brackets again in later years. A typical conversion lands in the 7.6% band ($48k-$125k single, used here). Hawaii fully exempts pensions and Social Security, but traditional IRA and 401(k) income is fully taxable — a Roth conversion is IRA income, so Hawaii taxes it."
+   "note": "Graduated 1.4% to 11% across twelve brackets; under the schedule for tax years after 2024 the 11% top only applies above $325k single / $650k joint, and Act 46 (2024) widens the brackets again in later years. A typical conversion lands in the 7.6% band ($48k-$125k single). Hawaii fully exempts pensions and Social Security, but traditional IRA and 401(k) income is fully taxable — a Roth conversion is IRA income, so Hawaii taxes it."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -2767,7 +2767,7 @@
   "roth": {
    "cr": 0.0295,
    "ex": false,
-   "note": "Flat 2.95% for 2026 (cut from 3.05%, scheduled to keep falling toward ~2.9% in 2027), applied to IRA and conversion income. Social Security is exempt. Every one of Indiana's 92 counties ALSO levies a mandatory local income tax -- not a minor add-on: rates range 0.50% to 3.00% (Indiana DOR Departmental Notice #1, effective Jan. 1, 2026), with a median of ~1.97% across all 92 counties and Marion County (Indianapolis, the state's most populous) at 2.02% -- roughly doubling the effective rate for a typical filer. This calculator applies that ~1.97% median county rate explicitly on top of the state rate, the same mandatory-local-tax pattern used for Maryland's county tax."
+   "note": "Flat 2.95% for 2026 (cut from 3.05%, scheduled to keep falling toward ~2.9% in 2027), applied to IRA and conversion income. Social Security is exempt. Every one of Indiana's 92 counties ALSO levies a mandatory local income tax -- not a minor add-on: rates range 0.50% to 3.00% (Indiana DOR Departmental Notice #1, effective Jan. 1, 2026), with a median of ~1.97% across all 92 counties and Marion County (Indianapolis, the state's most populous) at 2.02% -- roughly doubling the effective rate for a typical filer. This calculator applies that ~1.97% median county rate on top of the state tax, as it does Maryland's county tax."
   },
   "localTax": {
    "county": {
@@ -3267,7 +3267,7 @@
   "roth": {
    "cr": 0.0715,
    "ex": false,
-   "note": "Graduated 5.8% to 7.15%; the 7.15% top starts near $65k single / $130k joint, so a conversion that brings total income near $100k lands at the 7.15% used here (smaller totals pay 6.75% or less). Important: Maine's pension income deduction does NOT apply to Roth conversions — they are specifically excluded — so the conversion is fully taxable with no shelter. Social Security is exempt."
+   "note": "Graduated 5.8% to 7.15%; the 7.15% top starts near $65k single / $130k joint, so a conversion that brings total income near $100k is taxed at 7.15% (smaller totals pay 6.75% or less). Important: Maine's pension income deduction does NOT apply to Roth conversions — they are specifically excluded — so the conversion is fully taxable with no shelter. Social Security is exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -3485,7 +3485,7 @@
   "roth": {
    "cr": 0.0475,
    "ex": false,
-   "note": "State 2% to 6.5% (2026 H.B. 352/FY26 budget added new 6.25%/6.5% top brackets over $500k/$1M single); a conversion near $100k lands at the 4.75% state rate used here. Maryland's county income tax is MANDATORY for every resident (unlike Michigan's opt-in city tax) and applies on top — this calculator adds 3.20%, the median AND modal rate across all 24 Maryland jurisdictions (23 counties + Baltimore City) per the Comptroller's 2026 local withholding table, since 12 of the 24 sit at the 3.20% ceiling. Actual county rates range 2.25% (Worcester) to 3.30% (Dorchester, Kent) — check your own county if it's not near 3.20%. Important: Maryland's pension exclusion (about $36k at 65+) covers 401(k)/403(b)/pension income but EXCLUDES all IRAs, so a Roth conversion gets no shelter and is fully taxable. Social Security is exempt."
+   "note": "State 2% to 6.5% (2026 H.B. 352/FY26 budget added new 6.25%/6.5% top brackets over $500k/$1M single); a conversion near $100k is taxed at 4.75% by the state. Maryland's county income tax is MANDATORY for every resident (unlike Michigan's opt-in city tax) and applies on top — this calculator adds 3.20%, the median AND modal rate across all 24 Maryland jurisdictions (23 counties + Baltimore City) per the Comptroller's 2026 local withholding table, since 12 of the 24 sit at the 3.20% ceiling. Actual county rates range 2.25% (Worcester) to 3.30% (Dorchester, Kent) — check your own county if it's not near 3.20%. Important: Maryland's pension exclusion (about $36k at 65+) covers 401(k)/403(b)/pension income but EXCLUDES all IRAs, so a Roth conversion gets no shelter and is fully taxable. Social Security is exempt."
   },
   "localTax": {
    "county": {
@@ -3777,14 +3777,14 @@
    "brackets": [
     {
      "rate": 0.05,
-     "upTo": 1000000
+     "upTo": 1107750
     },
     {
      "rate": 0.09,
      "upTo": null
     }
    ],
-   "ssTreatment": "Social Security exempt. Flat 5% with NO retirement exclusion (IRA/401k fully taxed); 4% surtax stacks above $1M income (9% effective on the excess) — a very large conversion can trip it.",
+   "ssTreatment": "Social Security exempt. Flat 5% with NO retirement exclusion (IRA/401k fully taxed); 4% surtax stacks above $1,107,750 of taxable income for 2026 (9% effective on the excess) — a very large conversion can trip it.",
    "incomeTax": true,
    "source": "https://www.mass.gov/orgs/massachusetts-department-of-revenue"
   },
@@ -3798,7 +3798,7 @@
     "single": [
      {
       "rate": 0.05,
-      "upTo": 1000000
+      "upTo": 1107750
      },
      {
       "rate": 0.09,
@@ -3808,7 +3808,7 @@
     "mfj": [
      {
       "rate": 0.05,
-      "upTo": 1000000
+      "upTo": 1107750
      },
      {
       "rate": 0.09,
@@ -3818,7 +3818,7 @@
     "mfs": [
      {
       "rate": 0.05,
-      "upTo": 1000000
+      "upTo": 1107750
      },
      {
       "rate": 0.09,
@@ -3828,7 +3828,7 @@
     "hoh": [
      {
       "rate": 0.05,
-      "upTo": 1000000
+      "upTo": 1107750
      },
      {
       "rate": 0.09,
@@ -3891,7 +3891,7 @@
   "roth": {
    "cr": 0.0425,
    "ex": false,
-   "note": "Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint (the same $67,610 single limit applies if you're married filing separately), regardless of birth year — wages don't count toward this cap. IMPORTANT: a Roth CONVERSION specifically only qualifies for this deduction if you're 59.5 or older when it happens (Michigan Treasury's own guidance: the rollover distribution qualifies for the subtraction only at that age) — this is a separate, stricter rule than the age-independent one that applies to pension or IRA income you're already receiving. Below 59.5, this calculator taxes your conversion in full, with no shelter, even if you have other pension income using the cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly. Detroit and 23 other Michigan cities add their own local income tax on top of the state rate — not modeled here; check your city if you live in one.",
+   "note": "Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint (the same $67,610 single limit applies if you're married filing separately), regardless of birth year — wages don't count toward this cap. IMPORTANT: a Roth CONVERSION, like any IRA withdrawal, qualifies for this deduction only if you're 59.5 or older when it happens (Michigan Treasury: the rollover distribution qualifies for the subtraction only at that age); pension income has no such age rule. Below 59.5, this calculator taxes your conversion like wages, with none of the deduction, even if your pension income leaves room under the cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly. Detroit and 23 other Michigan cities add their own local income tax on top of the state rate — not modeled here; check your city if you live in one.",
    "retDeduction": {
     "single": 67610,
     "mfj": 135220,
@@ -3951,10 +3951,10 @@
    },
    "standardDeduction": {
     "deduction": {
-     "single": 5800,
-     "mfj": 11600,
-     "mfs": 5800,
-     "hoh": 5800
+     "single": 5900,
+     "mfj": 11800,
+     "mfs": 5900,
+     "hoh": 5900
     }
    }
   },
@@ -3999,7 +3999,7 @@
   "roth": {
    "cr": 0.068,
    "ex": false,
-   "note": "Graduated 5.35% to 9.85%; the 6.8% band runs to about $109k single, so a conversion that brings total income near $100k lands at the 6.8% used here (7.85% applies from ~$109k to ~$203k, 9.85% above). IRA and Roth-conversion income is fully taxable (no broad retirement exclusion). Watch a second effect: a conversion raises your income and can shrink Minnesota's Social Security subtraction, pulling more of your benefits into MN tax that year."
+   "note": "Graduated 5.35% to 9.85%; the 6.8% band runs to about $109k single, so a conversion that brings total income near $100k is taxed at 6.8% (7.85% applies from ~$109k to ~$203k, 9.85% above). IRA and Roth-conversion income is fully taxable (no broad retirement exclusion). Watch a second effect: a conversion raises your income and can shrink Minnesota's Social Security subtraction, pulling more of your benefits into MN tax that year (this calculator includes it)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -4276,7 +4276,7 @@
   "roth": {
    "cr": 0.047,
    "ex": false,
-   "note": "Graduated 2% to 4.7%, but the 4.7% top rate starts at just ~$9,200 of taxable income, so a conversion is effectively taxed at 4.7% as shown here. Missouri's $6,000 private-pension exclusion (RSMo 143.124) no longer has an income ceiling for tax years 2024+ — the old $25k single/$32k joint AGI phase-out was repealed by statute. But whether it actually applies to a Roth conversion is an unresolved statutory question (the exclusion covers IRA distributions but the statute excludes 'Roth IRAs,' and it's unclear if that carve-out reaches a conversion), so it is NOT applied here pending confirmation from MO DOR — this calculator conservatively shows the full conversion as taxable. Social Security is fully exempt (62+)."
+   "note": "Graduated 2% to 4.7%, but the 4.7% top rate starts at just ~$9,200 of taxable income, so a conversion is effectively taxed at 4.7%. Missouri's $6,000 private-pension exclusion (RSMo 143.124) no longer has an income ceiling for tax years 2024+ — the old $25k single/$32k joint AGI phase-out was repealed by statute. But whether it actually applies to a Roth conversion is an unresolved statutory question (the exclusion covers IRA distributions but the statute excludes 'Roth IRAs,' and it's unclear if that carve-out reaches a conversion), so it is NOT applied here pending confirmation from MO DOR — this calculator conservatively shows the full conversion as taxable. Social Security is fully exempt (62+)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -4583,7 +4583,7 @@
   "roth": {
    "cr": 0.0565,
    "ex": false,
-   "note": "Two brackets (4.7% / 5.65% for 2026, top rate falling to 5.4% in 2027); the 5.65% rate starts at $47,500 single / $95,000 joint for 2026, and conversion income above that is taxed at 5.65% (used here). IRA and conversion income is taxable; Montana repealed its broader retirement deduction and now allows only a small (~$5,500) qualified-retirement-income deduction. Montana also taxes Social Security on the federal formula, so a conversion can pull more of your benefits into tax. No sales tax."
+   "note": "Two brackets (4.7% / 5.65% for 2026, top rate falling to 5.4% in 2027); the 5.65% rate starts at $47,500 single / $95,000 joint for 2026, and conversion income above that is taxed at 5.65%. IRA and conversion income is taxable; Montana repealed its broader retirement deduction and now allows only a small (~$5,500) qualified-retirement-income deduction. Montana also taxes Social Security on the federal formula, so a conversion can pull more of your benefits into tax. No sales tax."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5024,7 +5024,7 @@
   "roth": {
    "cr": 0.0637,
    "ex": false,
-   "note": "New Jersey excludes up to $75,000 single / $100,000 joint of retirement income, including a conversion, for those 62+ — below a $100,000 Total Income threshold (NJ's own income line, which excludes Social Security entirely). Between $100,000 and $150,000 the exclusion steps down to a smaller percentage of your actual income rather than disappearing outright; above $150,000 it's $0. This calculator applies the real stepped tiers, taxing whatever isn't sheltered at rates up to 10.75% (6.37% is typical for a mid-size conversion). Social Security is fully exempt from NJ tax."
+   "note": "New Jersey excludes up to $75,000 single / $100,000 joint of retirement income, including a conversion, for those 62+ — below a $100,000 Total Income threshold (NJ's own income line, which excludes Social Security entirely). Between $100,000 and $150,000 the exclusion steps down to a smaller percentage of your actual income rather than disappearing outright; above $150,000 it's $0. This calculator applies the real stepped tiers and taxes whatever isn't sheltered at New Jersey's graduated rates, up to 10.75%. Social Security is fully exempt from NJ tax."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5282,7 +5282,7 @@
   "roth": {
    "cr": 0.049,
    "ex": false,
-   "note": "Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands near the 4.9% band used here. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AND HEAD OF HOUSEHOLD AGI (NM's own table groups HOH with joint, using the wider thresholds, not single's) — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico's separate Social Security exemption, not this deduction. This calculator applies the real stepped table for single, joint, and HOH; married-filing-separately has its own third, narrower table ($15,000-$25,500) that isn't separately modeled — MFS filers here get the single-bucket figures instead, consistent with how this tool handles MFS elsewhere."
+   "note": "Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands in the 4.9% band. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AND HEAD OF HOUSEHOLD AGI (NM's own table groups HOH with joint, using the wider thresholds, not single's) — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico's separate Social Security exemption, not this deduction. This calculator applies the real stepped table for single, joint, and HOH; married-filing-separately has its own third, narrower table ($15,000-$25,500) that isn't separately modeled — MFS filers here get the single-bucket figures instead, consistent with how this tool handles MFS elsewhere."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5578,7 +5578,7 @@
   "roth": {
    "cr": 0.059,
    "ex": false,
-   "note": "Graduated 3.9% to 10.9% for 2026 (the 10.9% top only applies above $25M; 5.9% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the five lowest rates by 0.1 point). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse's age, which could silently zero out the shelter or wrongly double it depending on which spouse's age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don't use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax."
+   "note": "Graduated 3.9% to 10.9% for 2026 (the 10.9% top only applies above $25M; a typical conversion lands in the 5.9% band, ~$80k-$215k, after the 2026 budget cut the five lowest rates by 0.1 point). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse's age, which could silently zero out the shelter or wrongly double it depending on which spouse's age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don't use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax."
   },
   "localTax": {
    "nyc": {
@@ -5974,7 +5974,7 @@
   "roth": {
    "cr": 0.0195,
    "ex": false,
-   "note": "Very low rates topping out at 2.5%, applied to IRA and conversion income — among the lowest state taxes on a conversion anywhere. The 2.5% top starts near $245k, so a conversion that brings total income near $100k lands at the 1.95% used here. Social Security is exempt. North Dakota has a 0% bottom bracket, so part of a small conversion may not be taxed at all."
+   "note": "Very low rates topping out at 2.5%, applied to IRA and conversion income — among the lowest state taxes on a conversion anywhere. The 2.5% top starts near $245k, so a conversion that brings total income near $100k is taxed at 1.95%. Social Security is exempt. North Dakota has a 0% bottom bracket, so part of a small conversion may not be taxed at all."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -6100,7 +6100,8 @@
   "roth": {
    "cr": 0.0275,
    "ex": false,
-   "note": "For 2026 Ohio uses a flat 2.75% on income above $26,050 (0% below). IRA and Roth-conversion income is taxable at that rate; a small retirement-income credit (up to $200 total) barely offsets a conversion. Social Security is fully exempt from Ohio tax."
+   "note": "For 2026 Ohio uses a flat 2.75% on income above $26,050 (0% below). IRA and Roth-conversion income is taxable at that rate; Ohio's small retirement-income credit (up to $200) counts only distributions received on account of retirement, so not a conversion. Social Security is fully exempt from Ohio tax.",
+   "conversionAsOtherIncome": true
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -7116,7 +7117,7 @@
   "roth": {
    "cr": 0.0475,
    "ex": false,
-   "note": "Three brackets (3.75% / 4.75% / 5.99%); 5.99% only starts near $176k, so a typical conversion lands in the 4.75% band used here. Important: Rhode Island's up-to-$50,000 retirement-income modification covers 401(k)/403(b)/pension/annuity income but specifically EXCLUDES all IRAs — so a Roth conversion gets no shelter and is fully taxable. Rhode Island also taxes Social Security above $107,000 single / $133,500 joint federal AGI, a threshold a conversion can cross (both this and the pension modification above also require reaching Social Security full retirement age, not just staying under the AGI limit)."
+   "note": "Three brackets (3.75% / 4.75% / 5.99%); 5.99% only starts near $176k, so a typical conversion lands in the 4.75% band. Important: Rhode Island's up-to-$50,000 retirement-income modification covers 401(k)/403(b)/pension/annuity income but specifically EXCLUDES all IRAs — so a Roth conversion gets no shelter and is fully taxable. Rhode Island also taxes Social Security above $107,000 single / $133,500 joint federal AGI, a threshold a conversion can cross (both this and the pension modification above also require reaching Social Security full retirement age, not just staying under the AGI limit)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -7697,7 +7698,7 @@
   "roth": {
    "cr": 0.0445,
    "ex": false,
-   "note": "Flat 4.45% for 2026 (cut from 4.5%), applied to IRA and conversion income. Utah is one of the few states that taxes Social Security, though a phased credit offsets it for lower incomes; the flat structure means a conversion is taxed at the same rate at any size. A small retirement credit applies but phases out as income rises."
+   "note": "Flat 4.45% for 2026 (cut from 4.5%), applied to IRA and conversion income. Utah is one of the few states that taxes Social Security, though a credit offsets it for lower incomes; that credit and Utah's taxpayer credit both phase out as income rises, so a conversion can cost more than 4.45% of itself (this calculator applies both)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -7840,7 +7841,7 @@
   "roth": {
    "cr": 0.066,
    "ex": false,
-   "note": "Graduated 3.35% to 8.75%; the 8.75% top only starts above $249,700 single / $304,000 joint, so a typical conversion lands in the 6.6% band used here. IRA and Roth-conversion income is fully taxable (only a small $10k deduction for certain pension/government retirement income, income-limited). A conversion can also push you past Vermont's Social Security exemption thresholds, taxing more of your benefits that year."
+   "note": "Graduated 3.35% to 8.75%; the 8.75% top only starts above $249,700 single / $304,000 joint, so a typical conversion lands in the 6.6% band. IRA and Roth-conversion income is fully taxable (only a small $10k deduction for certain pension/government retirement income, income-limited). A conversion can also push you past Vermont's Social Security exemption thresholds, taxing more of your benefits that year."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -8417,7 +8418,7 @@
   "roth": {
    "cr": 0.053,
    "ex": false,
-   "note": "Graduated 3.5% to 7.65%; the 7.65% top only starts above $332,720 single / $443,630 joint, so a typical conversion lands in the 5.3% band used here ($51,950-$332,720 single). A 2025 law (Act 15) lets those 67+ subtract up to $24,000 of retirement income, including a conversion — but the $48,000 joint figure only applies if BOTH spouses are 67+; if only one is, the household gets $24,000, not a flat doubling. This calculator applies that per-spouse rule. One thing to weigh: claiming this subtraction forfeits every other Wisconsin tax credit for that year. Social Security is fully exempt."
+   "note": "Graduated 3.5% to 7.65%; the 7.65% top only starts above $332,720 single / $443,630 joint, so a typical conversion lands in the 5.3% band ($51,950-$332,720 single). A 2025 law (Act 15) lets those 67+ subtract up to $24,000 of retirement income, including a conversion — but the $48,000 joint figure only applies if BOTH spouses are 67+; if only one is, the household gets $24,000, not a flat doubling. This calculator applies that per-spouse rule. One thing to weigh: claiming this subtraction forfeits every other Wisconsin tax credit for that year. Social Security is fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -8696,7 +8697,7 @@
   "roth": {
    "cr": 0.085,
    "ex": false,
-   "note": "Graduated 4% to 10.75%; the 10.75% top only applies above $1M, while the 8.5% band covers roughly $60k-$250k where most conversion income lands (used here). IRA, 401(k), and Roth-conversion income is fully taxable; there is no retirement-income exclusion. Social Security is exempt."
+   "note": "Graduated 4% to 10.75%; the 10.75% top only applies above $1M, while the 8.5% band covers roughly $60k-$250k, where most conversion income lands. IRA, 401(k), and Roth-conversion income is fully taxable; there is no retirement-income exclusion. Social Security is exempt."
   },
   "taxRules": {
    "bracketsByStatus": {

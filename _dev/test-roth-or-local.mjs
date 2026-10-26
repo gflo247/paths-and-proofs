@@ -1,172 +1,123 @@
 #!/usr/bin/env node
-// Regression test for Portland Metro's Supportive Housing Services (SHS) tax and
-// Multnomah County's Preschool For All (PFA) tax — added 2026-08-25, following the
-// NYC/Yonkers local-tax feature (see test-roth-nyc-yonkers.mjs). Structurally
-// different from NYC/Yonkers in one important way: Metro and Multnomah are NOT
-// mutually exclusive — Multnomah County is a SUBSET of Metro's 3-county district
-// (Multnomah/Washington/Clackamas), so a Multnomah filer owes BOTH taxes, stacked,
-// while a Washington/Clackamas filer inside Metro owes only Metro's. Both taxes are
-// threshold-gated (flat/stepped above a dollar amount), modeled as ordinary
-// {rate,upTo} bracket ladders with a deliberate rate:0 leading tier, reusing the
-// SAME generic bracketTax() helper NYC's graduated schedule uses.
+// Portland Metro's Supportive Housing Services (SHS) tax and Multnomah County's Preschool For All
+// (PFA) tax in the Roth tool's conversion cost. Since 2026-10-25 computeConversionCost() takes
+// Oregon's tax and these local taxes from the Relocation engine (computeStateAndLocalTax):
+// Oregon's brackets, standard deduction, exemption credit and subtraction for federal income tax,
+// then Metro and Multnomah on Oregon taxable income above their thresholds. Metro and Multnomah
+// are NOT mutually exclusive: Multnomah County is inside Metro's three-county district, so a
+// Multnomah filer owes both, stacked, while a Washington or Clackamas filer owes only Metro's.
 //
-// Extracts the REAL computeConversionCost/ORTAX/bracketTax definitions verbatim
-// from the shipped HTML via jsdom (same approach as test-roth-nyc-yonkers.mjs).
-// The "neither" regression guard (#7 below) uses hardcoded expected values, not a
-// live `git show HEAD` diff — see test-roth-nyc-yonkers.mjs's own comment for why a
-// dynamic HEAD comparison silently stops meaning anything the moment it's committed.
+// Hand-derived from the 2026 figures in states.json (sources in SOURCES.md: OR-ESTIMATE 2026,
+// Form MET-40, the Multnomah PFA tables):
+//   Oregon brackets  single 4.75% to $4,550, 6.75% to $11,400, 8.75% to $125,000, 9.9% above;
+//                    joint and head of household $9,100 / $22,800 / $250,000
+//   standard deduction $2,900 single and separate, $5,800 joint, $4,650 head of household
+//   exemption credit $260 a filer, none over federal AGI $100,000 single ($200,000 joint, HoH)
+//   federal tax subtraction up to $8,750 ($4,375 separate); the limit is 80/60/40/20/0% of
+//     that at federal AGI of $125,000/130,000/135,000/140,000/145,000 or more ($250,000 to
+//     $290,000 joint, HoH). The federal tax is the engine's 2026 estimate (FEDERAL_2026: standard
+//     deduction $16,100 single, $32,200 joint, $24,150 HoH; 10% / 12% / 22% brackets).
+//   Metro 1% above $125,000 single and separate, $200,000 joint and HoH (MET-40's grouping)
+//   Multnomah 1.5% above the same, 3% above $250,000 / $400,000
+// Every case here is age 45 (no 65+ amounts).
 
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { readFileSync } from 'node:fs';
-import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
+import { federalTaxableSS } from '../core/retirement-rules.js';
+import { computeStateAndLocalTax } from '../relocation/relo-engine.mjs';
 
-// Same harness pattern as test-roth-nyc-yonkers.mjs.
-function extractCC(html) {
-  const vc = new VirtualConsole();
-  const dom = new JSDOM('<!doctype html><body></body>', { virtualConsole: vc });
-  globalThis.window = dom.window;
-  globalThis.document = dom.window.document;
-  globalThis.getComputedStyle = dom.window.getComputedStyle;
-  globalThis.matchMedia = () => ({ matches: true });
-  globalThis.window.resolveRetirementIncome = resolveRetirementIncome;
-  globalThis.window.calcTaxableSS = federalTaxableSS;
-  globalThis.resolveRetirementIncome = resolveRetirementIncome;
-  globalThis.calcTaxableSS = federalTaxableSS;
-
-  const marker = 'function computeConversionCost';
-  const markerIdx = html.indexOf(marker);
-  if (markerIdx === -1) throw new Error('computeConversionCost not found');
-  const scriptStart = html.lastIndexOf('<script>', markerIdx) + '<script>'.length;
-  const scriptEnd = html.indexOf('</script>', markerIdx);
-  const scriptSrc = html.slice(scriptStart, scriptEnd);
-  return new Function(scriptSrc + '\nreturn {computeConversionCost, ORTAX, bracketTax, ST};')();
-}
+const vc = new VirtualConsole();
+const dom = new JSDOM('<!doctype html><body></body>', { virtualConsole: vc });
+globalThis.window = dom.window;
+globalThis.document = dom.window.document;
+globalThis.getComputedStyle = dom.window.getComputedStyle;
+globalThis.matchMedia = () => ({ matches: true });
+// Same harness-only binding as test-roth-state-engine.mjs (window and globalThis differ here).
+globalThis.window.computeStateAndLocalTax = computeStateAndLocalTax;
+globalThis.window.calcTaxableSS = federalTaxableSS;
+globalThis.computeStateAndLocalTax = computeStateAndLocalTax;
+globalThis.calcTaxableSS = federalTaxableSS;
 
 const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.url), 'utf8');
-const { computeConversionCost, ORTAX, bracketTax, ST } = extractCC(html);
+const markerIdx = html.indexOf('function computeConversionCost');
+if (markerIdx === -1) throw new Error('computeConversionCost not found');
+const scriptSrc = html.slice(html.lastIndexOf('<script>', markerIdx) + '<script>'.length, html.indexOf('</script>', markerIdx));
+const { computeConversionCost, ST } = new Function(scriptSrc + '\nreturn {computeConversionCost, ST};')();
 
 let pass = 0, fail = 0;
-function check(label, actual, expected, tolerance = 0.01) {
-  const ok = Math.abs(actual - expected) <= tolerance;
-  if (ok) pass++;
+function check(label, actual, expected, tolerance = 0.005) {
+  if (Math.abs(actual - expected) <= tolerance) pass++;
   else { fail++; console.log(`FAIL  ${label}  (got=${actual}, expected=${expected})`); }
 }
-function checkTrue(label, cond) {
-  if (cond) pass++;
-  else { fail++; console.log(`FAIL  ${label}`); }
+
+const cc = (cvt, o) => computeConversionCost(cvt, { income: 0, pensionIncome: 0, nii: 0, ltcg: 0, ss: 0, nSr: 0,
+  stD: ST.OR, stateCode: 'OR', status: 'single', curAge: 45, spouseAge: null, isCouple: false, taxableFrac: 1,
+  localTax: '', ...o }).cvtTxSt;
+
+// --- 1. Single, $100,000 wages, $50,000 conversion: straddles Metro's $125,000 threshold. ---
+// Without: federal tax on $100,000 is over $8,750 (taxable 83,900: 1,240 + 4,560 + 7,370 = 13,170)
+//   and federal AGI is under $125,000, so $8,750 comes off: Oregon taxable 100,000 - 8,750 - 2,900
+//   = 88,350 → 216.125 + 462.375 + 8.75% x 76,950 = 7,411.625, less the $260 credit (AGI not over
+//   $100,000) = 7,151.625. Below Metro's threshold.
+// With: federal AGI $150,000 → no federal subtraction, no credit; taxable 147,100 →
+//   216.125 + 462.375 + 8.75% x 113,600 + 9.9% x 22,100 = 12,806.40.
+// Oregon: 12,806.40 - 7,151.625 = 5,654.775. Metro: 1% x (147,100 - 125,000) = 221.
+// Multnomah adds 1.5% x 22,100 = 331.50.
+check('OR single 100k + 50k, no locality: $5,654.78', cc(50000, { income: 100000 }), 5654.775);
+check('OR single 100k + 50k, Metro: $5,875.78 (+$221)', cc(50000, { income: 100000, localTax: 'metro' }), 5875.775);
+check('OR single 100k + 50k, Multnomah: $6,207.28 (Metro $221 + PFA $331.50, stacked)', cc(50000, { income: 100000, localTax: 'multnomah' }), 6207.275);
+
+// --- 2. Single, $50,000 wages, $20,000 conversion: entirely under both thresholds. ---
+// Federal tax $3,820 → $6,570 (taxable 33,900 → 53,900). Oregon taxable 50,000 - 3,820 - 2,900 =
+// 43,280 → 70,000 - 6,570 - 2,900 = 60,530; tax 3,468.00 - 260 = 3,208.00 → 4,977.375 - 260 =
+// 4,717.375: 1,509.375 (the larger federal subtraction offsets part of it). No local tax either way.
+for (const localTax of ['', 'metro', 'multnomah']) {
+  check(`OR single 50k + 20k, locality '${localTax}': $1,509.38 (under both thresholds)`, cc(20000, { income: 50000, localTax }), 1509.375);
 }
 
-const baseCtx = { pensionIncome: 0, nii: 0, ltcg: 0, ss: 0, nSr: 0, stD: ST.OR, stateCode: 'OR', curAge: 45, spouseAge: undefined, isCouple: false, taxableFrac: 1 };
+// --- 3. Single, $240,000 wages, $20,000 conversion: straddles Multnomah's $250,000 step. ---
+// Federal AGI is over $145,000 both ways: no federal subtraction or credit. Oregon taxable 237,100 →
+// 257,100, all at 9.9%: 1,980. Metro: 1% x 20,000 = 200. PFA: 1.5% x (250,000 - 237,100) +
+// 3% x (257,100 - 250,000) = 193.50 + 213 = 406.50.
+check('OR single 240k + 20k, no locality: $1,980', cc(20000, { income: 240000 }), 1980);
+check('OR single 240k + 20k, Metro: $2,180', cc(20000, { income: 240000, localTax: 'metro' }), 2180);
+check('OR single 240k + 20k, Multnomah: $2,586.50 (the 3% step reached)', cc(20000, { income: 240000, localTax: 'multnomah' }), 2586.5);
 
-// --- 1. Metro-only: a conversion straddling the single-filer $125,000 threshold,
-// independently hand-verified against ORTAX's own bracket table. ---
-{
-  const income = 100000, cvt = 50000; // 100k -> 150k, straddles 125k
-  const ctx = { ...baseCtx, income, status: 'single', localTax: 'metro' };
-  const r = computeConversionCost(cvt, ctx);
-  const brax = ORTAX.metro.single;
-  const expectedMetroDelta = bracketTax(income + cvt, brax) - bracketTax(income, brax);
-  const expectedStateOnly = cvt * ctx.stD.cr;
-  check('Metro single: total = OR state tax + Metro delta', r.cvtTxSt, expectedStateOnly + expectedMetroDelta);
-  checkTrue('Metro single: nonzero Metro tax actually applied (test is meaningful)', expectedMetroDelta > 0);
-  check('Metro single: stMarginalDisp reflects OR cr + 1%', r.stMarginalDisp, ctx.stD.cr + 0.01);
-}
+// --- 4. Filing-status grouping (Form MET-40): HoH uses the joint $200,000 threshold, separate
+// uses the single $125,000 one. $150,000 wages, $60,000 conversion, Metro's share alone. ---
+// Single and separate: no federal subtraction (AGI over $145,000); Oregon taxable 147,100 →
+//   207,100: Metro 1% x (207,100 - 125,000) - 1% x (147,100 - 125,000) = 821 - 221 = 600.
+// HoH: $8,750 subtracted both ways (the HoH limit falls only from $250,000): 150,000 - 8,750 -
+//   4,650 = 136,600 → 196,600, under $200,000: Metro 0. Joint: 150,000 - 8,750 - 5,800 = 135,450
+//   → 195,450: Metro 0.
+const metroShare = (status) => cc(60000, { income: 150000, status, localTax: 'metro', isCouple: status === 'mfj' || status === 'mfs' })
+  - cc(60000, { income: 150000, status, localTax: '', isCouple: status === 'mfj' || status === 'mfs' });
+check('Metro share, single: $600', metroShare('single'), 600);
+check('Metro share, separate: $600 (single threshold)', metroShare('mfs'), 600);
+check('Metro share, head of household: $0 (joint threshold)', metroShare('hoh'), 0);
+check('Metro share, joint: $0', metroShare('mfj'), 0);
+// And the whole single figure: Oregon 9.9% x 60,000 = 5,940, plus Metro 600.
+check('OR single 150k + 60k, Metro: $6,540', cc(60000, { income: 150000, localTax: 'metro' }), 6540);
 
-// --- 2. Multnomah: the SAME scenario must stack BOTH Metro's delta AND PFA's delta
-// -- the central claim of this whole feature (Multnomah is a subset of Metro, so a
-// Multnomah filer owes both, not just one). ---
+// --- 5. A non-Oregon state ignores a stray locality value. ---
 {
-  const income = 100000, cvt = 50000;
-  const ctxMetro = { ...baseCtx, income, status: 'single', localTax: 'metro' };
-  const ctxMulti = { ...baseCtx, income, status: 'single', localTax: 'multnomah' };
-  const rMetro = computeConversionCost(cvt, ctxMetro);
-  const rMulti = computeConversionCost(cvt, ctxMulti);
-  const pfaBrax = ORTAX.multnomah.single;
-  const expectedPfaDelta = bracketTax(income + cvt, pfaBrax) - bracketTax(income, pfaBrax);
-  checkTrue('Multnomah adds a real, additional PFA delta on top of Metro (test is meaningful)', expectedPfaDelta > 0);
-  check('Multnomah total = Metro-only total + PFA delta (both layers stack)', rMulti.cvtTxSt, rMetro.cvtTxSt + expectedPfaDelta);
-  checkTrue('Multnomah is taxed strictly more than Metro-only for the same scenario', rMulti.cvtTxSt > rMetro.cvtTxSt);
-}
-
-// --- 3. A conversion entirely below both thresholds shows $0 local tax for either
-// option -- confirms the rate:0 leading tier correctly shelters low incomes, not
-// just that SOME number comes back. ---
-{
-  const ctx = { ...baseCtx, income: 50000, status: 'single', localTax: 'metro' };
-  const r = computeConversionCost(20000, ctx); // 50k -> 70k, well under 125k
-  check('Metro, fully below threshold: $0 local tax (matches flat state-only formula)', r.cvtTxSt, 20000 * ctx.stD.cr);
-}
-{
-  const ctx = { ...baseCtx, income: 50000, status: 'single', localTax: 'multnomah' };
-  const r = computeConversionCost(20000, ctx);
-  check('Multnomah, fully below threshold: $0 local tax either layer', r.cvtTxSt, 20000 * ctx.stD.cr);
+  const ga = (localTax) => computeConversionCost(50000, { income: 0, pensionIncome: 0, nii: 0, ltcg: 0, ss: 0, nSr: 0,
+    stD: ST.GA, stateCode: 'GA', status: 'single', curAge: 45, spouseAge: null, isCouple: false, taxableFrac: 1, localTax }).cvtTxSt;
+  check('GA ignores a stray localTax value', ga('multnomah'), ga(''), 1e-9);
 }
 
-// --- 4. Multnomah's second tier: a conversion straddling the $250,000 (single)
-// step from 1.5% to 3% -- confirms the stepped transition, not just the first tier. ---
-{
-  const income = 240000, cvt = 20000; // 240k -> 260k, straddles 250k
-  const ctx = { ...baseCtx, income, status: 'single', localTax: 'multnomah' };
-  const r = computeConversionCost(cvt, ctx);
-  const metroBrax = ORTAX.metro.single, pfaBrax = ORTAX.multnomah.single;
-  const expectedMetroDelta = bracketTax(income + cvt, metroBrax) - bracketTax(income, metroBrax);
-  const expectedPfaDelta = bracketTax(income + cvt, pfaBrax) - bracketTax(income, pfaBrax);
-  const expectedStateOnly = cvt * ctx.stD.cr;
-  check('Multnomah straddling the $250k step: full stack matches independent bracket walk', r.cvtTxSt, expectedStateOnly + expectedMetroDelta + expectedPfaDelta);
-  // Sanity: the PFA delta on this straddling conversion should exceed what a flat
-  // 1.5% would give (some of the $20k lands in the 3% tier), proving the stepped
-  // transition actually fired, not just the first tier.
-  checkTrue('PFA delta reflects the 3% tier kicking in partway through the conversion', expectedPfaDelta > cvt * 0.015);
-}
-
-// --- 5. Filing-status grouping: HOH uses the JOINT thresholds ($200k/$400k), MFS
-// uses the SINGLE thresholds ($125k/$250k) -- confirmed directly from Form MET-40's
-// own filing-status checkboxes, the opposite of this project's more common
-// single-vs-hoh-as-its-own-bracket convention, so worth a dedicated check. ---
-{
-  // $150k income + $60k conversion = $210k total: single/MFS threshold is $125k
-  // (fully in the 1% Metro tier by $210k), but joint/HOH threshold is $200k -- a
-  // small conversion should barely clear it for HOH, producing a much smaller
-  // Metro delta than the same scenario would for single/MFS.
-  const income = 150000, cvt = 60000; // 150k -> 210k
-  const single = computeConversionCost(cvt, { ...baseCtx, income, status: 'single', localTax: 'metro' });
-  const hoh    = computeConversionCost(cvt, { ...baseCtx, income, status: 'hoh',    localTax: 'metro' });
-  const mfs    = computeConversionCost(cvt, { ...baseCtx, income, status: 'mfs',    localTax: 'metro' });
-  const mfj    = computeConversionCost(cvt, { ...baseCtx, income, status: 'mfj',    localTax: 'metro' });
-  check('HOH matches MFJ (both use the $200k joint threshold)', hoh.cvtTxSt, mfj.cvtTxSt, 0.01);
-  check('MFS matches single (both use the $125k single threshold)', mfs.cvtTxSt, single.cvtTxSt, 0.01);
-  checkTrue('HOH/MFJ (higher threshold) owes strictly less Metro tax than single/MFS for the same income', hoh.cvtTxSt < single.cvtTxSt);
-}
-
-// --- 6. Non-OR state with a stray orLocalTax-shaped value must be silently
-// ignored. Uses GA (a RIX state) as the non-OR example, matching the analogous NY
-// test's own correction (an earlier version of that test used a dedicated-branch
-// state and never actually exercised the guard it claimed to). ---
-{
-  const ctx = { pensionIncome: 0, nii: 0, ltcg: 0, ss: 0, nSr: 0, stD: { cr: 0.0539, ex: false }, stateCode: 'GA', status: 'single', curAge: 45, spouseAge: undefined, isCouple: false, taxableFrac: 1, localTax: 'multnomah' };
-  const rStray = computeConversionCost(50000, ctx);
-  const rClean = computeConversionCost(50000, { ...ctx, localTax: '' });
-  check('Non-OR RIX state (GA) ignores a stray localTax value', rStray.cvtTxSt, rClean.cvtTxSt, 0.01);
-}
-
-// --- 7. Golden-snapshot regression guard: "neither" (localTax='') must match OR's
-// existing flat-cr formula exactly, for a few scenarios spanning both thresholds --
-// proof the new stateCode==='OR' branch doesn't change ordinary (no-locality-
-// selected) OR behavior from the pre-feature flat computation. ---
-{
-  const scenarios = [
-    { income: 40000, status: 'single', cvt: 20000 },
-    { income: 100000, status: 'single', cvt: 50000 },
-    { income: 240000, status: 'mfj', isCouple: true, cvt: 20000 },
-    { income: 20000, status: 'hoh', cvt: 25000 },
-  ];
-  for (const s of scenarios) {
-    const ctx = { ...baseCtx, income: s.income, status: s.status, isCouple: !!s.isCouple, localTax: '' };
-    const got = computeConversionCost(s.cvt, ctx).cvtTxSt;
-    const expected = s.cvt * ctx.stD.cr;
-    check(`Golden snapshot (localTax=''), ${s.status} income=${s.income} cvt=${s.cvt}: matches OR's flat-cr formula`, got, expected, 0.001);
-  }
-}
+// --- 6. No locality, other statuses. ---
+// Single $40,000 + $20,000: federal tax 2,620 → 5,020; Oregon taxable 34,480 → 52,080; tax
+//   2,698 - 260 = 2,438 → 4,238 - 260 = 3,978: 1,540.
+check('OR single 40k + 20k: $1,540', cc(20000, { income: 40000 }), 1540);
+// Joint $240,000 + $20,000: the limit is $8,750 at AGI 240,000 and 60% of it, $5,250, at exactly
+//   260,000; Oregon taxable 240,000 - 8,750 - 5,800 = 225,450 → 260,000 - 5,250 - 5,800 = 248,950,
+//   all at 8.75% (no credit over $200,000): 8.75% x 23,500 = 2,056.25.
+check('OR joint 240k + 20k: $2,056.25 (federal-tax limit steps down)', cc(20000, { income: 240000, status: 'mfj', isCouple: true, spouseAge: 45 }), 2056.25);
+// HoH $20,000 + $25,000: federal tax 0 → 2,148 (taxable 20,850: 1,770 + 378); Oregon taxable
+//   20,000 - 4,650 = 15,350 → 45,000 - 2,148 - 4,650 = 38,202; tax 432.25 + 421.875 - 260 =
+//   594.125 → 432.25 + 924.75 + 8.75% x 15,402 - 260 = 2,444.675: 1,850.55.
+check('OR head of household 20k + 25k: $1,850.55', cc(25000, { income: 20000, status: 'hoh' }), 1850.55);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

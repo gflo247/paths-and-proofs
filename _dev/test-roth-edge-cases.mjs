@@ -2,23 +2,25 @@
 // Edge-case sweep for roth-conversion/index.html — computeConversionCost().
 //
 // Covers the precision gaps NOT exercised by the existing test suite
-// (test-roth-scenarios.mjs, test-roth-rix.mjs, test-roth-retded.mjs, etc.):
+// (test-roth-scenarios.mjs, test-roth-state-engine.mjs, test-roth-retded.mjs, etc.):
 //
 //   Group 1: NIIT threshold straddling — 3.8% Medicare surcharge edge cases
 //   Group 2: LTCG bracket-stacking across the 0%→15% and 15%→20% zone boundaries
 //   Group 3: Senior deduction phaseout at the $75k/$150k AGI boundary
-//   Group 4: Michigan RETDED — wages do NOT compete for pension cap; age-gate isolation
+//   Group 4: Michigan — wages do NOT compete for the retirement cap; age-gate isolation
 //   Group 5: EXAGE spouse age desync — IA/MS exemption requires BOTH spouses to qualify
 //   Group 6: Ohio zero-bracket and Massachusetts surtax threshold straddling
-//   Group 7: Connecticut iraWeightPct=0.75 — IRA gets lighter weight than pension
+//   Group 7: Connecticut's stepped pension and IRA subtraction
 //
 // All expected values are hand-derived from the production code's own formulas and
-// constants (BRAX/STDD/LTCGX/NIIT thresholds/RETDED/EXAGE/RIX data), then
-// cross-checked against the primary sources the production code cites.
+// constants (BRAX/STDD/LTCGX/NIIT thresholds/EXAGE) and, for state tax (computed by the
+// Relocation engine since 2026-10-25), from each state's own rules in states.json
+// taxRules, then cross-checked against the primary sources cited below and in SOURCES.md.
 
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { readFileSync } from 'node:fs';
-import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
+import { federalTaxableSS } from '../core/retirement-rules.js';
+import { computeStateAndLocalTax } from '../relocation/relo-engine.mjs';
 
 // ─── Harness setup (mirrors test-roth-scenarios.mjs exactly) ────────────────
 const vc = new VirtualConsole();
@@ -31,9 +33,9 @@ globalThis.document = dom.window.document;
 globalThis.getComputedStyle = dom.window.getComputedStyle;
 globalThis.matchMedia = () => ({ matches: true });
 // Bridge shared module the same way the real <script type="module"> does it:
-globalThis.window.resolveRetirementIncome = resolveRetirementIncome;
+globalThis.window.computeStateAndLocalTax = computeStateAndLocalTax;
 globalThis.window.calcTaxableSS           = federalTaxableSS;
-globalThis.resolveRetirementIncome        = resolveRetirementIncome;
+globalThis.computeStateAndLocalTax = computeStateAndLocalTax;
 globalThis.calcTaxableSS                  = federalTaxableSS;
 
 const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.url), 'utf8');
@@ -185,40 +187,38 @@ function ctx({ wages = 0, pension = 0, nii = 0, ltcg = 0, ss = 0,
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// GROUP 4: MICHIGAN RETDED — WAGES DO NOT COMPETE FOR PENSION CAP
+// GROUP 4: MICHIGAN — WAGES DO NOT COMPETE FOR THE RETIREMENT CAP
 //
-// RETDED.MI = {single:67610, mfj:135220, conversionAgeGate:59.5}
-// Only pensionIncome competes for the cap — wagesInc is irrelevant.
-//
-// Formula:
-//   stTiBase        = max(0, pension - min(cap, pension))
-//   stTiWithEligible= max(0, (pension+cvtEligible) - min(cap, pension+cvtEligible))
-//   cvtTxSt         = ((stTiWithEligible-stTiBase) + (cvt-cvtEligible)) * MI.cr
-// MI.cr = 4.25%, conversionAgeGate = 59.5
+// MI (2026): flat 4.25% after a $5,900 personal exemption per person (Treasury Form 446);
+// pension and retirement-account income comes off up to $67,610 single / $135,220 joint
+// (wages never use the cap). A conversion counts as retirement-account income only at
+// 59.5+ (RETDED.MI.conversionAgeGate; MI Treasury: the rollover qualifies only at that
+// age); below it the conversion is taxed in full, after whatever exemption is left.
 // ═══════════════════════════════════════════════════════════════════════════
 
 {
   // 4.1 Wages=$80k (> cap=$67,610), pension=$0, age=65 (≥59.5) → wages don't compete.
-  // stTiBase=max(0,0-0)=0; stTiWithEligible=max(0,20000-20000)=0 (cvt<cap); cvtTxSt=0.
-  // Wages above the cap is intentional: if wages were incorrectly fed into the cap
-  // formula (e.g., using wages+pension instead of just pension), stTiBase would become
-  // max(0,80000-67610)=12390 and cvtTxSt would be non-zero → test would FAIL, catching
-  // the bug. Wages below the cap (e.g. $60k) would be silently absorbed by the cap
-  // clamp and miss that exact bug class.
+  // The whole $20k conversion comes off under the cap, so MI tax is unchanged: cvtTxSt=0.
+  // Wages above the cap is intentional: if wages were incorrectly fed into the cap,
+  // they would use all of it and the conversion would be taxed (4.25% x 20,000 = 850)
+  // → test would FAIL, catching the bug. Wages below the cap (e.g. $60k) would leave
+  // room for the conversion and miss that exact bug class.
   const c1 = computeConversionCost(20000, ctx({ wages: 80000, stateCode: 'MI', curAge: 65 }));
   near('4.1 MI wages=80k (>cap) pension=0 age=65: cvtTxSt=0 (wages don\'t compete for cap)', c1.cvtTxSt, 0);
 
   // 4.2 Pension=$70k (>cap=$67,610), age=65 → cap fully exhausted by pension.
-  // stTiBase=max(0,70000-67610)=2390; stTiWithEligible=max(0,90000-67610)=22390.
-  // cvtTxSt = (20000+0) * 0.0425 = 850.
+  // Without: 70,000 - 67,610 = 2,390, under the $5,900 exemption → $0.
+  // With:    90,000 - 67,610 = 22,390 - 5,900 = 16,490 x 4.25% = 700.825.
+  // (Was 850 — 4.25% of the whole conversion, ignoring the exemption the pension left
+  // unused — before 2026-10-25.)
   const c2 = computeConversionCost(20000, ctx({ pension: 70000, stateCode: 'MI', curAge: 65 }));
-  near('4.2 MI pension=70k (>cap) age=65: cvtTxSt=850 (cap exhausted, conversion fully taxable)', c2.cvtTxSt, 850);
+  near('4.2 MI pension=70k (>cap) age=65: cvtTxSt=700.83 (cap exhausted; exemption still left)', c2.cvtTxSt, 700.825, 0.01);
 
-  // 4.3 Age=55 (< conversionAgeGate=59.5) → ZERO shelter for the conversion.
-  // cvtEligible=0; cvtTxSt = (0 + cvt) * 0.0425 = 850.
-  // Distinct from 4.2: same cvtTxSt, different reason — age gate, not cap exhaustion.
+  // 4.3 Age=55 (< conversionAgeGate=59.5) → no retirement-cap shelter for the conversion.
+  // cvtTxSt = (20,000 - 5,900 exemption) x 4.25% = 599.25.
+  // Distinct from 4.2: the cap isn't used up here; the age gate keeps the conversion off it.
   const c3 = computeConversionCost(20000, ctx({ stateCode: 'MI', curAge: 55 }));
-  near('4.3 MI age=55 (<59.5 gate): cvtTxSt=850 (zero shelter under conversionAgeGate)', c3.cvtTxSt, 850);
+  near('4.3 MI age=55 (<59.5 gate): cvtTxSt=599.25 (no cap shelter under conversionAgeGate)', c3.cvtTxSt, 599.25, 0.01);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -234,41 +234,46 @@ function ctx({ wages = 0, pension = 0, nii = 0, ltcg = 0, ss = 0,
 // ═══════════════════════════════════════════════════════════════════════════
 
 {
-  // 5.1 IA couple: primary=56, spouse=53. min(56,53)=53 < EXAGE.IA=55 → NOT exempt.
-  // cvtTxSt = 20000 * IA.cr = 20000 * 0.038 = 760.
+  // 5.1 IA couple: primary=56, spouse=53. min(56,53)=53 < EXAGE.IA=55 → NOT exempt;
+  // the conversion is ordinary Iowa income. $40k of wages already uses the $31,500 joint
+  // standard deduction, so the whole conversion is taxed at Iowa's flat 3.8%:
+  // cvtTxSt = 20,000 x 3.8% = 760. (Wages added 2026-10-25: with no other income the
+  // deduction covers the conversion and 5.1 and 5.2 would both read $0.)
   const c1 = computeConversionCost(20000, ctx({
-    stateCode: 'IA', status: 'mfj', isCouple: true, curAge: 56, spouseAge: 53,
+    wages: 40000, stateCode: 'IA', status: 'mfj', isCouple: true, curAge: 56, spouseAge: 53,
   }));
-  near('5.1 IA couple age=56/53: NOT exempt (53<55) → cvtTxSt=760', c1.cvtTxSt, 760);
+  near('5.1 IA couple age=56/53: NOT exempt (53<55) → cvtTxSt=760', c1.cvtTxSt, 760, 0.01);
 
   // 5.2 IA couple: primary=56, spouse=55. min(56,55)=55 ≥ EXAGE.IA=55 → exempt.
   // cvtTxSt = 0.
   const c2 = computeConversionCost(20000, ctx({
-    stateCode: 'IA', status: 'mfj', isCouple: true, curAge: 56, spouseAge: 55,
+    wages: 40000, stateCode: 'IA', status: 'mfj', isCouple: true, curAge: 56, spouseAge: 55,
   }));
   near('5.2 IA couple age=56/55: exempt (min=55 meets threshold exactly) → cvtTxSt=0', c2.cvtTxSt, 0);
 
   // 5.3 MS single: age=58 < EXAGE.MS=59.5 → NOT exempt (early-distribution rule).
-  // cvtTxSt = 20000 * MS.cr = 20000 * 0.04 = 800 (TY2026 rate 4%; was 0.044 → 880 before 2026-10-21).
-  const c3 = computeConversionCost(20000, ctx({ stateCode: 'MS', curAge: 58 }));
-  near('5.3 MS single age=58 (<59.5): NOT exempt → cvtTxSt=800', c3.cvtTxSt, 800);
+  // $30k of wages uses the $8,300 exemption and deduction and the 0% first $10,000, so
+  // the conversion is taxed at the full 4% (TY2026): cvtTxSt = 20,000 x 4% = 800.
+  const c3 = computeConversionCost(20000, ctx({ wages: 30000, stateCode: 'MS', curAge: 58 }));
+  near('5.3 MS single age=58 (<59.5): NOT exempt → cvtTxSt=800', c3.cvtTxSt, 800, 0.01);
 
   // 5.4 MS single: age=59.5 (exactly at EXAGE.MS gate) → exempt.
   // cvtTxSt = 0.
-  const c4 = computeConversionCost(20000, ctx({ stateCode: 'MS', curAge: 59.5 }));
+  const c4 = computeConversionCost(20000, ctx({ wages: 30000, stateCode: 'MS', curAge: 59.5 }));
   near('5.4 MS single age=59.5 (exactly at gate): exempt → cvtTxSt=0', c4.cvtTxSt, 0);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // GROUP 6: OHIO ZERO-BRACKET AND MASSACHUSETTS SURTAX THRESHOLD
 //
-// OH: 0% on ordinary income ≤$26,050; 2.75% above (no age gate).
-//   ohBase = income + nii + ltcg  (SS excluded per OH SS exemption)
-//   cvtTxSt = max(0, ohBase+cvt-26050) - max(0, ohBase-26050)) * stD.cr
+// OH (2026): 0% on Ohio taxable income up to $26,050, 2.75% above; a $2,400 exemption
+//   per person (Ohio MAGI up to $40,000); a $50 senior credit (65+, a return) and a $20
+//   exemption credit per person (Ohio taxable income under $30,000). The retirement
+//   income credit doesn't count a conversion (R.C. 5747.055(A): only distributions
+//   "received ... on account of retirement"), so the conversion goes in as other income.
 //
-// MA: flat 5% base + 4% surtax on income above $1,107,750 (2026 DOR threshold).
-//   maBase = income + nii + ltcg
-//   cvtTxSt = cvt*0.05 + (max(0,maBase+cvt-1107750) - max(0,maBase-1107750))*0.04
+// MA (2026): 5%, plus the 4% surtax on taxable income above $1,107,750 (DOR, 2026
+//   Form 1-ES); a $4,400 exemption single, +$700 at 65 (ctx's default age).
 // ═══════════════════════════════════════════════════════════════════════════
 
 {
@@ -276,62 +281,66 @@ function ctx({ wages = 0, pension = 0, nii = 0, ltcg = 0, ss = 0,
   const c1 = computeConversionCost(0, ctx({ wages: 24000, stateCode: 'OH' }));
   near('6.1 OH wages=24k cvt=0: cvtTxSt=0 (below $26,050 threshold)', c1.cvtTxSt, 0);
 
-  // 6.2 OH: conversion straddles threshold — only the $2,950 above $26,050 is taxed.
-  // ohBase=24000; stTiWith=max(0,29000-26050)=2950; cvtTxSt=2950*0.0275=$81.13.
+  // 6.2 OH: a small conversion just over the 0% band: Ohio taxable income
+  // 29,000 - 2,400 = 26,600 → 2.75% x 550 = 15.13, which the $50 senior credit and
+  // the $20 exemption credit cover → cvtTxSt = 0. (Was 81.13 — 2.75% of everything
+  // above $26,050, before the exemption and credits — before 2026-10-25.)
   const c2 = computeConversionCost(5000, ctx({ wages: 24000, stateCode: 'OH' }));
-  near('6.2 OH wages=24k cvt=5k: cvtTxSt≈$81.13 (straddles $26,050, only above portion taxed)', c2.cvtTxSt, 81.13, 0.02);
+  near('6.2 OH wages=24k cvt=5k: cvtTxSt=0 (exemption and credits cover the tax)', c2.cvtTxSt, 0);
+
+  // 6.2b OH: a conversion that straddles the band and ends the $20 credit.
+  // Without: 25,000 - 2,400 = 22,600 → $0. With: 35,000 - 2,400 = 32,600 →
+  // 2.75% x (32,600 - 26,050) = 180.125, less the $50 senior credit (no $20 credit at
+  // $30,000+, no retirement income credit for a conversion) = 130.125.
+  const c2b = computeConversionCost(10000, ctx({ wages: 25000, stateCode: 'OH' }));
+  near('6.2b OH wages=25k cvt=10k: cvtTxSt=130.13 (straddles $26,050; senior credit only)', c2b.cvtTxSt, 130.125, 0.01);
 
   // 6.3 MA: well below $1,107,750 surtax threshold — only flat 5% applies.
   // cvtTxSt = 20000 * 0.05 = 1000.
   const c3 = computeConversionCost(20000, ctx({ wages: 600000, stateCode: 'MA' }));
   near('6.3 MA wages=600k cvt=20k: cvtTxSt=1000 (below surtax threshold, flat 5% only)', c3.cvtTxSt, 1000);
 
-  // 6.4 MA: conversion straddles $1,107,750 surtax threshold.
-  // maBase=1100000; stTiWith=max(0,1120000-1107750)=12250; surtax=12250*0.04=490.
-  // cvtTxSt = 20000*0.05 + 490 = $1490.
+  // 6.4 MA: conversion straddles the $1,107,750 surtax threshold. Taxable income
+  // without = 1,100,000 - 4,400 - 700 = 1,094,900 (under it); with = 1,114,900, so
+  // 7,150 is above it: cvtTxSt = 20,000 x 5% + 7,150 x 4% = 1,286. (Was 1,490 before
+  // 2026-10-25, which left out the exemption.)
   const c4 = computeConversionCost(20000, ctx({ wages: 1100000, stateCode: 'MA' }));
-  near('6.4 MA wages=1.1M cvt=20k: cvtTxSt=1490 (straddles $1,107,750 surtax threshold)', c4.cvtTxSt, 1490);
+  near('6.4 MA wages=1.1M cvt=20k: cvtTxSt=1286 (straddles $1,107,750 surtax threshold)', c4.cvtTxSt, 1286, 0.01);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// GROUP 7: CONNECTICUT iraWeightPct=0.75
+// GROUP 7: CONNECTICUT'S STEPPED PENSION AND IRA SUBTRACTION
 //
-// CT is the only state where IRA distributions (Roth conversions ARE IRA
-// distributions per CT-1040 Pension/Annuity Worksheet) enter the exclusion at
-// 75% weight — pension/annuity gets 100%. This applies at EVERY AGI tier,
-// including the 100% exclusion tier below $75k single.
-//
-// Formula for conversion with no pension:
-//   weighted   = cvt * 0.75
-//   totalEx    = weighted * tier.pct
-//   iraTaxable = cvt - totalEx = cvt * (1 - 0.75 * pct)
-//   cvtTxSt    = iraTaxable * CT.cr   (CT.cr = 0.055)
-//
-// CT single AGI step tiers (agiWith determines the tier):
+// From 2026 the whole IRA distribution counts, like pension income
+// (CGS 12-701(a)(20)(B)(xxviii)(III) and (xxix)(III); it was 75% for 2025), so a
+// conversion comes off at the tier's full percentage. The tier is set by federal AGI
+// including the conversion:
 //   ≤$74,999 → pct=1.00   $75k–$77.5k → pct=0.85   $77.5k–$80k → pct=0.70
 //   $80k–$82.5k → 0.55    $82.5k–$85k → 0.40       $85k–$87.5k → 0.25
 //   $87.5k–$90k → 0.10    $90k–$95k   → 0.05       $95k–$100k  → 0.025
 //   ≥$100,000 → pct=0.00 (fully taxable)
+// What stays is taxed at CT's brackets (single: 2% to $10,000, 4.5% to $50,000, 5.5%
+// to $100,000, 6% to $200,000); at these incomes the personal exemption is gone
+// (above $44,000) and the personal credit is too (over $64,500), except as noted.
 // ═══════════════════════════════════════════════════════════════════════════
 
 {
-  // 7.1 agiWith=$70k → 100% exclusion tier. Despite pct=1.0, the IRA weight means
-  // 25% of the conversion is still taxable. If weight were 1.0 (wrong), cvtTxSt=0.
-  // iraTaxable=10000*(1-0.75*1.0)=2500; cvtTxSt=2500*0.055=$137.50.
+  // 7.1 agiWith=$70k → 100% tier: the whole 10,000 comes off, CT AGI stays 60,000,
+  // cvtTxSt = 0. At the 2025 share, 2,500 would stay in CT AGI (62,500) and cut the
+  // personal credit from 10% to 5%: cvtTxSt = 258.13 — so this case tells them apart.
   const c1 = computeConversionCost(10000, ctx({ wages: 60000, stateCode: 'CT' }));
-  near('7.1 CT wages=60k cvt=10k (agiWith=70k, pct=1.0): cvtTxSt=$137.50 (75% IRA weight at top tier)', c1.cvtTxSt, 137.50, 0.5);
+  near('7.1 CT wages=60k cvt=10k (agiWith=70k, pct=1.0): cvtTxSt=0 (whole conversion counts in 2026)', c1.cvtTxSt, 0);
 
-  // 7.2 agiWith=$110k → 0% exclusion tier, fully taxable (pct=0 → no IRA weight effect).
-  // iraTaxable=10000; cvtTxSt=10000*0.055=$550.
+  // 7.2 agiWith=$110k → 0% tier, fully taxable, and the conversion sits in CT's 6%
+  // bracket (CT AGI 100,000–110,000): cvtTxSt = 10,000 x 6% = 600. (Was 550, a flat
+  // 5.5%, before 2026-10-25.)
   const c2 = computeConversionCost(10000, ctx({ wages: 100000, stateCode: 'CT' }));
-  near('7.2 CT wages=100k cvt=10k (agiWith=110k, pct=0): cvtTxSt=$550 (fully taxable above $100k)', c2.cvtTxSt, 550, 0.5);
+  near('7.2 CT wages=100k cvt=10k (agiWith=110k, pct=0): cvtTxSt=$600 (6% bracket)', c2.cvtTxSt, 600, 0.01);
 
-  // 7.3 agiWith=$77k → 85% exclusion tier. IRA weight applied within the tier.
-  // wages=$74k, cvt=$3k → agiWith=$77,000 (tier: upTo:77499, pct=0.85).
-  // weighted=3000*0.75=2250; totalEx=2250*0.85=1912.50; iraTaxable=3000-1912.50=1087.50.
-  // cvtTxSt=1087.50*0.055=$59.81.
+  // 7.3 agiWith=$77k → 85% tier: 3,000 x 0.85 = 2,550 comes off, 450 stays in CT AGI
+  // (74,450, in the 5.5% bracket): cvtTxSt = 450 x 5.5% = 24.75.
   const c3 = computeConversionCost(3000, ctx({ wages: 74000, stateCode: 'CT' }));
-  near('7.3 CT wages=74k cvt=3k (agiWith=77k, pct=0.85): cvtTxSt≈$59.81 (IRA weight in 85% tier)', c3.cvtTxSt, 59.81, 0.5);
+  near('7.3 CT wages=74k cvt=3k (agiWith=77k, pct=0.85): cvtTxSt=$24.75 (85% tier)', c3.cvtTxSt, 24.75, 0.01);
 }
 
 // ── Done ─────────────────────────────────────────────────────────────────────

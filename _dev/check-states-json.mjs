@@ -16,7 +16,6 @@
 
 import { readFileSync } from 'node:fs';
 import { parseStatesFromHtml } from './parse-states.mjs';
-import { RIX_STATES } from './gen-st-table.mjs';
 
 const htmlPath = new URL('../roth-conversion/index.html', import.meta.url);
 const jsonPath = new URL('../roth-conversion/states.json', import.meta.url);
@@ -148,8 +147,8 @@ for (const code of htmlCodes) {
   }
 
   // G2 — THE INVARIANT: facts.brackets must deep-equal bracketsByStatus.single.
-  // This is the load-bearing guarantee: the Roth tool reads facts.brackets, relocation
-  // reads bracketsByStatus; if they ever diverge, that is a data-integrity bug.
+  // facts.brackets is the human-readable copy; both tools compute from
+  // bracketsByStatus, so the two must never diverge.
   if (bbs && bbs.single) {
     if (JSON.stringify(j.facts.brackets) !== JSON.stringify(bbs.single)) {
       diffs.push(`${code}: facts.brackets != bracketsByStatus.single (invariant broken)`);
@@ -182,34 +181,51 @@ for (const code of htmlCodes) {
   }
 }
 
-// --- 6. RIX/RETDED coverage guard (G5) ---
-// Found live 2026-08-24, twice: a state can have fully correct, verified
-// taxRules.retirementIncome data in states.json and still be SILENTLY unshelterd in the
-// Roth calculator, because RIX_STATES (gen-st-table.mjs) or roth.retDeduction (RETDED)
-// is a hand-maintained allowlist that's easy to forget updating (NY, CO, AR, DE, KY, OK
-// all had this exact gap this session — some missing entirely, some with a wrong capJoint
-// value too). This guard makes that omission a build failure instead of a silent runtime
-// bug: any state whose retirementIncome data implies a REAL, appliable exclusion (a
-// genuine "exclusion" or "offsetStack" treatment, not already self-excluded via
-// excludesIRA:true, whose flat-cr/no-exclusion fallback would be WRONG rather than a
-// coincidentally-correct simplification) must be covered by RETDED, RIX_STATES, or a
-// documented Roth-side dedicated stateCode branch.
+// --- 6. Roth conversion rules vs the state engine (G5) ---
+// Rewritten 2026-10-25 (fix-pack 12). The Roth tool now figures state tax with the
+// Relocation engine from taxRules, so the old guard (every real exclusion had to be on a
+// hand-kept RIX/RETDED allowlist or the Roth tool silently ignored it) is moot: every state
+// goes through the engine. What can still drift is the Roth layer's own conversion rules
+// against the engine's data, so they must agree:
+//  - roth.ex:true means IRA withdrawals are exempt, at least from some age: taxRules must say
+//    exempt or ageExempt (the engine's retirement rate is then 0 where the page says so), and
+//    roth.exMinAge, when set, must equal that age gate.
+//  - roth.ex:false states must not be exempt in taxRules (the page would call a taxed
+//    conversion of exempt income a cost it isn't).
+//  - roth.retDeduction (Michigan) caps, shown in the state breakdown, must equal the
+//    engine's exclusion caps; conversionAgeGate must be a plausible age.
+//  - roth.conversionAsOtherIncome must be true when present.
 for (const code of htmlCodes) {
+  const r = json[code]?.roth;
   const ri = json[code]?.taxRules?.retirementIncome;
-  if (!ri) continue; // taxRules not yet merged for this state — skip, same as G1-G4
-  const needsCoverage = ri.treatment === 'offsetStack'
-    || (ri.treatment === 'exclusion' && ri.exclusion && !ri.exclusion.excludesIRA);
-  if (!needsCoverage) continue;
-  const covered = RIX_STATES.includes(code) || !!json[code]?.roth?.retDeduction;
-  if (!covered) {
-    diffs.push(`${code}: taxRules.retirementIncome implies a real exclusion the Roth calculator would silently apply as $0 (not in RETDED, not in RIX_STATES) — add to one, or add a documented dedicated stateCode branch and extend this guard's exception list`);
+  if (!r || !ri) continue;
+  if (r.ex === true) {
+    if (!['exempt', 'ageExempt'].includes(ri.treatment)) {
+      diffs.push(`${code}: roth.ex is true but taxRules.retirementIncome.treatment is "${ri.treatment}" (need exempt or ageExempt)`);
+    }
+    if (r.exMinAge != null && ri.ageGate !== r.exMinAge) {
+      diffs.push(`${code}: roth.exMinAge ${r.exMinAge} differs from taxRules.retirementIncome.ageGate ${ri.ageGate}`);
+    }
+  } else if (ri.treatment === 'exempt') {
+    diffs.push(`${code}: taxRules exempts retirement income but roth.ex is false`);
+  }
+  if (r.retDeduction) {
+    const rd = r.retDeduction, ex = ri.exclusion;
+    const ok = ri.treatment === 'exclusion' && ex && ex.capSingle === rd.single && ex.capJoint === rd.mfj
+      && rd.mfs === rd.single && rd.hoh === rd.single;
+    if (!ok) diffs.push(`${code}: roth.retDeduction caps ${JSON.stringify(rd)} differ from taxRules.retirementIncome.exclusion caps (${ex?.capSingle} / ${ex?.capJoint})`);
+    if (rd.conversionAgeGate != null && !(rd.conversionAgeGate >= 50 && rd.conversionAgeGate <= 75)) {
+      diffs.push(`${code}: roth.retDeduction.conversionAgeGate ${rd.conversionAgeGate} is not a plausible age`);
+    }
+  }
+  if ('conversionAsOtherIncome' in r && r.conversionAsOtherIncome !== true) {
+    diffs.push(`${code}: roth.conversionAsOtherIncome must be true when present (omit it otherwise)`);
   }
 }
 
 // --- 7. Local-tax shape guard (G6) ---
 // Added 2026-08-25 for NY (NYC/Yonkers), extended 2026-08-25 for OR (Metro/
-// Multnomah). Every state's localTax is hand-authored JSON (unlike the RIX/
-// RETDED tables above, which are derived from taxRules), so a typo here (a gap in
+// Multnomah). Every state's localTax is hand-authored JSON, so a typo here (a gap in
 // the bracket ladder, a missing filing status, an implausible rate) would silently
 // corrupt every affected conversion's tax — catch it at build time instead of live.
 // Moved 2026-08-27 from roth.localTax to a top-level localTax key, shared by both
@@ -297,8 +313,8 @@ const LOCAL_TAX_STATUSES = ['single', 'mfj', 'mfs', 'hoh'];
 
 {
   // MD/IN: a single flat, mandatory county rate (not a bracket ladder) — every
-  // resident pays it, no wizard selector. Both Roth (COUNTYTAX, via
-  // gen-st-table.mjs) and Relocation (computeLocalTax) read this same field.
+  // resident pays it, no wizard selector. Both tools read this same field through the
+  // engine (relocation/relo-engine.mjs).
   for (const code of ['MD', 'IN']) {
     const rate = json[code]?.localTax?.county?.rate;
     if (rate != null && (typeof rate !== 'number' || rate <= 0 || rate >= 1)) {

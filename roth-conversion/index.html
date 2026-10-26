@@ -1046,7 +1046,7 @@
     <div class="field">
       <div class="flr"><label for="retRate">Your Expected <strong>Federal</strong> Rate in Retirement</label><button class="tb" onclick="toggleTip(‘retrate’)">ⓘ</button></div>
       <div class="ipct"><input type="number" id="retRate" value="22" min="0" max="60" oninput="calc()"></div>
-        <div class="ttip" id="tip-retrate"><strong>Federal only — I add your state rate automatically.</strong> Enter your expected federal bracket rate on IRA withdrawals. Select your state above and I’ll fold the state rate in automatically so the comparison is apples-to-apples. Use the estimator below if you are unsure.</div>
+        <div class="ttip" id="tip-retrate"><strong>Federal only — I add your state rate automatically.</strong> Enter your expected federal bracket rate on IRA withdrawals. Select your state above and I’ll add your state’s rate on IRA withdrawals, figured from its own rules at the retirement income in the estimator below, so the comparison is apples-to-apples. Use the estimator if you are unsure.</div>
         <details class="rest">
           <summary>Not sure what rate to enter? Calculate it here ↓</summary>
           <div class="restb">
@@ -1069,7 +1069,7 @@
             <div style="margin-bottom:8px">
               <label for="retWd" style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:3px">Annual IRA / 401(k) withdrawal</label>
               <div id="retWdHint" style="display:none;font-size:.76rem;color:var(--muted);margin-bottom:4px;line-height:1.4"></div>
-              <div class="idollar"><input type="number" id="retWd" value="0" min="0" step="500" oninput="_retWdUserSet=true;updateRetRate()" style="font-size:.93rem"></div>
+              <div class="idollar"><input type="number" id="retWd" value="0" min="0" step="500" oninput="_retWdUserSet=true;updateRetRate();calc()" style="font-size:.93rem"></div>
             </div>
             <div id="retRateResult" style="min-height:1.5rem"></div>
           </div>
@@ -1142,7 +1142,7 @@
 
   <span class="footer-nav">Also on Paths and Proofs: <a href="/social-security-couples/">Social Security: couples</a> · <a href="/relocation/">Relocation tax comparison</a> · <a href="/medicare/">Medicare: Medigap vs Medicare Advantage</a> · <a href="/life-insurance/">Life insurance</a></span>
 
-  <span class="footer-legal">Planning tool only — not tax or financial advice. State tax rates are approximate; your actual rate may vary. Verify locally. Always consult a CPA, tax professional, or financial advisor before converting. <a href="https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill" target="_blank" rel="noopener">IRS 2026 full tax year summary →</a></span>
+  <span class="footer-legal">Planning tool only — not tax or financial advice. State tax is estimated from each state’s own rules; your actual tax may vary. Verify locally. Always consult a CPA, tax professional, or financial advisor before converting. <a href="https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill" target="_blank" rel="noopener">IRS 2026 full tax year summary →</a></span>
 </footer>
 <div class="wayfind-bar" id="wayfindBar" role="note">
   <div class="wayfind-inner">
@@ -1181,6 +1181,10 @@ function computeEstimatedRMD(){
   var tradBal = parseFloat((document.getElementById('tradBal')||{}).value)||0;
   var curAge  = parseInt((document.getElementById('currentAge')||{}).value)||0;
   var g       = (parseFloat((document.getElementById('growthRate')||{}).value)||7)/100;
+  return estimatedRMD(tradBal, curAge, g);
+}
+// The same estimate from values rather than the page's fields (exampleVerdict uses it).
+function estimatedRMD(tradBal, curAge, g){
   if(tradBal<=0||curAge<=0) return null;
   var birthYear    = new Date().getFullYear()-curAge;
   var rmdStartAge  = birthYear>=1960 ? 75 : 73;
@@ -1208,7 +1212,7 @@ function updateRetWdHint(){
     ? 'Estimated current-year RMD: ~'+fmtAmt+' (no-conversion baseline)'
     : 'Estimated first-year RMD at age '+est.rmdStartAge+': ~'+fmtAmt+' (no-conversion baseline)';
   el.innerHTML = _retWdUserSet
-    ? label+' \u2014 <button onclick="_retWdUserSet=false;syncRetFieldsFromMain();updateRetRate()" style="background:none;border:none;color:var(--navy);font-size:inherit;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline">reset to estimate</button>'
+    ? label+' \u2014 <button onclick="_retWdUserSet=false;syncRetFieldsFromMain();calc()" style="background:none;border:none;color:var(--navy);font-size:inherit;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline">reset to estimate</button>'
     : label+' (edit to override)';
   el.style.display = '';
 }
@@ -1265,8 +1269,9 @@ const ITHR={single:[0,109000,137000,171000,205000,500000],mfj:[0,218000,274000,3
 function irmaaT(magi,st){if(st==='mfs')return magi<=109000?0:magi<391000?4:5;const t=st==='mfj'?ITHR.mfj:ITHR.single;let tier=0;for(let i=1;i<t.length;i++)if(i===5?magi>=t[i]:magi>t[i])tier=i;return tier;}
 
 // ═══ STATE TAX DATA ═══
-// {n:name, cr:conversion marginal rate, ex:IRA exempt in retirement, note:retirement treatment}
-// cr = approximate marginal state rate on ordinary income (for conversions added on top of other income)
+// {n:name, cr:reference rate, ex:IRA exempt in retirement, note:retirement treatment}
+// cr = a representative marginal rate, kept as reference data for the notes; since 2026-10-25 the
+//      state and local tax itself comes from the Relocation engine and STRULES below, not from cr
 // ex = true means IRA/401k distributions are generally state-tax-exempt in retirement
 // IMPORTANT: For states where ex=true, converting NOW means paying state tax you'd NEVER pay later
 const ST={
@@ -1275,53 +1280,53 @@ const ST={
   AK: {n:'Alaska',cr:0,ex:true,note:'No state income tax.'},
   AZ: {n:'Arizona',cr:.025,ex:false,note:'Flat 2.5% (one of the lowest in the nation), applied to IRA and conversion income. Social Security is exempt. The flat rate means a conversion is taxed at 2.5% regardless of size, making Arizona one of the cheaper states for a large conversion.'},
   AR: {n:'Arkansas',cr:.037,ex:false,note:'Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000-per-person retirement exemption covers traditional IRA income at 59.5+ (early distributions do not qualify) -- genuinely per-spouse, not a flat joint cap, so a joint return with both spouses 59.5+ shelters $12,000, not $6,000 (this calculator previously applied none of this exclusion at all). Social Security is not taxed by Arkansas.'},
-  CA: {n:'California',cr:.093,ex:false,note:'No retirement income exemption — IRA and Roth-conversion income is taxed as regular income through nine progressive brackets (1% to 12.3%), plus a 1% surcharge on income over $1M (13.3% top). The 9.3% bracket used here covers roughly $73k-$371k single income, where most filers land; your rate may be lower or higher. Social Security is not taxed by California.'},
-  CO: {n:'Colorado',cr:.044,ex:false,note:'Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR\'s own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ (this calculator previously modeled a flat $24,000 at any qualifying age, or applied no cap at all — now fixed to the real age-tiered amounts) — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+, and shares that same $20k/$24k cap with pension/annuity income below that age — but state-level Social Security taxability is out of scope for this calculator specifically (only the federal SS hidden tax zone is modeled here, same as every other state; see the Relocation tool for CO\'s full state-level SS treatment).'},
-  CT: {n:'Connecticut',cr:.055,ex:false,note:'Connecticut shelters a percentage of your actual conversion income, stepping down in ten tiers from a top of $75,000 single / $100,000 joint AGI to $0 by $100,000 single / $150,000 joint AGI, with no age requirement at all (unusual — this applies at any age). Important: a Roth conversion is an IRA distribution, and CT\'s own Pension and Annuity Worksheet only lets 75% of an IRA distribution into the sheltered amount before that percentage applies — pension/annuity income gets 100%, but IRA money never does, even in the top tier. This calculator applies that 75% factor plus the real stepped table. A Roth conversion also raises AGI and can push you into a lower-percentage tier, so a large conversion shelters a smaller share of itself than a small one. Connecticut also taxes Social Security above those same AGI thresholds; whatever isn\'t sheltered is taxed at graduated 2%-6.99% rates (about 5.5% is typical for a mid-size conversion).'},
-  DE: {n:'Delaware',cr:.066,ex:false,note:'Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k lands at the 6.6% used here (totals under $60k pay 5.55% or less). At 60+, a $12,500-per-person exclusion covers combined pension + IRA income -- genuinely per-spouse, so a joint return with both spouses 60+ shelters $25,000, not a flat $12,500 (this calculator previously applied none of this exclusion at all) — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax.'},
+  CA: {n:'California',cr:.093,ex:false,note:'No retirement income exemption — IRA and Roth-conversion income is taxed as regular income through nine progressive brackets (1% to 12.3%), plus a 1% surcharge on income over $1M (13.3% top). The 9.3% bracket covers roughly $73k-$371k single income, where most filers land; this calculator applies every bracket to your own income. Social Security is not taxed by California.'},
+  CO: {n:'Colorado',cr:.044,ex:false,note:'Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR\'s own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ (this calculator previously modeled a flat $24,000 at any qualifying age, or applied no cap at all — now fixed to the real age-tiered amounts) — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+, and shares that same $20k/$24k cap with pension/annuity income below that age; this calculator applies Colorado\'s Social Security rules too, so below 65 a conversion that uses up the cap can leave more of your benefits taxed.'},
+  CT: {n:'Connecticut',cr:.055,ex:false,note:'Connecticut shelters a share of IRA and pension income, including a Roth conversion, set by your federal adjusted gross income (AGI): all of it below $75,000 single / $100,000 joint, then stepping down in nine more tiers to none at $100,000 single / $150,000 joint. There is no age requirement. For 2026 the whole IRA distribution counts (for 2025 only 75% did). A conversion raises your AGI and can drop you into a lower tier, so a large conversion shelters a smaller share of itself than a small one. Connecticut also taxes Social Security above those same AGI thresholds. Whatever isn\'t sheltered is taxed at Connecticut\'s graduated 2% to 6.99% rates, after its personal exemption and personal tax credit.'},
+  DE: {n:'Delaware',cr:.066,ex:false,note:'Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k is taxed at 6.6% (totals under $60k pay 5.55% or less). At 60+, a $12,500-per-person exclusion covers combined pension + IRA income -- genuinely per-spouse, so a joint return with both spouses 60+ shelters $25,000, not a flat $12,500 (this calculator previously applied none of this exclusion at all) — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax.'},
   FL: {n:'Florida',cr:0,ex:true,note:'No state income tax.'},
   GA: {n:'Georgia',cr:.0499,ex:false,note:'Georgia excludes retirement income up to an age-tiered cap — $35,000 per person at 62-64, $65,000 at 65+ — then taxes the rest at its flat 4.99% rate (cut from 5.19% under HB 463, signed May 2026; the 65+ tier itself rises to $70,000 starting TY2027). This calculator applies that cap to your conversion: each spouse\'s own age sets their own tier, summed for a joint return, so how much shelters depends on your age and how much of the cap your other retirement income already uses. Social Security is fully exempt and doesn\'t use up the cap.'},
-  HI: {n:'Hawaii',cr:.076,ex:false,note:'Graduated 1.4% to 11% across twelve brackets; under the schedule for tax years after 2024 the 11% top only applies above $325k single / $650k joint, and Act 46 (2024) widens the brackets again in later years. A typical conversion lands in the 7.6% band ($48k-$125k single, used here). Hawaii fully exempts pensions and Social Security, but traditional IRA and 401(k) income is fully taxable — a Roth conversion is IRA income, so Hawaii taxes it.'},
+  HI: {n:'Hawaii',cr:.076,ex:false,note:'Graduated 1.4% to 11% across twelve brackets; under the schedule for tax years after 2024 the 11% top only applies above $325k single / $650k joint, and Act 46 (2024) widens the brackets again in later years. A typical conversion lands in the 7.6% band ($48k-$125k single). Hawaii fully exempts pensions and Social Security, but traditional IRA and 401(k) income is fully taxable — a Roth conversion is IRA income, so Hawaii taxes it.'},
   ID: {n:'Idaho',cr:.053,ex:false,note:'Flat 5.3% (cut from 5.695% under 2025 reform, retroactive to that year), applied to IRA and conversion income. Social Security is exempt. Being flat, the rate on a conversion does not change with its size.'},
   IL: {n:'Illinois',cr:.0495,ex:true,note:'Illinois exempts qualified retirement income — IRA, 401(k), and pension — from its 4.95% flat tax, and the Department of Revenue treats the taxable portion of a Roth conversion as exempt too (subtracted on Schedule M). No age requirement, no income cap, no cliff — so a conversion is genuinely Illinois-tax-free. Social Security is also exempt.'},
-  IN: {n:'Indiana',cr:.0295,ex:false,note:'Flat 2.95% for 2026 (cut from 3.05%, scheduled to keep falling toward ~2.9% in 2027), applied to IRA and conversion income. Social Security is exempt. Every one of Indiana\'s 92 counties ALSO levies a mandatory local income tax -- not a minor add-on: rates range 0.50% to 3.00% (Indiana DOR Departmental Notice #1, effective Jan. 1, 2026), with a median of ~1.97% across all 92 counties and Marion County (Indianapolis, the state\'s most populous) at 2.02% -- roughly doubling the effective rate for a typical filer. This calculator applies that ~1.97% median county rate explicitly on top of the state rate, the same mandatory-local-tax pattern used for Maryland\'s county tax.'},
+  IN: {n:'Indiana',cr:.0295,ex:false,note:'Flat 2.95% for 2026 (cut from 3.05%, scheduled to keep falling toward ~2.9% in 2027), applied to IRA and conversion income. Social Security is exempt. Every one of Indiana\'s 92 counties ALSO levies a mandatory local income tax -- not a minor add-on: rates range 0.50% to 3.00% (Indiana DOR Departmental Notice #1, effective Jan. 1, 2026), with a median of ~1.97% across all 92 counties and Marion County (Indianapolis, the state\'s most populous) at 2.02% -- roughly doubling the effective rate for a typical filer. This calculator applies that ~1.97% median county rate on top of the state tax, as it does Maryland\'s county tax.'},
   IA: {n:'Iowa',cr:.038,ex:true,note:'Since 2023 Iowa fully exempts retirement income — including Roth conversion income — for residents age 55 and older (no dollar cap), so a conversion at 55+ is Iowa-tax-free. Under 55, the conversion is taxable at Iowa\'s flat 3.8% rate (SF 2442 collapsed the old brackets to a single flat rate for 2025+). Social Security is fully exempt at any age.'},
   KS: {n:'Kansas',cr:.0558,ex:false,note:'Two brackets; the top ~5.58% rate starts at just ~$23k single, so a typical conversion is taxed near that rate. IRA, 401(k), and conversion income is fully taxable (KPERS, federal, and military pensions are exempt, but private retirement accounts are not). Kansas fully exempted Social Security starting in 2024, so a conversion here does not pull benefits into tax.'},
   KY: {n:'Kentucky',cr:.035,ex:false,note:'Flat 3.5% (cut from 4% on Jan 1 2026 via a revenue trigger), applied to IRA and conversion income. Kentucky exempts Social Security and gives a $31,110-per-person retirement exclusion (no age requirement) that this calculator now applies -- genuinely per-spouse, so a joint return with both spouses receiving qualifying income shelters $62,220 (this calculator previously applied none of this exclusion at all). A meaningful conversion can still exceed the cap.'},
   LA: {n:'Louisiana',cr:.03,ex:false,note:'Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a retirement-income exclusion at 65+ — $12,000 per qualifying spouse (CPI-adjusted; exact TY2026 figures pending LDR\'s 2026 IT-540i), summed for a joint return only if BOTH spouses are 65+ (this calculator previously modeled a flat $24,000 for any joint return where just the primary filer was 65+, regardless of the spouse\'s age — now fixed to the real per-person structure) — that this calculator applies before taxing the rest at 3%. This exclusion is for pension/retirement-account income specifically, not wages — already receiving a pension? Enter it in the Pension / Retirement-Account field below. Social Security and most LA government/military pensions are fully exempt.'},
-  ME: {n:'Maine',cr:.0715,ex:false,note:'Graduated 5.8% to 7.15%; the 7.15% top starts near $65k single / $130k joint, so a conversion that brings total income near $100k lands at the 7.15% used here (smaller totals pay 6.75% or less). Important: Maine\'s pension income deduction does NOT apply to Roth conversions — they are specifically excluded — so the conversion is fully taxable with no shelter. Social Security is exempt.'},
-  MD: {n:'Maryland',cr:.0475,ex:false,note:'State 2% to 6.5% (2026 H.B. 352/FY26 budget added new 6.25%/6.5% top brackets over $500k/$1M single); a conversion near $100k lands at the 4.75% state rate used here. Maryland\'s county income tax is MANDATORY for every resident (unlike Michigan\'s opt-in city tax) and applies on top — this calculator adds 3.20%, the median AND modal rate across all 24 Maryland jurisdictions (23 counties + Baltimore City) per the Comptroller\'s 2026 local withholding table, since 12 of the 24 sit at the 3.20% ceiling. Actual county rates range 2.25% (Worcester) to 3.30% (Dorchester, Kent) — check your own county if it\'s not near 3.20%. Important: Maryland\'s pension exclusion (about $36k at 65+) covers 401(k)/403(b)/pension income but EXCLUDES all IRAs, so a Roth conversion gets no shelter and is fully taxable. Social Security is exempt.'},
+  ME: {n:'Maine',cr:.0715,ex:false,note:'Graduated 5.8% to 7.15%; the 7.15% top starts near $65k single / $130k joint, so a conversion that brings total income near $100k is taxed at 7.15% (smaller totals pay 6.75% or less). Important: Maine\'s pension income deduction does NOT apply to Roth conversions — they are specifically excluded — so the conversion is fully taxable with no shelter. Social Security is exempt.'},
+  MD: {n:'Maryland',cr:.0475,ex:false,note:'State 2% to 6.5% (2026 H.B. 352/FY26 budget added new 6.25%/6.5% top brackets over $500k/$1M single); a conversion near $100k is taxed at 4.75% by the state. Maryland\'s county income tax is MANDATORY for every resident (unlike Michigan\'s opt-in city tax) and applies on top — this calculator adds 3.20%, the median AND modal rate across all 24 Maryland jurisdictions (23 counties + Baltimore City) per the Comptroller\'s 2026 local withholding table, since 12 of the 24 sit at the 3.20% ceiling. Actual county rates range 2.25% (Worcester) to 3.30% (Dorchester, Kent) — check your own county if it\'s not near 3.20%. Important: Maryland\'s pension exclusion (about $36k at 65+) covers 401(k)/403(b)/pension income but EXCLUDES all IRAs, so a Roth conversion gets no shelter and is fully taxable. Social Security is exempt.'},
   MA: {n:'Massachusetts',cr:.05,ex:false,note:'Flat 5% on most income including IRA and conversion income, with NO retirement exclusion (Massachusetts taxes IRA/401(k) withdrawals in full). This calculator applies the 4% surtax on income above $1,107,750 (the DOR\'s published, CPI-indexed 2026 threshold) — a very large conversion that pushes that year past the threshold is taxed at 9% on the excess, 5% below it. Social Security is exempt.'},
-  MI: {n:'Michigan',cr:.0425,ex:false,note:'Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint (the same $67,610 single limit applies if you\'re married filing separately), regardless of birth year — wages don\'t count toward this cap. IMPORTANT: a Roth CONVERSION specifically only qualifies for this deduction if you\'re 59.5 or older when it happens (Michigan Treasury\'s own guidance: the rollover distribution qualifies for the subtraction only at that age) — this is a separate, stricter rule than the age-independent one that applies to pension or IRA income you\'re already receiving. Below 59.5, this calculator taxes your conversion in full, with no shelter, even if you have other pension income using the cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly. Detroit and 23 other Michigan cities add their own local income tax on top of the state rate — not modeled here; check your city if you live in one.'},
-  MN: {n:'Minnesota',cr:.068,ex:false,note:'Graduated 5.35% to 9.85%; the 6.8% band runs to about $109k single, so a conversion that brings total income near $100k lands at the 6.8% used here (7.85% applies from ~$109k to ~$203k, 9.85% above). IRA and Roth-conversion income is fully taxable (no broad retirement exclusion). Watch a second effect: a conversion raises your income and can shrink Minnesota\'s Social Security subtraction, pulling more of your benefits into MN tax that year.'},
+  MI: {n:'Michigan',cr:.0425,ex:false,note:'Flat 4.25%. For 2026 the Lowering MI Costs phase-in is complete: retirees can deduct pension and retirement-account income (including IRA withdrawals) up to $67,610 single / $135,220 joint (the same $67,610 single limit applies if you\'re married filing separately), regardless of birth year — wages don\'t count toward this cap. IMPORTANT: a Roth CONVERSION, like any IRA withdrawal, qualifies for this deduction only if you\'re 59.5 or older when it happens (Michigan Treasury: the rollover distribution qualifies for the subtraction only at that age); pension income has no such age rule. Below 59.5, this calculator taxes your conversion like wages, with none of the deduction, even if your pension income leaves room under the cap. Social Security is fully exempt from Michigan tax. Already receiving a pension or other retirement-account income? Enter it in the Pension / Retirement-Account field below so this calculator applies the cap correctly. Detroit and 23 other Michigan cities add their own local income tax on top of the state rate — not modeled here; check your city if you live in one.'},
+  MN: {n:'Minnesota',cr:.068,ex:false,note:'Graduated 5.35% to 9.85%; the 6.8% band runs to about $109k single, so a conversion that brings total income near $100k is taxed at 6.8% (7.85% applies from ~$109k to ~$203k, 9.85% above). IRA and Roth-conversion income is fully taxable (no broad retirement exclusion). Watch a second effect: a conversion raises your income and can shrink Minnesota\'s Social Security subtraction, pulling more of your benefits into MN tax that year (this calculator includes it).'},
   MS: {n:'Mississippi',cr:.04,ex:true,note:'Mississippi exempts qualified retirement income — IRA, 401(k), and pension — once you have met the plan\'s retirement requirements (generally age 59.5). A conversion at 59.5+ is therefore MS-tax-free; an EARLY distribution before then does not qualify and is taxed at the flat rate (4% for 2026, 3.75% for 2027). Social Security is fully exempt.'},
-  MO: {n:'Missouri',cr:.047,ex:false,note:'Graduated 2% to 4.7%, but the 4.7% top rate starts at just ~$9,200 of taxable income, so a conversion is effectively taxed at 4.7% as shown here. Missouri\'s $6,000 private-pension exclusion (RSMo 143.124) no longer has an income ceiling for tax years 2024+ — the old $25k single/$32k joint AGI phase-out was repealed by statute. But whether it actually applies to a Roth conversion is an unresolved statutory question (the exclusion covers IRA distributions but the statute excludes \'Roth IRAs,\' and it\'s unclear if that carve-out reaches a conversion), so it is NOT applied here pending confirmation from MO DOR — this calculator conservatively shows the full conversion as taxable. Social Security is fully exempt (62+).'},
-  MT: {n:'Montana',cr:.0565,ex:false,note:'Two brackets (4.7% / 5.65% for 2026, top rate falling to 5.4% in 2027); the 5.65% rate starts at $47,500 single / $95,000 joint for 2026, and conversion income above that is taxed at 5.65% (used here). IRA and conversion income is taxable; Montana repealed its broader retirement deduction and now allows only a small (~$5,500) qualified-retirement-income deduction. Montana also taxes Social Security on the federal formula, so a conversion can pull more of your benefits into tax. No sales tax.'},
+  MO: {n:'Missouri',cr:.047,ex:false,note:'Graduated 2% to 4.7%, but the 4.7% top rate starts at just ~$9,200 of taxable income, so a conversion is effectively taxed at 4.7%. Missouri\'s $6,000 private-pension exclusion (RSMo 143.124) no longer has an income ceiling for tax years 2024+ — the old $25k single/$32k joint AGI phase-out was repealed by statute. But whether it actually applies to a Roth conversion is an unresolved statutory question (the exclusion covers IRA distributions but the statute excludes \'Roth IRAs,\' and it\'s unclear if that carve-out reaches a conversion), so it is NOT applied here pending confirmation from MO DOR — this calculator conservatively shows the full conversion as taxable. Social Security is fully exempt (62+).'},
+  MT: {n:'Montana',cr:.0565,ex:false,note:'Two brackets (4.7% / 5.65% for 2026, top rate falling to 5.4% in 2027); the 5.65% rate starts at $47,500 single / $95,000 joint for 2026, and conversion income above that is taxed at 5.65%. IRA and conversion income is taxable; Montana repealed its broader retirement deduction and now allows only a small (~$5,500) qualified-retirement-income deduction. Montana also taxes Social Security on the federal formula, so a conversion can pull more of your benefits into tax. No sales tax.'},
   NE: {n:'Nebraska',cr:.0455,ex:false,note:'Top rate is 4.55% for 2026 (down from 5.84%; falling to 3.99% in 2027 under LB 754), and a typical conversion lands at or near that top rate ($100k clears the top-bracket threshold for every filing status). IRA and conversion income is fully taxable with no special exemption. Social Security is fully exempt (since tax year 2024) regardless of income — so unlike some neighbors, a conversion here does not pull more SS into tax.'},
   NV: {n:'Nevada',cr:0,ex:true,note:'No state income tax.'},
   NH: {n:'New Hampshire',cr:0,ex:true,note:'No income tax (interest/dividend tax ended 2025).'},
-  NJ: {n:'New Jersey',cr:.0637,ex:false,note:'New Jersey excludes up to $75,000 single / $100,000 joint of retirement income, including a conversion, for those 62+ — below a $100,000 Total Income threshold (NJ\'s own income line, which excludes Social Security entirely). Between $100,000 and $150,000 the exclusion steps down to a smaller percentage of your actual income rather than disappearing outright; above $150,000 it\'s $0. This calculator applies the real stepped tiers, taxing whatever isn\'t sheltered at rates up to 10.75% (6.37% is typical for a mid-size conversion). Social Security is fully exempt from NJ tax.'},
-  NM: {n:'New Mexico',cr:.049,ex:false,note:'Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands near the 4.9% band used here. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AND HEAD OF HOUSEHOLD AGI (NM\'s own table groups HOH with joint, using the wider thresholds, not single\'s) — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico\'s separate Social Security exemption, not this deduction. This calculator applies the real stepped table for single, joint, and HOH; married-filing-separately has its own third, narrower table ($15,000-$25,500) that isn\'t separately modeled — MFS filers here get the single-bucket figures instead, consistent with how this tool handles MFS elsewhere.'},
-  NY: {n:'New York',cr:.059,ex:false,note:'Graduated 3.9% to 10.9% for 2026 (the 10.9% top only applies above $25M; 5.9% here reflects a typical conversion landing in the ~$80k-$215k band, after the 2026 budget cut the five lowest rates by 0.1 point). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse\'s own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse\'s age, which could silently zero out the shelter or wrongly double it depending on which spouse\'s age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don\'t use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax.'},
+  NJ: {n:'New Jersey',cr:.0637,ex:false,note:'New Jersey excludes up to $75,000 single / $100,000 joint of retirement income, including a conversion, for those 62+ — below a $100,000 Total Income threshold (NJ\'s own income line, which excludes Social Security entirely). Between $100,000 and $150,000 the exclusion steps down to a smaller percentage of your actual income rather than disappearing outright; above $150,000 it\'s $0. This calculator applies the real stepped tiers and taxes whatever isn\'t sheltered at New Jersey\'s graduated rates, up to 10.75%. Social Security is fully exempt from NJ tax.'},
+  NM: {n:'New Mexico',cr:.049,ex:false,note:'Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands in the 4.9% band. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AND HEAD OF HOUSEHOLD AGI (NM\'s own table groups HOH with joint, using the wider thresholds, not single\'s) — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico\'s separate Social Security exemption, not this deduction. This calculator applies the real stepped table for single, joint, and HOH; married-filing-separately has its own third, narrower table ($15,000-$25,500) that isn\'t separately modeled — MFS filers here get the single-bucket figures instead, consistent with how this tool handles MFS elsewhere.'},
+  NY: {n:'New York',cr:.059,ex:false,note:'Graduated 3.9% to 10.9% for 2026 (the 10.9% top only applies above $25M; a typical conversion lands in the 5.9% band, ~$80k-$215k, after the 2026 budget cut the five lowest rates by 0.1 point). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse\'s own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse\'s age, which could silently zero out the shelter or wrongly double it depending on which spouse\'s age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don\'t use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax.'},
   NC: {n:'North Carolina',cr:.0399,ex:false,note:'Flat 3.99% for 2026 (final step of a phasedown; scheduled to keep falling toward 2.99% by 2028), applied to IRA and conversion income. Social Security is exempt. Being flat, the conversion is taxed at the same rate regardless of size.'},
-  ND: {n:'North Dakota',cr:.0195,ex:false,note:'Very low rates topping out at 2.5%, applied to IRA and conversion income — among the lowest state taxes on a conversion anywhere. The 2.5% top starts near $245k, so a conversion that brings total income near $100k lands at the 1.95% used here. Social Security is exempt. North Dakota has a 0% bottom bracket, so part of a small conversion may not be taxed at all.'},
-  OH: {n:'Ohio',cr:.0275,ex:false,note:'For 2026 Ohio uses a flat 2.75% on income above $26,050 (0% below). IRA and Roth-conversion income is taxable at that rate; a small retirement-income credit (up to $200 total) barely offsets a conversion. Social Security is fully exempt from Ohio tax.'},
+  ND: {n:'North Dakota',cr:.0195,ex:false,note:'Very low rates topping out at 2.5%, applied to IRA and conversion income — among the lowest state taxes on a conversion anywhere. The 2.5% top starts near $245k, so a conversion that brings total income near $100k is taxed at 1.95%. Social Security is exempt. North Dakota has a 0% bottom bracket, so part of a small conversion may not be taxed at all.'},
+  OH: {n:'Ohio',cr:.0275,ex:false,note:'For 2026 Ohio uses a flat 2.75% on income above $26,050 (0% below). IRA and Roth-conversion income is taxable at that rate; Ohio\'s small retirement-income credit (up to $200) counts only distributions received on account of retirement, so not a conversion. Social Security is fully exempt from Ohio tax.'},
   OK: {n:'Oklahoma',cr:.0475,ex:false,note:'Oklahoma taxes traditional IRA and 401(k) conversion income; the top rate for tax year 2025 (the latest year with a complete published bracket table) is 4.75%, reached at low income, so a conversion is effectively taxed at 4.75%. A 2025 law, House Bill 2764, cuts the top rate to 4.5% and moves to three brackets beginning tax year 2026, but the full 2026 bracket amounts are not yet published, so this tool uses the confirmed 2025 schedule. The $10,000-per-person retirement-income exclusion (age 65+) does include IRA income -- genuinely per-spouse, so a joint return with both spouses 65+ shelters $20,000, not a flat $10,000 (this calculator previously applied none of this exclusion at all) -- leaving the rest taxable. Social Security is fully exempt.'},
   OR: {n:'Oregon',cr:.0875,ex:false,note:'Graduated 4.75% to 9.9%; the 8.75% bracket runs up to $125,000, so most conversion income lands there (9.9% applies above that). IRA and Roth-conversion income is fully taxable, and the retirement-income credit is limited to low household income, so it rarely helps with a conversion. Social Security is fully exempt; Oregon has no sales tax. Portland-area residents owe real, material local income taxes on top of this -- this calculator now models both explicitly if you select your locality below: Metro\'s Supportive Housing Services tax (a flat 1% above $125,000 single / $200,000 joint Oregon taxable income, covering Multnomah, Washington, and Clackamas counties), and Multnomah County\'s Preschool For All tax on top of that for Multnomah residents specifically (1.5% above the same thresholds, an additional 1.5% -- 3% total -- above $250,000 single / $400,000 joint) -- together up to 4% for a Multnomah County filer, larger than New York City\'s rate.'},
   PA: {n:'Pennsylvania',cr:.0307,ex:true,note:'Pennsylvania does not tax a Roth conversion at ANY age. A full trustee-to-trustee (or timely 60-day) conversion is a transfer into another \'eligible Pennsylvania retirement plan\' — Roth IRAs qualify — not a taxable distribution, per the PA DOR\'s own Personal Income Tax Guide. This is different from an ORDINARY IRA withdrawal you spend, which PA taxes before age 59.5 under its cost-recovery method — the age-59.5 rule commonly associated with PA retirement income applies to that case, not to a conversion. Caveat: if part of the distribution is withheld (e.g. for federal taxes) rather than fully converted, that withheld portion IS taxable — this calculator assumes a full conversion with no withholding leakage, which is the standard case. Social Security is fully exempt.'},
-  RI: {n:'Rhode Island',cr:.0475,ex:false,note:'Three brackets (3.75% / 4.75% / 5.99%); 5.99% only starts near $176k, so a typical conversion lands in the 4.75% band used here. Important: Rhode Island\'s up-to-$50,000 retirement-income modification covers 401(k)/403(b)/pension/annuity income but specifically EXCLUDES all IRAs — so a Roth conversion gets no shelter and is fully taxable. Rhode Island also taxes Social Security above $107,000 single / $133,500 joint federal AGI, a threshold a conversion can cross (both this and the pension modification above also require reaching Social Security full retirement age, not just staying under the AGI limit).'},
+  RI: {n:'Rhode Island',cr:.0475,ex:false,note:'Three brackets (3.75% / 4.75% / 5.99%); 5.99% only starts near $176k, so a typical conversion lands in the 4.75% band. Important: Rhode Island\'s up-to-$50,000 retirement-income modification covers 401(k)/403(b)/pension/annuity income but specifically EXCLUDES all IRAs — so a Roth conversion gets no shelter and is fully taxable. Rhode Island also taxes Social Security above $107,000 single / $133,500 joint federal AGI, a threshold a conversion can cross (both this and the pension modification above also require reaching Social Security full retirement age, not just staying under the AGI limit).'},
   SC: {n:'South Carolina',cr:.0521,ex:false,note:'Two-bracket system for 2026 under H.4216 (signed March 2026): 1.99% on the first $30,000, then 5.21% above. The retirement deduction covers traditional IRA and conversion income, but it\'s really two deductions sharing one $15,000-per-person ceiling: under 65 you get up to $3,000, rising to the full $15,000 at 65+. This calculator applies the age-appropriate ceiling, so post-65 is a meaningfully more favorable conversion window here. Social Security is fully exempt. (Note: qualified Roth distributions are already federally excluded and carry over, but a Roth conversion is taxable income.)'},
   SD: {n:'South Dakota',cr:0,ex:true,note:'No state income tax.'},
   TN: {n:'Tennessee',cr:0,ex:true,note:'No income tax.'},
   TX: {n:'Texas',cr:0,ex:true,note:'No state income tax.'},
-  UT: {n:'Utah',cr:.0445,ex:false,note:'Flat 4.45% for 2026 (cut from 4.5%), applied to IRA and conversion income. Utah is one of the few states that taxes Social Security, though a phased credit offsets it for lower incomes; the flat structure means a conversion is taxed at the same rate at any size. A small retirement credit applies but phases out as income rises.'},
-  VT: {n:'Vermont',cr:.066,ex:false,note:'Graduated 3.35% to 8.75%; the 8.75% top only starts above $249,700 single / $304,000 joint, so a typical conversion lands in the 6.6% band used here. IRA and Roth-conversion income is fully taxable (only a small $10k deduction for certain pension/government retirement income, income-limited). A conversion can also push you past Vermont\'s Social Security exemption thresholds, taxing more of your benefits that year.'},
+  UT: {n:'Utah',cr:.0445,ex:false,note:'Flat 4.45% for 2026 (cut from 4.5%), applied to IRA and conversion income. Utah is one of the few states that taxes Social Security, though a credit offsets it for lower incomes; that credit and Utah\'s taxpayer credit both phase out as income rises, so a conversion can cost more than 4.45% of itself (this calculator applies both).'},
+  VT: {n:'Vermont',cr:.066,ex:false,note:'Graduated 3.35% to 8.75%; the 8.75% top only starts above $249,700 single / $304,000 joint, so a typical conversion lands in the 6.6% band. IRA and Roth-conversion income is fully taxable (only a small $10k deduction for certain pension/government retirement income, income-limited). A conversion can also push you past Vermont\'s Social Security exemption thresholds, taxing more of your benefits that year.'},
   VA: {n:'Virginia',cr:.0575,ex:false,note:'Top rate 5.75% starts at just $17,000, so essentially all conversion income is taxed at 5.75%. IRA and Roth-conversion income is taxable. Those 65+ get a $12,000 age deduction, but it phases out dollar-for-dollar above $50,000 single / $75,000 joint AGI — and a conversion raises your AGI, so a large one can erase the deduction. Social Security is fully exempt.'},
   WA: {n:'Washington',cr:0,ex:true,note:'No income tax, so IRA and Roth-conversion income is untaxed (the 7% capital-gains tax exempts retirement accounts). One thing to watch: a new state income tax of 9.9% on household income above $1 million takes effect in 2028 and counts conversion income toward that threshold — so only a very large conversion in 2028 or later could be affected. Social Security is exempt.'},
   WV: {n:'West Virginia',cr:.0458,ex:false,note:'Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable. Seniors 65+ get an $8,000 modification, summed from each spouse\'s own age -- $16,000 only if BOTH spouses are 65+ (this calculator previously applied that $16,000 regardless of the spouse\'s own age -- now fixed), but it shares one pool with your Social Security benefit and other pension exclusions (W. Va. Code section 11-21-12(c)(9)) — if your Social Security alone exceeds your share of the cap, which it does for most retirees already claiming it, there\'s little or nothing left to shelter IRA or conversion income. This calculator nets your Social Security benefit against the cap automatically, so it\'s fullest for those who haven\'t started claiming Social Security yet.'},
-  WI: {n:'Wisconsin',cr:.053,ex:false,note:'Graduated 3.5% to 7.65%; the 7.65% top only starts above $332,720 single / $443,630 joint, so a typical conversion lands in the 5.3% band used here ($51,950-$332,720 single). A 2025 law (Act 15) lets those 67+ subtract up to $24,000 of retirement income, including a conversion — but the $48,000 joint figure only applies if BOTH spouses are 67+; if only one is, the household gets $24,000, not a flat doubling. This calculator applies that per-spouse rule. One thing to weigh: claiming this subtraction forfeits every other Wisconsin tax credit for that year. Social Security is fully exempt.'},
+  WI: {n:'Wisconsin',cr:.053,ex:false,note:'Graduated 3.5% to 7.65%; the 7.65% top only starts above $332,720 single / $443,630 joint, so a typical conversion lands in the 5.3% band ($51,950-$332,720 single). A 2025 law (Act 15) lets those 67+ subtract up to $24,000 of retirement income, including a conversion — but the $48,000 joint figure only applies if BOTH spouses are 67+; if only one is, the household gets $24,000, not a flat doubling. This calculator applies that per-spouse rule. One thing to weigh: claiming this subtraction forfeits every other Wisconsin tax credit for that year. Social Security is fully exempt.'},
   WY: {n:'Wyoming',cr:0,ex:true,note:'No state income tax.'},
-  DC: {n:'Washington D.C.',cr:.085,ex:false,note:'Graduated 4% to 10.75%; the 10.75% top only applies above $1M, while the 8.5% band covers roughly $60k-$250k where most conversion income lands (used here). IRA, 401(k), and Roth-conversion income is fully taxable; there is no retirement-income exclusion. Social Security is exempt.'},
+  DC: {n:'Washington D.C.',cr:.085,ex:false,note:'Graduated 4% to 10.75%; the 10.75% top only applies above $1M, while the 8.5% band covers roughly $60k-$250k, where most conversion income lands. IRA, 401(k), and Roth-conversion income is fully taxable; there is no retirement-income exclusion. Social Security is exempt.'},
 };
 
 // RETDED: sparse per-state retirement-income deduction caps. Generated from
@@ -1340,56 +1345,69 @@ const EXAGE={
   MS: 59.5,
 };
 
-// RIX: sparse table for states whose retirement-income deduction needs a richer shape
-// than RETDED's single flat cap (age-tiered caps, stepped tables by AGI, per-spouse
-// phase-outs, offset-stacked deductions) — the same mechanics built for the relocation
-// tool's relo-engine.mjs, generated from the SAME canonical states.json taxRules data by
-// _dev/gen-st-table.mjs. Deliberately excludes Michigan (already covered by RETDED).
-// West Virginia's Social-Security-netting question is resolved and included below
-// (see WV's netAgainstSS).
-const RIX={
-  GA: {"retirementIncome":{"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":62,"cap":35000},{"minAge":65,"cap":65000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  LA: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":12000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  SC: {"retirementIncome":{"treatment":"offsetStack","ageGate":null,"exclusion":null,"offsetStack":{"tier1AgeGate":65,"tier1CapBelow":3000,"tier1CapAtOrAbove":10000,"tier2AgeGate":65,"tier2Ceiling":15000}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  VA: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"perSpousePhaseout","ageGate":65,"perPersonCap":12000,"thresholdAGI":{"single":50000,"joint":75000},"thresholdExcludesSS":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  WI: {"retirementIncome":{"treatment":"exclusion","ageGate":67,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":67,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  NM: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedAmount","ageGate":65,"perQualifyingSpouse":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"hohMapsToJoint":true,"steps":{"single":[{"upTo":18000,"amt":8000},{"upTo":19500,"amt":7000},{"upTo":21000,"amt":6000},{"upTo":22500,"amt":5000},{"upTo":24000,"amt":4000},{"upTo":25500,"amt":3000},{"upTo":27000,"amt":2000},{"upTo":28500,"amt":1000},{"upTo":null,"amt":0}],"joint":[{"upTo":30000,"amt":8000},{"upTo":33000,"amt":7000},{"upTo":36000,"amt":6000},{"upTo":39000,"amt":5000},{"upTo":42000,"amt":4000},{"upTo":45000,"amt":3000},{"upTo":48000,"amt":2000},{"upTo":51000,"amt":1000},{"upTo":null,"amt":0}]}}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":100000,"joint":150000},"maxTaxableFraction":0.85,"hohMapsToJoint":true}},
-  CT: {"retirementIncome":{"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":{"single":75000,"joint":100000},"zeroByAGI":{"single":100000,"joint":150000},"excludesIRA":false,"iraWeightPct":0.75,"steps":{"single":[{"upTo":74999,"pct":1},{"upTo":77499,"pct":0.85},{"upTo":79999,"pct":0.7},{"upTo":82499,"pct":0.55},{"upTo":84999,"pct":0.4},{"upTo":87499,"pct":0.25},{"upTo":89999,"pct":0.1},{"upTo":94999,"pct":0.05},{"upTo":99999,"pct":0.025},{"upTo":null,"pct":0}],"joint":[{"upTo":99999,"pct":1},{"upTo":104999,"pct":0.85},{"upTo":109999,"pct":0.7},{"upTo":114999,"pct":0.55},{"upTo":119999,"pct":0.4},{"upTo":124999,"pct":0.25},{"upTo":129999,"pct":0.1},{"upTo":139999,"pct":0.05},{"upTo":149999,"pct":0.025},{"upTo":null,"pct":0}]}}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":75000,"joint":100000},"hohMapsToJoint":true,"maxTaxableFraction":0.25}},
-  NJ: {"retirementIncome":{"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":75000,"capJoint":100000,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"thresholdExcludesSS":true,"steps":{"single":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.375},{"upTo":150000,"pct":0.1875},{"upTo":null,"pct":0}],"joint":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.5},{"upTo":150000,"pct":0.25},{"upTo":null,"pct":0}]}}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  WV: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":8000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"netAgainstSS":true}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  NY: {"retirementIncome":{"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":59.5,"cap":20000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"socialSecurity":{"taxed":false}},
-  CO: {"retirementIncome":{"treatment":"exclusion","ageGate":55,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":55,"cap":20000},{"minAge":65,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"sharesCapWithSS":true}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":true,"sharesRetirementCap":true,"fullExemptBelowAGI":{"single":75000,"joint":95000}}},
-  AR: {"retirementIncome":{"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":59.5,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  DE: {"retirementIncome":{"treatment":"exclusion","ageGate":60,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":60,"cap":12500}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  KY: {"retirementIncome":{"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":0,"cap":31110}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  OK: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":10000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"socialSecurity":{"taxed":false}},
-  AL: {"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"socialSecurity":{"taxed":false}},
+// CVTOTHER: states where a Roth conversion counts as other ordinary income rather than an
+// IRA withdrawal (see conversionKind). Generated from states.json roth.conversionAsOtherIncome
+// by _dev/gen-st-table.mjs.
+const CVTOTHER={
+  OH: true,
 };
 
-// NYCTAX: New York City's and Yonkers' local income tax (see states.json
-// _schema.fields["localTax"]). NY-only, generated from states.json's top-level
-// localTax by _dev/gen-st-table.mjs -- do not hand-edit.
-const NYCTAX={
-  nyc: {"single":[{"rate":0.03078,"upTo":12000},{"rate":0.03762,"upTo":25000},{"rate":0.03819,"upTo":50000},{"rate":0.03876,"upTo":null}],"mfj":[{"rate":0.03078,"upTo":21600},{"rate":0.03762,"upTo":45000},{"rate":0.03819,"upTo":90000},{"rate":0.03876,"upTo":null}],"mfs":[{"rate":0.03078,"upTo":12000},{"rate":0.03762,"upTo":25000},{"rate":0.03819,"upTo":50000},{"rate":0.03876,"upTo":null}],"hoh":[{"rate":0.03078,"upTo":14400},{"rate":0.03762,"upTo":30000},{"rate":0.03819,"upTo":60000},{"rate":0.03876,"upTo":null}]},
-  yonkersRate: .1675,
-};
-
-// ORTAX: Portland Metro's Supportive Housing Services tax and Multnomah County's
-// Preschool For All tax (see states.json _schema.fields["localTax"]).
-// OR-only, generated from states.json's top-level localTax by _dev/gen-st-table.mjs --
-// do not hand-edit.
-const ORTAX={
-  metro: {"single":[{"rate":0,"upTo":125000},{"rate":0.01,"upTo":null}],"mfj":[{"rate":0,"upTo":200000},{"rate":0.01,"upTo":null}],"mfs":[{"rate":0,"upTo":125000},{"rate":0.01,"upTo":null}],"hoh":[{"rate":0,"upTo":200000},{"rate":0.01,"upTo":null}]},
-  multnomah: {"single":[{"rate":0,"upTo":125000},{"rate":0.015,"upTo":250000},{"rate":0.03,"upTo":null}],"mfj":[{"rate":0,"upTo":200000},{"rate":0.015,"upTo":400000},{"rate":0.03,"upTo":null}],"mfs":[{"rate":0,"upTo":125000},{"rate":0.015,"upTo":250000},{"rate":0.03,"upTo":null}],"hoh":[{"rate":0,"upTo":200000},{"rate":0.015,"upTo":400000},{"rate":0.03,"upTo":null}]},
-};
-
-// COUNTYTAX: Maryland's and Indiana's mandatory, unconditional county income tax
-// (see states.json _schema.fields["localTax"]). A single flat rate per state, not a
-// bracket ladder -- every resident pays it, no wizard selector. Generated from
-// states.json's top-level localTax by _dev/gen-st-table.mjs -- do not hand-edit.
-const COUNTYTAX={
-  MD: .032,
-  IN: .0197,
+// STRULES: every state's full taxRules and localTax, the data the Relocation tool's
+// engine (relocation/relo-engine.mjs) reads. computeConversionCost() figures the state and
+// local tax on a conversion with that engine (see stateTaxFor below). Generated from
+// states.json by _dev/gen-st-table.mjs -- do not hand-edit.
+const STRULES={
+  AL: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.02,"upTo":500},{"rate":0.04,"upTo":3000},{"rate":0.05,"upTo":null}],"mfj":[{"rate":0.02,"upTo":1000},{"rate":0.04,"upTo":6000},{"rate":0.05,"upTo":null}],"mfs":[{"rate":0.02,"upTo":500},{"rate":0.04,"upTo":3000},{"rate":0.05,"upTo":null}],"hoh":[{"rate":0.02,"upTo":500},{"rate":0.04,"upTo":3000},{"rate":0.05,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":3000,"mfj":8500,"mfs":4250,"hoh":5200},"phaseOut":{"type":"steps","basis":"stateAGI","start":{"single":25999,"mfj":25999,"mfs":12999,"hoh":25999},"step":{"single":500,"mfj":500,"mfs":250,"hoh":500},"perStep":{"single":25,"mfj":175,"mfs":88,"hoh":135},"floor":{"single":2500,"mfj":5000,"mfs":2500,"hoh":2500}},"exemption":{"perPerson":1500,"hohExtra":1500},"federalTaxDeduction":{"includesNIIT":true}}}},
+  AK: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":null}],"mfj":[{"rate":0,"upTo":null}],"mfs":[{"rate":0,"upTo":null}],"hoh":[{"rate":0,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"}}},
+  AZ: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.025,"upTo":null}],"mfj":[{"rate":0.025,"upTo":null}],"mfs":[{"rate":0.025,"upTo":null}],"hoh":[{"rate":0.025,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"excludedPct","exclusionPct":0.25,"minDeduction":null,"maxGainEligible":null,"sourceRestricted":false},"standardDeduction":{"deduction":{"single":15750,"mfj":31500,"mfs":15750,"hoh":23625},"age65AddOn":{"unmarried":2100,"married":2100}}}},
+  AR: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":5599},{"rate":0.02,"upTo":11199},{"rate":0.03,"upTo":15999},{"rate":0.034,"upTo":26399},{"rate":0.037,"upTo":null}],"mfj":[{"rate":0,"upTo":5599},{"rate":0.02,"upTo":11199},{"rate":0.03,"upTo":15999},{"rate":0.034,"upTo":26399},{"rate":0.037,"upTo":null}],"mfs":[{"rate":0,"upTo":5599},{"rate":0.02,"upTo":11199},{"rate":0.03,"upTo":15999},{"rate":0.034,"upTo":26399},{"rate":0.037,"upTo":null}],"hoh":[{"rate":0,"upTo":5599},{"rate":0.02,"upTo":11199},{"rate":0.03,"upTo":15999},{"rate":0.034,"upTo":26399},{"rate":0.037,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":59.5,"cap":6000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"excludedPct","exclusionPct":0.5,"minDeduction":null,"maxGainEligible":null,"sourceRestricted":false},"standardDeduction":{"deduction":{"single":2470,"mfj":4940,"mfs":2470,"hoh":2470},"exemptionCredit":{"perFiler":29,"hohExtra":29,"ageBonus":{"age":65,"amount":29}}}}},
+  CA: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.01,"upTo":11079},{"rate":0.02,"upTo":26264},{"rate":0.04,"upTo":41452},{"rate":0.06,"upTo":57542},{"rate":0.08,"upTo":72724},{"rate":0.093,"upTo":371479},{"rate":0.103,"upTo":445771},{"rate":0.113,"upTo":742953},{"rate":0.123,"upTo":1000000},{"rate":0.133,"upTo":null}],"mfj":[{"rate":0.01,"upTo":22158},{"rate":0.02,"upTo":52528},{"rate":0.04,"upTo":82904},{"rate":0.06,"upTo":115084},{"rate":0.08,"upTo":145448},{"rate":0.093,"upTo":742958},{"rate":0.103,"upTo":891542},{"rate":0.113,"upTo":1000000},{"rate":0.123,"upTo":1485906},{"rate":0.133,"upTo":null}],"mfs":[{"rate":0.01,"upTo":11079},{"rate":0.02,"upTo":26264},{"rate":0.04,"upTo":41452},{"rate":0.06,"upTo":57542},{"rate":0.08,"upTo":72724},{"rate":0.093,"upTo":371479},{"rate":0.103,"upTo":445771},{"rate":0.113,"upTo":742953},{"rate":0.123,"upTo":1000000},{"rate":0.133,"upTo":null}],"hoh":[{"rate":0.01,"upTo":22173},{"rate":0.02,"upTo":52530},{"rate":0.04,"upTo":67716},{"rate":0.06,"upTo":83805},{"rate":0.08,"upTo":98990},{"rate":0.093,"upTo":505208},{"rate":0.103,"upTo":606251},{"rate":0.113,"upTo":1000000},{"rate":0.123,"upTo":1010417},{"rate":0.133,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":5706,"mfj":11412,"mfs":5706,"hoh":11412},"exemptionCredit":{"perFiler":153,"ageBonus":{"age":65,"amount":153}}}}},
+  CO: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.044,"upTo":null}],"mfj":[{"rate":0.044,"upTo":null}],"mfs":[{"rate":0.044,"upTo":null}],"hoh":[{"rate":0.044,"upTo":null}]},"socialSecurity":{"taxed":true,"sharesRetirementCap":true,"fullExemptBelowAGI":{"single":75000,"joint":95000}},"retirementIncome":{"treatment":"exclusion","ageGate":55,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":55,"cap":20000},{"minAge":65,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"sharesCapWithSS":true}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":15750,"mfj":31500,"mfs":15750,"hoh":23625},"age65AddOn":{"unmarried":2000,"married":1600},"federalSeniorDeduction":true}}},
+  CT: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.02,"upTo":10000},{"rate":0.045,"upTo":50000},{"rate":0.055,"upTo":100000},{"rate":0.06,"upTo":200000},{"rate":0.065,"upTo":250000},{"rate":0.069,"upTo":500000},{"rate":0.0699,"upTo":null}],"mfj":[{"rate":0.02,"upTo":20000},{"rate":0.045,"upTo":100000},{"rate":0.055,"upTo":200000},{"rate":0.06,"upTo":400000},{"rate":0.065,"upTo":500000},{"rate":0.069,"upTo":1000000},{"rate":0.0699,"upTo":null}],"mfs":[{"rate":0.02,"upTo":10000},{"rate":0.045,"upTo":50000},{"rate":0.055,"upTo":100000},{"rate":0.06,"upTo":200000},{"rate":0.065,"upTo":250000},{"rate":0.069,"upTo":500000},{"rate":0.0699,"upTo":null}],"hoh":[{"rate":0.02,"upTo":16000},{"rate":0.045,"upTo":80000},{"rate":0.055,"upTo":160000},{"rate":0.06,"upTo":320000},{"rate":0.065,"upTo":400000},{"rate":0.069,"upTo":800000},{"rate":0.0699,"upTo":null}]},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":75000,"joint":100000},"hohMapsToJoint":true,"maxTaxableFraction":0.25},"retirementIncome":{"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":{"single":75000,"joint":100000},"zeroByAGI":{"single":100000,"joint":150000},"excludesIRA":false,"steps":{"single":[{"upTo":74999,"pct":1},{"upTo":77499,"pct":0.85},{"upTo":79999,"pct":0.7},{"upTo":82499,"pct":0.55},{"upTo":84999,"pct":0.4},{"upTo":87499,"pct":0.25},{"upTo":89999,"pct":0.1},{"upTo":94999,"pct":0.05},{"upTo":99999,"pct":0.025},{"upTo":null,"pct":0}],"joint":[{"upTo":99999,"pct":1},{"upTo":104999,"pct":0.85},{"upTo":109999,"pct":0.7},{"upTo":114999,"pct":0.55},{"upTo":119999,"pct":0.4},{"upTo":124999,"pct":0.25},{"upTo":129999,"pct":0.1},{"upTo":139999,"pct":0.05},{"upTo":149999,"pct":0.025},{"upTo":null,"pct":0}]}}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":15000,"mfj":24000,"mfs":12000,"hoh":19000},"phaseOut":{"type":"steps","basis":"stateAGI","start":{"single":30000,"mfj":48000,"mfs":24000,"hoh":38000},"step":{"single":1000,"mfj":1000,"mfs":1000,"hoh":1000},"perStep":{"single":1000,"mfj":1000,"mfs":1000,"hoh":1000}},"credits":[{"type":"percentOfTax","basis":"stateAGI","bands":{"single":[{"over":15000,"rate":0.75},{"over":18800,"rate":0.7},{"over":19300,"rate":0.65},{"over":19800,"rate":0.6},{"over":20300,"rate":0.55},{"over":20800,"rate":0.5},{"over":21300,"rate":0.45},{"over":21800,"rate":0.4},{"over":22300,"rate":0.35},{"over":25000,"rate":0.3},{"over":25500,"rate":0.25},{"over":26000,"rate":0.2},{"over":26500,"rate":0.15},{"over":31300,"rate":0.14},{"over":31800,"rate":0.13},{"over":32300,"rate":0.12},{"over":32800,"rate":0.11},{"over":33300,"rate":0.1},{"over":60000,"rate":0.09},{"over":60500,"rate":0.08},{"over":61000,"rate":0.07},{"over":61500,"rate":0.06},{"over":62000,"rate":0.05},{"over":62500,"rate":0.04},{"over":63000,"rate":0.03},{"over":63500,"rate":0.02},{"over":64000,"rate":0.01},{"over":64500,"rate":0}],"mfj":[{"over":24000,"rate":0.75},{"over":30000,"rate":0.7},{"over":30500,"rate":0.65},{"over":31000,"rate":0.6},{"over":31500,"rate":0.55},{"over":32000,"rate":0.5},{"over":32500,"rate":0.45},{"over":33000,"rate":0.4},{"over":33500,"rate":0.35},{"over":40000,"rate":0.3},{"over":40500,"rate":0.25},{"over":41000,"rate":0.2},{"over":41500,"rate":0.15},{"over":50000,"rate":0.14},{"over":50500,"rate":0.13},{"over":51000,"rate":0.12},{"over":51500,"rate":0.11},{"over":52000,"rate":0.1},{"over":96000,"rate":0.09},{"over":96500,"rate":0.08},{"over":97000,"rate":0.07},{"over":97500,"rate":0.06},{"over":98000,"rate":0.05},{"over":98500,"rate":0.04},{"over":99000,"rate":0.03},{"over":99500,"rate":0.02},{"over":100000,"rate":0.01},{"over":100500,"rate":0}],"mfs":[{"over":12000,"rate":0.75},{"over":15000,"rate":0.7},{"over":15500,"rate":0.65},{"over":16000,"rate":0.6},{"over":16500,"rate":0.55},{"over":17000,"rate":0.5},{"over":17500,"rate":0.45},{"over":18000,"rate":0.4},{"over":18500,"rate":0.35},{"over":20000,"rate":0.3},{"over":20500,"rate":0.25},{"over":21000,"rate":0.2},{"over":21500,"rate":0.15},{"over":25000,"rate":0.14},{"over":25500,"rate":0.13},{"over":26000,"rate":0.12},{"over":26500,"rate":0.11},{"over":27000,"rate":0.1},{"over":48000,"rate":0.09},{"over":48500,"rate":0.08},{"over":49000,"rate":0.07},{"over":49500,"rate":0.06},{"over":50000,"rate":0.05},{"over":50500,"rate":0.04},{"over":51000,"rate":0.03},{"over":51500,"rate":0.02},{"over":52000,"rate":0.01},{"over":52500,"rate":0}],"hoh":[{"over":19000,"rate":0.75},{"over":24000,"rate":0.7},{"over":24500,"rate":0.65},{"over":25000,"rate":0.6},{"over":25500,"rate":0.55},{"over":26000,"rate":0.5},{"over":26500,"rate":0.45},{"over":27000,"rate":0.4},{"over":27500,"rate":0.35},{"over":34000,"rate":0.3},{"over":34500,"rate":0.25},{"over":35000,"rate":0.2},{"over":35500,"rate":0.15},{"over":44000,"rate":0.14},{"over":44500,"rate":0.13},{"over":45000,"rate":0.12},{"over":45500,"rate":0.11},{"over":46000,"rate":0.1},{"over":74000,"rate":0.09},{"over":74500,"rate":0.08},{"over":75000,"rate":0.07},{"over":75500,"rate":0.06},{"over":76000,"rate":0.05},{"over":76500,"rate":0.04},{"over":77000,"rate":0.03},{"over":77500,"rate":0.02},{"over":78000,"rate":0.01},{"over":78500,"rate":0}]}}]}}},
+  DE: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":2000},{"rate":0.022,"upTo":5000},{"rate":0.039,"upTo":10000},{"rate":0.048,"upTo":20000},{"rate":0.052,"upTo":25000},{"rate":0.0555,"upTo":60000},{"rate":0.066,"upTo":null}],"mfj":[{"rate":0,"upTo":2000},{"rate":0.022,"upTo":5000},{"rate":0.039,"upTo":10000},{"rate":0.048,"upTo":20000},{"rate":0.052,"upTo":25000},{"rate":0.0555,"upTo":60000},{"rate":0.066,"upTo":null}],"mfs":[{"rate":0,"upTo":2000},{"rate":0.022,"upTo":5000},{"rate":0.039,"upTo":10000},{"rate":0.048,"upTo":20000},{"rate":0.052,"upTo":25000},{"rate":0.0555,"upTo":60000},{"rate":0.066,"upTo":null}],"hoh":[{"rate":0,"upTo":2000},{"rate":0.022,"upTo":5000},{"rate":0.039,"upTo":10000},{"rate":0.048,"upTo":20000},{"rate":0.052,"upTo":25000},{"rate":0.0555,"upTo":60000},{"rate":0.066,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":60,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":60,"cap":12500}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":3250,"mfj":6500,"mfs":3250,"hoh":3250},"age65AddOn":{"unmarried":2500,"married":2500},"exemptionCredit":{"perFiler":110,"ageBonus":{"age":60,"amount":110}}}}},
+  FL: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":null}],"mfj":[{"rate":0,"upTo":null}],"mfs":[{"rate":0,"upTo":null}],"hoh":[{"rate":0,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"}}},
+  GA: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0499,"upTo":null}],"mfj":[{"rate":0.0499,"upTo":null}],"mfs":[{"rate":0.0499,"upTo":null}],"hoh":[{"rate":0.0499,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":62,"cap":35000},{"minAge":65,"cap":65000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":12000,"mfj":24000,"mfs":12000,"hoh":12000}}}},
+  HI: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.014,"upTo":9600},{"rate":0.032,"upTo":14400},{"rate":0.055,"upTo":19200},{"rate":0.064,"upTo":24000},{"rate":0.068,"upTo":36000},{"rate":0.072,"upTo":48000},{"rate":0.076,"upTo":125000},{"rate":0.079,"upTo":175000},{"rate":0.0825,"upTo":225000},{"rate":0.09,"upTo":275000},{"rate":0.1,"upTo":325000},{"rate":0.11,"upTo":null}],"mfj":[{"rate":0.014,"upTo":19200},{"rate":0.032,"upTo":28800},{"rate":0.055,"upTo":38400},{"rate":0.064,"upTo":48000},{"rate":0.068,"upTo":72000},{"rate":0.072,"upTo":96000},{"rate":0.076,"upTo":250000},{"rate":0.079,"upTo":350000},{"rate":0.0825,"upTo":450000},{"rate":0.09,"upTo":550000},{"rate":0.1,"upTo":650000},{"rate":0.11,"upTo":null}],"mfs":[{"rate":0.014,"upTo":9600},{"rate":0.032,"upTo":14400},{"rate":0.055,"upTo":19200},{"rate":0.064,"upTo":24000},{"rate":0.068,"upTo":36000},{"rate":0.072,"upTo":48000},{"rate":0.076,"upTo":125000},{"rate":0.079,"upTo":175000},{"rate":0.0825,"upTo":225000},{"rate":0.09,"upTo":275000},{"rate":0.1,"upTo":325000},{"rate":0.11,"upTo":null}],"hoh":[{"rate":0.014,"upTo":14400},{"rate":0.032,"upTo":21600},{"rate":0.055,"upTo":28800},{"rate":0.064,"upTo":36000},{"rate":0.068,"upTo":54000},{"rate":0.072,"upTo":72000},{"rate":0.076,"upTo":187500},{"rate":0.079,"upTo":262500},{"rate":0.0825,"upTo":337500},{"rate":0.09,"upTo":412500},{"rate":0.1,"upTo":487500},{"rate":0.11,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"capitalGains":{"treatment":"stacked","ladderByStatus":{"single":[{"rate":0.014,"upTo":9600},{"rate":0.032,"upTo":14400},{"rate":0.055,"upTo":19200},{"rate":0.064,"upTo":24000},{"rate":0.068,"upTo":36000},{"rate":0.072,"upTo":48000},{"rate":0.0725,"upTo":null}],"mfj":[{"rate":0.014,"upTo":19200},{"rate":0.032,"upTo":28800},{"rate":0.055,"upTo":38400},{"rate":0.064,"upTo":48000},{"rate":0.068,"upTo":72000},{"rate":0.072,"upTo":96000},{"rate":0.0725,"upTo":null}],"mfs":[{"rate":0.014,"upTo":9600},{"rate":0.032,"upTo":14400},{"rate":0.055,"upTo":19200},{"rate":0.064,"upTo":24000},{"rate":0.068,"upTo":36000},{"rate":0.072,"upTo":48000},{"rate":0.0725,"upTo":null}],"hoh":[{"rate":0.014,"upTo":14400},{"rate":0.032,"upTo":21600},{"rate":0.055,"upTo":28800},{"rate":0.064,"upTo":36000},{"rate":0.068,"upTo":54000},{"rate":0.072,"upTo":72000},{"rate":0.0725,"upTo":null}]}},"standardDeduction":{"deduction":{"single":5544,"mfj":11088,"mfs":5544,"hoh":7568},"age65AddOn":{"unmarried":1144,"married":1144}}}},
+  ID: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":4811},{"rate":0.053,"upTo":null}],"mfj":[{"rate":0,"upTo":9622},{"rate":0.053,"upTo":null}],"mfs":[{"rate":0,"upTo":4811},{"rate":0.053,"upTo":null}],"hoh":[{"rate":0,"upTo":9622},{"rate":0.053,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":15750,"mfj":31500,"mfs":15750,"hoh":23625},"age65AddOn":{"unmarried":2000,"married":1600},"federalSeniorDeduction":true}}},
+  IL: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0495,"upTo":null}],"mfj":[{"rate":0.0495,"upTo":null}],"mfs":[{"rate":0.0495,"upTo":null}],"hoh":[{"rate":0.0495,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":2850,"mfj":5700,"mfs":2850,"hoh":2850},"age65AddOn":{"unmarried":1000,"married":1000},"phaseOut":{"type":"bands","basis":"federalAGI","bands":{"single":[{"over":250000,"factor":0}],"mfj":[{"over":500000,"factor":0}],"mfs":[{"over":250000,"factor":0}],"hoh":[{"over":250000,"factor":0}]}}}}},
+  IN: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0295,"upTo":null}],"mfj":[{"rate":0.0295,"upTo":null}],"mfs":[{"rate":0.0295,"upTo":null}],"hoh":[{"rate":0.0295,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":1000,"mfj":2000,"mfs":1000,"hoh":1000},"age65AddOn":{"unmarried":1000,"married":1000}}},"localTax":{"county":{"rate":0.0197,"note":"Median across all 92 Indiana counties (Indiana DOR Departmental Notice #1, effective Jan. 1, 2026); range 0.50% (Porter) to 3.00% (Randolph); Marion County (Indianapolis, the state's most populous) close by at 2.02%. Mandatory for every IN resident, unconditional -- unlike NY/OR's opt-in localTax shapes, there is no selector for this.","source":"Indiana DOR Departmental Notice #1 (effective Jan. 1, 2026), in.gov/dor"}}},
+  IA: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.038,"upTo":null}],"mfj":[{"rate":0.038,"upTo":null}],"mfs":[{"rate":0.038,"upTo":null}],"hoh":[{"rate":0.038,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"ageExempt","ageGate":55,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":15750,"mfj":31500,"mfs":15750,"hoh":23625},"age65AddOn":{"unmarried":2000,"married":1600},"federalSeniorDeduction":true,"exemptionCredit":{"perFiler":40,"hohExtra":40,"ageBonus":{"age":65,"amount":20}}}}},
+  KS: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.052,"upTo":23000},{"rate":0.0558,"upTo":null}],"mfj":[{"rate":0.052,"upTo":46000},{"rate":0.0558,"upTo":null}],"mfs":[{"rate":0.052,"upTo":23000},{"rate":0.0558,"upTo":null}],"hoh":[{"rate":0.052,"upTo":23000},{"rate":0.0558,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":12765,"mfj":26560,"mfs":13280,"hoh":17660},"age65AddOn":{"unmarried":850,"married":700}}}},
+  KY: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.035,"upTo":null}],"mfj":[{"rate":0.035,"upTo":null}],"mfs":[{"rate":0.035,"upTo":null}],"hoh":[{"rate":0.035,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":0,"cap":31110}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":3360,"mfj":3360,"mfs":3360,"hoh":3360},"exemptionCredit":{"perFiler":0,"ageBonus":{"age":65,"amount":40}}}}},
+  LA: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.03,"upTo":null}],"mfj":[{"rate":0.03,"upTo":null}],"mfs":[{"rate":0.03,"upTo":null}],"hoh":[{"rate":0.03,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":12000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":12500,"mfj":25000,"mfs":12500,"hoh":25000}}}},
+  ME: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.058,"upTo":27400},{"rate":0.0675,"upTo":64850},{"rate":0.0715,"upTo":1000000},{"rate":0.0915,"upTo":null}],"mfj":[{"rate":0.058,"upTo":54850},{"rate":0.0675,"upTo":129750},{"rate":0.0715,"upTo":1500000},{"rate":0.0915,"upTo":null}],"mfs":[{"rate":0.058,"upTo":27400},{"rate":0.0675,"upTo":64850},{"rate":0.0715,"upTo":750000},{"rate":0.0915,"upTo":null}],"hoh":[{"rate":0.058,"upTo":41100},{"rate":0.0675,"upTo":97300},{"rate":0.0715,"upTo":1500000},{"rate":0.0915,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":48216,"capJoint":48216,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":true}},"pensionIncome":{"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":48216,"capJoint":48216,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":15700,"mfj":31400,"mfs":15700,"hoh":23550},"age65AddOn":{"unmarried":2050,"married":1650},"phaseOut":{"type":"linear","basis":"stateAGI","start":{"single":102250,"mfj":204550,"mfs":102250,"hoh":153400},"width":{"single":75000,"mfj":150000,"mfs":75000,"hoh":112500}},"exemption":{"perPerson":5300,"phaseOut":{"type":"linear","basis":"stateAGI","start":{"single":341000,"mfj":409150,"mfs":204575,"hoh":375050},"width":{"single":125000,"mfj":125000,"mfs":62500,"hoh":125000}}}}}},
+  MD: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.02,"upTo":1000},{"rate":0.03,"upTo":2000},{"rate":0.0475,"upTo":100000},{"rate":0.05,"upTo":125000},{"rate":0.0525,"upTo":150000},{"rate":0.055,"upTo":250000},{"rate":0.0575,"upTo":500000},{"rate":0.0625,"upTo":1000000},{"rate":0.065,"upTo":null}],"mfj":[{"rate":0.02,"upTo":1000},{"rate":0.03,"upTo":2000},{"rate":0.0475,"upTo":150000},{"rate":0.05,"upTo":175000},{"rate":0.0525,"upTo":225000},{"rate":0.055,"upTo":300000},{"rate":0.0575,"upTo":600000},{"rate":0.0625,"upTo":1200000},{"rate":0.065,"upTo":null}],"mfs":[{"rate":0.02,"upTo":1000},{"rate":0.03,"upTo":2000},{"rate":0.0475,"upTo":100000},{"rate":0.05,"upTo":125000},{"rate":0.0525,"upTo":150000},{"rate":0.055,"upTo":250000},{"rate":0.0575,"upTo":500000},{"rate":0.0625,"upTo":1000000},{"rate":0.065,"upTo":null}],"hoh":[{"rate":0.02,"upTo":1000},{"rate":0.03,"upTo":2000},{"rate":0.0475,"upTo":150000},{"rate":0.05,"upTo":175000},{"rate":0.0525,"upTo":225000},{"rate":0.055,"upTo":300000},{"rate":0.0575,"upTo":600000},{"rate":0.0625,"upTo":1200000},{"rate":0.065,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":39500,"capJoint":39500,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":true}},"pensionIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":39500,"capJoint":39500,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":3350,"mfj":6700,"mfs":3350,"hoh":6700},"age65AddOn":{"unmarried":1000,"married":1000},"exemption":{"perPerson":3200,"phaseOut":{"type":"bands","basis":"federalAGI","bands":{"single":[{"over":100000,"factor":0.5},{"over":125000,"factor":0.25},{"over":150000,"factor":0}],"mfj":[{"over":150000,"factor":0.5},{"over":175000,"factor":0.25},{"over":200000,"factor":0}],"mfs":[{"over":100000,"factor":0.5},{"over":125000,"factor":0.25},{"over":150000,"factor":0}],"hoh":[{"over":150000,"factor":0.5},{"over":175000,"factor":0.25},{"over":200000,"factor":0}]}}}}},"localTax":{"county":{"rate":0.032,"note":"Median AND modal rate across all 24 Maryland jurisdictions (23 counties + Baltimore City) per the Comptroller's 2026 local withholding table -- 12 of the 24 sit at the 3.20% ceiling. Actual range 2.25% (Worcester) to 3.30% (Dorchester, Kent); Anne Arundel and Frederick are themselves income-tiered. Mandatory for every MD resident, unconditional -- unlike NY/OR's opt-in localTax shapes, there is no selector for this.","source":"MD Comptroller 2026 local income tax rate table (marylandtaxes.gov)"}}},
+  MA: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.05,"upTo":1107750},{"rate":0.09,"upTo":null}],"mfj":[{"rate":0.05,"upTo":1107750},{"rate":0.09,"upTo":null}],"mfs":[{"rate":0.05,"upTo":1107750},{"rate":0.09,"upTo":null}],"hoh":[{"rate":0.05,"upTo":1107750},{"rate":0.09,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":4400,"mfj":8800,"mfs":4400,"hoh":6800},"age65AddOn":{"unmarried":700,"married":700}}}},
+  MI: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0425,"upTo":null}],"mfj":[{"rate":0.0425,"upTo":null}],"mfs":[{"rate":0.0425,"upTo":null}],"hoh":[{"rate":0.0425,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":null,"exclusion":{"capSingle":67610,"capJoint":135220,"cliffType":"hard","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":5900,"mfj":11800,"mfs":5900,"hoh":5900}}}},
+  MN: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0535,"upTo":33310},{"rate":0.068,"upTo":109430},{"rate":0.0785,"upTo":203150},{"rate":0.0985,"upTo":null}],"mfj":[{"rate":0.0535,"upTo":48700},{"rate":0.068,"upTo":193480},{"rate":0.0785,"upTo":337930},{"rate":0.0985,"upTo":null}],"mfs":[{"rate":0.0535,"upTo":24350},{"rate":0.068,"upTo":96740},{"rate":0.0785,"upTo":168965},{"rate":0.0985,"upTo":null}],"hoh":[{"rate":0.0535,"upTo":41010},{"rate":0.068,"upTo":164800},{"rate":0.0785,"upTo":270060},{"rate":0.0985,"upTo":null}]},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":86410,"joint":110780},"phaseOut":{"type":"stepped","step":4000,"pctPerStep":0.1},"maxTaxableFraction":0.85},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":15300,"mfj":30600,"mfs":15300,"hoh":23000},"age65AddOn":{"unmarried":2000,"married":1600}}}},
+  MS: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":10000},{"rate":0.04,"upTo":null}],"mfj":[{"rate":0,"upTo":10000},{"rate":0.04,"upTo":null}],"mfs":[{"rate":0,"upTo":10000},{"rate":0.04,"upTo":null}],"hoh":[{"rate":0,"upTo":10000},{"rate":0.04,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"ageExempt","ageGate":59.5,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":8300,"mfj":16600,"mfs":8300,"hoh":11400},"age65AddOn":{"unmarried":1500,"married":1500}}}},
+  MO: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":1313},{"rate":0.02,"upTo":2626},{"rate":0.025,"upTo":3939},{"rate":0.03,"upTo":5252},{"rate":0.035,"upTo":6565},{"rate":0.04,"upTo":7878},{"rate":0.045,"upTo":9191},{"rate":0.047,"upTo":null}],"mfj":[{"rate":0,"upTo":1313},{"rate":0.02,"upTo":2626},{"rate":0.025,"upTo":3939},{"rate":0.03,"upTo":5252},{"rate":0.035,"upTo":6565},{"rate":0.04,"upTo":7878},{"rate":0.045,"upTo":9191},{"rate":0.047,"upTo":null}],"mfs":[{"rate":0,"upTo":1313},{"rate":0.02,"upTo":2626},{"rate":0.025,"upTo":3939},{"rate":0.03,"upTo":5252},{"rate":0.035,"upTo":6565},{"rate":0.04,"upTo":7878},{"rate":0.045,"upTo":9191},{"rate":0.047,"upTo":null}],"hoh":[{"rate":0,"upTo":1313},{"rate":0.02,"upTo":2626},{"rate":0.025,"upTo":3939},{"rate":0.03,"upTo":5252},{"rate":0.035,"upTo":6565},{"rate":0.04,"upTo":7878},{"rate":0.045,"upTo":9191},{"rate":0.047,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"excludedPct","exclusionPct":1,"minDeduction":null,"maxGainEligible":null,"sourceRestricted":false},"standardDeduction":{"deduction":{"single":15750,"mfj":31500,"mfs":15750,"hoh":23625},"age65AddOn":{"unmarried":2000,"married":1600},"federalTaxDeduction":{"cap":{"single":5000,"mfj":10000,"mfs":5000,"hoh":5000},"share":{"type":"bands","basis":"stateAGI","bands":{"single":[{"atLeast":0,"factor":0.35},{"over":25000,"factor":0.25},{"over":50000,"factor":0.15},{"over":100000,"factor":0.05},{"over":125000,"factor":0}],"mfj":[{"atLeast":0,"factor":0.35},{"over":25000,"factor":0.25},{"over":50000,"factor":0.15},{"over":100000,"factor":0.05},{"over":125000,"factor":0}],"mfs":[{"atLeast":0,"factor":0.35},{"over":25000,"factor":0.25},{"over":50000,"factor":0.15},{"over":100000,"factor":0.05},{"over":125000,"factor":0}],"hoh":[{"atLeast":0,"factor":0.35},{"over":25000,"factor":0.25},{"over":50000,"factor":0.15},{"over":100000,"factor":0.05},{"over":125000,"factor":0}]}}}}}},
+  MT: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.047,"upTo":47500},{"rate":0.0565,"upTo":null}],"mfj":[{"rate":0.047,"upTo":95000},{"rate":0.0565,"upTo":null}],"mfs":[{"rate":0.047,"upTo":47500},{"rate":0.0565,"upTo":null}],"hoh":[{"rate":0.047,"upTo":71250},{"rate":0.0565,"upTo":null}]},"socialSecurity":{"taxed":true,"followsFederalFormula":true},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"stacked","ladderByStatus":{"single":[{"rate":0.03,"upTo":47500},{"rate":0.041,"upTo":null}],"mfj":[{"rate":0.03,"upTo":95000},{"rate":0.041,"upTo":null}],"mfs":[{"rate":0.03,"upTo":47500},{"rate":0.041,"upTo":null}],"hoh":[{"rate":0.03,"upTo":71250},{"rate":0.041,"upTo":null}]}},"standardDeduction":{"deduction":{"single":15750,"mfj":31500,"mfs":15750,"hoh":23625},"age65AddOn":{"unmarried":7660,"married":7260},"federalSeniorDeduction":true}}},
+  NE: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0246,"upTo":4130},{"rate":0.0351,"upTo":24760},{"rate":0.0455,"upTo":null}],"mfj":[{"rate":0.0246,"upTo":8250},{"rate":0.0351,"upTo":49530},{"rate":0.0455,"upTo":null}],"mfs":[{"rate":0.0246,"upTo":4130},{"rate":0.0351,"upTo":24760},{"rate":0.0455,"upTo":null}],"hoh":[{"rate":0.0246,"upTo":7700},{"rate":0.0351,"upTo":39620},{"rate":0.0455,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":8850,"mfj":17700,"mfs":8850,"hoh":12950},"age65AddOn":{"unmarried":2050,"married":1700},"exemptionCredit":{"perFiler":176}}}},
+  NV: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":null}],"mfj":[{"rate":0,"upTo":null}],"mfs":[{"rate":0,"upTo":null}],"hoh":[{"rate":0,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"}}},
+  NH: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":null}],"mfj":[{"rate":0,"upTo":null}],"mfs":[{"rate":0,"upTo":null}],"hoh":[{"rate":0,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"}}},
+  NJ: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.014,"upTo":20000},{"rate":0.0175,"upTo":35000},{"rate":0.035,"upTo":40000},{"rate":0.05525,"upTo":75000},{"rate":0.0637,"upTo":500000},{"rate":0.0897,"upTo":1000000},{"rate":0.1075,"upTo":null}],"mfj":[{"rate":0.014,"upTo":20000},{"rate":0.0175,"upTo":50000},{"rate":0.0245,"upTo":70000},{"rate":0.035,"upTo":80000},{"rate":0.05525,"upTo":150000},{"rate":0.0637,"upTo":500000},{"rate":0.0897,"upTo":1000000},{"rate":0.1075,"upTo":null}],"mfs":[{"rate":0.014,"upTo":20000},{"rate":0.0175,"upTo":35000},{"rate":0.035,"upTo":40000},{"rate":0.05525,"upTo":75000},{"rate":0.0637,"upTo":500000},{"rate":0.0897,"upTo":1000000},{"rate":0.1075,"upTo":null}],"hoh":[{"rate":0.014,"upTo":20000},{"rate":0.0175,"upTo":50000},{"rate":0.0245,"upTo":70000},{"rate":0.035,"upTo":80000},{"rate":0.05525,"upTo":150000},{"rate":0.0637,"upTo":500000},{"rate":0.0897,"upTo":1000000},{"rate":0.1075,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":62,"exclusion":{"capSingle":75000,"capJoint":100000,"cliffType":"steppedPercent","cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"thresholdExcludesSS":true,"steps":{"single":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.375},{"upTo":150000,"pct":0.1875},{"upTo":null,"pct":0}],"joint":[{"upTo":100000,"pct":1,"capped":true},{"upTo":125000,"pct":0.5},{"upTo":150000,"pct":0.25},{"upTo":null,"pct":0}]}}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":1000,"mfj":2000,"mfs":1000,"hoh":1000},"age65AddOn":{"unmarried":1000,"married":1000}}}},
+  NM: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.015,"upTo":5500},{"rate":0.032,"upTo":16500},{"rate":0.043,"upTo":33500},{"rate":0.047,"upTo":66500},{"rate":0.049,"upTo":210000},{"rate":0.059,"upTo":null}],"mfj":[{"rate":0.015,"upTo":8000},{"rate":0.032,"upTo":25000},{"rate":0.043,"upTo":50000},{"rate":0.047,"upTo":100000},{"rate":0.049,"upTo":315000},{"rate":0.059,"upTo":null}],"mfs":[{"rate":0.015,"upTo":5500},{"rate":0.032,"upTo":16500},{"rate":0.043,"upTo":33500},{"rate":0.047,"upTo":66500},{"rate":0.049,"upTo":210000},{"rate":0.059,"upTo":null}],"hoh":[{"rate":0.015,"upTo":5500},{"rate":0.032,"upTo":16500},{"rate":0.043,"upTo":33500},{"rate":0.047,"upTo":66500},{"rate":0.049,"upTo":210000},{"rate":0.059,"upTo":null}]},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":100000,"joint":150000},"maxTaxableFraction":0.85,"hohMapsToJoint":true},"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"steppedAmount","ageGate":65,"perQualifyingSpouse":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"hohMapsToJoint":true,"steps":{"single":[{"upTo":18000,"amt":8000},{"upTo":19500,"amt":7000},{"upTo":21000,"amt":6000},{"upTo":22500,"amt":5000},{"upTo":24000,"amt":4000},{"upTo":25500,"amt":3000},{"upTo":27000,"amt":2000},{"upTo":28500,"amt":1000},{"upTo":null,"amt":0}],"joint":[{"upTo":30000,"amt":8000},{"upTo":33000,"amt":7000},{"upTo":36000,"amt":6000},{"upTo":39000,"amt":5000},{"upTo":42000,"amt":4000},{"upTo":45000,"amt":3000},{"upTo":48000,"amt":2000},{"upTo":51000,"amt":1000},{"upTo":null,"amt":0}]}}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"excludedPct","exclusionPct":0.4,"minDeduction":2500,"maxGainEligible":1000000,"sourceRestricted":true},"standardDeduction":{"deduction":{"single":15750,"mfj":31500,"mfs":15750,"hoh":23625},"age65AddOn":{"unmarried":2000,"married":1600}}}},
+  NY: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.039,"upTo":8500},{"rate":0.044,"upTo":11700},{"rate":0.0515,"upTo":13900},{"rate":0.054,"upTo":80650},{"rate":0.059,"upTo":215400},{"rate":0.0685,"upTo":1077550},{"rate":0.0965,"upTo":5000000},{"rate":0.103,"upTo":25000000},{"rate":0.109,"upTo":null}],"mfj":[{"rate":0.039,"upTo":17150},{"rate":0.044,"upTo":23600},{"rate":0.0515,"upTo":27900},{"rate":0.054,"upTo":161550},{"rate":0.059,"upTo":323200},{"rate":0.0685,"upTo":2155350},{"rate":0.0965,"upTo":5000000},{"rate":0.103,"upTo":25000000},{"rate":0.109,"upTo":null}],"mfs":[{"rate":0.039,"upTo":8500},{"rate":0.044,"upTo":11700},{"rate":0.0515,"upTo":13900},{"rate":0.054,"upTo":80650},{"rate":0.059,"upTo":215400},{"rate":0.0685,"upTo":1077550},{"rate":0.0965,"upTo":5000000},{"rate":0.103,"upTo":25000000},{"rate":0.109,"upTo":null}],"hoh":[{"rate":0.039,"upTo":12800},{"rate":0.044,"upTo":17650},{"rate":0.0515,"upTo":20900},{"rate":0.054,"upTo":107650},{"rate":0.059,"upTo":269300},{"rate":0.0685,"upTo":1616450},{"rate":0.0965,"upTo":5000000},{"rate":0.103,"upTo":25000000},{"rate":0.109,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":59.5,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":59.5,"cap":20000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":8000,"mfj":16050,"mfs":8000,"hoh":11200}}},"localTax":{"nyc":{"bracketsByStatus":{"single":[{"rate":0.03078,"upTo":12000},{"rate":0.03762,"upTo":25000},{"rate":0.03819,"upTo":50000},{"rate":0.03876,"upTo":null}],"mfj":[{"rate":0.03078,"upTo":21600},{"rate":0.03762,"upTo":45000},{"rate":0.03819,"upTo":90000},{"rate":0.03876,"upTo":null}],"mfs":[{"rate":0.03078,"upTo":12000},{"rate":0.03762,"upTo":25000},{"rate":0.03819,"upTo":50000},{"rate":0.03876,"upTo":null}],"hoh":[{"rate":0.03078,"upTo":14400},{"rate":0.03762,"upTo":30000},{"rate":0.03819,"upTo":60000},{"rate":0.03876,"upTo":null}]},"source":"NY Form IT-201-I (2025 instructions, the latest published year), p.40, \"New York City tax rate schedule\""},"yonkers":{"rate":0.1675,"source":"NY Form IT-201-I (2025 instructions), Yonkers resident income tax surcharge worksheet -- 16.75% of net NY State tax liability, not a separate income-based tax"}}},
+  NC: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0399,"upTo":null}],"mfj":[{"rate":0.0399,"upTo":null}],"mfs":[{"rate":0.0399,"upTo":null}],"hoh":[{"rate":0.0399,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":12750,"mfj":25500,"mfs":12750,"hoh":19125}}}},
+  ND: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":48475},{"rate":0.0195,"upTo":244825},{"rate":0.025,"upTo":null}],"mfj":[{"rate":0,"upTo":80975},{"rate":0.0195,"upTo":298075},{"rate":0.025,"upTo":null}],"mfs":[{"rate":0,"upTo":40475},{"rate":0.0195,"upTo":149025},{"rate":0.025,"upTo":null}],"hoh":[{"rate":0,"upTo":64950},{"rate":0.0195,"upTo":271450},{"rate":0.025,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"excludedPct","exclusionPct":0.4,"minDeduction":null,"maxGainEligible":null,"sourceRestricted":false},"standardDeduction":{"deduction":{"single":15750,"mfj":31500,"mfs":15750,"hoh":23625},"age65AddOn":{"unmarried":2000,"married":1600},"federalSeniorDeduction":true}}},
+  OH: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":26050},{"rate":0.0275,"upTo":null}],"mfj":[{"rate":0,"upTo":26050},{"rate":0.0275,"upTo":null}],"mfs":[{"rate":0,"upTo":26050},{"rate":0.0275,"upTo":null}],"hoh":[{"rate":0,"upTo":26050},{"rate":0.0275,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"exemption":{"perPerson":2400,"phaseOut":{"type":"bands","basis":"stateAGI","bands":{"single":[{"over":40000,"amount":2150},{"over":80000,"amount":1900},{"atLeast":750000,"amount":0}],"mfj":[{"over":40000,"amount":2150},{"over":80000,"amount":1900},{"atLeast":750000,"amount":0}],"mfs":[{"over":40000,"amount":2150},{"over":80000,"amount":1900},{"atLeast":750000,"amount":0}],"hoh":[{"over":40000,"amount":2150},{"over":80000,"amount":1900},{"atLeast":750000,"amount":0}]}}},"credits":[{"type":"schedule","basis":"retirementIncome","bands":{"single":[{"over":500,"amount":25},{"over":1500,"amount":50},{"over":3000,"amount":80},{"over":5000,"amount":130},{"over":8000,"amount":200}],"mfj":[{"over":500,"amount":25},{"over":1500,"amount":50},{"over":3000,"amount":80},{"over":5000,"amount":130},{"over":8000,"amount":200}],"mfs":[{"over":500,"amount":25},{"over":1500,"amount":50},{"over":3000,"amount":80},{"over":5000,"amount":130},{"over":8000,"amount":200}],"hoh":[{"over":500,"amount":25},{"over":1500,"amount":50},{"over":3000,"amount":80},{"over":5000,"amount":130},{"over":8000,"amount":200}]},"phaseOut":{"type":"bands","basis":"stateTaxableIncome","bands":{"single":[{"atLeast":100000,"factor":0}],"mfj":[{"atLeast":100000,"factor":0}],"mfs":[{"atLeast":100000,"factor":0}],"hoh":[{"atLeast":100000,"factor":0}]}}},{"type":"flat","amount":50,"per":"return","age":65,"phaseOut":{"type":"bands","basis":"stateTaxableIncome","bands":{"single":[{"atLeast":100000,"factor":0}],"mfj":[{"atLeast":100000,"factor":0}],"mfs":[{"atLeast":100000,"factor":0}],"hoh":[{"atLeast":100000,"factor":0}]}}},{"type":"flat","amount":20,"per":"person","phaseOut":{"type":"bands","basis":"stateTaxableIncome","bands":{"single":[{"atLeast":30000,"factor":0}],"mfj":[{"atLeast":30000,"factor":0}],"mfs":[{"atLeast":30000,"factor":0}],"hoh":[{"atLeast":30000,"factor":0}]}}}]}}},
+  OK: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0025,"upTo":1000},{"rate":0.0075,"upTo":2500},{"rate":0.0175,"upTo":3750},{"rate":0.0275,"upTo":4900},{"rate":0.0375,"upTo":7200},{"rate":0.0475,"upTo":null}],"mfj":[{"rate":0.0025,"upTo":2000},{"rate":0.0075,"upTo":5000},{"rate":0.0175,"upTo":7500},{"rate":0.0275,"upTo":9800},{"rate":0.0375,"upTo":12200},{"rate":0.0475,"upTo":null}],"mfs":[{"rate":0.0025,"upTo":1000},{"rate":0.0075,"upTo":2500},{"rate":0.0175,"upTo":3750},{"rate":0.0275,"upTo":4900},{"rate":0.0375,"upTo":7200},{"rate":0.0475,"upTo":null}],"hoh":[{"rate":0.0025,"upTo":2000},{"rate":0.0075,"upTo":5000},{"rate":0.0175,"upTo":7500},{"rate":0.0275,"upTo":9800},{"rate":0.0375,"upTo":12200},{"rate":0.0475,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":10000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":7350,"mfj":14700,"mfs":7350,"hoh":10350}}}},
+  OR: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0475,"upTo":4550},{"rate":0.0675,"upTo":11400},{"rate":0.0875,"upTo":125000},{"rate":0.099,"upTo":null}],"mfj":[{"rate":0.0475,"upTo":9100},{"rate":0.0675,"upTo":22800},{"rate":0.0875,"upTo":250000},{"rate":0.099,"upTo":null}],"mfs":[{"rate":0.0475,"upTo":4550},{"rate":0.0675,"upTo":11400},{"rate":0.0875,"upTo":125000},{"rate":0.099,"upTo":null}],"hoh":[{"rate":0.0475,"upTo":9100},{"rate":0.0675,"upTo":22800},{"rate":0.0875,"upTo":250000},{"rate":0.099,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":2900,"mfj":5800,"mfs":2900,"hoh":4650},"age65AddOn":{"unmarried":1200,"married":1000},"exemptionCredit":{"perFiler":260,"phaseOut":{"type":"bands","basis":"federalAGI","bands":{"single":[{"over":100000,"factor":0}],"mfj":[{"over":200000,"factor":0}],"mfs":[{"over":100000,"factor":0}],"hoh":[{"over":200000,"factor":0}]}}},"federalTaxDeduction":{"cap":{"single":8750,"mfj":8750,"mfs":4375,"hoh":8750},"capPhaseOut":{"type":"bands","basis":"federalAGI","bands":{"single":[{"atLeast":125000,"factor":0.8},{"atLeast":130000,"factor":0.6},{"atLeast":135000,"factor":0.4},{"atLeast":140000,"factor":0.2},{"atLeast":145000,"factor":0}],"mfj":[{"atLeast":250000,"factor":0.8},{"atLeast":260000,"factor":0.6},{"atLeast":270000,"factor":0.4},{"atLeast":280000,"factor":0.2},{"atLeast":290000,"factor":0}],"mfs":[{"atLeast":125000,"factor":0.8},{"atLeast":130000,"factor":0.6},{"atLeast":135000,"factor":0.4},{"atLeast":140000,"factor":0.2},{"atLeast":145000,"factor":0}],"hoh":[{"atLeast":250000,"factor":0.8},{"atLeast":260000,"factor":0.6},{"atLeast":270000,"factor":0.4},{"atLeast":280000,"factor":0.2},{"atLeast":290000,"factor":0}]}}}}},"localTax":{"metro":{"bracketsByStatus":{"single":[{"rate":0,"upTo":125000},{"rate":0.01,"upTo":null}],"mfj":[{"rate":0,"upTo":200000},{"rate":0.01,"upTo":null}],"mfs":[{"rate":0,"upTo":125000},{"rate":0.01,"upTo":null}],"hoh":[{"rate":0,"upTo":200000},{"rate":0.01,"upTo":null}]},"source":"Official 2025 Form MET-40 (Rev. 01/21/2026), Metro Supportive Housing Services Personal Income Tax Return, Full-Year Resident -- 'Tax (line 5 x 1%)', 'Metro SHS income threshold exemption ($125K for single; $200K for joint)'. Filing-status grouping (single/MFS -> single; MFJ/HOH/qualifying surviving spouse -> joint) confirmed from the same form's own filing-status checkboxes."},"multnomah":{"bracketsByStatus":{"single":[{"rate":0,"upTo":125000},{"rate":0.015,"upTo":250000},{"rate":0.03,"upTo":null}],"mfj":[{"rate":0,"upTo":200000},{"rate":0.015,"upTo":400000},{"rate":0.03,"upTo":null}],"mfs":[{"rate":0,"upTo":125000},{"rate":0.015,"upTo":250000},{"rate":0.03,"upTo":null}],"hoh":[{"rate":0,"upTo":200000},{"rate":0.015,"upTo":400000},{"rate":0.03,"upTo":null}]},"source":"Official 'Updated 1/05/26' 2026 Multnomah County Preschool For All Personal Income Tax Tables (multco.us) -- rate/threshold reconstructed by walking the table's implied marginal rate across every income band and cross-checked exactly against its own stated formulas ('$9,375 plus 3% of excess over $500,000' single, '$6,000 plus 3% of excess over $500,000' joint). Applies ON TOP of Metro's tax for Multnomah County residents -- Multnomah is a subset of Metro's 3-county district, not a separate/exclusive choice."}}},
+  PA: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0307,"upTo":null}],"mfj":[{"rate":0.0307,"upTo":null}],"mfs":[{"rate":0.0307,"upTo":null}],"hoh":[{"rate":0.0307,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"ageExempt","ageGate":59.5,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"}}},
+  RI: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0375,"upTo":82050},{"rate":0.0475,"upTo":186450},{"rate":0.0599,"upTo":null}],"mfj":[{"rate":0.0375,"upTo":82050},{"rate":0.0475,"upTo":186450},{"rate":0.0599,"upTo":null}],"mfs":[{"rate":0.0375,"upTo":82050},{"rate":0.0475,"upTo":186450},{"rate":0.0599,"upTo":null}],"hoh":[{"rate":0.0375,"upTo":82050},{"rate":0.0475,"upTo":186450},{"rate":0.0599,"upTo":null}]},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":107000,"joint":133500},"maxTaxableFraction":0.85,"ssAgeGate":67},"retirementIncome":{"treatment":"exclusion","ageGate":67,"exclusion":{"capSingle":50000,"capJoint":50000,"cliffType":"hard","cliffAGI":{"single":107000,"joint":133500},"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":true}},"pensionIncome":{"treatment":"exclusion","ageGate":67,"exclusion":{"capSingle":50000,"capJoint":50000,"cliffType":"hard","cliffAGI":{"single":107000,"joint":133500},"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":16450,"mfj":32900,"mfs":16450,"hoh":22050},"phaseOut":{"type":"bands","basis":"federalAGI","bands":{"single":[{"over":261000,"factor":0.8},{"over":268450,"factor":0.6},{"over":275900,"factor":0.4},{"over":283350,"factor":0.2},{"over":290800,"factor":0}],"mfj":[{"over":261000,"factor":0.8},{"over":268450,"factor":0.6},{"over":275900,"factor":0.4},{"over":283350,"factor":0.2},{"over":290800,"factor":0}],"mfs":[{"over":261000,"factor":0.8},{"over":268450,"factor":0.6},{"over":275900,"factor":0.4},{"over":283350,"factor":0.2},{"over":290800,"factor":0}],"hoh":[{"over":261000,"factor":0.8},{"over":268450,"factor":0.6},{"over":275900,"factor":0.4},{"over":283350,"factor":0.2},{"over":290800,"factor":0}]}}}}},
+  SC: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0199,"upTo":30000},{"rate":0.0521,"upTo":null}],"mfj":[{"rate":0.0199,"upTo":30000},{"rate":0.0521,"upTo":null}],"mfs":[{"rate":0.0199,"upTo":30000},{"rate":0.0521,"upTo":null}],"hoh":[{"rate":0.0199,"upTo":30000},{"rate":0.0521,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"offsetStack","ageGate":null,"exclusion":null,"offsetStack":{"tier1AgeGate":65,"tier1CapBelow":3000,"tier1CapAtOrAbove":10000,"tier2AgeGate":65,"tier2Ceiling":15000}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"excludedPct","exclusionPct":0.44,"minDeduction":null,"maxGainEligible":null,"sourceRestricted":false},"standardDeduction":{"deduction":{"single":15000,"mfj":30000,"mfs":15000,"hoh":22500},"phaseOut":{"type":"linear","basis":"federalAGI","start":{"single":40000,"mfj":80000,"mfs":40000,"hoh":60000},"width":{"single":55000,"mfj":110000,"mfs":55000,"hoh":82500}}}}},
+  SD: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":null}],"mfj":[{"rate":0,"upTo":null}],"mfs":[{"rate":0,"upTo":null}],"hoh":[{"rate":0,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"}}},
+  TN: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":null}],"mfj":[{"rate":0,"upTo":null}],"mfs":[{"rate":0,"upTo":null}],"hoh":[{"rate":0,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"}}},
+  TX: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":null}],"mfj":[{"rate":0,"upTo":null}],"mfs":[{"rate":0,"upTo":null}],"hoh":[{"rate":0,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"}}},
+  UT: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0445,"upTo":null}],"mfj":[{"rate":0.0445,"upTo":null}],"mfs":[{"rate":0.0445,"upTo":null}],"hoh":[{"rate":0.0445,"upTo":null}]},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":54000,"joint":90000},"hohMapsToJoint":true,"phaseOut":{"type":"creditReduction","perDollar":0.025},"maxTaxableFraction":0.85},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"credits":[{"type":"ofDeduction","rate":0.06,"deduction":{"single":15750,"mfj":31500,"mfs":15750,"hoh":23625},"age65AddOn":{"unmarried":2000,"married":1600},"phaseOut":{"type":"rate","basis":"federalAGI","rules":{"single":[{"start":18213,"rate":0.013}],"mfj":[{"start":36426,"rate":0.013}],"mfs":[{"start":18213,"rate":0.013}],"hoh":[{"start":27320,"rate":0.013}]}}}]}}},
+  VT: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0335,"upTo":49400},{"rate":0.066,"upTo":119700},{"rate":0.076,"upTo":249700},{"rate":0.0875,"upTo":null}],"mfj":[{"rate":0.0335,"upTo":82500},{"rate":0.066,"upTo":199450},{"rate":0.076,"upTo":304000},{"rate":0.0875,"upTo":null}],"mfs":[{"rate":0.0335,"upTo":41250},{"rate":0.066,"upTo":99725},{"rate":0.076,"upTo":152000},{"rate":0.0875,"upTo":null}],"hoh":[{"rate":0.0335,"upTo":66200},{"rate":0.066,"upTo":171000},{"rate":0.076,"upTo":276850},{"rate":0.0875,"upTo":null}]},"socialSecurity":{"taxed":true,"exemptBelowAGI":{"single":55000,"joint":70000},"phaseOut":{"type":"linear","width":10000},"maxTaxableFraction":0.85},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"excludedPct","exclusionPct":0,"minDeduction":5000,"maxGainEligible":null,"sourceRestricted":false},"standardDeduction":{"deduction":{"single":12950,"mfj":25900,"mfs":12950,"hoh":16750},"age65AddOn":{"unmarried":1250,"married":1250}}}},
+  VA: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.02,"upTo":3000},{"rate":0.03,"upTo":5000},{"rate":0.05,"upTo":17000},{"rate":0.0575,"upTo":null}],"mfj":[{"rate":0.02,"upTo":3000},{"rate":0.03,"upTo":5000},{"rate":0.05,"upTo":17000},{"rate":0.0575,"upTo":null}],"mfs":[{"rate":0.02,"upTo":3000},{"rate":0.03,"upTo":5000},{"rate":0.05,"upTo":17000},{"rate":0.0575,"upTo":null}],"hoh":[{"rate":0.02,"upTo":3000},{"rate":0.03,"upTo":5000},{"rate":0.05,"upTo":17000},{"rate":0.0575,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"perSpousePhaseout","ageGate":65,"perPersonCap":12000,"thresholdAGI":{"single":50000,"joint":75000},"thresholdExcludesSS":true,"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":9680,"mfj":19360,"mfs":9680,"hoh":9680},"age65AddOn":{"unmarried":800,"married":800}}}},
+  WA: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":null}],"mfj":[{"rate":0,"upTo":null}],"mfs":[{"rate":0,"upTo":null}],"hoh":[{"rate":0,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"separateTax","exemptBelow":278000,"ladder":[{"rate":0.07,"upTo":1000000},{"rate":0.099,"upTo":null}]}}},
+  WV: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.0211,"upTo":10000},{"rate":0.0281,"upTo":25000},{"rate":0.0316,"upTo":40000},{"rate":0.0422,"upTo":60000},{"rate":0.0458,"upTo":null}],"mfj":[{"rate":0.0211,"upTo":10000},{"rate":0.0281,"upTo":25000},{"rate":0.0316,"upTo":40000},{"rate":0.0422,"upTo":60000},{"rate":0.0458,"upTo":null}],"mfs":[{"rate":0.0211,"upTo":5000},{"rate":0.0281,"upTo":12500},{"rate":0.0316,"upTo":20000},{"rate":0.0422,"upTo":30000},{"rate":0.0458,"upTo":null}],"hoh":[{"rate":0.0211,"upTo":10000},{"rate":0.0281,"upTo":25000},{"rate":0.0316,"upTo":40000},{"rate":0.0422,"upTo":60000},{"rate":0.0458,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":65,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":65,"cap":8000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false,"netAgainstSS":true}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":2000,"mfj":4000,"mfs":2000,"hoh":2000}}}},
+  WI: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.035,"upTo":15110},{"rate":0.044,"upTo":51950},{"rate":0.053,"upTo":332720},{"rate":0.0765,"upTo":null}],"mfj":[{"rate":0.035,"upTo":20150},{"rate":0.044,"upTo":69260},{"rate":0.053,"upTo":443630},{"rate":0.0765,"upTo":null}],"mfs":[{"rate":0.035,"upTo":15110},{"rate":0.044,"upTo":51950},{"rate":0.053,"upTo":332720},{"rate":0.0765,"upTo":null}],"hoh":[{"rate":0.035,"upTo":15110},{"rate":0.044,"upTo":51950},{"rate":0.053,"upTo":332720},{"rate":0.0765,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exclusion","ageGate":67,"exclusion":{"capSingle":null,"capJoint":null,"cliffType":"ageTieredCap","perPersonTiers":[{"minAge":67,"cap":24000}],"cliffAGI":null,"fullBelowAGI":null,"zeroByAGI":null,"excludesIRA":false}},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"excludedPct","exclusionPct":0.3},"standardDeduction":{"deduction":{"single":13960,"mfj":25840,"mfs":12280,"hoh":18030},"phaseOut":{"type":"rate","basis":"stateAGI","rules":{"single":[{"start":20120,"rate":0.12}],"mfj":[{"start":29040,"rate":0.19778}],"mfs":[{"start":13780,"rate":0.19778}],"hoh":[{"start":20120,"rate":0.22515},{"start":20120,"rate":0.12,"amount":13960}]}},"exemption":{"perPerson":700,"age65Extra":250}}}},
+  WY: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0,"upTo":null}],"mfj":[{"rate":0,"upTo":null}],"mfs":[{"rate":0,"upTo":null}],"hoh":[{"rate":0,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"exempt","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"}}},
+  DC: {"taxRules":{"bracketsByStatus":{"single":[{"rate":0.04,"upTo":10000},{"rate":0.06,"upTo":40000},{"rate":0.065,"upTo":60000},{"rate":0.085,"upTo":250000},{"rate":0.0925,"upTo":500000},{"rate":0.0975,"upTo":1000000},{"rate":0.1075,"upTo":null}],"mfj":[{"rate":0.04,"upTo":10000},{"rate":0.06,"upTo":40000},{"rate":0.065,"upTo":60000},{"rate":0.085,"upTo":250000},{"rate":0.0925,"upTo":500000},{"rate":0.0975,"upTo":1000000},{"rate":0.1075,"upTo":null}],"mfs":[{"rate":0.04,"upTo":10000},{"rate":0.06,"upTo":40000},{"rate":0.065,"upTo":60000},{"rate":0.085,"upTo":250000},{"rate":0.0925,"upTo":500000},{"rate":0.0975,"upTo":1000000},{"rate":0.1075,"upTo":null}],"hoh":[{"rate":0.04,"upTo":10000},{"rate":0.06,"upTo":40000},{"rate":0.065,"upTo":60000},{"rate":0.085,"upTo":250000},{"rate":0.0925,"upTo":500000},{"rate":0.0975,"upTo":1000000},{"rate":0.1075,"upTo":null}]},"socialSecurity":{"taxed":false},"retirementIncome":{"treatment":"taxed","ageGate":null,"exclusion":null},"pensionIncome":{"sameAs":"retirementIncome"},"capitalGains":{"treatment":"ordinary"},"standardDeduction":{"deduction":{"single":16100,"mfj":32200,"mfs":16100,"hoh":24150},"age65AddOn":{"unmarried":2050,"married":1650}}}},
 };
 
 // ═══ SOCIAL SECURITY TORPEDO CALCULATION ═══
@@ -1449,15 +1467,6 @@ function lifeExJoint(sex1,age1,sex2,age2){
 function lifeEx(sex,from){let s=1,e=0;for(let a=from;a<=110;a++){const q=(QX[sex][a]??500)/1000;e+=(a+.5)*s*q;s*=(1-q);}return Math.round(e*10)/10;}
 
 function calcTax(ti,st){if(ti<=0)return 0;let t=0,p=0;for(const b of BRAX[st]){if(ti<=p)break;t+=(Math.min(ti,b.m)-p)*b.r;p=b.m;}return t;}
-// Generic graduated-bracket walker over the {rate,upTo} shape used everywhere else
-// in this project (states.json's taxRules.bracketsByStatus, NYCTAX below) -- NOT the
-// same {m,r} shape calcTax above uses for federal brackets, so kept separate rather
-// than reshaping calcTax's own tight hot-path loop. A documented, byte-identical
-// port of relocation/relo-engine.mjs's own bracketTax() (confirmed same logic before
-// porting) -- this file is a self-contained single page with no imports, so it can't
-// literally share that function, only mirror it, same convention as
-// core/retirement-rules.js's federalTaxableSS being ported rather than imported here.
-function bracketTax(ti,brackets){if(ti<=0)return 0;let t=0,lo=0;for(const b of brackets){const hi=b.upTo==null?Infinity:b.upTo;if(ti>lo)t+=(Math.min(ti,hi)-lo)*b.rate;lo=hi;if(ti<=hi)break;}return t;}
 // Tax on a block of LTCG/qualified-dividend income sitting on top of ordinary
 // taxable income — stackStart is where ordinary income ends (post-deduction),
 // amt is how much LTCG stacks above that. Walks the same bracket boundaries as
@@ -1987,7 +1996,9 @@ function updateRetRate(){
 
   var stCode = $('stateCode').value;
   var stD    = ST[stCode]||{n:'',cr:0,ex:false};
-  var stRetR = stD.ex ? 0 : stD.cr;
+  // The state's own marginal rate on IRA withdrawals at this retirement income and age
+  // (see retirementStateRate) -- the same figure calc() adds to the federal rate.
+  var stRetR = domRetirementStateRate();
   var totalR = margFed + stRetR;
 
   var fedPct = Math.round(margFed*1000)/10;
@@ -2046,6 +2057,8 @@ function updateRetRate(){
     out += '<br>+ '+stPct+'% '+stD.n+' state = <strong>'+totPct+'% combined</strong>';
   } else if(stD.n && stD.ex){
     out += '<br><span style="font-size:.8rem">'+stD.n+' does not tax IRA withdrawals — state adds 0%</span>';
+  } else if(stD.n && stateHasIncomeTax(stCode)){
+    out += '<br><span style="font-size:.8rem">At this income, '+stD.n+' doesn\'t tax more IRA withdrawals (its deductions, exclusions, credits or 0% band cover them) — state adds 0%</span>';
   }
   out += '</div>';
   out += '<button class="use-rate-btn" onclick="useRetRate('+fedPct+')" style="margin-top:6px;background:var(--navy);color:white;border:none;border-radius:var(--rsm);padding:6px 14px;font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;display:block">Use '+fedPct+'% as federal rate &uarr;</button>';
@@ -2068,12 +2081,13 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
   // computeConversionCost (the single shared per-point tax function) rather than
   // a second hand-rolled implementation — this used to be its own parallel
   // federal+LTCG+state calculation, which drifted from computeConversionCost
-  // twice (the original Michigan bug, then RIX/EXAGE coverage never reaching
-  // here). Routing through the shared function instead of patching this one a
-  // third time also picks up NIIT, which this hand-rolled version never had.
+  // twice (the original Michigan bug, then the state retirement exclusions and
+  // age gates never reaching here). Routing through the shared function instead of
+  // patching this one a third time also picks up NIIT, which this hand-rolled
+  // version never had.
   // otherInc (wages) and pensionAmt (pension/retirement-account income) are
   // separate, additive federal-income components — pensionAmt is also the ONLY
-  // one that competes for MI/LA/RIX states' retirement-income deduction caps.
+  // one that competes for states' retirement-income exclusions.
   function convTax(otherInc,niiAmt,ltcgAmt,ssV,stat,nsr,cvt,tfrac,pensionAmt,ageForCalc,spouseAgeForCalc){
     var ctx={income:otherInc,pensionIncome:pensionAmt||0,nii:niiAmt,ltcg:ltcgAmt,ss:ssV,status:stat,nSr:nsr,
               stD:stD,stateCode:stateCode,curAge:ageForCalc,spouseAge:spouseAgeForCalc,
@@ -2103,7 +2117,7 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
   // runs low, its own actual converted amount) instead of the old "compute once at
   // today's age, then scale linearly by cv/planConvert" approximation -- that
   // silently froze every age-gated mechanism (MI's conversionAgeGate, EXAGE
-  // ex:true states, all RIX_STATES' age-tiered caps) and the federal senior
+  // ex:true states, age-tiered state retirement exclusions) and the federal senior
   // deduction at today's age for the ENTIRE plan, even for rows years in the
   // future. Found live 2026-08-24: a 55yo MI filer converting through age 64
   // showed a flat $4,320/yr total tax for all ten years, when ages 60-64 should
@@ -2149,8 +2163,8 @@ function computeMultiYear(income,nii,ltcg,ss,status,tradBal,rothBal,basis,g,nSr,
     // retOtherV is continued wages/self-employment income the person expects during
     // the golden window (e.g. part-time consulting after retiring) — kept separate
     // from retPenV for the SAME reason the main form's income/pensionIncome split
-    // exists: MI/LA/RIX states' retirement-income deductions shelter pension income,
-    // never wages, so only retPenV should ever compete for those caps.
+    // exists: states' retirement-income exclusions shelter pension income, never
+    // wages, so only retPenV should ever compete for those caps.
     var retOtherV=parseFloat(retOtherEl&&retOtherEl.value)||0;
     // Assumes today's investment income (dividends/interest/gains outside retirement
     // accounts) continues at the same level into the golden window — matches this
@@ -3973,7 +3987,8 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
 // "couple" default (used at page load and by both "Clear" resets) always
 // render a real, non-degenerate scenario.
 //
-// computeConversionCost() below depends on window.calcTaxableSS, which is
+// computeConversionCost() below depends on window.calcTaxableSS and
+// window.computeStateAndLocalTax, which are
 // only set once the trailing <script type="module"> bridge (near the end of
 // this file) has run. That only happens after DOMContentLoaded fires (see
 // that block's own comment). So updateHeroVis() must only ever be called
@@ -4061,7 +4076,12 @@ function exampleVerdict(name){
   };
   var cc        = computeConversionCost(f.convertAmt, ctx);
   var effR      = cc.effR;
-  var stRetR    = stD.ex ? 0 : stD.cr;
+  // Retirement income as loadExample() leaves the rate estimator: today's Social Security
+  // and pension, no other income, and the estimated first-year required minimum distribution.
+  var rmdEst    = estimatedRMD(f.tradBal, f.currentAge, f.growthRate/100);
+  var stRetR    = retirementStateRate(f.stateCode, status, '', f.currentAge, f.retirementAge,
+                    isCouple ? f.spouseAge : null,
+                    {ss: f.ssIncome, pension: f.pensionIncome||0, other: 0, withdrawals: rmdEst ? rmdEst.rmd : 0});
   var totalRetR = f.retRate/100 + stRetR;
   var rateDiff  = totalRetR - effR;
   var vCls = rateDiff>=.03 ? 'good' : (rateDiff>=-0.02 ? 'neutral' : 'bad');
@@ -4250,7 +4270,7 @@ var PROFILES = {
   couple: {
     label: 'Near-retiree couple in Ohio',
     stats: 'Ages 63 & 61 · Married · $380K IRA · converting $20K · Ohio',
-    context: 'Ohio taxes IRA withdrawals in retirement — I flag the state impact in your results.',
+    context: 'Ohio taxes this conversion, but at this couple\'s expected retirement income its 0% band and retirement credits would leave more IRA withdrawals untaxed — a state cost today that the traditional IRA wouldn\'t pay later, which I flag in your results.',
     f: {
       currentAge:63, retirementAge:68, filingStatus:'mfj',
       sex:'male', spouseAge:61, spouseSex:'female',
@@ -4278,7 +4298,7 @@ var PROFILES = {
   borderline: {
     label: 'Late converter in Texas — borderline case',
     stats: 'Age 68 · Single · $175K IRA · converting $22K',
-    context: 'Converting at 23.5% but expecting 23.0% in retirement — close enough that it\'s a genuine toss-up, not a lopsided call; check the sensitivity chart for how easily this could tip either way.',
+    context: 'Converting at 23.3% but expecting 23.0% in retirement — close enough that it\'s a genuine toss-up, not a lopsided call; check the sensitivity chart for how easily this could tip either way.',
     f: {
       currentAge:68, retirementAge:72, filingStatus:'single',
       sex:'male', spouseAge:null, spouseSex:null,
@@ -4306,7 +4326,7 @@ var PROFILES = {
   michSingle: {
     label: 'Retired teacher, single, in Michigan',
     stats: 'Age 70 · Single · $370K IRA · converting $30K · Michigan',
-    context: 'Michigan shelters up to $67,610 of pension and retirement-account income for single filers — but this $40,000 pension plus the $30,000 conversion totals $70,000, so $2,390 spills over the cap and gets taxed at Michigan\'s 4.25% rate. Most of the conversion still lands sheltered; this shows what happens right at the edge of it.',
+    context: 'Michigan shelters up to $67,610 of pension and retirement-account income for single filers — this $40,000 pension plus the $30,000 conversion totals $70,000, so $2,390 spills over the cap, and Michigan\'s $5,900 personal exemption covers that. Michigan adds nothing here; a conversion more than $3,510 bigger would start paying its 4.25% rate. This shows what happens right at the edge of the cap.',
     f: {
       currentAge:70, retirementAge:65, filingStatus:'single',
       sex:'female', spouseAge:null, spouseSex:null,
@@ -4321,7 +4341,7 @@ var PROFILES = {
     labelNote: ' (IRMAA)',
     label: 'Still-working 65-year-old in North Carolina — Medicare tier edge case',
     stats: 'Age 65 · Single · Still working · $340K IRA · converting $25K · North Carolina',
-    context: 'This $25,000 conversion pushes Medicare MAGI from $125,000 to $150,000 — crossing the $137,000 IRMAA Tier 1→2 threshold and adding about $1,736/year in extra Part B and Part D premiums for the rest of retirement. Judged by tax rate alone (29.4% today vs. an expected 31.0% later) this is already a near-toss-up — the Medicare surcharge is one more real cost stacked on an already-close call.',
+    context: 'This $25,000 conversion pushes Medicare MAGI from $125,000 to $150,000 — crossing the $137,000 IRMAA Tier 1→2 threshold and adding about $1,736/year in extra Part B and Part D premiums for the rest of retirement. Judged by tax rate alone (29.3% today vs. an expected 31.0% later) this is already a near-toss-up — the Medicare surcharge is one more real cost stacked on an already-close call.',
     f: {
       currentAge:65, retirementAge:68, filingStatus:'single',
       sex:'female', spouseAge:null, spouseSex:null,
@@ -4339,6 +4359,9 @@ function loadExample(name){
   var f=p.f;
   _retFieldsTouched = false;
   _retWdUserSet = false;
+  // The examples define every input: clear the estimator's "other income", which no profile
+  // sets, so the state rate in retirement matches the one exampleVerdict() labels the button with.
+  var _ro = document.getElementById('retOther'); if(_ro) _ro.value = 0;
   function setVal(id,v){ var el=$(id); if(el&&v!==null&&v!==undefined) el.value=v; }
   setVal('currentAge',f.currentAge); setVal('retirementAge',f.retirementAge);
   setVal('filingStatus',f.filingStatus); setVal('sex',f.sex);
@@ -4603,11 +4626,86 @@ function copyShareLink(){
 // hand-copied version of the state-tax math that quietly fell out of sync
 // with this exact logic once (the Michigan-deduction bug), which is the
 // failure mode having one shared function exists to prevent.
-// The per-cliffType exclusion math that used to live here (a rixExcluded() function
-// paralleling relo-engine.mjs's own dispatch) moved to core/retirement-rules.js
-// (resolveRetirementIncome, bridged in above as window.resolveRetirementIncome) on
-// 2026-08-24 — see the STATE TAX section of computeConversionCost below for the call
-// site, and that module's own header comment for why.
+// State and local tax comes from the Relocation tool's engine (stateTaxFor above, since
+// 2026-10-25), so the two tools can't disagree about a state's rules.
+
+// State plus local income tax on one year's income, from the Relocation tool's engine
+// (computeStateAndLocalTax, bridged in from relocation/relo-engine.mjs at the end of this
+// file) and STRULES. Unrounded, since callers take differences. inc is the engine's income
+// vector: {ss, iraWithdrawal, pension, capGains, wages, age, spouseAge}.
+function stateTaxFor(stateCode, status, inc, localTax){
+  const r = STRULES[stateCode];
+  if(!r) return 0;
+  return window.computeStateAndLocalTax(r.taxRules, r.localTax, status, inc, localTax || '').total;
+}
+
+// Does the state have an income tax that can reach this income at all (any bracket above
+// 0%)? Replaces the old `stD.cr > 0` test now that cr no longer drives the math.
+function stateHasIncomeTax(stateCode){
+  const r = STRULES[stateCode];
+  return !!r && Object.values(r.taxRules.bracketsByStatus).some((rows) => rows.some((b) => b.rate > 0));
+}
+
+// How a Roth conversion counts on the state return. To almost every state it is an IRA
+// distribution, and the engine applies the state's retirement exclusion to it as to any IRA
+// withdrawal ('ira'). The exceptions, kept from this tool's own state research:
+//  - ex:true states (no tax on retirement-account income, some only from an age, EXAGE): a
+//    conversion is exempt once you qualify — both spouses on a joint return, the
+//    conservative reading, since the tool doesn't know whose IRA it is — and otherwise is
+//    ordinary taxable income ('wages', so no exclusion touches it). Pennsylvania taxes an
+//    ordinary IRA withdrawal before 59 1/2 but not a full conversion at any age (a transfer
+//    into another eligible Pennsylvania plan; see its note), hence no EXAGE entry.
+//  - RETDED's conversionAgeGate (Michigan): the deduction covers a conversion only at
+//    59 1/2 or older; below that it is fully taxable while pension income still uses the cap.
+//  - CVTOTHER (Ohio): the state's retirement credit counts only distributions received on
+//    account of retirement (R.C. 5747.055(A)), which a conversion isn't; Ohio taxes it the same.
+function conversionKind(stD, exQualifies, rd, curAge, stateCode){
+  if(stD.ex) return exQualifies ? 'none' : 'wages';
+  if(rd && rd.conversionAgeGate != null && curAge < rd.conversionAgeGate) return 'wages';
+  if(CVTOTHER[stateCode]) return 'wages';
+  return 'ira';
+}
+
+// The state's (and local) marginal rate on IRA withdrawals in retirement: the tax on $1,000
+// more withdrawn, at the retirement income ret describes, at the ages it gives. Replaces the
+// flat ST[code].cr (0 for ex:true states) this tool used for every retirement year.
+// ret: {ss, pension, other, withdrawals, age, spouseAge}.
+// Michigan counts an IRA withdrawal as retirement income only from 59 1/2 (MCL
+// 206.30(8)(a)(ii); Treasury RAB 2017-21), the rule behind RETDED's conversionAgeGate, so
+// before that age the withdrawals go in as ordinary income.
+function stateRetMarginal(stateCode, status, ret, localTax){
+  const rd = RETDED[stateCode];
+  const wdOrdinary = !!rd && rd.conversionAgeGate != null && ret.age < rd.conversionAgeGate;
+  const inc = (extra) => {
+    const wd = ret.withdrawals + extra;
+    return { ss: ret.ss, pension: ret.pension, wages: ret.other + (wdOrdinary ? wd : 0), capGains: 0,
+      iraWithdrawal: wdOrdinary ? 0 : wd, age: ret.age, spouseAge: ret.spouseAge };
+  };
+  const rate = (stateTaxFor(stateCode, status, inc(1000), localTax) - stateTaxFor(stateCode, status, inc(0), localTax)) / 1000;
+  return Math.max(0, Math.round(rate * 10000) / 10000);
+}
+
+// The state part of the expected retirement rate: stateRetMarginal at retirement age (or
+// today's, if already past it), on the retirement income ret describes -- {ss, pension,
+// other, withdrawals}, the rate estimator's fields (by default today's Social Security and
+// pension and the estimated first-year required minimum distribution).
+function retirementStateRate(stateCode, status, localTax, curAge, retAge, spouseAge, ret){
+  const age = Math.max(retAge, curAge);
+  return stateRetMarginal(stateCode, status, {ss: ret.ss, pension: ret.pension, other: ret.other,
+    withdrawals: ret.withdrawals, age, spouseAge: spouseAge==null ? null : spouseAge + (age - curAge)}, localTax);
+}
+// The same from the page's own fields (calc() and the rate estimator both use this, so the
+// state rate the estimator shows is the one the verdict adds).
+function domRetirementStateRate(){
+  function num(id){ var e=document.getElementById(id); return e ? (parseFloat(e.value)||0) : 0; }
+  function str(id){ var e=document.getElementById(id); return e ? e.value : ''; }
+  var stateCode = str('stateCode'), status = str('filingStatus') || 'single';
+  var curAge = parseInt(str('currentAge'))||60, retAge = parseInt(str('retirementAge'))||67;
+  var spouseAge = (status==='mfj'||status==='mfs') ? (parseInt(str('spouseAge'))||60) : null;
+  var localTax = stateCode==='NY' ? str('nyLocalTax') : stateCode==='OR' ? str('orLocalTax') : '';
+  return retirementStateRate(stateCode, status, localTax, curAge, retAge, spouseAge,
+    {ss: num('retSS'), pension: num('retPen'), other: num('retOther'), withdrawals: num('retWd')});
+}
 
 // ctx: {income, pensionIncome, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac}
 function computeConversionCost(cvtAmt, ctx){
@@ -4616,10 +4714,10 @@ function computeConversionCost(cvtAmt, ctx){
   // Wages/other income (wagesInc) and pension/retirement-account income
   // (pensionIncome) are two DISTINCT, ADDITIVE amounts the user enters
   // separately — federally they're both just ordinary income (income below
-  // sums them), but several states' retirement-income deductions (MI's flat
-  // cap, and the RIX states' richer shapes) shelter pensionIncome only, never
-  // wages. Keeping them separate end to end is what makes that distinction
-  // possible; see the RETDED/RIX branches below.
+  // sums them), but many states' retirement-income deductions shelter
+  // pensionIncome only, never wages. Keeping them separate end to end is what
+  // makes that distinction possible; the state engine gets them as separate
+  // fields (stIncome in the STATE AND LOCAL TAX section below).
   const income = wagesInc + pensionIncome;
 
   // ── SS TORPEDO ──
@@ -4677,252 +4775,34 @@ function computeConversionCost(cvtAmt, ctx){
   const ltcgTaxWith = calcLTCGTax(tiWith, ltcgAmtWith, status);
   const cvtTxLtcg   = Math.max(0, ltcgTaxWith - ltcgTaxBase);
 
-  // ── STATE TAX ──
-  // ex:true states may still tax a conversion below a qualifying age (an
-  // early-distribution rule — EXAGE holds that threshold where one exists;
-  // absent means the exemption is unconditional). For a joint return, require
-  // BOTH spouses to qualify before treating the whole conversion as exempt —
-  // the tool doesn't model per-spouse IRA ownership, so this is the
-  // conservative reading rather than assuming either spouse's age suffices.
+  // ── STATE AND LOCAL TAX ──
+  // From the Relocation tool's engine (relocation/relo-engine.mjs): the state's own
+  // brackets, deductions, exemptions, credits, retirement exclusions, Social Security rules
+  // and federal-tax subtraction, and any local tax, on this year's income with the
+  // conversion minus without it. Until 2026-10-25 this was one flat rate per state
+  // (ST[code].cr, the marginal rate at roughly $100k of income) times the taxable change, so
+  // it missed graduated brackets below that, every deduction and credit, credit phase-outs
+  // and state Social Security tax: a California couple with $40,000 of pension converting
+  // $30,000 was charged $2,790 against $459 owed, and a Utah couple $1,335 against $2,261.
+  // How the conversion itself counts is the one Roth-specific part (conversionKind).
   const exAge      = EXAGE[stateCode];
   const exQualAge  = isCouple ? Math.min(curAge, spouseAge) : curAge;
   const exQualifies= stD.ex && (exAge===undefined || exQualAge>=exAge);
-
-  // States in RETDED have a verified flat, non-phased-out retirement-income
-  // deduction that a conversion competes for alongside the user's ALREADY-
-  // RECEIVING pension/retirement-account income specifically — not wages. Every
-  // one of the RETDED/RIX states' own deductions is a defined "retirement income"
-  // exclusion in its own statute; wages have never qualified for any of them
-  // (confirmed for Michigan against MI Treasury guidance — wages, salary, and
-  // self-employment are explicitly listed as NOT eligible). pensionIncome is the
-  // dedicated field for this; wagesInc never competes for these caps.
-  // Computed before/with the conversion, mirroring the federal calc, so the
-  // deduction only shelters conversion income once pensionIncome hasn't already
-  // used up the cap.
   const rd  = RETDED[stateCode];
-  const rix = RIX[stateCode];
-  let cvtTxSt;
-  // Overrides the "~X% marginal" label below when a state's TRUE marginal
-  // rate on this specific conversion differs from its flat stD.cr — found
-  // live: MA's surtax branch could tax part of a conversion at 9% while the
-  // label kept saying "~5.0%", the exact sentence-vs-number mismatch class
-  // this whole audit pass exists to catch. Defaults to stD.cr; only MA's
-  // branch below overrides it, and only when the surtax actually applied.
-  let stMarginalDisp = stD.cr;
-  if(exQualifies){
-    cvtTxSt = 0;
-  } else if(rd){
-    const cap = rd[status] ?? rd.single;
-    // MI: the deduction applies to ordinary pension/IRA income at ANY age (the 2026
-    // Lowering MI Costs phase-in restored the pre-2012, birth-year-independent rule),
-    // but a Roth CONVERSION specifically only qualifies if the taxpayer is 59.5+ at
-    // the time of the rollover — confirmed via MI Treasury's own FAQ: "the rollover
-    // distribution from a regular IRA qualifies for the pension subtraction... if the
-    // individual is at least 59 1/2 years of age when the rollover occurs." Below the
-    // gate, the conversion gets ZERO shelter and is fully taxable, even though
-    // pensionIncome (already-receiving income) still competes for the cap normally.
-    // Roth-calculator-only: Relocation's iraWithdrawal field has no conversion-
-    // specific semantics (it can represent a genuine pre-59.5 withdrawal-to-spend,
-    // which DOES still qualify under the age-independent rule), so this gate isn't
-    // applied there.
-    const cvtQualifies = rd.conversionAgeGate == null || curAge >= rd.conversionAgeGate;
-    const cvtEligible = cvtQualifies ? taxableCvt : 0;
-    const stTiBase = Math.max(0, pensionIncome - Math.min(cap, pensionIncome));
-    const stTiWithEligible = Math.max(0, (pensionIncome+cvtEligible) - Math.min(cap, pensionIncome+cvtEligible));
-    cvtTxSt = ((stTiWithEligible - stTiBase) + (taxableCvt - cvtEligible)) * stD.cr;
-  } else if(rix){
-    // window.resolveRetirementIncome (core/retirement-rules.js, bridged in near the
-    // end of this file) is fully rule-driven — it reads iraWeightPct, non-pooled
-    // pensionIncome.treatment, and (for CO) socialSecurity's sharesCapWithSS-adjacent
-    // fields straight from the RIX table's fuller shape, so this ONE call path now
-    // correctly handles CT's IRA-weighting and AL/NY's pension-separately-exempt
-    // shape too — previously dedicated stateCode branches, deleted here 2026-08-24.
-    // That consolidation is also what surfaced a real, previously-untested bug: the
-    // old dedicated-branch/rixExcluded() setup never read CO's sharesCapWithSS at
-    // all, so a CO filer with nonzero Social Security got the wrong shelter for a
-    // conversion (see core/retirement-rules.js's own header comment).
-    // ss (gross benefit) vs ssBase/ssWith (this tool's own precise taxable-SS figure,
-    // already computed above): resolveRetirementIncome's `ss` param needs the TRUE
-    // gross benefit (WV's netAgainstSS statute cares about the real benefit
-    // "regardless of federal taxability," and CO independently derives its own
-    // taxable-SS figure from it) — but `ssForThreshold`, used only by NJ/VA to back
-    // SS OUT of the agiProxy for a threshold test, must match what's actually baked
-    // INTO agiBase/agiWith, which is this tool's precise ssBase/ssWith, not the gross
-    // benefit. Passing the wrong one here would silently blunt this tool's own
-    // (better) precision back down to Relocation's cruder level for those 2 states.
-    // otherIncomeForSS (CO only): the shared function's default derivation
-    // (agiProxy-ss) is exact for Relocation but WRONG here, because this tool's
-    // agiBase/agiWith are built from ssBase/ssWith (a pre-computed taxable figure),
-    // not the raw benefit — found live while verifying this migration: at $20,000 of
-    // true other income, the default derivation silently zeroed CO's SS subtraction
-    // instead of the correct $2,500, a 100% error. income+nii is this tool's own true
-    // non-SS income figure (already used to derive ssBase/ssWith in the first place).
-    // Both calls also return ssTaxableOverride (populated for CO), intentionally
-    // unused here: this tool has never modeled state-level SS taxability, only the
-    // federal SS torpedo (ssBase/ssWith above) -- so CO's state tax on the SS itself
-    // still isn't captured, same as before this refactor. Only iraTaxable/penTaxable
-    // (the conversion's own state-tax effect) are read.
-    const base    = window.resolveRetirementIncome(rix, status, {age: curAge, spouseAge, ira: 0, pension: pensionIncome, agiProxy: agiBase, ss, ssForThreshold: ssBase, otherIncomeForSS: income+nii});
-    const withCvt = window.resolveRetirementIncome(rix, status, {age: curAge, spouseAge, ira: taxableCvt, pension: pensionIncome, agiProxy: agiWith, ss, ssForThreshold: ssWith, otherIncomeForSS: income+nii+taxableCvt});
-    const stDeltaBefore = base.iraTaxable + base.penTaxable;
-    const stDeltaWith   = withCvt.iraTaxable + withCvt.penTaxable;
-    cvtTxSt = (stDeltaWith - stDeltaBefore) * stD.cr;
-
-    // NYC / Yonkers local income tax — NY-specific, and unlike MD/IN's mandatory
-    // county tax (baked unconditionally into stD.cr's sibling branches below),
-    // applies ONLY to residents of these two SPECIFIC jurisdictions (most NY
-    // residents pay $0 local income tax), so it's opt-in via the wizard's
-    // nyLocalTax selector rather than unconditional. Layered on stDeltaBefore/
-    // stDeltaWith (the SAME NY-exclusion-adjusted amount the state tax above just
-    // used), not the raw taxableCvt — NY's own instructions define NYC taxable
-    // income relative to NY taxable income, so a conversion NY's own $20k/59.5+
-    // per-person exclusion already sheltered owes $0 city tax too, not just $0
-    // state tax. wagesInc/nii/ltcg aren't excludable under NY's retirement
-    // exclusion (only pension/IRA income is), so they count toward the NYC
-    // bracket base unchanged before/with the conversion.
-    if(stateCode==='NY' && localTax==='nyc'){
-      const nycBrax   = NYCTAX.nyc[status] || NYCTAX.nyc.single;
-      const nycBefore = bracketTax(wagesInc+nii+ltcg+stDeltaBefore, nycBrax);
-      const nycWith   = bracketTax(wagesInc+nii+ltcg+stDeltaWith,   nycBrax);
-      const nycCvtTax = nycWith - nycBefore;
-      cvtTxSt += nycCvtTax;
-      if(nycCvtTax>0){
-        const nycTopBracket = nycBrax.find(b=>(wagesInc+nii+ltcg+stDeltaWith)<=(b.upTo??Infinity)) || nycBrax[nycBrax.length-1];
-        stMarginalDisp = stD.cr + nycTopBracket.rate;
-      }
-    } else if(stateCode==='NY' && localTax==='yonkers'){
-      // Yonkers is NOT a separate income-based tax — it's a 16.75% SURCHARGE on
-      // the filer's NY STATE tax liability itself (NY Form IT-201-I's Yonkers
-      // worksheet). Because it's a strict linear function of the state tax
-      // already computed above, applying it to cvtTxSt is mathematically EXACT,
-      // not an approximation: surcharge(taxWith)-surcharge(taxBefore) always
-      // equals yonkersRate*(taxWith-taxBefore) regardless of what those are.
-      const yonkersTax = cvtTxSt * NYCTAX.yonkersRate;
-      cvtTxSt += yonkersTax;
-      if(yonkersTax>0) stMarginalDisp = stD.cr * (1 + NYCTAX.yonkersRate);
-    }
-  } else if(stateCode==='OH'){
-    // Ohio taxes nonbusiness income above a flat, filing-status-independent
-    // zero-bracket threshold (ORC 5747.02, effective 2026: 0% up to $26,050,
-    // 2.75% above — same threshold for single and MFJ per multiple independent
-    // sources; not a retirement-specific shelter like RETDED/RIX, just Ohio's
-    // own bracket floor, so no age gate). SS already excluded, matching Ohio's
-    // SS exemption. Same before/with delta pattern as RETDED/RIX above, so a
-    // conversion that straddles the threshold is only taxed on the portion
-    // that's actually above it.
-    const OH_ZERO_BRACKET = 26050;
-    // income here is ALREADY wagesInc+pensionIncome (reassigned above) -- don't
-    // add pensionIncome again.
-    const ohBase   = income + nii + ltcg;
-    const stTiBase = Math.max(0, ohBase - OH_ZERO_BRACKET);
-    const stTiWith = Math.max(0, (ohBase+taxableCvt) - OH_ZERO_BRACKET);
-    cvtTxSt = (stTiWith - stTiBase) * stD.cr;
-  } else if(stateCode==='MA'){
-    // Massachusetts' 4% surtax on income above the DOR's published, CPI-
-    // indexed 2026 threshold — found live: previously not modeled at all (a
-    // conversion pushing well past the threshold got charged the flat 5%
-    // only, despite the site's own note explicitly warning about this
-    // surtax). $1,107,750 confirmed 2026-08-24 directly from mass.gov's "4%
-    // Surtax on Taxable Income" page (via an archive.org snapshot dated
-    // 2026-07-27, since mass.gov 403s every direct fetch from this
-    // environment) — DOR states plainly: "The surtax threshold for: Tax year
-    // 2026 is $1,107,750." (previous years: 2025 $1,083,150, 2024 $1,053,750,
-    // 2023 $1,000,000, the constitutional amendment's original figure). Still
-    // NOT primary-source-confirmed: whether this threshold is the same for
-    // every filing status or doubles for a joint return — applied here as the
-    // SAME threshold regardless of status, matching the general
-    // understanding that this surtax does not double for MFJ (mass.gov does
-    // confirm MFJ couples subject to the surtax must file jointly with no
-    // exception, which is consistent with a single combined threshold, but
-    // doesn't explicitly rule out doubling). Applies ON TOP of the flat 5%
-    // (taxableCvt*stD.cr below), not instead of it.
-    const MA_SURTAX_THRESHOLD = 1107750;
-    const MA_SURTAX_RATE = 0.04;
-    // income here is ALREADY wagesInc+pensionIncome (reassigned above); SS
-    // excluded from the base, matching MA's own SS exemption (same pattern
-    // as Ohio above).
-    const maBase   = income + nii + ltcg;
-    const stTiBase = Math.max(0, maBase - MA_SURTAX_THRESHOLD);
-    const stTiWith = Math.max(0, (maBase+taxableCvt) - MA_SURTAX_THRESHOLD);
-    const surtax   = (stTiWith - stTiBase) * MA_SURTAX_RATE;
-    cvtTxSt = taxableCvt * stD.cr + surtax;
-    if(surtax>0) stMarginalDisp = stD.cr + MA_SURTAX_RATE;
-  } else if(stateCode==='MD'){
-    // Maryland's county income tax is MANDATORY for every resident (unlike
-    // Michigan's opt-in city tax, which is text-only disclosure below because
-    // most MI residents pay $0 local tax) — found live: stD.cr had been
-    // silently bumped from the true 4.75% state marginal to 5.75% as a rough,
-    // mathematically-wrong attempt to "offset" this unmodeled county tax
-    // (4.75%+3.2% is ~8%, not 5.75%). Modeled explicitly instead, applied to
-    // ALL income (not threshold-gated like MA's surtax above). Rate is the
-    // median AND modal rate across all 24 MD jurisdictions (23 counties +
-    // Baltimore City) per the Comptroller's 2026 local withholding table —
-    // 12 of 24 sit at the 3.20% ceiling — matching the Comptroller's own
-    // stated practice of basing combined withholding on the median local
-    // rate. Actual county rates range 2.25% (Worcester) to 3.30% (Dorchester,
-    // Kent); Anne Arundel and Frederick are themselves income-tiered.
-    // Sourced from states.json's localTax.county.rate via COUNTYTAX (moved off
-    // a hand-maintained literal 2026-08-27, closing the same unguarded-magic-
-    // number gap the earlier AL/AR/DE/KY/OK G5 guard work closed elsewhere).
-    cvtTxSt = taxableCvt * (stD.cr + COUNTYTAX.MD);
-    stMarginalDisp = stD.cr + COUNTYTAX.MD;
-  } else if(stateCode==='IN'){
-    // Indiana's county income tax is MANDATORY for every resident, same shape
-    // as Maryland's above — found live during the 2026-08-25 broader audit:
-    // the note called it "a small local income tax," when the real figure is
-    // anything but small. Extracted the full 92-county rate table directly
-    // from Indiana DOR's Departmental Notice #1 (effective Jan. 1, 2026,
-    // in.gov/dor/files/dn01.pdf) — rates range 0.50% (Porter) to 3.00%
-    // (Randolph), median 1.97% across all 92 counties, no single dominant
-    // rate the way MD has one (no state-published "typical" blended figure
-    // to lean on, unlike MD's Comptroller-stated median-withholding
-    // practice) — so the median across all 92 counties is the modeling
-    // choice here, corroborated by Marion County (Indianapolis, the state's
-    // most populous) independently sitting close by at 2.02%. On a 2.95%
-    // state rate, this roughly DOUBLES the effective rate for a typical
-    // filer — not the minor add-on the old note implied.
-    // Sourced from states.json's localTax.county.rate via COUNTYTAX (moved off
-    // a hand-maintained literal 2026-08-27, same as MD above).
-    cvtTxSt = taxableCvt * (stD.cr + COUNTYTAX.IN);
-    stMarginalDisp = stD.cr + COUNTYTAX.IN;
-  } else if(stateCode==='OR'){
-    // Portland-area local taxes — unlike MD/IN's mandatory county tax, and like
-    // NY's NYC/Yonkers above, these only apply to residents of specific
-    // jurisdictions (most OR residents pay $0), so they're opt-in via the
-    // wizard's orLocalTax selector. Genuinely different from NY's shape though:
-    // Metro's Supportive Housing Services tax and Multnomah County's Preschool
-    // For All tax are NOT mutually exclusive — Multnomah County is a SUBSET of
-    // Metro's 3-county district (Multnomah/Washington/Clackamas), so a Multnomah
-    // filer owes BOTH, stacked, while a Washington/Clackamas filer inside Metro
-    // owes only Metro's. Both taxes apply to "Oregon taxable income" (OR-40 line
-    // 19, confirmed via the official Form MET-40) — the same ordinary-income
-    // proxy OH's and MA's branches above already use (income is already
-    // wagesInc+pensionIncome, reassigned near the top of this function).
-    const orBase = income + nii + ltcg;
-    const orWith = orBase + taxableCvt;
-    cvtTxSt = taxableCvt * stD.cr;
-    if(localTax==='metro' || localTax==='multnomah'){
-      const metroBrax = ORTAX.metro[status] || ORTAX.metro.single;
-      const metroTax  = bracketTax(orWith, metroBrax) - bracketTax(orBase, metroBrax);
-      cvtTxSt += metroTax;
-      if(metroTax>0) stMarginalDisp = stD.cr + 0.01;
-    }
-    if(localTax==='multnomah'){
-      // Preschool For All is a SEPARATE tax computed on the SAME base and
-      // SUMMED with Metro's above — two distinct taxing authorities, not one
-      // combined bracket ladder (their thresholds don't share a single scale:
-      // Metro is flat 1% above $125k/$200k; PFA is its own 1.5%/3% ladder).
-      const pfaBrax = ORTAX.multnomah[status] || ORTAX.multnomah.single;
-      const pfaTax  = bracketTax(orWith, pfaBrax) - bracketTax(orBase, pfaBrax);
-      cvtTxSt += pfaTax;
-      if(pfaTax>0){
-        const pfaTopBracket = pfaBrax.find(b=>orWith<=(b.upTo??Infinity)) || pfaBrax[pfaBrax.length-1];
-        stMarginalDisp = stD.cr + 0.01 + pfaTopBracket.rate; // Metro's 1% + PFA's own marginal rate, stacked
-      }
-    }
-  } else {
-    cvtTxSt = taxableCvt * stD.cr;
-  }
+  const cvtKind = conversionKind(stD, exQualifies, rd, curAge, stateCode);
+  const stIncome = (cvt) => ({
+    ss, pension: pensionIncome, capGains: ltcg, age: curAge, spouseAge,
+    wages: wagesInc + nii + (cvtKind==='wages' ? cvt : 0),
+    iraWithdrawal: cvtKind==='ira' ? cvt : 0,
+  });
+  // Floored at zero, as the retirement-side rate is (stateRetMarginal): a conversion can lower
+  // a state's tax where the conversion itself is excluded but the federal tax on it is
+  // deductible (Alabama at 65+, inside its $6,000-a-person exclusion: at most a few hundred
+  // dollars), and the tool counts no state saving on either side.
+  const cvtTxSt = Math.max(0, stateTaxFor(stateCode, status, stIncome(taxableCvt), localTax)
+                            - stateTaxFor(stateCode, status, stIncome(0), localTax));
+  // The share of the taxable conversion that went to state and local tax (labels only).
+  const stMarginalDisp = taxableCvt > 0 ? cvtTxSt / taxableCvt : 0;
 
   // ── NIIT (3.8% on net investment income when MAGI > threshold) ──
   // Pool is nii+ltcg — both are "net investment income" for NIIT purposes,
@@ -4947,7 +4827,7 @@ function computeConversionCost(cvtAmt, ctx){
     agiBase, agiWith, ordAgiBase, ordAgiWith, std, srD, srDW, tiBase, tiWith,
     txOut, txIn, cvtTxFed, tiWithNoTorpedo, txInNoTorpedo, torpedoTax,
     totalTiBase, totalTiWith, ltcgAmtBase, ltcgAmtWith, ltcgTaxBase, ltcgTaxWith, cvtTxLtcg,
-    exAge, exQualAge, exQualifies, rd, cvtTxSt, stMarginalDisp,
+    exAge, exQualAge, exQualifies, rd, cvtKind, cvtTxSt, stMarginalDisp,
     niitThr, niiPool, niitBase, niitWith, niitCost,
     cvtTxTot, effR,
     iSt, tierBase, tierWith,
@@ -5159,7 +5039,7 @@ function calc(){
   if(snEl){
     if(stD.n && stD.ex)
       snEl.innerHTML='<span style="color:var(--success);font-size:.84rem">'+stD.note+'</span>';
-    else if(stD.n && stD.cr>0)
+    else if(stD.n && stateHasIncomeTax(stateCode))
       snEl.innerHTML='<span style="color:var(--muted);font-size:.84rem">'+stD.note+'</span>';
     else if(!stateCode)
       snEl.innerHTML='<span style="color:var(--ink-amber);font-size:.84rem">Add your state above — without it, every number below leaves out state tax entirely, which can add several percentage points.</span>';
@@ -5202,8 +5082,9 @@ function calc(){
       +'<p style="font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.5">This is a single-conversion snapshot. For the fuller picture — how many years of tax savings it takes to pay back the cost of moving itself, across all filing statuses — see the <a href="/relocation/" target="_blank" rel="noopener" style="color:var(--navy-mid);font-weight:600">Relocation tax comparison tool</a>.</p>';
   }
 
-  // State rate on future IRA withdrawals (0 if state exempts retirement income)
-  const stRetR    = stD.ex ? 0 : stD.cr;
+  // State (and local) marginal rate on future IRA withdrawals, at the retirement income in
+  // the rate estimator's fields (see retirementStateRate); 0 where the state exempts them.
+  const stRetR    = domRetirementStateRate();
   const totalRetR = retRate + stRetR;
 
   const {cur:curBR} = roomTo(tiBase, status);
@@ -5286,7 +5167,7 @@ function calc(){
   }
 
   let stateSectionHtml = '';
-  if(stD.cr > 0){
+  if(stateHasIncomeTax(stateCode)){
     let stateNote = '';
     if(stD.ex && exQualifies){
       stateNote =
@@ -5317,7 +5198,7 @@ function calc(){
       '<div class="tsep"></div>'
       +'<div class="tsubhead" id="stateTaxSection">State Tax ('+stD.n+')</div>'
       + capUsageHtml
-      +'<div class="trow"><span class="tl">State tax on conversion (~'+pct(stMarginalDisp,1)+' marginal)</span><span class="tv">'+fmt(cvtTxSt)+'</span></div>'
+      +'<div class="trow"><span class="tl">State tax on conversion ('+pct(stMarginalDisp,1)+' of it)</span><span class="tv">'+fmt(cvtTxSt)+'</span></div>'
       + stateNote
       +'<div class="tsep"></div>'
       +(cvtTxLtcg>0?'<div class="trow"><span class="tl">Qualified div./LTCG bumped to a higher bracket</span><span class="tv">'+fmt(cvtTxLtcg)+'</span></div>':'')
@@ -5353,8 +5234,12 @@ function calc(){
     ? '<div class="btip">💡 <strong>Bracket room:</strong> You can convert <strong>'+fmt(brRoomShown)+'</strong> more before crossing into the '+pct(nxtBR,0)+' bracket — still at your current '+pct(curBR,0)+' federal rate.</div>'
     : '';
 
-  const exemptTip = (stD.cr>0 && stRetR===0 && !exQualifies)
-    ? '<div class="btip" style="border-color:#9ECFB2;background:var(--sbg);color:var(--ink-green)"><strong>State exemption note:</strong> Since '+stD.n+' will not tax your traditional IRA withdrawals in retirement, you are paying state tax today that you never owe on the traditional IRA — which tilts the math against converting.</div>'
+  const exemptTip = (cvtTxSt>=0.5 && stRetR===0 && !exQualifies)
+    ? '<div class="btip" style="border-color:#9ECFB2;background:var(--sbg);color:var(--ink-green)"><strong>State exemption note:</strong> '
+      +(stD.ex
+        ? 'Since '+stD.n+' will not tax your traditional IRA withdrawals in retirement, you are paying state tax today that you never owe on the traditional IRA'
+        : 'At the retirement income in the rate estimator, '+stD.n+' doesn\'t tax more IRA withdrawals (its deductions, exclusions, credits or 0% band cover them), so you are paying state tax today that the same money wouldn\'t owe later')
+      +' — which tilts the math against converting.</div>'
     : '';
 
   const ssRow = ss>0
@@ -5490,7 +5375,8 @@ function calc(){
   if(cvtTxSt>0) includesParts.push(stD.n+' state tax');
   if(torpedoInc>0) includesParts.push('a hidden tax bump on your Social Security');
   const includesNote = includesParts.length ? ' (including '+includesParts.join(' and ')+')' : '';
-  const stRetNote    = stRetR>0 ? ' + '+pct(stRetR,1)+' '+stD.n+' state' : '';
+  // totalRetR already includes the state rate, so say "including", not "+".
+  const stRetNote    = stRetR>0 ? ', including '+pct(stRetR,1)+' '+stD.n+' state' : '';
   let blTxt =
     'Converting <strong>'+fmt(cvtAmt)+'</strong>'+(basis>0&&taxableFrac<0.9999?' ('+fmt(taxableCvt)+' taxable after your '+fmt(basis)+' in after-tax basis)':'')+' this year costs <strong>'+fmt(cvtTxTot)+'</strong> in taxes'
     +includesNote+' — an all-in rate of <strong>'+pct(effR)+'</strong>.';
@@ -5595,7 +5481,7 @@ function calc(){
         +'<strong>Sensitivity chart not shown for this scenario.</strong> '
         +'Your state ('+stD.n+') exempts IRA distributions from state income tax in retirement. '
         +'The conversion chart works by comparing growth and retirement tax rate combinations — '
-        +'but it can\'t capture the asymmetry here: you\'d pay '+pct(stD.cr)+' '+stD.n+' state tax to convert today, '
+        +'but it can\'t capture the asymmetry here: you\'d pay '+fmt(cvtTxSt)+' of '+stD.n+' state tax to convert today, '
         +'yet owe nothing on traditional withdrawals later. '
         +'That cost doesn\'t show up in the chart\'s axes regardless of which inputs you test. '
         +'The state exemption warning in your results above is the key insight for your situation.'
@@ -5720,23 +5606,21 @@ function calc(){
     'Your tax rate today: <strong>'+pct(effR)+'</strong> · in retirement: <strong>'+pct(totalRetR)+stRetNote+'</strong>',
     'federalTaxSection', true));
 
-  // Grounded in cvtTxSt (the actual computed dollar amount for THIS user) rather
-  // than the state's nominal cr rate — a RETDED/RIX state (Michigan among them)
-  // can owe $0 on this specific conversion even though cr>0, if the retirement-
-  // income deduction cap fully shelters it. Asserting "~4.3% marginal" in that
-  // case would be the same overstatement class as the Ohio zero-bracket bug.
+  // Grounded in cvtTxSt (the actual computed dollar amount for THIS user): a state can
+  // owe $0 on this specific conversion when its retirement exclusion, deductions or
+  // credits cover it.
   if(!stateCode){
     whyItems.push(whyItem('State treatment', 'No state selected — this is a federal-only comparison.', null));
-  } else if(cvtTxSt===0 && stD.cr===0){
+  } else if(!stateHasIncomeTax(stateCode)){
     whyItems.push(whyItem('State treatment', stD.n+' has no state income tax.', null));
-  } else if(cvtTxSt===0 && stD.ex && exQualifies){
+  } else if(cvtTxSt<0.5 && stD.ex && exQualifies){
     whyItems.push(whyItem('State treatment', stD.n+' exempts this conversion from state tax — you already qualify.', 'stateTaxSection', true));
-  } else if(cvtTxSt===0){
-    whyItems.push(whyItem('State treatment', '$0 state tax on this conversion — your retirement-income deduction fully covers it.', 'stateTaxSection', true));
+  } else if(cvtTxSt<0.5){
+    whyItems.push(whyItem('State treatment', '$0 state tax on this conversion — '+stD.n+'\'s retirement exclusion, deductions or credits cover it at your income.', 'stateTaxSection', true));
   } else if(stD.ex && !exQualifies){
     whyItems.push(whyItem('State treatment', stD.n+' exempts IRA withdrawals in retirement, but you don\'t qualify yet'+(exAge!==undefined?' (you need to be age '+exAge+'+)':'')+' — you\'re paying <strong>'+fmt(cvtTxSt)+'</strong> in state tax today you\'d otherwise avoid.', 'stateTaxSection', true));
   } else {
-    whyItems.push(whyItem('State treatment', stD.n+' taxes this conversion — <strong>'+fmt(cvtTxSt)+'</strong> (~'+pct(stD.cr,1)+' marginal).', 'stateTaxSection', true));
+    whyItems.push(whyItem('State treatment', stD.n+' taxes this conversion — <strong>'+fmt(cvtTxSt)+'</strong> ('+pct(stMarginalDisp,1)+' of it).', 'stateTaxSection', true));
   }
 
   if(ss>0){
@@ -5786,11 +5670,11 @@ function calc(){
   $('resultsWrap').innerHTML =
     '<div class="fade-up">'
     +rmdResultNote
-    +'<div class="disclaimer">📌 <strong>Planning tool, not financial advice.</strong> This calculator models common tax rules but cannot see your full picture — estate goals, healthcare subsidies, future moves, charitable plans, and income changes all matter. State rates are approximate. Use this to understand the landscape and size the conversation with your CPA or financial advisor, not to make the decision alone.</div>'
+    +'<div class="disclaimer">📌 <strong>Planning tool, not financial advice.</strong> This calculator models common tax rules but cannot see your full picture — estate goals, healthcare subsidies, future moves, charitable plans, and income changes all matter. State tax is an estimate from each state’s own rules. Use this to understand the landscape and size the conversation with your CPA or financial advisor, not to make the decision alone.</div>'
     +'<div class="bottom-line"><div class="bl-eye">YOUR BOTTOM LINE · CONVERTING '+fmt(cvtAmt)+'</div><div class="bl-txt" id="blTxt">'+blTxt+'</div><div class="bl-cav">Estimates only — rough numbers are fine for planning. Scroll down for the full breakdown.</div></div>'
     +whyPanelHTML
     +'<div class="rgrid">'
-    +'<div class="sc2 cost"><div class="slbl">Total Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stD.cr>0?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(!stateCode?'<br>Federal only — no state selected':(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):'')))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + Net Investment Income Tax: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')
+    +'<div class="sc2 cost"><div class="slbl">Total Tax Cost Today</div><div class="sval amb" id="animTax">'+fmt(cvtTxTot)+'</div><div class="ssub">'+pct(effR)+' effective rate'+(stateHasIncomeTax(stateCode)?'<br>Fed: '+fmt(cvtTxFed)+' + '+stD.n+': '+fmt(cvtTxSt):(!stateCode?'<br>Federal only — no state selected':(niitCost>0||cvtTxLtcg>0?'<br>Fed: '+fmt(cvtTxFed):'')))+(cvtTxLtcg>0?' + LTCG: '+fmt(cvtTxLtcg):'')+(niitCost>0?' + Net Investment Income Tax: '+fmt(niitCost):'')+(torpedoInc>0?'<br>incl. SS hidden tax':'')
     +(taxSrc==='inside'?'<br>Tax withheld from IRA — only '+fmt(rothIn)+' enters Roth':'<br>Paid from outside savings — full '+fmt(rothIn)+' enters Roth')
     +'</div></div>'
     +'<div class="sc2 be"><div class="slbl">When Roth Wins</div><div class="sval '+(beAge?'grn':'red')+'">'+(beAge?(beAge===curAge?'Right now':'Age '+beAge):'Traditional wins')+'</div><div class="ssub">'+(beAge===curAge?'Roth ahead from day one':beAge?(beAge-curAge)+' yrs from now'+(survBE?' · '+pct(survBE,0)+(isCouple?' joint chance':' chance'):''):'Traditional stays ahead')+'</div></div>'
@@ -5824,7 +5708,6 @@ function calc(){
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem 1.5rem;font-size:.87rem;line-height:1.55" class="pcols">'
     +'<div><p style="margin-bottom:.45rem"><strong style="color:var(--danger)">High impact</strong></p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">ACA (Affordable Care Act) marketplace subsidies.</strong> If you retire before age 65, Roth conversion income counts toward your ACA marketplace income and can reduce or eliminate premium tax credits — sometimes by thousands of dollars per year. For early retirees, this can completely change the conversion math. Not modeled here at all.</p>'
-    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">State rate accuracy.</strong> Rates shown are approximate at moderate incomes. Your actual rate differs based on deductions, local taxes, and income level. Verify locally before converting.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Hidden Social Security tax in retirement.</strong> If you have substantial income in retirement, this effect can also raise your effective retirement rate — potentially making the Roth more favorable than shown.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Widow/widower tax cliff.</strong> When a spouse dies, filing status changes from Married (jointly) to Single, often dramatically increasing effective tax rates and compressing Medicare brackets. For married couples, this is one of the strongest arguments for converting while both spouses are alive.'+(status==='mfj'?' The note above shows the general federal brackets that shift — it isn\'t a personalized recalculation of your own results, which is what "not modeled" means here.':' Not modeled here — the numbers above are your own filing status, not a recalculation of what happens after this transition.')+'</p>'
     +'</div>'
@@ -5833,7 +5716,8 @@ function calc(){
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Life expectancy modeling uses a 2023 snapshot, not a forward-looking estimate.</strong> The technical term for this is a "period" table vs. a "cohort" table. A cohort table accounts for the fact that life expectancy has been improving over time — giving somewhat longer expected lifespans, which further favors the Roth.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Your first dollars of retirement income land in a lower bracket.</strong> They fall in the 10–12% range, not your top rate. Use the rate estimator above to find the true rate on your specific income mix.</p>'
     +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Future state of residence.</strong> If you plan to move to a no-income-tax state before retirement, the state tax comparison is reversed — you pay state tax on the conversion today but owe nothing later. Factor this in before converting.</p>'
-    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">State-level capital gains treatment.</strong> The Qualified Dividends &amp; LTCG field models the federal preferential rate (0/15/20%) correctly, but state tax on that income is still approximated at your flat conversion rate — nearly every state (including all the ones with large populations of Roth converters) taxes capital gains the same as ordinary income anyway, but a handful of states have their own capital-gains carve-outs this tool doesn\'t model. (The Alternative Minimum Tax isn\'t modeled either, but rarely applies at typical conversion income levels under current law.)</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">State tax details.</strong> State tax comes from each state\'s own brackets, deductions, credits, retirement exclusions, Social Security rules and capital-gains treatment (the same engine as the Relocation tool), using the latest published figures. Not modeled: city and county income taxes other than New York City, Yonkers, the Portland area, Maryland and Indiana; itemized deductions; Connecticut\'s and New York\'s high-income recapture; and a few smaller credits. State capital-gains breaks assume your gains qualify. Verify locally before converting.</p>'
+    +'<p style="margin-bottom:.6rem;color:var(--muted)"><strong style="color:var(--text)">Alternative Minimum Tax.</strong> Not modeled; it rarely applies at typical conversion income levels under current law.</p>'
     +'</div></div>'
     +'</div>'
     +nextStepsHTML
@@ -5947,9 +5831,9 @@ window.addEventListener('scroll', function(){
 // calc() call site already only fires post-interaction, well after DOMContentLoaded).
 // A trailing <script type="module"> (added right after this block, before </body>)
 // always executes with defer timing per the HTML spec, regardless of where it's
-// placed — so without this wrap, window.resolveRetirementIncome/window.calcTaxableSS
+// placed — so without this wrap, window.calcTaxableSS/window.computeStateAndLocalTax
 // would still be undefined at the moment this eager calc() runs, breaking the very
-// first render for EVERY state, not just RIX states (calcTaxableSS is used broadly).
+// first render for EVERY state.
 document.addEventListener('DOMContentLoaded', function(){
   document.getElementById('taxYearTitle').textContent=new Date().getFullYear();
   // A valid shared link takes priority over whatever's already saved locally.
@@ -6000,15 +5884,16 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 <script type="module">
-  // Bridges the shared retirement-exclusion module into this file's classic-script
-  // scope. Aliased to the SAME literal names the deleted local functions used
-  // (calcTaxableSS) so every existing call site needs zero edits — an unresolved
-  // classic-script reference falls through the scope chain to the same-named window
-  // property, set by the time any real call site fires (all confirmed to run only
+  // Bridges the shared modules into this file's classic-script scope: the federal Social
+  // Security worksheet under the name the deleted local function used (calcTaxableSS), so
+  // existing call sites need no edits, and the Relocation tool's state and local tax engine
+  // (stateTaxFor). An unresolved classic-script reference falls through the scope chain to
+  // the same-named window property, set by the time any real call site fires (all run only
   // post-interaction or from the DOMContentLoaded-wrapped block above).
-  import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
-  window.resolveRetirementIncome = resolveRetirementIncome;
+  import { federalTaxableSS } from '../core/retirement-rules.js';
+  import { computeStateAndLocalTax } from '../relocation/relo-engine.mjs';
   window.calcTaxableSS = federalTaxableSS;
+  window.computeStateAndLocalTax = computeStateAndLocalTax;
   import '/core/sw-init.js';
 </script>
 </body>

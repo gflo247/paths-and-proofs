@@ -231,9 +231,9 @@ function check(label, actual, expected, tolerance = 1) {
   check('NC joint, $80k: 3.99% x 54,500 = $2,175', tax('NC', 'mfj', { wages: 80000, age: 60 }).tax, 2175);
   // GA (IT-511 2025 line 11): $12,000, no age add-on.
   check('GA single, 66: 4.99% x 38,000 = $1,896', tax('GA', 'single', { wages: 50000, age: 66 }).tax, 1896);
-  // MI (Treasury): $5,800 each.
-  check('MI single: 4.25% x 44,200 = $1,879', tax('MI', 'single', { wages: 50000, age: 60 }).tax, 1879);
-  check('MI joint: 4.25% x 38,400 = $1,632', tax('MI', 'mfj', { wages: 50000, age: 60 }).tax, 1632);
+  // MI (Treasury Form 446, 2026): $5,900 each ($5,800 for 2025).
+  check('MI single: 4.25% x 44,100 = $1,874', tax('MI', 'single', { wages: 50000, age: 60 }).tax, 1874);
+  check('MI joint: 4.25% x 38,200 = $1,624', tax('MI', 'mfj', { wages: 50000, age: 60 }).tax, 1624);
   // IL (IL-1040 2025): $2,850 each + $1,000 at 65.
   check('IL single, 60: 4.95% x 47,150 = $2,334', tax('IL', 'single', { wages: 50000, age: 60 }).tax, 2334);
   check('IL joint, both 65+: 4.95% x 42,300 = $2,094', tax('IL', 'mfj', { wages: 50000, age: 67, spouseAge: 66 }).tax, 2094);

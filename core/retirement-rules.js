@@ -102,6 +102,8 @@ function allowedExclusion(excl, isIRA, agiProxy, status, cap, actualAmount) {
     // bound — e.g. CT's 100%-tier is {upTo:74999}, since $75,000 itself drops to the next
     // tier). Most states with this shape have no dollar cap at all (CT); NJ's lowest tier
     // is `capped:true`, meaning that tier alone still respects the flat dollar cap.
+    // CT counts IRA distributions in full, like pension income, from 2026 (75% in 2025):
+    // CGS 12-701(a)(20)(B)(xxviii)(III) and (xxix)(III).
     const tiers = excl.steps[status];
     const tier = tiers.find((t) => t.upTo == null || agiProxy <= t.upTo) || tiers[tiers.length - 1];
     const excluded = actualAmount * tier.pct;
@@ -285,24 +287,6 @@ export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ir
     const totalEx = tStatus === "joint"
       ? Math.min(personShelter(age, combined) + personShelter(spouseAge ?? age, combined), combined)
       : personShelter(age, combined);
-    ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, ira, pension));
-  } else if (pooled && ri.treatment === "exclusion" && ri.exclusion.cliffType === "steppedPercent" && ri.exclusion.iraWeightPct != null) {
-    // CT: IRA distributions enter the eligible base at a REDUCED weight relative to
-    // pension/annuity income — confirmed via the official CT-1040 "Pension and Annuity
-    // Worksheet": pension/annuity income counts at 100%, IRA distributions (other than
-    // Roth — a Roth CONVERSION is an IRA distribution) count at only 75%, before the
-    // AGI-tiered phase-out percentage even applies. True at EVERY tier, including the
-    // "fully exempt" 100% tier below the AGI threshold. The AGI threshold TEST itself
-    // still uses real, unweighted combined income (thresholdProxy below); only the
-    // amount fed into the final phase-out multiplication is weighted. NJ also uses
-    // steppedPercent but has no iraWeightPct (its own rule doesn't distinguish IRA from
-    // pension/annuity), so it correctly falls through to the generic branch below.
-    const excl = ri.exclusion;
-    const thresholdProxy = excl.thresholdExcludesSS ? agiProxy - ssForThreshold : agiProxy;
-    const tiers = excl.steps[tStatus];
-    const tier = tiers.find((t) => t.upTo == null || thresholdProxy <= t.upTo) || tiers[tiers.length - 1];
-    const weighted = ira * excl.iraWeightPct + pension;
-    const totalEx = weighted * tier.pct;
     ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, ira, pension));
   } else if (pooled && ri.treatment === "exclusion") {
     const gateOk = ri.ageGate == null || age >= ri.ageGate;

@@ -297,7 +297,9 @@ function resolveCredits(sd, status, { age, spouseAge, fedAGI, stateAGI, taxableI
   return out;
 }
 
-export function computeStateIncomeTax(rules, status, income) {
+// Unrounded: the Roth tool takes differences of these (tax with a conversion minus tax
+// without it), and rounding each to the dollar would put up to a dollar of noise in every one.
+function stateIncomeTax(rules, status, income) {
   const { ss = 0, iraWithdrawal = 0, pension = 0, capGains = 0, wages = 0, age = 67, spouseAge } = income;
   // `status` is one of: single | mfj | mfs | hoh (four filing statuses, for brackets).
   // SS thresholds and exclusion cliffs are defined single-vs-married only, so map:
@@ -427,6 +429,11 @@ export function computeStateIncomeTax(rules, status, income) {
 
   // Credits are nonrefundable: they can take the bracket tax to zero, not below.
   const tax = Math.max(0, incomeTax - exemptionCredit - credits) + cgSeparateTax;
+  return { tax, breakdown };
+}
+
+export function computeStateIncomeTax(rules, status, income) {
+  const { tax, breakdown } = stateIncomeTax(rules, status, income);
   return { tax: Math.round(tax), breakdown };
 }
 
@@ -445,7 +452,7 @@ export function computeStateIncomeTax(rules, status, income) {
 // localCode: '' | 'nyc' | 'yonkers' | 'metro' | 'multnomah' — the filer's
 //   opt-in selection for NY/OR. Has no effect on MD/IN's county.rate, which
 //   is mandatory and unconditional (no opt-out selector exists for it).
-export function computeLocalTax(local, status, breakdown, stateTax, localCode) {
+function localIncomeTax(local, status, breakdown, stateTax, localCode) {
   if (!local) return 0;
   const base = breakdown.taxableIncome;
   let tax = 0;
@@ -474,5 +481,18 @@ export function computeLocalTax(local, status, breakdown, stateTax, localCode) {
   // MD/IN: mandatory flat add-on for every resident — unconditional, ignores localCode.
   if (local.county) tax += base * local.county.rate;
 
-  return Math.round(tax);
+  return tax;
+}
+
+export function computeLocalTax(local, status, breakdown, stateTax, localCode) {
+  return Math.round(localIncomeTax(local, status, breakdown, stateTax, localCode));
+}
+
+// State plus local income tax, unrounded, for the Roth tool's conversion cost (see
+// stateIncomeTax). local: the state's localTax (undefined for most); localCode as for
+// computeLocalTax ('' for none: MD's and IN's county tax applies regardless).
+export function computeStateAndLocalTax(rules, local, status, income, localCode = '') {
+  const { tax, breakdown } = stateIncomeTax(rules, status, income);
+  const localTax = localIncomeTax(local, status, breakdown, tax, localCode);
+  return { state: tax, local: localTax, total: tax + localTax, breakdown };
 }

@@ -5,7 +5,9 @@ Status: **DRAFT — proving on stress-test states before rollout to all 51.**
 This document defines the additive schema extension that powers the Relocation tool's
 state-vs-state total-burden comparison. It extends each `facts` entry in
 `roth-conversion/states.json` with two new sibling objects. It disturbs nothing existing:
-the Roth tool keeps reading `facts.brackets` / `facts.roth`; these are new keys.
+these are new keys. (Since 2026-10-25 the Roth tool also computes its state and local tax
+from `taxRules` and `localTax` with this engine; its `roth` block keeps the notes and the
+conversion-specific rules.)
 
 ## Design principles (decided before encoding)
 

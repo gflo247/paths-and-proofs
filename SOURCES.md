@@ -148,6 +148,44 @@ already shows "verify locally" notes on the tricky ones. **This is the softest
 area and the first thing to verify on the next pass** — or to spot-check for the
 user's own state when accuracy matters to them.
 
+#### How the tool figures state tax — the Relocation engine since 2026-10-25 (fix-pack 12)
+
+- **Before:** one flat rate per state (`roth.cr`, roughly the marginal rate near $100,000
+  of income) times the taxable change, with special cases for the retirement exclusions
+  (`core/retirement-rules.js`), Ohio's 0% band, Massachusetts' surtax, Michigan's cap and
+  the local taxes. It missed lower brackets, deductions and exemptions, credits and their
+  phase-outs, state Social Security tax, the federal-tax subtraction and state
+  capital-gains rules.
+- **Now:** `computeConversionCost` calls `computeStateAndLocalTax`
+  (`relocation/relo-engine.mjs`) on the year's income with and without the conversion,
+  from the same `taxRules`/`localTax` the Relocation tool uses (inlined as `STRULES` by
+  `_dev/gen-st-table.mjs`). The retirement-side state rate is the engine's tax on $1,000
+  more IRA withdrawal at the rate estimator's retirement income, at retirement age (it was
+  `roth.cr`, or 0 for `ex:true` states). `roth.cr` remains as reference data for the notes.
+- **The Roth-specific layer** is how a conversion counts (`conversionKind`): an IRA
+  withdrawal in almost every state; exempt in `ex:true` states once the filer (both spouses
+  on a joint return) meets `exMinAge`, ordinary income before; ordinary income in Michigan
+  below 59 1/2 (`retDeduction.conversionAgeGate`) and in Ohio (`conversionAsOtherIncome`: its
+  retirement income credit counts only distributions "received ... on account of
+  retirement", R.C. 5747.055(A)). `_dev/check-states-json.mjs` G5 holds these against the
+  engine data.
+- **Floored at zero on both sides.** Alabama excludes a conversion inside its $6,000-a-person
+  65+ exclusion but deducts all federal income tax, including the tax on the conversion, so
+  converting can lower Alabama tax (by at most a few hundred dollars); the tool counts no
+  state saving.
+- **Examples (hand-verified in `_dev/test-roth-state-cases.mjs`, `test-roth-scenarios.mjs`
+  and `test-roth-edge-cases.mjs`):** California couple, both
+  66, $40,000 pension and $40,000 Social Security, converting $30,000: $459 (was $2,790).
+  Utah, the same couple: $2,261 (was $1,335; Utah taxes Social Security and phases out its
+  credits). Mississippi, single at 55 with no other income, converting $50,000: $1,268
+  (was $2,000). Michigan, single at 65 with a $70,000 pension, converting $20,000: $700.83
+  (was $850; the exemption the pension left unused now counts).
+- **Data corrected with it (both tools):** Connecticut's 2026 IRA share, Massachusetts'
+  2026 surtax threshold, Michigan's 2026 exemption (see those entries).
+- **Tests:** `_dev/test-roth-state-engine.mjs` (wiring, all 51 jurisdictions; replaces
+  `test-roth-rix.mjs`), `_dev/test-roth-state-cases.mjs`, and the re-derived Michigan grid
+  (`test-roth-retded.mjs`), local-tax, scenario and edge-case files.
+
 #### Michigan — ✅ fully verified June 2026; wages-exclusion bug found and fixed 2026-08-01
 
 - **Rate: 4.25%** — confirmed against [MI Treasury, 2026 rate determination](https://www.michigan.gov/treasury/news/2026/04/15/state-individual-income-tax-rate-for-2026-tax-year-determined).
@@ -177,6 +215,18 @@ user's own state when accuracy matters to them.
   > Relocation tool's `iraWithdrawal` field has no conversion-specific
   > semantics (per user decision) and can represent a genuine pre-59.5
   > withdrawal-to-spend, which still qualifies under the age-independent rule.
+  > **Corrected 2026-10-25 (fix-pack 12): the 59 1/2 rule is not conversion-only.** It
+  > covers every IRA distribution: MCL 206.30(8)(a)(ii) counts IRAs as retirement or
+  > pension benefits only "if the distributions are not made until the participant has
+  > reached 59-1/2 years of age, except in the case of death, disability, or distributions
+  > described by section 72(t)(2)(A)(iv)" ([MCL 206.30](https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-206-30);
+  > [RAB 2017-21](https://www.michigan.gov/documents/treasury/RAB_2017-21_IRA_603142_7.pdf),
+  > which also treats a rollover as a distribution from the original account). Pension
+  > (employer-plan) income has no such age test. The Roth tool now applies the rule to its
+  > retirement-side withdrawals too (`stateRetMarginal`); its current-year "Pension /
+  > Retirement-Account" field still shelters at any age, and so does the Relocation
+  > engine's "IRA / 401(k) withdrawal" input, which mixes IRAs with 401(k)s (Michigan
+  > treats employer plans differently). Open, for the owner's decision.
   > **Stronger citation found during the adversarial review**: MI's 2026 Form
   > 446 (Withholding Guide, rev. Feb 2026) states the $67,610/$135,220 figures
   > directly and explicitly — "For 2026, recipients born after 1945 may
@@ -831,6 +881,17 @@ impact remaining `ex:false` fixes.
   > and the Social Security and pension tiers are tested on federal AGI, which counts
   > only the taxable part of the benefit (they were tested on income plus the whole
   > benefit).
+  > **Fixed 2026-10-25 (fix-pack 12, both tools): IRA distributions count in full for
+  > 2026.** The 2026-08-24 change (commit 328e8e7) weighted IRA money at 75% before the
+  > tier percentage, from the 2025 Pension and Annuity Worksheet; 75% was the 2025 share
+  > of the phase-in. The statute gives "for the taxable year commencing January 1, 2026,
+  > and each taxable year thereafter, any distribution from an individual retirement
+  > account other than a Roth individual retirement account" (CGS 12-701(a)(20)(B)(xxviii)(III),
+  > joint (xxix)(III), [chapter 229](https://www.cga.ct.gov/current/pub/chap_229.htm));
+  > [OLR 2025-R-0152](https://prdext2.cga.ct.gov/2025/rpt/pdf/2025-R-0152.pdf): "The
+  > deduction is 75% for 2025 and 100% beginning in 2026." `iraWeightPct` and its engine
+  > branch are removed; IRA and pension income share the stepped table. Example: single,
+  > $60,000 wages, $10,000 conversion (AGI $70,000, the 100% tier): $0 (was $258.13).
 
 #### Vermont — ✅ rate fixed June 2026
 
@@ -1259,6 +1320,12 @@ Income Tax Rates report and state sources.
   > threshold, not doubled), but doesn't explicitly rule out doubling — see
   > `roth-ny-ma-state-tax-fixes.md` and `roth-ma-surtax-threshold-fix.md`
   > project memory.
+  > **Fixed 2026-10-25 (fix-pack 12):** the Relocation data (`taxRules`, which the Roth
+  > tool now computes from) still started the 9% band at $1,000,000; it now starts at
+  > $1,107,750, confirmed again in the DOR's
+  > [2026 Form 1-ES](https://www.mass.gov/doc/2026-form-1-es-estimated-tax-payment-vouchers-instructions-and-worksheets/download):
+  > "The surtax threshold for tax year 2026 is $1,107,750." The threshold applies to
+  > taxable income, after the $4,400 exemption ($700 more at 65).
 - **North Dakota** — **2.5% top confirmed** (0% bottom bracket; among the lowest
   conversion taxes anywhere). SS exempt.
 - **Arizona** — **2.5% flat confirmed** (lowest flat rate nationally). SS exempt.
@@ -1427,7 +1494,7 @@ Engine (`relocation/relo-engine.mjs`):
 | MA | 2025 | $4,400 / $8,800 / $6,800 HoH; +$700 per 65+ | [DOR](https://www.mass.gov/info-details/massachusetts-personal-income-tax-exemptions) |
 | MD | 2025 | Std $3,350 ($6,700 joint, HoH); exemption $3,200 each, stepping down by federal AGI (single over $100,000, joint over $150,000); +$1,000 per 65+ | [resident booklet](https://www.marylandcomptroller.gov/content/dam/mdcomp/tax/instructions/2025/resident-booklet.pdf), [tax alert](https://www.marylandcomptroller.gov/content/dam/mdcomp/tax/legal-publications/alerts/tax-alert-changes-to-standard-and-itemized-deductions-and-to-state-and-local-income-tax-rates-from-the-2025-legislative-session.pdf) |
 | ME | 2026 | Std $15,700 / $31,400 / $23,550 HoH, +$2,050 / $1,650 per 65+, phased out over Maine AGI from $102,250 single; exemption $5,300 each, phased out from $341,000 single; new 2% surcharge over $1M single (9.15% band) | [rate schedules](https://www.maine.gov/revenue/sites/maine.gov.revenue/files/2026-05/ind_tax_rate_sched_2026_rev.pdf), [std ded worksheet](https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/26_item_stand_%20ded_phaseout_wksht_0.pdf), [exemption worksheet](https://www.maine.gov/revenue/sites/maine.gov.revenue/files/inline-files/26_1040es_pers_exempt_phaseout_wksht.pdf) |
-| MI | 2025 | $5,800 each | [Treasury](https://www.michigan.gov/taxes/questions/iit/accordion/filing/what-are-the-current-tax-rate-and-exemption-amounts-1) |
+| MI | 2026 | $5,900 each ($5,800 for 2025) | [Form 446 (2026)](https://www.michigan.gov/taxes/-/media/Project/Websites/taxes/Forms/SUW/TY2026/446_Withholding-Guide_2026.pdf) ("Personal Exemption Amount: $5,900"), [Treasury](https://www.michigan.gov/taxes/questions/iit/accordion/filing/what-are-the-current-tax-rate-and-exemption-amounts-1) (2025) |
 | MN | 2026 | Std $15,300 / $30,600 / $23,000 HoH; +$2,000 unmarried / $1,600 married per 65+ | [DOR 2026 amounts](https://www.revenue.state.mn.us/sites/default/files/2025-12/inflation-adjusted-amounts-2026.pdf) |
 | MO | 2025 | Federal std + add-on (no senior deduction); federal income tax x 35% / 25% / 15% / 5% / 0% for Missouri AGI to $25,000 / $50,000 / $100,000 / $125,000 / over, at most $5,000 ($10,000 joint) | [DOR 4711](https://dor.mo.gov/forms/4711_2025.pdf), [MO-1040 instructions](https://dor.mo.gov/forms/MO-1040%20Instructions_2025.pdf) (lines 9–13) |
 | MS | 2025 | Exemption $6,000 / $12,000 / $8,000 head of family + std $2,300 / $4,600 / $3,400; +$1,500 per 65+ | [DOR](https://www.dor.ms.gov/general-information) |
@@ -1566,5 +1633,5 @@ coverage (usually tied to pay) is still held at today's value. Tests:
 3. **IRMAA** → new CMS "Medicare Parts A & B Premiums and Deductibles" fact sheet (issued each fall).
 4. **RMD divisors** → only change if the IRS revises the Uniform Lifetime Table (rare).
 5. **Social Security** → reduction formulas are statutory (rarely change); confirm FRA assumption still fits the audience.
-6. **State rates** → the big annual chore; verify against a current source, prioritizing high-population states.
+6. **State rates** → the big annual chore; verify against a current source, prioritizing high-population states. Both tools compute from `taxRules`, so include its year-specific figures: indexed exemptions and thresholds (Michigan's exemption, Massachusetts' surtax start) and scheduled phase-ins (Connecticut's IRA share reached 100% in 2026).
 7. Update **"Last full verification"** date at the top of this file.

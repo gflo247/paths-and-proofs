@@ -9,7 +9,7 @@
 //   Group 3: Senior deduction phaseout — seniorDed() formula
 //   Group 4: LTCG stacking — calcLTCGTax() with STDD=16100 and LTCGX actual boundaries
 //   Group 5: Multi-year plan — row counts and conversion amounts
-//   Group 6: State edge cases — PA, IL, MS (ex:true), CT (iraWeightPct)
+//   Group 6: State edge cases — PA, IL, MS (ex:true), CT (stepped IRA subtraction)
 //
 // Primary sources used:
 //   - IRS Rev. Proc. 2025-32 (2026 brackets/deductions/LTCG thresholds, as enacted
@@ -23,8 +23,11 @@
 //     appear to be 2025 figures; 2026 thresholds confirmed from the code itself)
 //   - PA DOR Personal Income Tax Guide (conversions tax-free)
 //   - IL DOR Schedule M guidance (ex:true, no age gate)
-//   - MS ex:true, age gate 59.5 (EXAGE table)
-//   - CT states.json iraWeightPct=0.75 + RIX cliffType logic
+//   - MS DOR (4% above the first $10,000 for 2026; $6,000 exemption + $2,300 standard
+//     deduction single); ex:true from 59.5 (EXAGE table)
+//   - CGS 12-701(a)(20)(B)(xxviii)(III): from 2026 Connecticut counts the whole IRA
+//     distribution in its stepped subtraction (75% for 2025)
+//   State tax comes from the Relocation engine (computeStateAndLocalTax) since 2026-10-25.
 //
 // NOTE: The task description's SS formula for zone1 used a simplified derivation
 // that disagreed with IRS Pub 915 and the actual code. For example, with PI=$42k
@@ -40,7 +43,8 @@
 
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { readFileSync } from 'node:fs';
-import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
+import { federalTaxableSS } from '../core/retirement-rules.js';
+import { computeStateAndLocalTax } from '../relocation/relo-engine.mjs';
 
 // ─── Harness setup (mirrors test-roth-multiyear.mjs exactly) ────────────────
 // computeMultiYear reads DOM inputs directly for golden-window retirement income,
@@ -59,9 +63,9 @@ globalThis.matchMedia = () => ({ matches: true });
 // bind on BOTH window and Node's globalThis, since they are two separate objects
 // in this jsdom+Function-constructor sandbox — bare identifier resolution falls
 // through to window.X in a real browser automatically, but not here.
-globalThis.window.resolveRetirementIncome = resolveRetirementIncome;
+globalThis.window.computeStateAndLocalTax = computeStateAndLocalTax;
 globalThis.window.calcTaxableSS           = federalTaxableSS;
-globalThis.resolveRetirementIncome        = resolveRetirementIncome;
+globalThis.computeStateAndLocalTax = computeStateAndLocalTax;
 globalThis.calcTaxableSS                  = federalTaxableSS;
 
 const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.url), 'utf8');
@@ -485,9 +489,8 @@ console.log('\n─── Group 5: Multi-year plan ───');
 //     transfers into an eligible PA retirement plan, not taxable distributions)
 // IL: ex:true, no age gate → cvtTxSt = 0 (Schedule M exemption)
 // MS: ex:true, age gate = 59.5 (EXAGE table) → taxable before 59.5, free after
-// CT: RIX state, iraWeightPct=0.75 → only 75% of conversion is IRA-eligible
-//     for the pension exclusion tiers; even at the 100% tier, 25% of conversion
-//     is always taxable (at CT's 5.5% cr)
+// CT: pension and IRA income sheltered by a stepped share of federal AGI; from 2026
+//     the whole conversion counts, so in the 100% tier it is fully sheltered
 // ═══════════════════════════════════════════════════════════════════════════
 console.log('\n─── Group 6: State edge cases ───');
 {
@@ -520,14 +523,16 @@ console.log('\n─── Group 6: State edge cases ───');
 
   // 6.5 MS: ex:true with EXAGE=59.5 — taxable BEFORE the gate
   // curAge=55, $50k conversion: exQualifies = stD.ex && exQualAge(55) >= exAge(59.5)
-  // = true && 55>=59.5 = false → NOT exempt → cvtTxSt = taxableCvt * stD.cr
-  // stD.cr for MS = 0.04 (TY2026 rate; MS DOR: "Tax Year 2026 ... 4%") → cvtTxSt = 50000*0.04 = 2000
-  // (was 0.044 → 2200, the TY2025 rate mislabeled as 2026; fixed 2026-10-21)
+  // = true && 55>=59.5 = false → NOT exempt → the conversion is ordinary MS income.
+  // MS DOR: $6,000 exemption + $2,300 standard deduction (single) = $8,300 off;
+  // 0% on the first $10,000 of taxable income, 4% above (TY2026).
+  // Taxable = 50,000 - 8,300 = 41,700; cvtTxSt = 4% x (41,700 - 10,000) = 1,268.
+  // (Was 2,000 — a flat 4% of the whole conversion — before 2026-10-25.)
   const ccMS_young = computeConversionCost(50000, ctx({
     wages: 0, stateCode: 'MS', curAge: 55,
   }));
-  near('6.5 MS: age=55 (below 59.5 gate): cvtTxSt=2000 (4% applies)',
-       ccMS_young.cvtTxSt, 2000);
+  near('6.5 MS: age=55 (below 59.5 gate): cvtTxSt=1268 (4% above $10,000, after $8,300 off)',
+       ccMS_young.cvtTxSt, 1268);
 
   // 6.6 MS: curAge=60 (above 59.5 gate) — exempt
   const ccMS_old = computeConversionCost(50000, ctx({
@@ -536,41 +541,38 @@ console.log('\n─── Group 6: State edge cases ───');
   near('6.6 MS: age=60 (above 59.5 gate): cvtTxSt=0 (exemption applies)',
        ccMS_old.cvtTxSt, 0);
 
-  // 6.7 CT: iraWeightPct=0.75 means only 75% of the conversion is eligible for
-  // CT's pension-exclusion tiers. At low AGI (below $75k single), the 100% pension
-  // exclusion applies — but IRA income only gets 75% into that shelter bucket.
-  // So effective shelter on conversion = 75% × conversion. The remaining 25% is
-  // always taxable at CT's cr (5.5% ≈ the tool's stD.cr=0.055).
-  // Concrete: single, age=70, $0 other income, $20k conversion
-  //   agiWith = 0 + 20000 + 0 = 20000 (below $75k CT threshold → 100% pension tier)
-  //   IRA-eligible = 20000 × 0.75 = 15000 → fully sheltered by the 100% tier
-  //   Taxable remainder = 20000 - 15000 = 5000
-  //   cvtTxSt = 5000 × 0.055 = 275
-  // (The exact RIX computation is more complex — resolveRetirementIncome handles it —
-  // but the 25%-always-taxable property is the key invariant to test.)
+  // 6.7 CT: from 2026 the whole IRA distribution counts in CT's stepped subtraction
+  // (CGS 12-701(a)(20)(B)(xxviii)(III); 75% for 2025). Single, age 70, $20k
+  // conversion, no other income: federal AGI 20,000 is in the 100% tier, so all
+  // 20,000 comes off → CT AGI 0 → cvtTxSt = 0. (At the 2025 share, 5,000 would stay,
+  // still under the $15,000 personal exemption, so 6.8 is the case that tells the
+  // shares apart.)
   const ccCT = computeConversionCost(20000, ctx({
     wages: 0, stateCode: 'CT', curAge: 70,
   }));
-  ok('6.7 CT: iraWeightPct=0.75 — at 100% exclusion tier, 25% of conversion remains taxable',
-     ccCT.cvtTxSt > 0);
-  // Also verify the amount is consistent with 25% of conversion being taxable:
-  // cvtTxSt ≈ 20000 * 0.25 * 0.055 = 275
-  near('6.8 CT: cvtTxSt ≈ 275 (25% of 20k at 5.5% CR — only 75% eligible for 100% exclusion)',
-       ccCT.cvtTxSt, 275, 5);
+  near('6.7 CT: $20k conversion in the 100% tier: cvtTxSt=0 (fully sheltered)', ccCT.cvtTxSt, 0);
 
-  // 6.9 CT at higher AGI: conversion raises AGI past a CT tier boundary, sheltering less
-  // than 75%×100%. With wages=$90k (above CT's $75k single cliff), the exclusion
-  // drops toward 0 as AGI rises. A $10k conversion should still produce some state tax
-  // (CT's exclusion falls proportionally with AGI in the $75k-$100k band), and that
-  // tax must be more than the low-AGI case on a per-dollar basis.
+  // 6.8 CT: wages 60k + $20k conversion → federal AGI 80,000 → 55% tier
+  // ($80,000–$82,499) → 11,000 comes off → CT AGI 69,000.
+  //   With:    2% x 10,000 + 4.5% x 40,000 + 5.5% x 19,000 = 3,045; no personal
+  //            exemption (gone above $44,000) and no personal credit (none over $64,500).
+  //   Without: CT AGI 60,000 → 200 + 1,800 + 550 = 2,550, less the 10% personal
+  //            credit (CT AGI over $33,300 up to $60,000) = 2,295.
+  //   cvtTxSt = 3,045 - 2,295 = 750 (495 on the 9,000 left, plus the $255 credit lost).
+  //   At the 2025 share the subtraction would be 8,250 and cvtTxSt 901.25.
+  const ccCT_tier = computeConversionCost(20000, ctx({
+    wages: 60000, stateCode: 'CT', curAge: 70,
+  }));
+  near('6.8 CT: wages 60k + cvt 20k (55% tier): cvtTxSt=750', ccCT_tier.cvtTxSt, 750, 0.01);
+
+  // 6.9 CT at higher AGI: wages 90k + $10k conversion → federal AGI 100,000, the 0%
+  // tier ({upTo:null, pct:0}) → nothing comes off. The 10,000 is taxed in CT's 5.5%
+  // bracket ($50,000–$100,000): cvtTxSt = 550 (no exemption or credit at this income).
   const ccCT_hi = computeConversionCost(10000, ctx({
     wages: 90000, stateCode: 'CT', curAge: 70,
   }));
-  // At agiWith=$100k the step lookup hits {upTo:null,pct:0} → 0% exclusion.
-  // IRA-eligible = 10000×0.75=7500; excluded = 7500×0 = 0; iraTaxable = 10000.
-  // cvtTxSt = 10000×0.055 = 550.
-  near('6.9 CT: agiWith=100k hits pct=0 tier, cvtTxSt=550 (full 10k at 5.5% CR)',
-       ccCT_hi.cvtTxSt, 550, 5);
+  near('6.9 CT: agiWith=100k hits pct=0 tier, cvtTxSt=550 (full 10k in the 5.5% bracket)',
+       ccCT_hi.cvtTxSt, 550, 0.01);
 }
 
 // ─── Summary ─────────────────────────────────────────────────────────────────

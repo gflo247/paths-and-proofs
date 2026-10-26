@@ -10,15 +10,16 @@
 // through age 64 showed a flat $4,320/yr total tax for all ten years, when ages
 // 60-64 should show MI's shelter kick in (the correct age-62 figure: $2,620/yr).
 //
-// Extracts the REAL computeMultiYear/computeConversionCost/ST/RETDED/EXAGE/RIX
+// Extracts the REAL computeMultiYear/computeConversionCost/ST/STRULES/RETDED/EXAGE
 // definitions verbatim from the shipped HTML via jsdom (same approach as
-// test-roth-rix.mjs — test the actual shipped code, not a third hand-transcription
+// test-roth-state-engine.mjs — test the actual shipped code, not a third hand-transcription
 // of it), then asserts a concrete before/after delta at each mechanism's threshold,
 // not just "some number came back."
 
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { readFileSync } from 'node:fs';
-import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
+import { federalTaxableSS } from '../core/retirement-rules.js';
+import { computeStateAndLocalTax } from '../relocation/relo-engine.mjs';
 
 // computeMultiYear's golden-window phase reads document.getElementById('retSS' etc.)
 // directly, so the stub body needs those inputs present even though most scenarios
@@ -32,11 +33,11 @@ globalThis.window = dom.window;
 globalThis.document = dom.window.document;
 globalThis.getComputedStyle = dom.window.getComputedStyle;
 globalThis.matchMedia = () => ({ matches: true });
-// Same harness-only quirk documented in test-roth-rix.mjs: bind on both window and
+// Same harness-only quirk documented in test-roth-state-engine.mjs: bind on both window and
 // Node's own globalThis, since the two aren't the same object in this sandbox.
-globalThis.window.resolveRetirementIncome = resolveRetirementIncome;
+globalThis.window.computeStateAndLocalTax = computeStateAndLocalTax;
 globalThis.window.calcTaxableSS = federalTaxableSS;
-globalThis.resolveRetirementIncome = resolveRetirementIncome;
+globalThis.computeStateAndLocalTax = computeStateAndLocalTax;
 globalThis.calcTaxableSS = federalTaxableSS;
 
 const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.url), 'utf8');
@@ -78,7 +79,9 @@ function check(label, cond) {
   check('MI: rows before the gate all show the same (unsheltered) tax', preGate.every(r => r.tax === preGate[0].tax));
   check('MI: rows at/after the gate all show a lower (sheltered) tax than pre-gate rows', postGate.every(r => r.tax < preGate[0].tax));
   check('MI: age-62 row matches the hand-verified sheltered figure ($2,620)', plan.preRows.find(r => r.age === 62).tax === 2620);
-  check('MI: pre-gate rows match the hand-verified unsheltered figure ($4,320)', preGate[0].tax === 4320);
+  // Pre-gate: federal 2,620 + Michigan (40,000 - 5,900 exemption) x 4.25% = 1,449.25
+  // → 4,069. (4,320 before 2026-10-25, when the exemption wasn't counted.)
+  check('MI: pre-gate rows match the hand-verified unsheltered figure ($4,069)', preGate[0].tax === 4069);
 }
 
 // --- 2. MI golden window: base age is goldStartAge, NOT curAge -- a golden window
@@ -108,7 +111,7 @@ function check(label, cond) {
   check('MS (EXAGE): rows at/after 59.5 show a lower tax (ex:true exemption applies)', postGate.length === 5 && postGate.every(r => r.tax < preGate[0].tax));
 }
 
-// --- 4. NY (RIX_STATES, per-spouse ageTieredCap): a JOINT filer where only the
+// --- 4. NY (per-spouse ageTieredCap): a JOINT filer where only the
 // SPOUSE crosses 59.5 mid-plan must see the household shelter appear at exactly
 // that row -- proves spouseAge advances in lockstep with curAge across rows,
 // rather than staying frozen at today's spouseAge. curAge=50, spouseAge=58,
@@ -181,7 +184,7 @@ function check(label, cond) {
   check('NYC multi-year: rows before 59.5 all match each other', preGate.length === 5 && preGate.every(r => r.tax === preGate[0].tax));
   check('NYC multi-year: rows at/after 59.5 all match each other', postGate.length === 5 && postGate.every(r => r.tax === postGate[0].tax));
   // Post-gate tax should be LOWER: NY's own $20k exclusion (feeding the NYC base
-  // too) kicks in, same age-staleness shape as MI/EXAGE/RIX above -- if localTax
+  // too) kicks in, same age-staleness shape as the MI/EXAGE/NY gates above -- if localTax
   // only reached row 0 (a wiring bug), every row's tax would look identical
   // instead of dropping at the gate.
   check('NYC multi-year: post-gate tax is lower (NY exclusion + NYC tax both shrink)', postGate[0].tax < preGate[0].tax);

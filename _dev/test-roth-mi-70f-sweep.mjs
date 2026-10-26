@@ -20,13 +20,14 @@
 //   SS taxability single thresholds:  $25,000 (lo) / $34,000 (hi)
 //   IRMAA single tier-1 threshold:    $109,000 MAGI
 //   MI pension deduction cap (single, age 70): $67,610
-//   MI tax rate (cr):                   4.25%
+//   MI tax rate:                        4.25%, after the $5,900 personal exemption
 //
 // Run: node _dev/test-roth-mi-70f-sweep.mjs
 
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { readFileSync } from 'node:fs';
-import { resolveRetirementIncome, federalTaxableSS } from '../core/retirement-rules.js';
+import { federalTaxableSS } from '../core/retirement-rules.js';
+import { computeStateAndLocalTax } from '../relocation/relo-engine.mjs';
 
 // ─── Harness setup ────────────────────────────────────────────────────────────
 const vc = new VirtualConsole();
@@ -38,9 +39,9 @@ globalThis.window   = dom.window;
 globalThis.document = dom.window.document;
 globalThis.getComputedStyle = dom.window.getComputedStyle;
 globalThis.matchMedia = () => ({ matches: true });
-globalThis.window.resolveRetirementIncome = resolveRetirementIncome;
+globalThis.window.computeStateAndLocalTax = computeStateAndLocalTax;
 globalThis.window.calcTaxableSS           = federalTaxableSS;
-globalThis.resolveRetirementIncome        = resolveRetirementIncome;
+globalThis.computeStateAndLocalTax        = computeStateAndLocalTax;
 globalThis.calcTaxableSS                  = federalTaxableSS;
 
 const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.url), 'utf8');
@@ -122,7 +123,7 @@ function runScenario(ssLabel, ss) {
   console.log(`  Baseline (cvt=$0):  taxable SS = ${$(base.ssBase)}    senior deduction = ${$(base.srD)}    IRMAA tier ${base.tierBase}`);
   console.log(`\n  Key thresholds for this profile:`);
   console.log(`    SS torpedo zone:       ~${$(torp.start).trim()} → ~${$(torp.end).trim()} conversion  (SS taxability rises $0 → ${$(torp.ssAt85).trim()})`);
-  console.log(`    MI shelter cap:        ~${$(miCapCvt).trim()} conversion  (first $${MI_CAP.toLocaleString()} sheltered; 4.25% MI tax applies above)`);
+  console.log(`    MI shelter cap:        ~${$(miCapCvt).trim()} conversion  (first $${MI_CAP.toLocaleString()} sheltered, then the $5,900 exemption; 4.25% MI tax above)`);
   console.log(`    12% → 22% federal:     ~${bracket22 !== null ? $(bracket22).trim() : 'n/a'} conversion`);
   console.log(`    22% → 24% federal:     ~${bracket24 !== null ? $(bracket24).trim() : 'n/a'} conversion`);
   console.log(`    IRMAA tier 1 ($109k):  ~${irmaaCvt !== null ? $(irmaaCvt).trim() : 'n/a'} conversion  (⚠ Part B + D premium surcharge)`);
