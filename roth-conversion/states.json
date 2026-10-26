@@ -41,7 +41,7 @@
   "roth": {
    "cr": 0.05,
    "ex": false,
-   "note": "Alabama exempts defined-benefit PENSIONS (government, military, many private) and Social Security, unconditionally — but traditional IRA and 401(k) distributions are FULLY TAXABLE at up to 5%. A Roth conversion is IRA income, so Alabama taxes it; those 65+ can exclude the first $6,000 per person, summed from each spouse's own age -- a joint return only gets the full $12,000 if BOTH spouses are 65+ (this calculator now applies that exclusion correctly per spouse; previously applied none of it, then briefly applied a flat cap regardless of the spouse's own age)."
+   "note": "Alabama exempts defined-benefit PENSIONS (government, military, many private) and Social Security, unconditionally — but traditional IRA and 401(k) distributions are FULLY TAXABLE at up to 5%. A Roth conversion is IRA income, so Alabama taxes it; those 65+ can exclude the first $6,000 per person, summed from each spouse's own age -- a joint return only gets the full $12,000 if BOTH spouses are 65+."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -381,7 +381,7 @@
   "roth": {
    "cr": 0.037,
    "ex": false,
-   "note": "Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000-per-person retirement exemption covers traditional IRA income at 59.5+ (early distributions do not qualify) -- genuinely per-spouse, not a flat joint cap, so a joint return with both spouses 59.5+ shelters $12,000, not $6,000 (this calculator previously applied none of this exclusion at all). Social Security is not taxed by Arkansas."
+   "note": "Top rate cut to 3.7% (2026 special session, S1), reached at low income (~$26,400), so a conversion is effectively taxed near 3.7%. A $6,000-per-person retirement exemption covers traditional IRA income at 59.5+ (early distributions do not qualify) -- genuinely per-spouse, not a flat joint cap, so a joint return with both spouses 59.5+ shelters $12,000, not $6,000. Social Security is not taxed by Arkansas."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -819,7 +819,7 @@
   "roth": {
    "cr": 0.044,
    "ex": false,
-   "note": "Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR's own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ (this calculator previously modeled a flat $24,000 at any qualifying age, or applied no cap at all — now fixed to the real age-tiered amounts) — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+, and shares that same $20k/$24k cap with pension/annuity income below that age; this calculator applies Colorado's Social Security rules too, so below 65 a conversion that uses up the cap can leave more of your benefits taxed."
+   "note": "Flat 4.4% (sometimes reduced by TABOR refunds). A pension/annuity subtraction covers IRA and conversion income and is genuinely age-tiered per CO DOR's own guidance — up to $20,000 for ages 55-64, $24,000 at 65+ — but it specifically EXCLUDES premature (pre-59.5) distributions, and a meaningful conversion can still exceed the cap. Colorado fully exempts Social Security at 65+, and shares that same $20k/$24k cap with pension/annuity income below that age; this calculator applies Colorado's Social Security rules too, so below 65 a conversion that uses up the cap can leave more of your benefits taxed."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -1746,7 +1746,7 @@
   "roth": {
    "cr": 0.066,
    "ex": false,
-   "note": "Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k is taxed at 6.6% (totals under $60k pay 5.55% or less). At 60+, a $12,500-per-person exclusion covers combined pension + IRA income -- genuinely per-spouse, so a joint return with both spouses 60+ shelters $25,000, not a flat $12,500 (this calculator previously applied none of this exclusion at all) — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax."
+   "note": "Graduated 2.2% to 6.6%; the 6.6% top starts at just $60k, so a conversion that brings total income near $100k is taxed at 6.6% (totals under $60k pay 5.55% or less). At 60+, a $12,500-per-person exclusion covers combined pension + IRA income -- genuinely per-spouse, so a joint return with both spouses 60+ shelters $25,000, not a flat $12,500 — and an early distribution (before 59.5) does not qualify at all. Social Security is exempt and there is no sales tax."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -3058,7 +3058,7 @@
   "roth": {
    "cr": 0.035,
    "ex": false,
-   "note": "Flat 3.5% (cut from 4% on Jan 1 2026 via a revenue trigger), applied to IRA and conversion income. Kentucky exempts Social Security and gives a $31,110-per-person retirement exclusion (no age requirement) that this calculator now applies -- genuinely per-spouse, so a joint return with both spouses receiving qualifying income shelters $62,220 (this calculator previously applied none of this exclusion at all). A meaningful conversion can still exceed the cap."
+   "note": "Flat 3.5% (cut from 4% on Jan 1 2026 via a revenue trigger), applied to IRA and conversion income. Kentucky exempts Social Security and gives a $31,110-per-person retirement exclusion (no age requirement) that this calculator applies -- genuinely per-spouse, so a joint return with both spouses receiving qualifying income shelters $62,220. A meaningful conversion can still exceed the cap."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -3160,7 +3160,7 @@
   "roth": {
    "cr": 0.03,
    "ex": false,
-   "note": "Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a retirement-income exclusion at 65+ — $12,000 per qualifying spouse (CPI-adjusted; exact TY2026 figures pending LDR's 2026 IT-540i), summed for a joint return only if BOTH spouses are 65+ (this calculator previously modeled a flat $24,000 for any joint return where just the primary filer was 65+, regardless of the spouse's age — now fixed to the real per-person structure) — that this calculator applies before taxing the rest at 3%. This exclusion is for pension/retirement-account income specifically, not wages — already receiving a pension? Enter it in the Pension / Retirement-Account field below. Social Security and most LA government/military pensions are fully exempt."
+   "note": "Flat 3% (2025 reform, Act 11/HB1 — replaced the old graduated structure; LA DOR confirms). IRA and conversion income is taxable, with a retirement-income exclusion at 65+ — $12,000 per qualifying spouse (CPI-adjusted; exact TY2026 figures pending LDR's 2026 IT-540i), summed for a joint return only if BOTH spouses are 65+ — that this calculator applies before taxing the rest at 3%. This exclusion is for pension/retirement-account income specifically, not wages — already receiving a pension? Enter it in the Pension / Retirement-Account field below. Social Security and most LA government/military pensions are fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5578,7 +5578,7 @@
   "roth": {
    "cr": 0.059,
    "ex": false,
-   "note": "Graduated 3.9% to 10.9% for 2026 (the 10.9% top only applies above $25M; a typical conversion lands in the 5.9% band, ~$80k-$215k, after the 2026 budget cut the five lowest rates by 0.1 point). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age (this calculator previously applied a flat $20,000 regardless of the spouse's age, which could silently zero out the shelter or wrongly double it depending on which spouse's age was entered where -- now fixed). Government pensions and Social Security are fully exempt and don't use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator now models both explicitly if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax."
+   "note": "Graduated 3.9% to 10.9% for 2026 (the 10.9% top only applies above $25M; a typical conversion lands in the 5.9% band, ~$80k-$215k, after the 2026 budget cut the five lowest rates by 0.1 point). IRA and Roth-conversion income is taxable, but those 59.5+ can exclude $20,000 of private retirement income per person (still $20,000 for 2026 — proposed increases were not enacted), genuinely per-individual under NY law -- a joint return with both spouses 59.5+ shelters $40,000, summed from each spouse's own cap based on their own age. Government pensions and Social Security are fully exempt and don't use up the cap. NYC and Yonkers residents pay a real, material local tax on top of this -- this calculator models both if you select your locality below (NYC: a genuinely graduated 3.078%-3.876% city tax on the same base as NY state tax, including the conversion; Yonkers: a 16.75% surcharge on your NY State tax bill itself). Every other NY resident pays $0 local income tax."
   },
   "localTax": {
    "nyc": {
@@ -6474,7 +6474,7 @@
   "roth": {
    "cr": 0.0475,
    "ex": false,
-   "note": "Oklahoma taxes traditional IRA and 401(k) conversion income; the top rate for tax year 2025 (the latest year with a complete published bracket table) is 4.75%, reached at low income, so a conversion is effectively taxed at 4.75%. A 2025 law, House Bill 2764, cuts the top rate to 4.5% and moves to three brackets beginning tax year 2026, but the full 2026 bracket amounts are not yet published, so this tool uses the confirmed 2025 schedule. The $10,000-per-person retirement-income exclusion (age 65+) does include IRA income -- genuinely per-spouse, so a joint return with both spouses 65+ shelters $20,000, not a flat $10,000 (this calculator previously applied none of this exclusion at all) -- leaving the rest taxable. Social Security is fully exempt."
+   "note": "Oklahoma taxes traditional IRA and 401(k) conversion income; the top rate for tax year 2025 (the latest year with a complete published bracket table) is 4.75%, reached at low income, so a conversion is effectively taxed at 4.75%. A 2025 law, House Bill 2764, cuts the top rate to 4.5% and moves to three brackets beginning tax year 2026, but the full 2026 bracket amounts are not yet published, so this tool uses the confirmed 2025 schedule. The $10,000-per-person retirement-income exclusion (age 65+) does include IRA income -- genuinely per-spouse, so a joint return with both spouses 65+ shelters $20,000, not a flat $10,000 -- leaving the rest taxable. Social Security is fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -6661,7 +6661,7 @@
   "roth": {
    "cr": 0.0875,
    "ex": false,
-   "note": "Graduated 4.75% to 9.9%; the 8.75% bracket runs up to $125,000, so most conversion income lands there (9.9% applies above that). IRA and Roth-conversion income is fully taxable, and the retirement-income credit is limited to low household income, so it rarely helps with a conversion. Social Security is fully exempt; Oregon has no sales tax. Portland-area residents owe real, material local income taxes on top of this -- this calculator now models both explicitly if you select your locality below: Metro's Supportive Housing Services tax (a flat 1% above $125,000 single / $200,000 joint Oregon taxable income, covering Multnomah, Washington, and Clackamas counties), and Multnomah County's Preschool For All tax on top of that for Multnomah residents specifically (1.5% above the same thresholds, an additional 1.5% -- 3% total -- above $250,000 single / $400,000 joint) -- together up to 4% for a Multnomah County filer, larger than New York City's rate."
+   "note": "Graduated 4.75% to 9.9%; the 8.75% bracket runs up to $125,000, so most conversion income lands there (9.9% applies above that). IRA and Roth-conversion income is fully taxable, and the retirement-income credit is limited to low household income, so it rarely helps with a conversion. Social Security is fully exempt; Oregon has no sales tax. Portland-area residents owe real, material local income taxes on top of this -- this calculator models both if you select your locality below: Metro's Supportive Housing Services tax (a flat 1% above $125,000 single / $200,000 joint Oregon taxable income, covering Multnomah, Washington, and Clackamas counties), and Multnomah County's Preschool For All tax on top of that for Multnomah residents specifically (1.5% above the same thresholds, an additional 1.5% -- 3% total -- above $250,000 single / $400,000 joint) -- together up to 4% for a Multnomah County filer, larger than New York City's rate."
   },
   "localTax": {
    "metro": {
@@ -8246,7 +8246,7 @@
   "roth": {
    "cr": 0.0458,
    "ex": false,
-   "note": "Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable. Seniors 65+ get an $8,000 modification, summed from each spouse's own age -- $16,000 only if BOTH spouses are 65+ (this calculator previously applied that $16,000 regardless of the spouse's own age -- now fixed), but it shares one pool with your Social Security benefit and other pension exclusions (W. Va. Code section 11-21-12(c)(9)) — if your Social Security alone exceeds your share of the cap, which it does for most retirees already claiming it, there's little or nothing left to shelter IRA or conversion income. This calculator nets your Social Security benefit against the cap automatically, so it's fullest for those who haven't started claiming Social Security yet."
+   "note": "Top rate cut to 4.58% effective Jan 1 2026 (SB 392, the 2026 session 5% across-the-board cut; West Virginia is cutting income tax most years, so this keeps falling). IRA and Roth-conversion income is taxable. Seniors 65+ get an $8,000 modification, summed from each spouse's own age -- $16,000 only if BOTH spouses are 65+, but it shares one pool with your Social Security benefit and other pension exclusions (W. Va. Code section 11-21-12(c)(9)) — if your Social Security alone exceeds your share of the cap, which it does for most retirees already claiming it, there's little or nothing left to shelter IRA or conversion income. This calculator nets your Social Security benefit against the cap automatically, so it's fullest for those who haven't started claiming Social Security yet."
   },
   "taxRules": {
    "bracketsByStatus": {

@@ -544,9 +544,19 @@ for (const code of htmlCodes) {
   }
 }
 
+// --- 10. Notes state the rule, not this calculator's history (G9) ---
+// Added 2026-10-26 (fix-pack 13). roth.note is shown to anyone who picks the state, and
+// remarks about what an earlier version of this calculator did ("previously applied none of
+// this exclusion", "now fixed") only raise doubts. That history belongs in git.
+const HISTORY = /\b(?:previously (?:applied|modeled|used|treated|showed|had)|now fixed|this (?:calculator|tool) (?:now|previously|used to)|(?:calculator|tool) now (?:applies|models|uses))\b/i;
+for (const code of htmlCodes) {
+  const m = (json[code]?.roth?.note || '').match(HISTORY);
+  if (m) diffs.push(`${code}: roth.note reads as change history ("${m[0]}"); state the rule instead (G9)`);
+}
+
 if (diffs.length) {
   fail(`${diffs.length} field mismatch(es):\n  ` + diffs.join('\n  '));
 }
 
 const reloNote = reloStates ? `, relocation taxRules validated on ${reloStates} states (G1-G4, G7-G8)` : '';
-console.log(`states.json guard OK: 51 states (50 + DC), roth blocks match HTML exactly${reloNote}.`);
+console.log(`states.json guard OK: 51 states (50 + DC), roth blocks match HTML exactly, notes state rules not history (G9)${reloNote}.`);

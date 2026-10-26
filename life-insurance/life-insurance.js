@@ -85,18 +85,18 @@ export const inputs = [
     min: 0, max: 500000, step: 1000, default: 65000, unit: '$', group: 'spouse' },
   { id: 'spouseRetirementSaving', type: 'number', label: 'Your spouse: yearly retirement saving, including any employer match',
     min: 0, max: 100000, step: 500, default: 6000, unit: '$', group: 'spouse' },
-  { id: 'spouseSsPerChild', type: 'number', label: 'Your spouse: monthly survivor benefit per child, from your Social Security statement',
+  { id: 'spouseSsPerChild', type: 'number', label: 'Your spouse: monthly survivor benefit per child, from your spouse\'s Social Security statement',
     min: 0, max: 5000, step: 50, default: 800, unit: '$', group: 'spouse',
     help: 'Use $0 if the person has little work history.' },
-  { id: 'spouseSsFamilyMax', type: 'number', label: 'Your spouse: monthly total family maximum, from your Social Security statement',
+  { id: 'spouseSsFamilyMax', type: 'number', label: 'Your spouse: monthly total family maximum, from your spouse\'s Social Security statement',
     min: 0, max: 10000, step: 50, default: 1500, unit: '$', group: 'spouse' },
   { id: 'spouseExtraCare', type: 'number', label: 'Your spouse: extra yearly cost for childcare and help at home if your spouse died',
     min: 0, max: 100000, step: 1000, default: 15000, unit: '$', group: 'spouse' },
-  { id: 'spouseTermCoverage', type: 'number', label: 'Your spouse: individual term life coverage you already own',
+  { id: 'spouseTermCoverage', type: 'number', label: 'Your spouse: individual term life coverage your spouse already has',
     min: 0, max: 5000000, step: 25000, default: 0, unit: '$', group: 'spouse' },
   { id: 'spouseTermYearsLeft', type: 'number', label: 'Your spouse: years left on that term policy',
     min: 0, max: 30, step: 1, default: 0, group: 'spouse' },
-  { id: 'spouseEmployerCoverage', type: 'number', label: 'Your spouse: life insurance through your employer',
+  { id: 'spouseEmployerCoverage', type: 'number', label: 'Your spouse: life insurance through your spouse\'s employer',
     min: 0, max: 2000000, step: 25000, default: 0, unit: '$', group: 'spouse' },
 
   // ── Home, debts, and savings ──
@@ -201,6 +201,78 @@ const dollarsK = (n) => {
   if (n >= 1000) return `$${Math.round(n / 1000)}k`;
   return dollars(n);
 };
+const yearsText = (n) => `${n} year${n === 1 ? '' : 's'}`;
+// "a", "a and b", "a, b, and c".
+const listText = (xs) => xs.length < 3 ? xs.join(' and ') : `${xs.slice(0, -1).join(', ')}, and ${xs[xs.length - 1]}`;
+
+/**
+ * The "if it happened today" breakdown: what the family would need, what they'd already
+ * have, and the gap, itemized from the engine's parts for death year 0.
+ *
+ * Lines are whole dollars that add up exactly: each total is the sum of its lines, and
+ * need minus have is the gap, the rounded engine gap that the rest of the page shows
+ * (with no gap, need never shows above have). Rounding each line can leave the sum a few
+ * dollars off; that difference goes to the largest present-value line, so amounts typed
+ * in (savings, the mortgage balance) show as entered. College costs and the college
+ * savings that offset them are left as they are, so they still match when the savings
+ * cover the cost.
+ *
+ * @param {{need: number, parts: Object}} row  scenarioByYear(...)[0].
+ * @param {Object} values  Calculator inputs.
+ * @param {'you'|'spouse'} scenario  Who dies.
+ * @param {number[]} childAges
+ * @returns {{need: {label: string, amount: number}[], have: {label: string, amount: number}[],
+ *            needTotal: number, haveTotal: number, gap: number}}
+ */
+export function breakdownToday(row, values, scenario, childAges) {
+  const P = row.parts;
+  const isYou = scenario === 'you';
+  const deceased = isYou ? 'you' : 'your spouse';
+  const survivorPoss = isYou ? 'your spouse\'s' : 'your';
+  const hasKids = childAges.length > 0;
+  // Same defaults as the engine.
+  const supportUntilAge = Number(values.supportUntilAge) || 22;
+  const retirementAge = Number(values.retirementAge) || 65;
+
+  const span = P.supportYears === 1 ? 'year' : yearsText(P.supportYears);   // "the next year", "the next 10 years"
+  const window = hasKids ? `until your youngest turns ${supportUntilAge}` : `for the next ${span}`;
+  const income = `${survivorPoss} take-home pay${hasKids ? ' and any Social Security' : ''}`;
+  const after = P.supportYears <= 0 ? ''
+    : hasKids ? `after your youngest turns ${supportUntilAge}, ` : `after the first ${span}, `;
+  const collegeSaved = Number(values.collegeSavings) || 0;
+  const collegePaired = P.college > 0 && P.collegeSavingsApplied === P.college;
+
+  // [side, label, value, adjustable]
+  const raw = [
+    ['need', 'Funeral and estate', P.finalExpenses, false],
+    ['need', 'Other debts', P.otherDebts, false],
+    ['need', 'Mortgage payoff', P.mortgage, false],
+    ['need', 'College costs (present value)', P.college, !collegePaired],
+    ['need', `Costs not covered by ${income}, ${window} (present value)`, P.shortfallPV, true],
+    ['need', `Lost retirement saving ${after}until ${deceased} would have turned ${retirementAge} (present value)`, P.lostSavingPV, true],
+    ['have', 'Savings', P.savings, false],
+    // Either the amount typed in, or (when it covers the cost) the college cost itself.
+    ['have', `College savings, counted up to the college cost${P.collegeSavingsApplied < collegeSaved ? ` (${dollars(collegeSaved)} saved)` : ''}`,
+      P.collegeSavingsApplied, false],
+    ['have', `${income.charAt(0).toUpperCase()}${income.slice(1)} left over after costs, ${window} (present value)`, P.surplusPV, true],
+    ['have', 'Existing term policy', P.term, false],
+    ['have', 'Employer coverage (counted)', P.employer, false],
+  ];
+  const lines = raw.filter(([, , v]) => v >= 0.5)
+    .map(([side, label, value, adjustable]) => ({ side, label, value, adjustable, amount: Math.round(value) }));
+
+  const sum = (side) => lines.filter(l => l.side === side).reduce((s, l) => s + l.amount, 0);
+  const gap = row.need > 0 ? Math.round(row.need) : 0;
+  // With no gap, need may not show above have.
+  const diff = row.need > 0 ? sum('need') - sum('have') - gap : Math.max(0, sum('need') - sum('have'));
+  if (diff !== 0 && lines.length) {
+    const pool = lines.filter(l => l.adjustable);
+    const target = (pool.length ? pool : lines).reduce((a, b) => (b.value > a.value ? b : a));
+    target.amount += target.side === 'need' ? -diff : diff;
+  }
+  const pick = (side) => lines.filter(l => l.side === side).map(({ label, amount }) => ({ label, amount }));
+  return { need: pick('need'), have: pick('have'), needTotal: sum('need'), haveTotal: sum('have'), gap };
+}
 
 export function compute(values) {
   const scenario = values.scenario || 'you';
@@ -322,7 +394,7 @@ export function compute(values) {
   // Coverage duration.
   if (lastNeedYear >= 0) {
     const ageAtEnd = decAge + lastNeedYear + 1;
-    summary.push({ label: 'Coverage no longer needed after', value: `age ${ageAtEnd} (in ${lastNeedYear + 1} years)` });
+    summary.push({ label: 'Coverage no longer needed after', value: `age ${ageAtEnd} (in ${yearsText(lastNeedYear + 1)})` });
   } else {
     summary.push({ label: 'Coverage no longer needed after', value: 'Not needed within the next 40 years' });
   }
@@ -385,46 +457,33 @@ export function onResult(result) {
     h.textContent = 'Breakdown if it happened today';
     section.appendChild(h);
 
-    const items = [];
-    const finalExpenses = Number(values.finalExpenses) || 0;
-    const otherDebts = Number(values.otherDebts) || 0;
-    const mortBalance = Number(values.mortgageBalance) || 0;
-    const savings = Number(values.savings) || 0;
-    const collegeSavings = Number(values.collegeSavings) || 0;
-    const termCoverage = Number(values[decPrefix + 'TermCoverage']) || 0;
-    const termYearsLeft = Number(values[decPrefix + 'TermYearsLeft']) || 0;
-    const employerCoverage = Number(values[decPrefix + 'EmployerCoverage']) || 0;
-    const countEmployer = values.countEmployerCoverage === 'count';
-
-    if (finalExpenses > 0) items.push(`Funeral and estate: ${dollars(finalExpenses)}`);
-    if (otherDebts > 0) items.push(`Other debts: ${dollars(otherDebts)}`);
-    if (mortBalance > 0) items.push(`Mortgage payoff: ${dollars(mortBalance)}`);
-    items.push(`Present value of spending shortfalls: ${dollars(Math.max(0, r0.needs - finalExpenses - otherDebts - mortBalance))}`);
-
-    items.push('');
-    if (savings > 0) items.push(`Savings: ${dollars(savings)}`);
-    if (collegeSavings > 0) items.push(`College savings: ${dollars(collegeSavings)}`);
-    if (termCoverage > 0 && termYearsLeft > 0) items.push(`Existing term policy: ${dollars(termCoverage)}`);
-    if (countEmployer && employerCoverage > 0) items.push(`Employer coverage (counted): ${dollars(employerCoverage)}`);
-
-    items.push('');
-    items.push(`Gap if it happened today: ${dollars(r0.need)}`);
-    if (maxNeed > r0.need) items.push(`Peak gap (in a later year): ${dollars(maxNeed)}`);
-
-    items.forEach(text => {
-      if (text === '') {
-        section.appendChild(document.createElement('hr'));
+    const b = breakdownToday(r0, values, scenario, childAges);
+    const line = (label, amount, total = false) => {
+      const p = document.createElement('p');
+      const text = `${label}: ${dollars(amount)}`;
+      if (total) {
+        const s = document.createElement('strong');
+        s.textContent = text;
+        p.appendChild(s);
       } else {
-        const p = document.createElement('p');
         p.textContent = text;
-        section.appendChild(p);
       }
-    });
+      section.appendChild(p);
+    };
+    b.need.forEach(l => line(l.label, l.amount));
+    line('What your family would need', b.needTotal, true);
+    section.appendChild(document.createElement('hr'));
+    b.have.forEach(l => line(l.label, l.amount));
+    line('What they\'d already have', b.haveTotal, true);
+    section.appendChild(document.createElement('hr'));
+    line('Gap if it happened today', b.gap, true);
+    if (maxNeed > r0.need) line('Peak gap (in a later year)', maxNeed);
     el.appendChild(section);
   }
 
   // ── Social Security note ──
-  if (childAges.length > 0) {
+  // Only while a child is under 18: past that, no survivor benefit is paid on these numbers.
+  if (childAges.length > 0 && Math.min(...childAges) < 18) {
     const ssPerChild = Number(values[decPrefix + 'SsPerChild']) || 0;
     const ssFamilyMax = Number(values[decPrefix + 'SsFamilyMax']) || 0;
     const survivorPay = Number(values[survPrefix + 'GrossPay']) || 0;
@@ -441,9 +500,9 @@ export function onResult(result) {
       const caregiverEnd = Math.max(0, 16 - youngest);
 
       const notes = [];
-      notes.push(`Children's benefits would be paid for about ${ssYears} years (until the youngest turns 18).`);
+      notes.push(`Children's benefits would be paid for about ${yearsText(ssYears)} (until the youngest turns 18).`);
       if (caregiverEnd > 0) {
-        notes.push(`The caregiver benefit would end when the youngest turns 16 (in about ${caregiverEnd} years).`);
+        notes.push(`The caregiver benefit would end when the youngest turns 16 (in about ${yearsText(caregiverEnd)}).`);
       }
 
       const ss0 = survivorSocialSecurity(ssPerChild, ssFamilyMax, survivorPay, childAges);
@@ -456,7 +515,7 @@ export function onResult(result) {
         const survAge = Number(values[survPrefix + 'Age']) || 35;
         const caregiverEndsAge = survAge + (16 - youngest);
         if (caregiverEndsAge < 60) {
-          notes.push(`From when your youngest turns 16 until ${scenario === 'you' ? 'your spouse' : 'you'} turns 60, Social Security pays no survivor benefit to the parent. That is a ${60 - caregiverEndsAge}-year gap.`);
+          notes.push(`From when your youngest turns 16 until ${scenario === 'you' ? 'your spouse turns' : 'you turn'} 60, Social Security pays no survivor benefit to the parent. That gap lasts ${yearsText(60 - caregiverEndsAge)}.`);
         }
       }
 
@@ -471,7 +530,7 @@ export function onResult(result) {
 
   // ── Employer coverage note ──
   const employerCoverage = Number(values[decPrefix + 'EmployerCoverage']) || 0;
-  if (employerCoverage > 0 && values.countEmployerCoverage !== 'count') {
+  if (employerCoverage > 0 && values.countEmployerCoverage !== 'count' && maxNeed > 0) {
     const section = document.createElement('div');
     section.className = 'li-section';
     // Compute what the need would be with employer counted.
@@ -479,7 +538,7 @@ export function onResult(result) {
     const altResult = scenarioByYear(altValues, scenario);
     const altMax = Math.max(0, ...altResult.map(r => r.need));
     const p = document.createElement('p');
-    p.textContent = `Counting the ${dollars(employerCoverage)} of employer coverage would lower the peak need to ${dollars(altMax)}, but employer coverage usually ends when you leave the job.`;
+    p.textContent = `Counting the ${dollars(employerCoverage)} of employer coverage would lower the peak need to ${dollars(altMax)}, but employer coverage usually ends when ${scenario === 'you' ? 'you leave' : 'your spouse leaves'} the job.`;
     section.appendChild(p);
     el.appendChild(section);
   }
@@ -535,7 +594,11 @@ export function onResult(result) {
     const section = document.createElement('div');
     section.className = 'li-section';
     const p = document.createElement('p');
-    p.textContent = `The ladder uses ${Math.round(pol.ladder.savingsPct * 100)}% less coverage than a single policy because your family's need drops over time as the mortgage shrinks and the children age out. Each extra policy carries its own application and fee, so the ladder only appears here when the coverage savings are meaningful (at least 15%).`;
+    // Name only the reasons that apply to this family.
+    const why = [];
+    if (primary[0].parts.mortgage >= 0.5) why.push('the mortgage shrinks');
+    if (childAges.length > 0) why.push('the children age out');
+    p.textContent = `The ladder uses ${Math.round(pol.ladder.savingsPct * 100)}% less coverage than a single policy because your family's need drops over time${why.length ? ` as ${why.join(' and ')}` : ''}. Each extra policy carries its own application and fee, so the ladder only appears here when the coverage savings are meaningful (at least 15%).`;
     section.appendChild(p);
     el.appendChild(section);
   }
@@ -557,13 +620,30 @@ export function onResult(result) {
       const ss0 = survivorSocialSecurity(ssPerChild, ssFamilyMax, survPay, childAges);
 
       const p = document.createElement('p');
-      let text = `A common rule of thumb says ${dollars(ruleOfThumb)} (10 times pay). This comes out at ${dollars(maxNeed)} instead`;
-      if (ss0.total > 0 || survPay > 0) {
-        text += ` because`;
-        const parts = [];
-        if (ss0.total > 0) parts.push(`Social Security would pay your family about ${dollars(ss0.total)} a year`);
-        if (survPay > 0) parts.push(`${scenario === 'you' ? 'your spouse\'s' : 'your'} pay covers about ${dollars(survPay * ((Number(values.takeHomeShare) || 75) / 100))} a year after taxes`);
-        text += ' ' + parts.join(' and ');
+      let text = `A common rule of thumb says ${dollars(ruleOfThumb)} (10 times pay). `;
+      const shownNeed = Math.round(maxNeed);
+      if (shownNeed < Math.round(ruleOfThumb)) {
+        text += `This comes out lower, at ${dollars(maxNeed)}`;
+        const why = [];
+        if (ss0.total > 0) why.push(`Social Security would pay your family about ${dollars(ss0.total)} a year`);
+        if (survPay > 0) why.push(`${scenario === 'you' ? 'your spouse\'s' : 'your'} pay covers about ${dollars(survPay * ((Number(values.takeHomeShare) || 75) / 100))} a year after taxes`);
+        if (why.length) text += `, because ${why.join(' and ')}`;
+      } else if (shownNeed > Math.round(ruleOfThumb)) {
+        // Name what a multiple of pay leaves out, in the year the need peaks.
+        const P = primary[primary.findIndex(r => r.need === maxNeed)].parts;
+        const items = [];
+        if (P.mortgage >= 0.5) items.push('the mortgage payoff');
+        if (P.otherDebts >= 0.5) items.push('other debts');
+        if (P.college >= 0.5) items.push('college');
+        if (P.shortfallPV >= 0.5) {
+          items.push(childAges.length > 0
+            ? `living costs until your youngest turns ${Number(values.supportUntilAge) || 22}`
+            : `living costs for ${yearsText(P.supportYears)}`);
+        }
+        if (P.lostSavingPV >= 0.5) items.push('lost retirement saving');
+        text += `This comes out higher, at ${dollars(maxNeed)}, because it adds up what your family would actually need${items.length ? `, including ${listText(items)},` : ''} instead of using a multiple of pay`;
+      } else {
+        text += `This comes out the same, at ${dollars(maxNeed)}`;
       }
       text += '.';
       p.textContent = text;

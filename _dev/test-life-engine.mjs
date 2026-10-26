@@ -410,6 +410,143 @@ function makeInputs(overrides = {}) {
   check('PV at 0% discount = plain sum', r[0].needs, 60000, 5);
 }
 
+// ── Parts: needs and have itemized (the page's breakdown lists these) ──
+// All at 0% discount and 0% inflation unless noted, so each present value is a plain sum.
+{
+  // H1. No children: the window is min(10, 65 - 60) = 5 years. Each year: spending
+  // 50,000 + your retirement saving 10,000 (you're 60-64) = 60,000 out; your spouse's
+  // take-home 40,000 x 75% = 30,000 in. Short 30,000 a year x 5 = 150,000. You reach
+  // 65 as the window ends, so no lost saving after it.
+  const r = scenarioByYear(makeInputs({
+    youAge: '60', spouseAge: '60', householdSpending: '50000', spendingContinues: '100',
+    youRetirementSaving: '10000', spouseGrossPay: '40000', takeHomeShare: '75',
+    finalExpenses: '10000', otherDebts: '5000', savings: '100000',
+  }), 'you');
+  const P = r[0].parts;
+  check('parts H1: support years', P.supportYears, 5, 0);
+  check('parts H1: shortfall', P.shortfallPV, 150000, 0.01);
+  check('parts H1: no lost saving after the window', P.lostSavingPV, 0, 0);
+  check('parts H1: no surplus', P.surplusPV, 0, 0);
+  check('parts H1: final expenses', P.finalExpenses, 10000, 0);
+  check('parts H1: other debts', P.otherDebts, 5000, 0);
+  check('parts H1: savings', P.savings, 100000, 0);
+  check('parts H1: needs', r[0].needs, 165000, 0.01);
+  check('parts H1: have', r[0].have, 100000, 0.01);
+  check('parts H1: need', r[0].need, 65000, 0.01);
+}
+{
+  // H2. Child 10, support to 22: a 12-year window. Extra care 20,000 while the child is
+  // under 13 (years 0-2). No Social Security, no retirement saving. Out: 40,000 spending
+  // (+20,000 in years 0-2); in: your spouse's 60,000 x 75% = 45,000.
+  // Years 0-2 short 15,000 each = 45,000; years 3-11 over by 5,000 each = 45,000 surplus.
+  // Mortgage 100,000 at 0%, 10 years left: 100,000 at t = 0.
+  const r = scenarioByYear(makeInputs({
+    child1Age: '10', householdSpending: '40000', spendingContinues: '100',
+    youExtraCare: '20000', spouseGrossPay: '60000', takeHomeShare: '75',
+    mortgageBalance: '100000', mortgageRate: '0', mortgageYearsLeft: '10',
+    finalExpenses: '0', savings: '20000',
+  }), 'you');
+  const P = r[0].parts;
+  check('parts H2: support years', P.supportYears, 12, 0);
+  check('parts H2: shortfall years', P.shortfallPV, 45000, 0.01);
+  check('parts H2: surplus years', P.surplusPV, 45000, 0.01);
+  check('parts H2: mortgage', P.mortgage, 100000, 0.01);
+  check('parts H2: needs', r[0].needs, 145000, 0.01);
+  check('parts H2: have = savings + surplus', r[0].have, 65000, 0.01);
+  check('parts H2: need', r[0].need, 80000, 0.01);
+}
+{
+  // H3. No children, both 50: the window is min(5, 65 - 50) = 5 years. In it: spending
+  // 30,000 + your saving 8,000 out, your spouse's 40,000 x 75% = 30,000 in: short 8,000
+  // a year = 40,000. After it, your 8,000 a year stops for ages 55-64: 10 x 8,000 = 80,000.
+  const r = scenarioByYear(makeInputs({
+    youAge: '50', spouseAge: '50', householdSpending: '30000', spendingContinues: '100',
+    supportYearsNoKids: '5', youRetirementSaving: '8000', spouseGrossPay: '40000',
+    takeHomeShare: '75', finalExpenses: '0',
+  }), 'you');
+  const P = r[0].parts;
+  check('parts H3: shortfall in the window', P.shortfallPV, 40000, 0.01);
+  check('parts H3: lost saving after the window', P.lostSavingPV, 80000, 0.01);
+  check('parts H3: needs', r[0].needs, 120000, 0.01);
+}
+{
+  // H4. College only: child 18, 40,000 per child = 10,000 a year for ages 18-21 = 40,000.
+  // 50,000 saved, counted up to the 40,000 cost.
+  const r = scenarioByYear(makeInputs({
+    child1Age: '18', householdSpending: '0', collegePerChild: '40000',
+    collegeSavings: '50000', finalExpenses: '0',
+  }), 'you');
+  const P = r[0].parts;
+  check('parts H4: college', P.college, 40000, 0.01);
+  check('parts H4: college savings counted up to the cost', P.collegeSavingsApplied, 40000, 0.01);
+  check('parts H4: college savings counted equals the cost exactly', P.collegeSavingsApplied === P.college, true);
+  check('parts H4: need', r[0].need, 0, 0);
+}
+{
+  // H5. Term 250,000 with 10 years left, employer 100,000 counted, inflation 2.5%.
+  // t = 0: 250,000 and 100,000. t = 4: 250,000 / 1.025^4 = 250,000 / 1.103812890625
+  // = 226,487.66; employer stays 100,000. t = 10: the term has run out.
+  // Mortgage 100,000 at 0% over 10 years: 50,000 owed at t = 5, / 1.025^5
+  // (1.131408212890625) = 44,192.71 in today's dollars.
+  const r = scenarioByYear(makeInputs({
+    youTermCoverage: '250000', youTermYearsLeft: '10', youEmployerCoverage: '100000',
+    countEmployerCoverage: 'count', inflation: '2.5',
+    mortgageBalance: '100000', mortgageRate: '0', mortgageYearsLeft: '10',
+  }), 'you');
+  check('parts H5: term at t=0', r[0].parts.term, 250000, 0.01);
+  check('parts H5: employer at t=0', r[0].parts.employer, 100000, 0);
+  check('parts H5: term at t=4, in today\'s dollars', r[4].parts.term, 226487.66, 0.01);
+  check('parts H5: employer at t=4', r[4].parts.employer, 100000, 0);
+  check('parts H5: term gone at t=10', r[10].parts.term, 0, 0);
+  check('parts H5: mortgage at t=5, in today\'s dollars', r[5].parts.mortgage, 44192.71, 0.01);
+  // Employer coverage left out: counted as 0.
+  const r2 = scenarioByYear(makeInputs({ youEmployerCoverage: '100000', countEmployerCoverage: 'leave' }), 'you');
+  check('parts H5: employer left out counts 0', r2[0].parts.employer, 0, 0);
+}
+{
+  // No children and 0 years of living costs to cover: no support window at all (0 used to
+  // fall back to the 10-year default). Spending 50,000 with no survivor pay would otherwise
+  // be short 50,000 a year. Need = funeral 10,000 only.
+  const r = scenarioByYear(makeInputs({ householdSpending: '50000', spendingContinues: '100', supportYearsNoKids: '0' }), 'you');
+  check('no children, 0 years of support: no window', r[0].parts.supportYears, 0, 0);
+  check('no children, 0 years of support: no shortfall', r[0].parts.shortfallPV, 0, 0);
+  check('no children, 0 years of support: need = funeral only', r[0].need, 10000, 0);
+  // Left out entirely, it still defaults to 10 years: 50,000 x 10 + 10,000 = 510,000.
+  const v = makeInputs({ householdSpending: '50000', spendingContinues: '100' });
+  delete v.supportYearsNoKids;
+  check('no children, years of support missing: 10-year default', scenarioByYear(v, 'you')[0].need, 510000, 0.01);
+}
+{
+  // The parts add up to needs and have in every year, across a grid of inputs.
+  let worst = 0, rows = 0;
+  for (const kids of [[], ['4'], ['15', '17'], ['0', '3', '9'], ['19']])
+  for (const spousePay of ['0', '65000'])
+  for (const ss of [['0', '0'], ['1200', '2200']])
+  for (const mort of [['0', '0'], ['380000', '29']])
+  for (const college of [['0', '0'], ['80000', '30000'], ['40000', '200000']])
+  for (const disc of ['0', '2'])
+  for (const deceased of ['you', 'spouse']) {
+    const v = makeInputs({
+      child1Age: kids[0] ?? '', child2Age: kids[1] ?? '', child3Age: kids[2] ?? '',
+      youGrossPay: '95000', spouseGrossPay: spousePay, youRetirementSaving: '10000', spouseRetirementSaving: '6000',
+      youSsPerChild: ss[0], youSsFamilyMax: ss[1], spouseSsPerChild: ss[0], spouseSsFamilyMax: ss[1],
+      youExtraCare: '15000', spouseExtraCare: '15000',
+      youTermCoverage: '250000', youTermYearsLeft: '12', spouseEmployerCoverage: '50000', countEmployerCoverage: 'count',
+      mortgageBalance: mort[0], mortgageRate: '6.5', mortgageYearsLeft: mort[1],
+      collegePerChild: college[0], collegeSavings: college[1],
+      householdSpending: '72000', savings: '60000', discountRate: disc, inflation: '2.5', takeHomeShare: '75',
+    });
+    for (const row of scenarioByYear(v, deceased)) {
+      const P = row.parts;
+      const n = P.finalExpenses + P.otherDebts + P.mortgage + P.college + P.shortfallPV + P.lostSavingPV;
+      const h = P.savings + P.collegeSavingsApplied + P.surplusPV + P.term + P.employer;
+      worst = Math.max(worst, Math.abs(n - row.needs), Math.abs(h - row.have));
+      rows++;
+    }
+  }
+  check(`parts add up to needs and have (${rows} rows; worst ${worst.toExponential(1)})`, worst < 1e-6, true);
+}
+
 // ── Every select default/preset value is a string ──
 {
   // This checks the engine accepts string values for ages and numeric fields.

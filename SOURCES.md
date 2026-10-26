@@ -1624,6 +1624,17 @@ need in that year's dollars, existing term policies are deflated, and the
 coverage (usually tied to pay) is still held at today's value. Tests:
 `_dev/test-life-inflation.mjs`.
 
+Breakdown itemized 2026-10-26 — the "if it happened today" breakdown showed
+spending shortfalls as a remainder and never listed the years when the
+survivor's pay and Social Security exceed costs, which the engine counts
+toward what the family has, so its lines didn't add up to the gap (in the
+default example when your spouse dies, they came to $379,906 against a
+$270,259 gap).
+The engine now returns each year's parts, and the page lists them with
+totals that match the chart. A 0 in "If no children: years of living costs
+to cover" had been read as the 10-year default. Tests:
+`_dev/test-life-breakdown.mjs`.
+
 ---
 
 ## Annual re-verification checklist (do each tax year)

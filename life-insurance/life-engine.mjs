@@ -111,7 +111,15 @@ export function survivorSocialSecurity(ssPerChild, ssFamilyMax, survivorGrossPay
  *
  * @param {Object} inputs  All calculator inputs as a flat values object.
  * @param {'you'|'spouse'} deceased  Which person dies in this scenario.
- * @returns {{t: number, needs: number, have: number, need: number}[]}
+ * @returns {{t: number, needs: number, have: number, need: number, parts: Object}[]}
+ *   parts itemizes needs and have in today's dollars, for the page's breakdown:
+ *     needs = finalExpenses + otherDebts + mortgage + college + shortfallPV + lostSavingPV
+ *     have  = savings + collegeSavingsApplied + surplusPV + term + employer
+ *   (equal up to floating-point rounding). shortfallPV / surplusPV: the support-window
+ *   years whose costs (spending, extra care, the deceased's retirement saving) exceed / fall
+ *   short of the survivor's take-home pay plus Social Security. lostSavingPV: the deceased's
+ *   retirement saving after the window, until they would have reached retirementAge.
+ *   supportYears: the window's length.
  */
 export function scenarioByYear(inputs, deceased) {
   const isYou = deceased === 'you';
@@ -141,7 +149,9 @@ export function scenarioByYear(inputs, deceased) {
   const rawContinues = Number(inputs.spendingContinues);
   const spendingContinues = (Number.isFinite(rawContinues) ? rawContinues : 80) / 100;
   const supportUntilAge = Number(inputs.supportUntilAge) || 22;
-  const supportYearsNoKids = Number(inputs.supportYearsNoKids) || 10;
+  // 0 is a real answer here (cover no living costs), so only a missing value takes the default.
+  const rawNoKids = Number(inputs.supportYearsNoKids);
+  const supportYearsNoKids = Number.isFinite(rawNoKids) ? rawNoKids : 10;
   const childcareUntilAge = Number(inputs.childcareUntilAge) || 13;
   const rawDiscount = Number(inputs.discountRate);
   const discountRate = (Number.isFinite(rawDiscount) ? rawDiscount : 2) / 100;
@@ -181,6 +191,8 @@ export function scenarioByYear(inputs, deceased) {
     // ── Yearly flows ──
     let needsPV = 0;
     let havePV = 0;
+    let shortfallPV = 0;
+    let lostSavingPV = 0;
 
     for (let a = 0; a < supportEnd; a++) {
       // Ages of children in year (t + a) from now.
@@ -207,6 +219,7 @@ export function scenarioByYear(inputs, deceased) {
       const pv = presentValueOfStream(net / 12, a * 12, (a + 1) * 12, discountRate);
       if (net > 0) {
         needsPV += pv;
+        shortfallPV += pv;
       } else {
         havePV += -pv; // surplus adds to have
       }
@@ -220,7 +233,9 @@ export function scenarioByYear(inputs, deceased) {
       if (deceasedAgeAtA >= retirementAge) break;
       const lostSaving = deceasedRetSaving;
       if (lostSaving > 0) {
-        needsPV += presentValueOfStream(lostSaving / 12, a * 12, (a + 1) * 12, discountRate);
+        const pv = presentValueOfStream(lostSaving / 12, a * 12, (a + 1) * 12, discountRate);
+        needsPV += pv;
+        lostSavingPV += pv;
       }
     }
 
@@ -228,9 +243,11 @@ export function scenarioByYear(inputs, deceased) {
     let oneTimeNeeds = finalExpenses + otherDebts;
 
     // Mortgage at t, in today's dollars.
+    let mortgageToday = 0;
     if (mortBalance > 0 && mortYearsLeft > 0) {
       const nominalBal = mortgageBalanceAt(mortBalance, mortRate, mortYearsLeft, t);
-      oneTimeNeeds += nominalBal / Math.pow(1 + inflation, t);
+      mortgageToday = nominalBal / Math.pow(1 + inflation, t);
+      oneTimeNeeds += mortgageToday;
     }
 
     // College: PV of remaining college years for each child. Kept separate
@@ -258,18 +275,24 @@ export function scenarioByYear(inputs, deceased) {
     // amount, so in today's dollars it's worth less the later the death.
     // (Employer coverage below is usually tied to pay, which tends to keep up
     // with inflation, so it stays at today's value.)
+    let termToday = 0;
     if (termCoverage > 0 && t < termYearsLeft) {
-      haveTotal += termCoverage / Math.pow(1 + inflation, t);
+      termToday = termCoverage / Math.pow(1 + inflation, t);
+      haveTotal += termToday;
     }
 
     // Employer coverage.
-    if (countEmployer && employerCoverage > 0) {
-      haveTotal += employerCoverage;
-    }
+    const employerCounted = countEmployer && employerCoverage > 0 ? employerCoverage : 0;
+    haveTotal += employerCounted;
 
     const totalNeeds = needsPV + oneTimeNeeds;
     const need = Math.max(0, totalNeeds - haveTotal);
-    results.push({ t, needs: totalNeeds, have: haveTotal, need });
+    const parts = {
+      finalExpenses, otherDebts, mortgage: mortgageToday, college: collegeNeeds,
+      shortfallPV, lostSavingPV, supportYears: supportEnd,
+      savings, collegeSavingsApplied, surplusPV: havePV, term: termToday, employer: employerCounted,
+    };
+    results.push({ t, needs: totalNeeds, have: haveTotal, need, parts });
   }
 
   // Trim: t <= min(40, max(30, lastNeedYear + 3)).
