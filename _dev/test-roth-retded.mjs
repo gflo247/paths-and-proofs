@@ -121,5 +121,39 @@ check('worked: 55, pension 30k, cvt 20k → $599.25 (under 59 1/2: no cap shelte
 check('worked: 55, wages 10k, cvt 20k → $850 (exemption already used by wages)', one(20000, { curAge: 55, income: 10000 }), 850);
 
 console.log(`Checked ${checked.toLocaleString()} Michigan combinations across ${statuses.length} filing statuses and ${ages.length} ages (incl. the 59 1/2 conversion gate).`);
+
+// --- isGovernmentPension wiring: private pension raises conversion tax for govOnly states ---
+// Confirms isGovernmentPension flows from calc()'s ctx through computeConversionCost to
+// resolveRetirementIncome. KS and MA are the clearest hand-derivable cases.
+//
+// KS single 67, pension=$40k, $10k conversion:
+//   Standard deduction: $12,765 + $850 (65+) = $13,615.
+//   Government: pension exempt → taxable(with cvt) = max(0, 10000 − 13615) = 0 → cvtTxSt = $0.
+//   Private: pension taxable → taxable(without cvt) = 40000 − 13615 = 26385 (past the $23k
+//     bracket); taxable(with cvt) = 36385; delta = 10000 × 5.58% = $558.
+//
+// MA single 67, pension=$40k, $10k conversion:
+//   Standard deduction: $4,400 + $700 (65+) = $5,100.
+//   Government: pension exempt → taxable(with cvt) = max(0, 10000 − 5100) = 4900 × 5% = $245.
+//   Private: pension already taxed → taxable(without cvt) = 34900; delta = 10000 × 5% = $500.
+{
+  const ctx = (stateCode, pension, isGovernmentPension) => ({
+    income: 0, pensionIncome: pension, nii: 0, ltcg: 0, ss: 0,
+    status: 'single', nSr: 0, stD: ST[stateCode], stateCode,
+    curAge: 67, spouseAge: null, isCouple: false, taxableFrac: 1, localTax: '',
+    isGovernmentPension,
+  });
+
+  check('KS government pension: $0 state tax on $10k conversion (under standard deduction)',
+    computeConversionCost(10000, ctx('KS', 40000, true)).cvtTxSt, 0);
+  check('KS private pension $40k: 5.58% on $10k conversion = $558',
+    computeConversionCost(10000, ctx('KS', 40000, false)).cvtTxSt, 558);
+
+  check('MA government pension: $245 state tax on $10k conversion (4900 × 5%)',
+    computeConversionCost(10000, ctx('MA', 40000, true)).cvtTxSt, 245);
+  check('MA private pension $40k: 5% on full $10k conversion = $500',
+    computeConversionCost(10000, ctx('MA', 40000, false)).cvtTxSt, 500);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

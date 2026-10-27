@@ -162,16 +162,21 @@ export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ir
   if (!pooled && pr.governmentOnly && !isGovernmentPension) {
     let iraTaxable = ira, penTaxable = pension;
     if (ri.treatment === "exclusion" && ri.exclusion.cliffType === "ageTieredCap") {
-      const gateOk = ri.ageGate == null || age >= ri.ageGate;
-      if (gateOk) {
-        const cap = tierCapFor(ri.exclusion.perPersonTiers, age)
-          + (tStatus === "joint" ? tierCapFor(ri.exclusion.perPersonTiers, spouseAge ?? age) : 0);
+      // No household-level gateOk check here: tierCapFor resolves each person's cap from their
+      // OWN age against the tier's minAge — the same per-person logic the non-pooled IRA path
+      // uses. A household-level gate would zero out the qualifying spouse's $20k on a joint
+      // return where only the primary is under 59.5 (NY Tax Law §612(c)(3-a) is per-individual).
+      const cap = tierCapFor(ri.exclusion.perPersonTiers, age)
+        + (tStatus === "joint" ? tierCapFor(ri.exclusion.perPersonTiers, spouseAge ?? age) : 0);
+      if (cap > 0) {
         const totalEx = Math.min(cap, ira + pension);
         ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, ira, pension));
       }
     }
-    // ri.treatment === "taxed" (KS/MA/NC) or gate not met: both stay fully taxable
-    return { iraTaxable, penTaxable, ssTaxableOverride };
+    // ri.treatment === "taxed" (KS/MA/NC) or gate not met: both stay fully taxable.
+    // ssTaxableOverride is always null here — governmentOnly states with this flag
+    // are never CO (the only state with sharesCapWithSS).
+    return { iraTaxable, penTaxable, ssTaxableOverride: null };
   }
 
   let iraTaxable = ira;

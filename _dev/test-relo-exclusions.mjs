@@ -487,5 +487,94 @@ function check(label, actual, expected, tolerance = 1) {
   check('AL joint, only spouse 65+ (order-independence): still $6,000 sheltered', mixedSpouse.breakdown.iraTaxable, 20000 - 6000);
 }
 
+// --- 19. MI iraAgeGate: IRA distributions don't qualify for the pension deduction before 59.5 ---
+// MCL 206.30(8)(a)(ii); Treasury RAB 2017-21. taxRules.retirementIncome.exclusion.iraAgeGate:59.5
+// gates IRA OUT of the exclusion pool for the Relocation engine; pension still draws the cap.
+{
+  const mi = states.MI.taxRules;
+
+  // Below gate: IRA is fully taxable; pension alone draws the $67,610 cap.
+  const iraUnder = computeStateIncomeTax(mi, 'single', { iraWithdrawal: 80000, age: 55 });
+  check('MI age 55, IRA=$80k: below iraAgeGate — IRA fully taxable', iraUnder.breakdown.iraTaxable, 80000);
+
+  const penUnder = computeStateIncomeTax(mi, 'single', { pension: 50000, age: 55 });
+  check('MI age 55, pension=$50k: pension still draws the cap (under $67,610 → $0 taxable)', penUnder.breakdown.penTaxable, 0);
+
+  const bothUnder = computeStateIncomeTax(mi, 'single', { iraWithdrawal: 30000, pension: 20000, age: 55 });
+  check('MI age 55, IRA=$30k + pension=$20k: IRA taxable in full', bothUnder.breakdown.iraTaxable, 30000);
+  check('MI age 55, IRA=$30k + pension=$20k: pension sheltered by cap', bothUnder.breakdown.penTaxable, 0);
+
+  // At gate: IRA joins the pool normally; $100k IRA - $67,610 cap = $32,390 taxable.
+  const iraAt = computeStateIncomeTax(mi, 'single', { iraWithdrawal: 100000, age: 60 });
+  check('MI age 60 (>=59.5), IRA=$100k: IRA in pool — surplus above $67,610 cap is taxable', iraAt.breakdown.iraTaxable, 100000 - 67610);
+
+  // At gate with both: combined $20k under the cap — both fully sheltered.
+  const bothAt = computeStateIncomeTax(mi, 'single', { iraWithdrawal: 10000, pension: 10000, age: 60 });
+  check('MI age 60, IRA=$10k + pension=$10k: combined under cap → iraTaxable=0', bothAt.breakdown.iraTaxable, 0);
+  check('MI age 60, IRA=$10k + pension=$10k: combined under cap → penTaxable=0', bothAt.breakdown.penTaxable, 0);
+}
+
+// --- 20. NY governmentOnly: government pension fully exempt; private pension and IRA share
+// ONE $20k/person pool (NY Tax Law §612(c)(3-a) — a combined exclusion, not two separate caps) ---
+{
+  const ny = states.NY.taxRules;
+
+  // Government pension (default): unconditionally exempt, IRA cap is separate and unaffected.
+  const govOnly = computeStateIncomeTax(ny, 'single', { pension: 30000, age: 62 });
+  check('NY government pension: fully exempt (penTaxable=0)', govOnly.breakdown.penTaxable, 0);
+
+  const govWithIRA = computeStateIncomeTax(ny, 'single', { pension: 15000, iraWithdrawal: 15000, age: 62 });
+  check('NY government pension + IRA: pension exempt, IRA under $20k → iraTaxable=0', govWithIRA.breakdown.iraTaxable, 0);
+  check('NY government pension + IRA: penTaxable=0 (still exempt)', govWithIRA.breakdown.penTaxable, 0);
+
+  // Private pension below 59.5 gate: both stay taxable.
+  const privateUnder = computeStateIncomeTax(ny, 'single', { pension: 30000, isGovernmentPension: false, age: 55 });
+  check('NY private pension, age 55 (below gate): no exclusion applies', privateUnder.breakdown.penTaxable, 30000);
+
+  // Private pension at 62: draws the per-person $20k cap ($30k - $20k = $10k taxable).
+  const privateAt = computeStateIncomeTax(ny, 'single', { pension: 30000, isGovernmentPension: false, age: 62 });
+  check('NY private pension, age 62: $20k cap → $10k taxable', privateAt.breakdown.penTaxable, 10000);
+
+  // Private pension + IRA share ONE pool: single 62, each $15k → combined $30k, cap $20k.
+  // Each gets proportional exclusion: 15k / 30k = 50%, so each taxable = $15k - $10k = $5k.
+  const sharedPool = computeStateIncomeTax(ny, 'single', { pension: 15000, iraWithdrawal: 15000, isGovernmentPension: false, age: 62 });
+  check('NY private pension + IRA share one $20k pool: iraTaxable=$5k', sharedPool.breakdown.iraTaxable, 5000);
+  check('NY private pension + IRA share one $20k pool: penTaxable=$5k', sharedPool.breakdown.penTaxable, 5000);
+
+  // Joint, both 62, private pension + IRA = $20k each → combined $40k, cap $40k (2×$20k) → both sheltered.
+  const sharedJoint = computeStateIncomeTax(ny, 'mfj', { pension: 20000, iraWithdrawal: 20000, isGovernmentPension: false, age: 62, spouseAge: 62 });
+  check('NY private pension + IRA joint, both 62: combined $40k cap → iraTaxable=0', sharedJoint.breakdown.iraTaxable, 0);
+  check('NY private pension + IRA joint, both 62: combined $40k cap → penTaxable=0', sharedJoint.breakdown.penTaxable, 0);
+
+  // Mixed ages (order-independence): primary 55, spouse 65 → spouse's $20k cap still applies.
+  // tierCapFor resolves per-person, so a household-level gate would wrongly zero both.
+  const mixedYounger = computeStateIncomeTax(ny, 'mfj', { pension: 30000, isGovernmentPension: false, age: 55, spouseAge: 65 });
+  check('NY private pension joint, primary 55 + spouse 65: spouse qualifies → $20k cap', mixedYounger.breakdown.penTaxable, 10000);
+
+  const mixedOlder = computeStateIncomeTax(ny, 'mfj', { pension: 30000, isGovernmentPension: false, age: 65, spouseAge: 55 });
+  check('NY private pension joint, primary 65 + spouse 55: same $20k cap (order-independent)', mixedOlder.breakdown.penTaxable, 10000);
+}
+
+// --- 21. KS / MA / NC governmentOnly: government pension fully exempt, private fully taxable ---
+// KS: K.S.A. 74-4923(b) (KPERS, federal, military exempt; private retirement accounts not).
+// MA: G.L. c. 32, §25 (government contributory pensions exempt; private fully taxable).
+// NC: HB 387, TY2026+ (all state/local/federal government pensions exempt; private: only a
+//     $2,000 deduction, too small to model, treated as taxable here).
+{
+  for (const code of ['KS', 'MA', 'NC']) {
+    const rules = states[code].taxRules;
+
+    const govPension = computeStateIncomeTax(rules, 'single', { pension: 30000, age: 67 });
+    check(`${code} government pension: fully exempt (penTaxable=0)`, govPension.breakdown.penTaxable, 0);
+
+    const privatePension = computeStateIncomeTax(rules, 'single', { pension: 30000, isGovernmentPension: false, age: 67 });
+    check(`${code} private pension: fully taxable (penTaxable=30000)`, privatePension.breakdown.penTaxable, 30000);
+
+    // IRA alongside private pension — both stay taxable (ri.treatment="taxed" for these states).
+    const privPlusIRA = computeStateIncomeTax(rules, 'single', { pension: 15000, iraWithdrawal: 15000, isGovernmentPension: false, age: 67 });
+    check(`${code} private pension + IRA: both fully taxable`, privPlusIRA.breakdown.iraTaxable, 15000);
+  }
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
