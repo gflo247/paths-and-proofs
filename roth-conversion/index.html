@@ -592,7 +592,7 @@
     <button onclick="hideHero()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;font-family:inherit;padding:2px 4px;text-decoration:underline;text-underline-offset:2px">Hide example ↑</button>
   </div>
   <div class="hero-ex-tag">
-    <span class="hero-ex-tag-lbl">EXAMPLE</span>
+    <span id="heroExTagLbl" class="hero-ex-tag-lbl">EXAMPLE</span>
     <p id="heroVisAmtHd" class="hero-ex-tag-amt">$380K IRA Converted Gradually</p>
   </div>
   <div class="ex-bar" id="examplesSection">
@@ -4005,6 +4005,16 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
 // that block's own comment). So updateHeroVis() must only ever be called
 // from inside/after the DOMContentLoaded handler -- never at bare top-level
 // script scope -- exactly like calc()'s own one eager call already is.
+// Toggles between example mode ("EXAMPLE" tag + persona buttons) and live mode
+// ("YOUR NUMBERS" tag, buttons hidden). Called automatically by updateHeroVis.
+function _heroSetMode(isLive){
+  var lbl  = document.getElementById('heroExTagLbl');
+  var btns = document.getElementById('examplesSection');
+  if(lbl)  lbl.textContent    = isLive ? 'YOUR NUMBERS' : 'EXAMPLE';
+  if(btns) btns.style.display = isLive ? 'none' : '';
+  if(isLive) showHero();  // re-show the illustration if the user had hidden it
+}
+
 var HV_BAR_TOTAL_PX = 300;  // matches the historical hand-tuned bar heights
 var HV_SEG_MIN_PX   = 78;   // empirical floor -- below this, a segment's two lines of text don't fit
                              // (tightened alongside .hv-aseg's own padding/gap, which used to need ~88px)
@@ -4133,8 +4143,9 @@ function renderExampleButtons(){
   });
 }
 
-function updateHeroVis(name){
-  var v = exampleVerdict(name); if(!v) return;
+function updateHeroVis(nameOrData){
+  var v = (typeof nameOrData === 'string') ? exampleVerdict(nameOrData) : nameOrData;
+  if(!v) return;
   var vCls = v.vCls, effR = v.effR, totalRetR = v.totalRetR, tradBal = v.tradBal;
 
   var tradGreenFrac = 1-totalRetR, tradAmberFrac = totalRetR;
@@ -4194,6 +4205,7 @@ function updateHeroVis(name){
   upd('hvSavingsText', savingsText);
   var dl = document.getElementById('hvDollar');
   if(dl){ dl.className='hv-dollar '+savingsCls; dl.style.cssText='padding:.65rem 1rem'; }
+  _heroSetMode(typeof nameOrData !== 'string');
 }
 
 
@@ -5812,10 +5824,10 @@ function calc(){
   try{ renderGapSpark(); }
   catch(e){ console.warn("Gap spark crosshair error:", e); }
 
-  // Hide the hero once the user runs a real calc with their own numbers.
-  // _activeExample is set during example loads — skip the hide so clicking
-  // an example button doesn't collapse the hero section that contains them.
-  if(cvtAmt > 0 && !_activeExample) hideHero();
+  // Update the hero illustration with the user's own numbers once they've run
+  // a real calc with a non-zero conversion. _activeExample is set during example
+  // loads — skip so clicking an example button doesn't overwrite it with live data.
+  if(cvtAmt > 0 && !_activeExample) updateHeroVis({vCls, effR, totalRetR, tradBal});
 
   updateWayfindBar();
 }
