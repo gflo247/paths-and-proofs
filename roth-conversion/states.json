@@ -953,7 +953,7 @@
   "roth": {
    "cr": 0.055,
    "ex": false,
-   "note": "Connecticut shelters a share of IRA and pension income, including a Roth conversion, set by your federal adjusted gross income (AGI): all of it below $75,000 single / $100,000 joint, then stepping down in nine more tiers to none at $100,000 single / $150,000 joint. There is no age requirement. For 2026 the whole IRA distribution counts (for 2025 only 75% did). A conversion raises your AGI and can drop you into a lower tier, so a large conversion shelters a smaller share of itself than a small one. Connecticut also taxes Social Security above those same AGI thresholds. Whatever isn't sheltered is taxed at Connecticut's graduated 2% to 6.99% rates, after its personal exemption and personal tax credit."
+   "note": "Connecticut shelters a share of IRA and pension income, including a Roth conversion, set by your federal adjusted gross income (<abbr title=\"Adjusted Gross Income\">AGI</abbr>): all of it below $75,000 single / $100,000 joint, then stepping down in nine more tiers to none at $100,000 single / $150,000 joint. There is no age requirement. For 2026 the whole IRA distribution counts (for 2025 only 75% did). A conversion raises your <abbr title=\"Adjusted Gross Income\">AGI</abbr> and can drop you into a lower tier, so a large conversion shelters a smaller share of itself than a small one. Connecticut also taxes Social Security above those same <abbr title=\"Adjusted Gross Income\">AGI</abbr> thresholds. Whatever isn't sheltered is taxed at Connecticut's graduated 2% to 6.99% rates, after its personal exemption and personal tax credit."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -4283,7 +4283,7 @@
   "roth": {
    "cr": 0.047,
    "ex": false,
-   "note": "Graduated 2% to 4.7%, but the 4.7% top rate starts at just ~$9,200 of taxable income, so a conversion is effectively taxed at 4.7%. Missouri's $6,000 private-pension exclusion (RSMo 143.124) no longer has an income ceiling for tax years 2024+ — the old $25k single/$32k joint AGI phase-out was repealed by statute. But whether it actually applies to a Roth conversion is an unresolved statutory question (the exclusion covers IRA distributions but the statute excludes 'Roth IRAs,' and it's unclear if that carve-out reaches a conversion), so it is NOT applied here pending confirmation from MO DOR — this calculator conservatively shows the full conversion as taxable. Social Security is fully exempt (62+)."
+   "note": "Graduated 2% to 4.7%, but the 4.7% top rate starts at just ~$9,200 of taxable income, so a conversion is effectively taxed at 4.7%. Missouri's $6,000 private-pension exclusion (RSMo 143.124) no longer has an income ceiling for tax years 2024+ — the old $25k single/$32k joint <abbr title=\"Adjusted Gross Income\">AGI</abbr> phase-out was repealed by statute. But whether it actually applies to a Roth conversion is an unresolved statutory question (the exclusion covers IRA distributions but the statute excludes 'Roth IRAs,' and it's unclear if that carve-out reaches a conversion), so it is NOT applied here pending confirmation from MO DOR — this calculator conservatively shows the full conversion as taxable. Social Security is fully exempt (62+)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5289,7 +5289,7 @@
   "roth": {
    "cr": 0.049,
    "ex": false,
-   "note": "Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands in the 4.9% band. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as AGI rises, reaching zero above $28,500 single / $51,000 joint AND HEAD OF HOUSEHOLD AGI (NM's own table groups HOH with joint, using the wider thresholds, not single's) — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico's separate Social Security exemption, not this deduction. This calculator applies the real stepped table for single, joint, and HOH; married-filing-separately has its own third, narrower table ($15,000-$25,500) that isn't separately modeled — MFS filers here get the single-bucket figures instead, consistent with how this tool handles MFS elsewhere."
+   "note": "Graduated 1.5% to 5.9%; the 5.9% top only applies above $210k single / $315k joint, so a typical conversion lands in the 4.9% band. Those 65+ get an $8,000 deduction against IRA/conversion income that steps down as <abbr title=\"Adjusted Gross Income\">AGI</abbr> rises, reaching zero above $28,500 single / $51,000 joint AND HEAD OF HOUSEHOLD <abbr title=\"Adjusted Gross Income\">AGI</abbr> (NM's own table groups HOH with joint, using the wider thresholds, not single's) — a much lower threshold than the $100k/$150k some sources cite, which is actually New Mexico's separate Social Security exemption, not this deduction. This calculator applies the real stepped table for single, joint, and HOH; married-filing-separately has its own third, narrower table ($15,000-$25,500) that isn't separately modeled — MFS filers here get the single-bucket figures instead, consistent with how this tool handles MFS elsewhere."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -7128,7 +7128,7 @@
   "roth": {
    "cr": 0.0475,
    "ex": false,
-   "note": "Three brackets (3.75% / 4.75% / 5.99%); 5.99% only starts near $176k, so a typical conversion lands in the 4.75% band. Important: Rhode Island's up-to-$50,000 retirement-income modification covers 401(k)/403(b)/pension/annuity income but specifically EXCLUDES all IRAs — so a Roth conversion gets no shelter and is fully taxable. Rhode Island also taxes Social Security above $107,000 single / $133,500 joint federal AGI, a threshold a conversion can cross (both this and the pension modification above also require reaching Social Security full retirement age, not just staying under the AGI limit)."
+   "note": "Three brackets (3.75% / 4.75% / 5.99%); 5.99% only starts near $176k, so a typical conversion lands in the 4.75% band. Important: Rhode Island's up-to-$50,000 retirement-income modification covers 401(k)/403(b)/pension/annuity income but specifically EXCLUDES all IRAs — so a Roth conversion gets no shelter and is fully taxable. Rhode Island also taxes Social Security above $107,000 single / $133,500 joint federal <abbr title=\"Adjusted Gross Income\">AGI</abbr>, a threshold a conversion can cross (both this and the pension modification above also require reaching Social Security full retirement age, not just staying under the <abbr title=\"Adjusted Gross Income\">AGI</abbr> limit)."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -8010,7 +8010,7 @@
   "roth": {
    "cr": 0.0575,
    "ex": false,
-   "note": "Top rate 5.75% starts at just $17,000, so essentially all conversion income is taxed at 5.75%. IRA and Roth-conversion income is taxable. Those 65+ get a $12,000 age deduction, but it phases out dollar-for-dollar above $50,000 single / $75,000 joint AGI — and a conversion raises your AGI, so a large one can erase the deduction. Social Security is fully exempt."
+   "note": "Top rate 5.75% starts at just $17,000, so essentially all conversion income is taxed at 5.75%. IRA and Roth-conversion income is taxable. Those 65+ get a $12,000 age deduction, but it phases out dollar-for-dollar above $50,000 single / $75,000 joint <abbr title=\"Adjusted Gross Income\">AGI</abbr> — and a conversion raises your <abbr title=\"Adjusted Gross Income\">AGI</abbr>, so a large one can erase the deduction. Social Security is fully exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
