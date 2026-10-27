@@ -1582,6 +1582,19 @@ statute/bill text (`PRIMARY`); most other states remain `SECONDARY-CORROBORATED`
 Missouri's rating method is `UNVERIFIED` on purpose — sources conflict and no
 statute was found either way, so no guess was encoded.
 
+**Switching rights corrected, 2026-10-27.** Massachusetts guarantees an annual February 1
+to March 31 window, coverage from June 1; insurers may enroll at other times or year-round,
+but that isn't guaranteed ([211 CMR 71.10](https://law.cornell.edu/regulations/massachusetts/211-CMR-71-10),
+(5)(a), (8), (9)). Minnesota's open enrollment from August 1, 2026 is for first-time Medigap
+applicants aged 65 to 70, October 15 to December 7 and January 1 to March 31, with a surcharge
+of 15% (2026) rising 5 points a year to 35% (2030 on)
+([Commerce Department Administrative Bulletin 2026-3](https://mn.gov/commerce-stat/insurance/industry/bulletins/2026/administrative_bulletin_2026-3.pdf)).
+Washington's replaceable plan group is B, C, D, F, G (and high-deductible F and G), K, L, M
+and N ([RCW 48.66.045](https://lawfilesext.leg.wa.gov/Law/RCW/RCW%20%2048%20%20TITLE/RCW%20%2048%20.%2066%20%20CHAPTER/RCW%20%2048%20.%2066%20.045.htm)).
+Plans C and F are closed to people first eligible for Medicare on or after January 1, 2020,
+not to every later enrollment ([Idaho Department of Insurance](https://doi.idaho.gov/shiba/new-to-medicare/medicare-supplement-medigap/)).
+Tests: `_dev/test-medicare-engine.mjs`.
+
 **Scope note:** employer-retiree-coverage-change guaranteed issue (28 states, added
 2026-08-20 — see research doc section 12) is modeled as Yes/No only: the right's
 existence is sourced to KFF's state survey, but window length, insurer scope, and

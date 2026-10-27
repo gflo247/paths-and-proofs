@@ -433,3 +433,25 @@ Connecticut, Massachusetts, and New York are excluded from this list — not bec
 they lack the right, but because their existing `continuous`/`anyone` guaranteed-issue
 right (section 7) already covers this and every other qualifying event; adding a
 second, narrower entry for them would be redundant, not additive.
+
+## 13. Corrections (2026-10-26)
+
+- **Massachusetts** is no longer coded `continuous`. 211 CMR 71.10(5)(a) requires an annual
+  open enrollment for eligible persons from February 1 to March 31, for coverage effective
+  June 1; issuers *may* hold other windows (71.10(8)) or elect continuous enrollment
+  (71.10(9)). The guaranteed right is the annual window, so it's coded with the new trigger
+  `stateAnnualWindow`; year-round access is insurer practice. That also weakens section 12's
+  reason for leaving Massachusetts off the employer-retiree-change list: its year-round
+  access there is practice, not law. Not re-coded; no source for a Massachusetts
+  retiree-change right was checked.
+- **Minnesota**'s open enrollment from August 1, 2026 is for applicants aged 65 to 70 who are
+  applying for Medigap for the first time; existing holders can't use it to switch
+  (Commerce Department Administrative Bulletin 2026-3). Coded `appliesTo: "firstTimeOnly"`.
+  The bulletin also confirms the surcharge (15% for 2026, then 20%, 25%, 30%, and 35% from
+  2030) and the windows (October 15 to December 7; January 1 to March 31).
+- **Indiana and Kentucky** require a different insurer: `insurerScope: "differentInsurer"`.
+- **Washington**: for policies issued since June 1, 2010, the replaceable group is B, C, D, F,
+  F high-deductible, G, G high-deductible, K, L, M and N (B, D, G, G high-deductible, K, L, M,
+  N for people eligible from 2020); Plan A only by Plan A (RCW 48.66.045(2)).
+- **Tennessee** (and the federal plan list generally): plans C and F are closed to people
+  first *eligible* for Medicare on or after January 1, 2020, not to every later enrollment.

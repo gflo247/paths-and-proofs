@@ -174,7 +174,7 @@ check('default coinsurance rate', DEFAULT_COINSURANCE_RATE, 0.20);
   const r = computeMedicareGuaranteedIssueSanity('IL');
   check('IL: GI trigger', r.trigger, 'birthday');
   check('IL: GI windowDays', r.windowDays, 45);
-  check('IL: GI restrictions mentions age cap', r.restrictions.includes('65-75'), true);
+  check('IL: GI restrictions mentions age cap', r.restrictions.includes('65 to 75'), true);
 }
 function computeMedicareGuaranteedIssueSanity(code) {
   const r = computeMedigapBreakeven(states[code], { medigapMonthlyPremium: 200 });
@@ -236,6 +236,63 @@ function computeMedicareGuaranteedIssueSanity(code) {
     if (Math.abs(findCrossover(r.series[0], r.series[1]) - exact) > 1e-6) off++;
   }
   check(`chart: crossover marker exact across ${tried} input combinations`, off, 0, 0);
+}
+
+// ── Switching rights as the page shows them (fix-pack 14) ──
+{
+  const gi = (code, trig) => states[code].guaranteedIssuePeriods.find((p) => p.trigger === trig);
+  // Massachusetts: the guaranteed right is the annual February 1 to March 31 window (211 CMR
+  // 71.10(5)(a)); insurers MAY enroll at other times (71.10(8), (9)), so it isn't year-round.
+  const ma = gi('MA', 'stateAnnualWindow');
+  check('MA: an annual window set by state law, not "available year-round"', !!ma && !states.MA.guaranteedIssuePeriods.some((p) => p.trigger === 'continuous'), true);
+  check('MA: window is February 1 to March 31', !!ma && /February 1 to March 31/.test(ma.windowAnchor), true);
+  check('MA: open to people who never held Medigap', ma?.appliesTo, 'anyone');
+  // Indiana and Kentucky: the new policy must come from a different insurer.
+  check('IN: a different insurer than the current one', gi('IN', 'birthday').insurerScope, 'differentInsurer');
+  check('KY: a different insurer than the current one', gi('KY', 'birthday').insurerScope, 'differentInsurer');
+  // Minnesota: first-time Medigap applicants aged 65 to 70 only, with a 15%-35% surcharge
+  // (Minnesota Commerce Department Administrative Bulletin 2026-3).
+  const mn = gi('MN', 'annualEnrollmentPeriod');
+  check('MN: only for first-time Medigap applicants', mn.appliesTo, 'firstTimeOnly');
+  check('MN: ages 65 to 70, surcharge 15% rising to 35%', /65 to 70/.test(mn.restrictions) && /15%/.test(mn.restrictions) && /35%/.test(mn.restrictions), true);
+  // Washington: RCW 48.66.045(2) — the replaceable group runs B, C, D, F, G, K, L, M, N.
+  const wa = gi('WA', 'continuous');
+  check('WA: plan group includes M and N, and isn\'t "B through L"', /M and N/.test(wa.restrictions) && !/B through L/.test(wa.restrictions), true);
+  // Tennessee: plans C and F are closed to people first ELIGIBLE from 2020, not to every later enrollment.
+  check('TN: 2020 plan list keyed to first Medicare eligibility', /first eligible for Medicare on or after January 1, 2020/.test(gi('TN', 'lossOfMedicaidEligibility').restrictions), true);
+
+  // Every value the data uses has wording on the page.
+  const html = readFileSync(new URL('../medicare/index.html', import.meta.url), 'utf8');
+  const keysOf = (name) => {
+    const at = html.indexOf(`const ${name} = {`);
+    const body = html.slice(at, html.indexOf('};', at));
+    return new Set([...body.matchAll(/(?:^|[\s{,])([A-Za-z]+):/g)].map((m) => m[1]));
+  };
+  const triggers = keysOf('GI_LABELS'), scopes = keysOf('SCOPE_LABELS');
+  const shownAppliesTo = new Set([...html.matchAll(/p\.appliesTo === '([A-Za-z]+)'/g)].map((m) => m[1]));
+  const unlabeled = [];
+  for (const [code, st] of Object.entries(states)) {
+    if (code === '_schema') continue;
+    for (const p of st.guaranteedIssuePeriods || []) {
+      if (!triggers.has(p.trigger)) unlabeled.push(`${code} trigger ${p.trigger}`);
+      if (p.insurerScope != null && !scopes.has(p.insurerScope)) unlabeled.push(`${code} insurerScope ${p.insurerScope}`);
+      if (!['existingHoldersOnly', ...shownAppliesTo].includes(p.appliesTo)) unlabeled.push(`${code} appliesTo ${p.appliesTo}`);
+    }
+  }
+  check(`every switching-right value has page wording${unlabeled.length ? ': ' + unlabeled.join(', ') : ''}`, unlabeled.length, 0, 0);
+
+  // The text the page shows reads as a description, not research notes: no code names, no
+  // references to this data file or the research, no unexplained "AEP".
+  const internal = /\b[a-z]+[A-Z][A-Za-z]+\b|\bthis (?:file|entry|pass|research)\b|mid-research|\bAEP\b/;
+  const leaks = [];
+  for (const [code, st] of Object.entries(states)) {
+    if (code === '_schema') continue;
+    for (const p of st.guaranteedIssuePeriods || []) {
+      const shown = [p.windowAnchor, p.trigger === 'employerRetireeCoverageChange' ? null : p.restrictions].filter(Boolean);
+      for (const t of shown) { const m = t.match(internal); if (m) leaks.push(`${code} ${p.trigger}: "${m[0]}"`); }
+    }
+  }
+  check(`switching-right text has no code names or research notes${leaks.length ? ': ' + leaks.join(', ') : ''}`, leaks.length, 0, 0);
 }
 
 console.log(pass + fail === 0 ? '\nNo checks ran.' : `\n${pass} passed, ${fail} failed`);
