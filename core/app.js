@@ -49,7 +49,7 @@ export function mount(calculator, root, onResult) {
 }
 
 // Abbr click-to-reveal for mobile (hover works natively on desktop)
-(function () {
+if (typeof document !== 'undefined') (function () {
   let tip;
   document.addEventListener('click', function (e) {
     const a = e.target.closest('abbr[title]');

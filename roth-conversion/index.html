@@ -592,7 +592,7 @@
     <button onclick="hideHero()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.78rem;font-family:inherit;padding:2px 4px;text-decoration:underline;text-underline-offset:2px">Hide example ↑</button>
   </div>
   <div class="hero-ex-tag">
-    <span id="heroExTagLbl" class="hero-ex-tag-lbl">EXAMPLE</span>
+    <span class="hero-ex-tag-lbl">EXAMPLE</span>
     <p id="heroVisAmtHd" class="hero-ex-tag-amt">$380K IRA Converted Gradually</p>
   </div>
   <div class="ex-bar" id="examplesSection">
@@ -4005,15 +4005,6 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
 // that block's own comment). So updateHeroVis() must only ever be called
 // from inside/after the DOMContentLoaded handler -- never at bare top-level
 // script scope -- exactly like calc()'s own one eager call already is.
-// Toggles between example mode ("EXAMPLE" tag + persona buttons) and live mode
-// ("YOUR NUMBERS" tag, buttons hidden). Called automatically by updateHeroVis.
-function _heroSetMode(isLive){
-  var lbl  = document.getElementById('heroExTagLbl');
-  var btns = document.getElementById('examplesSection');
-  if(lbl)  lbl.textContent    = isLive ? 'YOUR NUMBERS' : 'EXAMPLE';
-  if(btns) btns.style.display = isLive ? 'none' : '';
-  if(isLive) showHero();  // re-show the illustration if the user had hidden it
-}
 
 var HV_BAR_TOTAL_PX = 300;  // matches the historical hand-tuned bar heights
 var HV_SEG_MIN_PX   = 78;   // empirical floor -- below this, a segment's two lines of text don't fit
@@ -4205,7 +4196,6 @@ function updateHeroVis(nameOrData){
   upd('hvSavingsText', savingsText);
   var dl = document.getElementById('hvDollar');
   if(dl){ dl.className='hv-dollar '+savingsCls; dl.style.cssText='padding:.65rem 1rem'; }
-  _heroSetMode(typeof nameOrData !== 'string');
 }
 
 
@@ -5827,7 +5817,7 @@ function calc(){
   // Update the hero illustration with the user's own numbers once they've run
   // a real calc with a non-zero conversion. _activeExample is set during example
   // loads — skip so clicking an example button doesn't overwrite it with live data.
-  if(cvtAmt > 0 && !_activeExample) updateHeroVis({vCls, effR, totalRetR, tradBal});
+  if(cvtAmt > 0 && !_activeExample) hideHero();
 
   updateWayfindBar();
 }
