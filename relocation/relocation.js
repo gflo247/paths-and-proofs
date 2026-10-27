@@ -115,7 +115,7 @@ export const inputs = [
   // custom:true — shown only when at least one selected state has a government-only
   // pension exemption. 'true' = government/public/military (exempt in those states);
   // 'false' = private/employer (no special treatment).
-  { id: 'pensionKind', type: 'select', custom: true, default: 'true',
+  { id: 'pensionKind', type: 'select', custom: true, default: 'false',
     label: 'Pension type',
     options: [
       { value: 'true',  label: 'Government (public / military)' },
@@ -125,7 +125,7 @@ export const inputs = [
 
 export const presets = {
   'California to Texas':      { fromState: 'CA', toState: 'TX', status: 'mfj', age: 68, socialSecurity: 30000, iraWithdrawal: 40000, pension: 20000, capGains: 10000, moveCost: 15000 },
-  'New York to Florida':      { fromState: 'NY', toState: 'FL', status: 'mfj', age: 70, socialSecurity: 36000, iraWithdrawal: 60000, pension: 30000, capGains: 15000, moveCost: 20000 },
+  'New York to Florida':      { fromState: 'NY', toState: 'FL', status: 'mfj', age: 70, socialSecurity: 36000, iraWithdrawal: 60000, pension: 30000, capGains: 15000, moveCost: 20000, pensionKind: 'true' },
   'When moving costs more (NJ to PA)': { fromState: 'NJ', toState: 'PA', status: 'mfj', age: 66, socialSecurity: 30000, iraWithdrawal: 40000, pension: 20000, capGains: 10000, moveCost: 15000 },
 };
 
