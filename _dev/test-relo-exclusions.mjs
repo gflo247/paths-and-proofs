@@ -555,13 +555,11 @@ function check(label, actual, expected, tolerance = 1) {
   check('NY private pension joint, primary 65 + spouse 55: same $20k cap (order-independent)', mixedOlder.breakdown.penTaxable, 10000);
 }
 
-// --- 21. KS / MA / NC governmentOnly: government pension fully exempt, private fully taxable ---
+// --- 21. KS / MA governmentOnly: government pension fully exempt, private fully taxable ---
 // KS: K.S.A. 74-4923(b) (KPERS, federal, military exempt; private retirement accounts not).
 // MA: G.L. c. 32, §25 (government contributory pensions exempt; private fully taxable).
-// NC: HB 387, TY2026+ (all state/local/federal government pensions exempt; private: only a
-//     $2,000 deduction, too small to model, treated as taxable here).
 {
-  for (const code of ['KS', 'MA', 'NC']) {
+  for (const code of ['KS', 'MA']) {
     const rules = states[code].taxRules;
 
     const govPension = computeStateIncomeTax(rules, 'single', { pension: 30000, age: 67 });
@@ -573,6 +571,23 @@ function check(label, actual, expected, tolerance = 1) {
     // IRA alongside private pension — both stay taxable (ri.treatment="taxed" for these states).
     const privPlusIRA = computeStateIncomeTax(rules, 'single', { pension: 15000, iraWithdrawal: 15000, isGovernmentPension: false, age: 67 });
     check(`${code} private pension + IRA: both fully taxable`, privPlusIRA.breakdown.iraTaxable, 15000);
+  }
+}
+
+// --- 22. NC taxes pensions like other retirement income, whatever their source ---
+// North Carolina exempts government pensions only for Bailey-vested retirees (5+ years of
+// service by Aug 12, 1989) and military pay after 20+ years or a medical retirement; the
+// engine doesn't model either, so every pension is taxed. (House Bill 387 of 2025, which
+// would have exempted all North Carolina and federal government pensions, was referred to
+// committee and not enacted.) NC is flat 3.99% with a $12,750 single standard deduction:
+// a $30,000 pension alone is $30,000 - $12,750 = $17,250 taxable, x 3.99% = $688.28.
+{
+  const nc = states.NC.taxRules;
+  check('NC: pensions follow the retirement-income rules (no government-only exemption)', nc.pensionIncome.sameAs === 'retirementIncome' ? 1 : 0, 1, 0);
+  for (const gov of [true, false]) {
+    const r = computeStateIncomeTax(nc, 'single', { pension: 30000, isGovernmentPension: gov, age: 67 });
+    check(`NC pension ($30k, ${gov ? 'government' : 'private'} answer): fully taxable`, r.breakdown.penTaxable, 30000);
+    check(`NC pension ($30k, ${gov ? 'government' : 'private'} answer): tax $688.28`, r.tax, 688.28, 0.5);
   }
 }
 

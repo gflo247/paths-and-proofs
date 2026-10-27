@@ -5893,7 +5893,7 @@
   "roth": {
    "cr": 0.0399,
    "ex": false,
-   "note": "Flat 3.99% for 2026 (final step of a phasedown; scheduled to keep falling toward 2.99% by 2028), applied to IRA and conversion income. Social Security is exempt. As of TY2026, all state, local, and federal government pensions are fully exempt (HB 387, 2025 Session). Private pensions get only a $2,000 deduction — too small to model, treated as fully taxable here. Being flat, the conversion is taxed at the same rate regardless of size."
+   "note": "Flat 3.99% for 2026 (final step of a phasedown; scheduled to keep falling toward 2.99% by 2028), applied to IRA and conversion income. Social Security is exempt. North Carolina and federal government pensions are exempt only for retirees with five or more years of service by August 12, 1989 (the Bailey settlement), and military retirement pay only after 20 or more years of service or a medical retirement; this calculator taxes pensions in full. Being flat, the conversion is taxed at the same rate regardless of size."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5931,10 +5931,7 @@
     "exclusion": null
    },
    "pensionIncome": {
-    "treatment": "exempt",
-    "ageGate": null,
-    "exclusion": null,
-    "governmentOnly": true
+    "sameAs": "retirementIncome"
    },
    "capitalGains": {
     "treatment": "ordinary"

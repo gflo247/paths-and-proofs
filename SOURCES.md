@@ -1541,6 +1541,19 @@ state table above, and the tool's own design keeps it low-stakes by construction
 Tier 2 numbers are shown as disclosed, clearly-labeled estimates and are
 structurally barred from ever feeding the precise headline crossover.
 
+**North Carolina pensions, 2026-10-27.** North Carolina taxes pensions like other retirement
+income here. It exempts government pensions only for retirees with five or more years of
+service by August 12, 1989
+([NCDOR, Bailey](https://www.ncdor.gov/taxes-forms/individual-income-tax/bailey-decision-concerning-federal-state-and-local-retirement-benefits)),
+and military retirement pay only after 20 or more years or a medical retirement
+([NCDOR, military retirement](https://NCDOR.gov/military-retirement)); neither is modeled.
+House Bill 387 (2025), which would have exempted North Carolina and federal government
+pensions, was referred to committee on March 13, 2025 and not enacted
+([UNC School of Government bill page](https://lrs.sog.unc.edu/bill/eliminate-tax-govt-retirees-2)).
+The $2,000 private-pension deduction ended with tax year 2014
+([NCDOR, 2014 individual income tax changes](https://www.ncdor.gov/documents/policies/2014-individual-income-tax-changes/open)).
+Tests: `_dev/test-relo-exclusions.mjs` section 22.
+
 **Scope note:** county/municipal/city income taxes, sub-state property-tax variation
 beyond the state median, vehicle/excise/registration taxes, and editorial
 "tax-friendliness" scores are deliberately not modeled — stated directly in
