@@ -47,3 +47,19 @@ export function mount(calculator, root, onResult) {
     },
   };
 }
+
+// Abbr click-to-reveal for mobile (hover works natively on desktop)
+(function () {
+  let tip;
+  document.addEventListener('click', function (e) {
+    const a = e.target.closest('abbr[title]');
+    if (tip) { const was = tip._src; tip.remove(); tip = null; if (!a || a === was) return; }
+    if (!a) return;
+    tip = document.createElement('span');
+    tip._src = a;
+    tip.textContent = a.title;
+    tip.setAttribute('style', 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1f2430;color:#f5f5f5;border-radius:6px;padding:6px 12px;font-size:.82rem;z-index:9999;pointer-events:none;max-width:260px;text-align:center;line-height:1.45;box-shadow:0 2px 10px rgba(0,0,0,.35)');
+    document.body.appendChild(tip);
+    setTimeout(function () { if (tip) { tip.remove(); tip = null; } }, 3500);
+  });
+}());

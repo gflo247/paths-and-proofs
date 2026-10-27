@@ -21,6 +21,7 @@
 .page-privacy-note:focus:not(:focus-visible) { outline: none; }
 .page-privacy-note .privacy-text { display: none; color: var(--muted); }
 .page-privacy-note .privacy-drawer { display: none; }
+abbr[title] { cursor: help; text-decoration: underline dotted; text-underline-offset: 2px; text-decoration-thickness: 1px; }
 @media (min-width: 601px) {
   .page-privacy-note { width: auto; padding: 0 10px; cursor: pointer; }
   .page-privacy-note .privacy-text { display: inline; }
