@@ -319,7 +319,11 @@
     if (ui.to.state !== 'OR' && selects.toOr.value) { selects.toOr.value = ''; api.setValue('toLocalTax', ''); }
 
     const pku = result.pensionKindUI;
-    if (pku) fields.pensionKind.style.display = pku.show ? 'block' : 'none';
+    if (pku) {
+      fields.pensionKind.style.display = pku.show ? 'block' : 'none';
+      // An example can set the answer; keep the select showing the answer the numbers use.
+      if (selects.pensionKind.value !== pku.value) selects.pensionKind.value = pku.value;
+    }
   }
 
   api = bootstrap(mod, renderExtras);

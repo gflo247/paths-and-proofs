@@ -326,6 +326,7 @@ export function compute(values) {
     localTaxUI: { from: { state: from }, to: { state: to } },
     // For the pension-type selector: show when pension > 0 and at least one
     // selected state has a government-only pension exemption.
-    pensionKindUI: { show: values.pension > 0 && (hasGovOnlyPension(from) || hasGovOnlyPension(to)) },
+    // value: the answer the numbers use, so the page's select shows it when an example sets it.
+    pensionKindUI: { show: values.pension > 0 && (hasGovOnlyPension(from) || hasGovOnlyPension(to)), value: income.isGovernmentPension ? 'true' : 'false' },
   };
 }
