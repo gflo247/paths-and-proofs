@@ -2958,7 +2958,7 @@
   "roth": {
    "cr": 0.0558,
    "ex": false,
-   "note": "Two brackets; the top ~5.58% rate starts at just ~$23k single, so a typical conversion is taxed near that rate. IRA, 401(k), and conversion income is fully taxable (KPERS, federal, and military pensions are exempt, but private retirement accounts are not). Kansas fully exempted Social Security starting in 2024, so a conversion here does not pull benefits into tax."
+   "note": "Two brackets; the top ~5.58% rate starts at just ~$23k single, so a typical conversion is taxed near that rate. IRA, 401(k), and conversion income is fully taxable (KPERS, federal, and military pensions are fully exempt under K.S.A. 74-4923(b), but private retirement accounts are not). Kansas fully exempted Social Security starting in 2024, so a conversion here does not pull benefits into tax."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -3012,7 +3012,10 @@
     "exclusion": null
    },
    "pensionIncome": {
-    "sameAs": "retirementIncome"
+    "treatment": "exempt",
+    "ageGate": null,
+    "exclusion": null,
+    "governmentOnly": true
    },
    "capitalGains": {
     "treatment": "ordinary"
@@ -3791,7 +3794,7 @@
   "roth": {
    "cr": 0.05,
    "ex": false,
-   "note": "Flat 5% on most income including IRA and conversion income, with NO retirement exclusion (Massachusetts taxes IRA/401(k) withdrawals in full). This calculator applies the 4% surtax on income above $1,107,750 (the DOR's published, CPI-indexed 2026 threshold) — a very large conversion that pushes that year past the threshold is taxed at 9% on the excess, 5% below it. Social Security is exempt."
+   "note": "Flat 5% on most income including IRA and conversion income, with NO retirement exclusion (Massachusetts taxes IRA/401(k) withdrawals in full). Government contributory pensions (state, local, federal) are fully exempt under G.L. c. 32, §25; private pensions are fully taxable. This calculator applies the 4% surtax on income above $1,107,750 (the DOR's published, CPI-indexed 2026 threshold) — a very large conversion that pushes that year past the threshold is taxed at 9% on the excess, 5% below it. Social Security is exempt."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -3845,7 +3848,10 @@
     "exclusion": null
    },
    "pensionIncome": {
-    "sameAs": "retirementIncome"
+    "treatment": "exempt",
+    "ageGate": null,
+    "exclusion": null,
+    "governmentOnly": true
    },
    "capitalGains": {
     "treatment": "ordinary"
@@ -3940,7 +3946,8 @@
      "cliffAGI": null,
      "fullBelowAGI": null,
      "zeroByAGI": null,
-     "excludesIRA": false
+     "excludesIRA": false,
+     "iraAgeGate": 59.5
     }
    },
    "pensionIncome": {
@@ -5843,7 +5850,8 @@
    "pensionIncome": {
     "treatment": "exempt",
     "ageGate": null,
-    "exclusion": null
+    "exclusion": null,
+    "governmentOnly": true
    },
    "capitalGains": {
     "treatment": "ordinary"
@@ -5885,7 +5893,7 @@
   "roth": {
    "cr": 0.0399,
    "ex": false,
-   "note": "Flat 3.99% for 2026 (final step of a phasedown; scheduled to keep falling toward 2.99% by 2028), applied to IRA and conversion income. Social Security is exempt. Being flat, the conversion is taxed at the same rate regardless of size."
+   "note": "Flat 3.99% for 2026 (final step of a phasedown; scheduled to keep falling toward 2.99% by 2028), applied to IRA and conversion income. Social Security is exempt. As of TY2026, all state, local, and federal government pensions are fully exempt (HB 387, 2025 Session). Private pensions get only a $2,000 deduction — too small to model, treated as fully taxable here. Being flat, the conversion is taxed at the same rate regardless of size."
   },
   "taxRules": {
    "bracketsByStatus": {
@@ -5923,7 +5931,10 @@
     "exclusion": null
    },
    "pensionIncome": {
-    "sameAs": "retirementIncome"
+    "treatment": "exempt",
+    "ageGate": null,
+    "exclusion": null,
+    "governmentOnly": true
    },
    "capitalGains": {
     "treatment": "ordinary"

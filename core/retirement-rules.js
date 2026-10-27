@@ -148,11 +148,31 @@ function allowedExclusion(excl, isIRA, agiProxy, status, cap, actualAmount) {
 // every state except when rules.retirementIncome.exclusion.sharesCapWithSS is true (CO
 // today, the only state with this flag) — callers MUST check for a non-null override
 // and substitute it for their own independently-computed SS taxability.
-export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ira = 0, pension = 0, agiProxy, ss = 0, ssForThreshold = ss, otherIncomeForSS = agiProxy - ss }) {
+export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ira = 0, pension = 0, agiProxy, ss = 0, ssForThreshold = ss, otherIncomeForSS = agiProxy - ss, isGovernmentPension = true }) {
   const tStatus = status === "mfj" ? "joint" : "single";
   const ri = rules.retirementIncome;
   const pooled = rules.pensionIncome.sameAs === "retirementIncome";
   const pr = pooled ? ri : rules.pensionIncome;
+
+  // Government-only pension + private selection: route both IRA and pension through ri's
+  // rules as a shared pool. IRA and private pension compete for ONE exclusion (NY's $20k
+  // per-person cap covers pension and IRA income combined — NY Tax Law §612(c)(3-a); giving
+  // each its own independent cap would double-count). For KS/MA/NC (ri.treatment="taxed"),
+  // both stay fully taxable.
+  if (!pooled && pr.governmentOnly && !isGovernmentPension) {
+    let iraTaxable = ira, penTaxable = pension;
+    if (ri.treatment === "exclusion" && ri.exclusion.cliffType === "ageTieredCap") {
+      const gateOk = ri.ageGate == null || age >= ri.ageGate;
+      if (gateOk) {
+        const cap = tierCapFor(ri.exclusion.perPersonTiers, age)
+          + (tStatus === "joint" ? tierCapFor(ri.exclusion.perPersonTiers, spouseAge ?? age) : 0);
+        const totalEx = Math.min(cap, ira + pension);
+        ({ iraTaxable, penTaxable } = splitPooledExclusion(totalEx, ira, pension));
+      }
+    }
+    // ri.treatment === "taxed" (KS/MA/NC) or gate not met: both stay fully taxable
+    return { iraTaxable, penTaxable, ssTaxableOverride };
+  }
 
   let iraTaxable = ira;
   let penTaxable = pension;
@@ -303,9 +323,12 @@ export function resolveRetirementIncome(rules, status, { age = 67, spouseAge, ir
     // NJ's threshold is its own "Total Income" line, which excludes Social Security
     // entirely — unlike every other state here, which thresholds off AGI (SS included).
     const thresholdProxy = ri.exclusion.thresholdExcludesSS ? agiProxy - ssForThreshold : agiProxy;
-    if (gateOk && ri.exclusion.excludesIRA) {
-      // MD-style trap even inside a nominally "shared" state: IRA gets nothing, so
-      // there's nothing to pool — pension draws the full pool against its own amount.
+    // iraAgeGate: IRA only joins the pool if the filer meets the age gate (MI: before 59.5,
+    // an IRA distribution doesn't qualify for the pension deduction — MCL 206.30(8)(a)(ii)).
+    const iraInPool = ri.exclusion.iraAgeGate == null || age >= ri.exclusion.iraAgeGate;
+    if (gateOk && (ri.exclusion.excludesIRA || !iraInPool)) {
+      // IRA gets nothing — either a permanent IRA trap (MD) or below the IRA age gate (MI).
+      // Pension alone draws the full cap.
       const penEx = allowedExclusion(ri.exclusion, false, thresholdProxy, tStatus, cap, pension);
       penTaxable = Math.max(0, pension - penEx);
     } else if (gateOk) {

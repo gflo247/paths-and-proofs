@@ -112,6 +112,15 @@ export const inputs = [
       { value: 'metro', label: 'Portland Metro area (OR)' },
       { value: 'multnomah', label: 'Multnomah County, OR' },
     ] },
+  // custom:true — shown only when at least one selected state has a government-only
+  // pension exemption. 'true' = government/public/military (exempt in those states);
+  // 'false' = private/employer (no special treatment).
+  { id: 'pensionKind', type: 'select', custom: true, default: 'true',
+    label: 'Pension type',
+    options: [
+      { value: 'true',  label: 'Government (public / military)' },
+      { value: 'false', label: 'Private (employer / IRA)' },
+    ] },
 ];
 
 export const presets = {
@@ -140,6 +149,13 @@ function localCodeFor(code, rawCode) {
   return LOCAL_TAX_STATES.has(code) ? rawCode : '';
 }
 
+// Returns true when the state has a pension exemption that is government-only —
+// i.e. the pensionKind selector must be shown if pension > 0.
+function hasGovOnlyPension(code) {
+  const pi = RELO[code]?.taxRules?.pensionIncome;
+  return !!(pi && !pi.sameAs && pi.governmentOnly);
+}
+
 export function compute(values) {
   const from = values.fromState;
   const to = values.toState;
@@ -150,6 +166,7 @@ export function compute(values) {
     pension: values.pension,
     capGains: values.capGains,
     age: values.age,
+    isGovernmentPension: values.pensionKind !== 'false', // default true ('true' or absent)
   };
 
   const fromResult = stateTax(from, status, income);
@@ -307,5 +324,8 @@ export function compute(values) {
     // — NOT part of the CalculatorModule contract, read directly off the result
     // by this page's script, same pattern as `note`/`context` above.
     localTaxUI: { from: { state: from }, to: { state: to } },
+    // For the pension-type selector: show when pension > 0 and at least one
+    // selected state has a government-only pension exemption.
+    pensionKindUI: { show: values.pension > 0 && (hasGovOnlyPension(from) || hasGovOnlyPension(to)) },
   };
 }

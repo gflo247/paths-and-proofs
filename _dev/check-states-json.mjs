@@ -544,6 +544,28 @@ for (const code of htmlCodes) {
   }
 }
 
+// --- 10a. Government-only pension and IRA age-gate consistency (G10) ---
+// pensionIncome.governmentOnly requires treatment:"exempt" (not sameAs) — it's only meaningful
+// as a standalone exempt entry, not as a pointer to retirementIncome rules.
+// retirementIncome.exclusion.iraAgeGate must equal roth.retDeduction.conversionAgeGate when
+// both are present: the two fields encode the same statutory rule for two different callers
+// (Relocation via iraAgeGate, Roth via conversionAgeGate) and must stay in sync.
+for (const code of htmlCodes) {
+  const st = json[code];
+  const pi = st?.taxRules?.pensionIncome;
+  if (pi?.governmentOnly) {
+    if (pi.sameAs) diffs.push(`${code}: pensionIncome.governmentOnly=true but sameAs is also set (G10)`);
+    if (pi.treatment !== 'exempt') diffs.push(`${code}: pensionIncome.governmentOnly=true but treatment is "${pi.treatment}", expected "exempt" (G10)`);
+  }
+  const riGate = st?.taxRules?.retirementIncome?.exclusion?.iraAgeGate;
+  const rdGate = st?.roth?.retDeduction?.conversionAgeGate;
+  if ((riGate != null) !== (rdGate != null)) {
+    diffs.push(`${code}: iraAgeGate (${riGate ?? 'absent'}) and conversionAgeGate (${rdGate ?? 'absent'}) must both be present or both absent (G10)`);
+  } else if (riGate != null && riGate !== rdGate) {
+    diffs.push(`${code}: taxRules.retirementIncome.exclusion.iraAgeGate (${riGate}) !== roth.retDeduction.conversionAgeGate (${rdGate}) — must match (G10)`);
+  }
+}
+
 // --- 10. Notes state the rule, not this calculator's history (G9) ---
 // Added 2026-10-26 (fix-pack 13). roth.note is shown to anyone who picks the state, and
 // remarks about what an earlier version of this calculator did ("previously applied none of

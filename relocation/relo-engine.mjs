@@ -300,7 +300,7 @@ function resolveCredits(sd, status, { age, spouseAge, fedAGI, stateAGI, taxableI
 // Unrounded: the Roth tool takes differences of these (tax with a conversion minus tax
 // without it), and rounding each to the dollar would put up to a dollar of noise in every one.
 function stateIncomeTax(rules, status, income) {
-  const { ss = 0, iraWithdrawal = 0, pension = 0, capGains = 0, wages = 0, age = 67, spouseAge } = income;
+  const { ss = 0, iraWithdrawal = 0, pension = 0, capGains = 0, wages = 0, age = 67, spouseAge, isGovernmentPension = true } = income;
   // `status` is one of: single | mfj | mfs | hoh (four filing statuses, for brackets).
   // SS thresholds and exclusion cliffs are defined single-vs-married only, so map:
   // mfj -> "joint"; single/mfs/hoh -> "single" (MFS & HoH use single-level thresholds).
@@ -357,7 +357,7 @@ function stateIncomeTax(rules, status, income) {
   // other state leaves tSS exactly as computed above.
   const { iraTaxable, penTaxable, ssTaxableOverride } = resolveRetirementIncome(rules, status, {
     age, spouseAge, ira: iraWithdrawal, pension, agiProxy: fedAGI, ss,
-    ssForThreshold: fedTaxableSS, otherIncomeForSS: otherIncome,
+    ssForThreshold: fedTaxableSS, otherIncomeForSS: otherIncome, isGovernmentPension,
   });
   if (ssTaxableOverride != null) tSS = ssTaxableOverride;
   breakdown.iraTaxable = iraTaxable;
