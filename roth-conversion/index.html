@@ -4005,7 +4005,6 @@ function buildBetSection(costTxt,beAge,curAge,survBE,isCouple,youOrOneOfYou){
 // that block's own comment). So updateHeroVis() must only ever be called
 // from inside/after the DOMContentLoaded handler -- never at bare top-level
 // script scope -- exactly like calc()'s own one eager call already is.
-
 var HV_BAR_TOTAL_PX = 300;  // matches the historical hand-tuned bar heights
 var HV_SEG_MIN_PX   = 78;   // empirical floor -- below this, a segment's two lines of text don't fit
                              // (tightened alongside .hv-aseg's own padding/gap, which used to need ~88px)
@@ -4134,9 +4133,8 @@ function renderExampleButtons(){
   });
 }
 
-function updateHeroVis(nameOrData){
-  var v = (typeof nameOrData === 'string') ? exampleVerdict(nameOrData) : nameOrData;
-  if(!v) return;
+function updateHeroVis(name){
+  var v = exampleVerdict(name); if(!v) return;
   var vCls = v.vCls, effR = v.effR, totalRetR = v.totalRetR, tradBal = v.tradBal;
 
   var tradGreenFrac = 1-totalRetR, tradAmberFrac = totalRetR;
@@ -5826,9 +5824,9 @@ function calc(){
   try{ renderGapSpark(); }
   catch(e){ console.warn("Gap spark crosshair error:", e); }
 
-  // Update the hero illustration with the user's own numbers once they've run
-  // a real calc with a non-zero conversion. _activeExample is set during example
-  // loads — skip so clicking an example button doesn't overwrite it with live data.
+  // Hide the hero once the user runs a real calc with their own numbers.
+  // _activeExample is set during example loads — skip the hide so clicking
+  // an example button doesn't collapse the hero section that contains them.
   if(cvtAmt > 0 && !_activeExample) hideHero();
 
   updateWayfindBar();
