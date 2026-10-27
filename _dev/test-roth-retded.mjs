@@ -44,7 +44,7 @@ const html = readFileSync(new URL('../roth-conversion/index.html', import.meta.u
 const markerIdx = html.indexOf('function computeConversionCost');
 if (markerIdx === -1) throw new Error('computeConversionCost not found in index.html');
 const scriptSrc = html.slice(html.lastIndexOf('<script>', markerIdx) + '<script>'.length, html.indexOf('</script>', markerIdx));
-const { computeConversionCost, ST } = new Function(scriptSrc + '\nreturn {computeConversionCost, ST};')();
+const { computeConversionCost, moveConversionCost, ST } = new Function(scriptSrc + '\nreturn {computeConversionCost, moveConversionCost, ST};')();
 
 const RATE = 0.0425;
 const CAP = { single: 67610, mfj: 135220, mfs: 67610, hoh: 67610 };
@@ -153,6 +153,44 @@ console.log(`Checked ${checked.toLocaleString()} Michigan combinations across ${
     computeConversionCost(10000, ctx('MA', 40000, true)).cvtTxSt, 245);
   check('MA private pension $40k: 5% on full $10k conversion = $500',
     computeConversionCost(10000, ctx('MA', 40000, false)).cvtTxSt, 500);
+}
+
+// --- The "If You Move to ... First" comparison applies the pension-type answer in the new state ---
+// calc() builds the ctx for the state you live in, where a state that ignores the answer gets
+// isGovernmentPension = true; moveConversionCost takes the answer itself for the destination.
+// Single, 66, a $40,000 pension and nothing else, converting $30,000; the state tax on the
+// conversion, by hand from states.json:
+//   New York, government pension: exempt, so the conversion takes the $20,000 exclusion:
+//     30,000 - 20,000 - 8,000 standard deduction = 2,000 x 3.9% = $78.
+//   New York, private pension: pension and conversion share the $20,000. Without the conversion
+//     40,000 - 20,000 - 8,000 = 12,000 taxable: 3.9% x 8,500 = 331.50, 4.4% x 3,200 = 140.80,
+//     5.15% x 300 = 15.45 = 487.75. With it 42,000: 331.50 + 140.80 + 5.15% x 2,200 = 113.30
+//     + 5.4% x 28,100 = 1,517.40 = 2,103.00. The conversion: $1,615.25.
+//   Kansas, government pension: 30,000 - 12,765 standard deduction and exemption - 850 at 65
+//     = 16,385 x 5.2% = $852.02.
+//   Kansas, private pension: the pension alone reaches the 5.58% bracket: 30,000 x 5.58% = $1,674.
+{
+  const ctx = (stateCode, isGovernmentPension) => ({
+    income: 0, pensionIncome: 40000, nii: 0, ltcg: 0, ss: 0,
+    status: 'single', nSr: 1, stD: ST[stateCode], stateCode,
+    curAge: 66, spouseAge: null, isCouple: false, taxableFrac: 1, localTax: '',
+    isGovernmentPension,
+  });
+  const near = 0.01;
+  // Florida ignores the answer, so calc() passes isGovernmentPension = true in its ctx.
+  check('move Florida to New York, private pension: New York taxes it, $1,615.25',
+    moveConversionCost(30000, ctx('FL', true), 'NY', false).cvtTxSt, 1615.25, near);
+  check('move Florida to New York, government pension: $78',
+    moveConversionCost(30000, ctx('FL', true), 'NY', true).cvtTxSt, 78, near);
+  check('move New York to Kansas, government pension: $852.02',
+    moveConversionCost(30000, ctx('NY', true), 'KS', true).cvtTxSt, 852.02, near);
+  check('move New York to Kansas, private pension: $1,674',
+    moveConversionCost(30000, ctx('NY', false), 'KS', false).cvtTxSt, 1674, near);
+
+  // calc() uses it, with the answer rather than the ctx's flag.
+  const calcSrc = html.slice(html.indexOf('function calc()'), html.indexOf('\nfunction ', html.indexOf('function calc()') + 1));
+  check('calc(): the move comparison applies the answer in the new state',
+    /moveConversionCost\(cvtAmt, ccCtx, reloStateCode, pensionIsGovernment\)/.test(calcSrc) && !/computeConversionCost\(cvtAmt, \{\.\.\.ccCtx/.test(calcSrc) ? 1 : 0, 1, 0);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -955,7 +955,7 @@
           <option value="true">Government (public / military)</option>
           <option value="false" selected>Private (employer / IRA)</option>
         </select>
-        <div class="hint">Your state exempts government pensions but not private ones — select which applies to you.</div>
+        <div class="hint">Some states exempt government pensions but not private ones — select which applies to you.</div>
       </div>
     </div>
     <div class="field">
@@ -4721,6 +4721,14 @@ function domRetirementStateRate(){
     {ss: num('retSS'), pension: num('retPen'), other: num('retOther'), withdrawals: num('retWd')}, isGovernmentPension);
 }
 
+// calc()'s "If You Move to ... First" comparison: the same conversion under destCode's rules,
+// with the pension-type answer itself (isGovernmentPension). The ctx's own flag can't carry
+// over: calc() sets it to true where the state you live in ignores the answer, and the
+// destination may not.
+function moveConversionCost(cvtAmt, ctx, destCode, isGovernmentPension){
+  return computeConversionCost(cvtAmt, {...ctx, stD: ST[destCode]||{n:'',cr:0,ex:false,note:''}, stateCode: destCode, isGovernmentPension});
+}
+
 // ctx: {income, pensionIncome, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac, isGovernmentPension}
 function computeConversionCost(cvtAmt, ctx){
   const {income: wagesInc, pensionIncome, nii, ltcg, ss, status, nSr, stD, stateCode, curAge, spouseAge, isCouple, taxableFrac, localTax, isGovernmentPension = true} = ctx;
@@ -5005,14 +5013,18 @@ function calc(){
   const localTax = (stateCode==='NY') ? (_ae ? (_ae.nyLocalTax||'') : _rv('nyLocalTax'))
                   : (stateCode==='OR') ? (_ae ? (_ae.orLocalTax||'') : _rv('orLocalTax'))
                   : '';
-  // Show the pension-type selector only when the selected state has a government-only
-  // pension exemption and the user has entered a non-zero pension amount.
+  // Show the pension-type selector whenever a government-only pension state uses the answer:
+  // the state you live in (today's pension, or the retirement-rate estimator's), or the state
+  // you're comparing a move to (today's pension, in the comparison below).
   const penKindField = document.getElementById('pensionKindField');
-  const stateHasGovOnlyPension = !!(STRULES[stateCode]?.taxRules?.pensionIncome?.governmentOnly);
-  if(penKindField) penKindField.style.display = (stateHasGovOnlyPension && pensionIncome > 0) ? 'block' : 'none';
-  const isGovernmentPension = stateHasGovOnlyPension
-    ? (_ae ? (_ae.pensionKind !== 'false') : (_rv('pensionKind') !== 'false'))
-    : true;
+  const govOnlyPension = (code) => !!(STRULES[code]?.taxRules?.pensionIncome?.governmentOnly);
+  const stateHasGovOnlyPension = govOnlyPension(stateCode);
+  const reloStateCode = _ae ? '' : _rv('reloStateCode');
+  const reloHasGovOnlyPension = !!reloStateCode && reloStateCode !== stateCode && govOnlyPension(reloStateCode);
+  if(penKindField) penKindField.style.display = ((stateHasGovOnlyPension && (pensionIncome > 0 || (parseFloat(_rv('retPen'))||0) > 0))
+    || (reloHasGovOnlyPension && pensionIncome > 0)) ? 'block' : 'none';
+  const pensionIsGovernment = _ae ? (_ae.pensionKind !== 'false') : (_rv('pensionKind') !== 'false');
+  const isGovernmentPension = stateHasGovOnlyPension ? pensionIsGovernment : true;
   const isCouple = (status==='mfj'||status==='mfs');
   const spFields = document.getElementById('spouseFields');
   if(spFields) spFields.style.display = isCouple ? 'block' : 'none';
@@ -5082,15 +5094,15 @@ function calc(){
 
   // ── PLANNING TO MOVE? Compare converting now vs. after relocating ──
   // Reuses computeConversionCost with the SAME ctx except stD/stateCode swapped
-  // to the destination — deliberately not a full move-year timeline (that would
+  // to the destination, and the pension-type answer applied there (moveConversionCost)
+  // — deliberately not a full move-year timeline (that would
   // mean threading a move year through computeMultiYear and the RMD counterfactual
   // too); this answers the one question a relocating user actually has: does it
   // matter whether I convert before or after the move.
-  const reloStateCode = _ae ? '' : _rv('reloStateCode');
   let reloCompareHtml = '';
   if(reloStateCode && stateCode && reloStateCode!==stateCode && cvtAmt>0){
     const reloStD = ST[reloStateCode]||{n:'',cr:0,ex:false,note:''};
-    const reloCC  = computeConversionCost(cvtAmt, {...ccCtx, stD:reloStD, stateCode:reloStateCode});
+    const reloCC  = moveConversionCost(cvtAmt, ccCtx, reloStateCode, pensionIsGovernment);
     const delta   = reloCC.cvtTxTot - cvtTxTot;
     const verbRow = delta===0
       ? '<div class="trow tgrand"><span class="tl">Waiting to move first</span><span class="tv">No difference</span></div>'
