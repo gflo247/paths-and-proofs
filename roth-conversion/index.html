@@ -1621,12 +1621,12 @@ function revealResults(noScroll){
   var results = document.getElementById('resultsArea');
   if(stepper) stepper.style.display = 'none';
   if(results) results.style.display = 'block';
-  // Flip this BEFORE calc() runs, not after — calc() is what calls
-  // saveInputs(), and saveInputs() only persists once _wizardCompleted is
-  // true. Flipping it first means the very first results view after
-  // finishing the wizard is actually saved, instead of only the next edit.
+  // Flip _wizardCompleted BEFORE calc() so the calc() call below triggers
+  // saveInputs() (which always saves now). Write rg_v1_done to signal that
+  // the next page load should skip the wizard and go straight to results.
   if(!_wizardCompleted){
     _wizardCompleted = true;
+    try{ if(_canStore) localStorage.setItem('rg_v1_done','1'); }catch(e){}
     var sp = document.getElementById('stepProgress');
     if(sp){
       sp.classList.add('clickable');
@@ -4244,7 +4244,7 @@ function clearAllInputs(){
   var gd=document.getElementById('gDisp'), gv=document.getElementById('gValDisp');
   if(gd) gd.textContent='7%'; if(gv) gv.textContent='7%';
   // Clear localStorage
-  if(_canStore) try{ localStorage.removeItem('rg_v1'); }catch(e){}
+  if(_canStore) try{ localStorage.removeItem('rg_v1'); localStorage.removeItem('rg_v1_done'); }catch(e){}
   // Hide example banner
   var banner=document.getElementById('exBanner');
   if(banner) banner.style.display='none';
@@ -4499,15 +4499,14 @@ function applyInputs(obj){
 }
 
 function saveInputs(){
-  // calc() runs unconditionally on every page load (including the very
-  // first, before the user has touched anything), so saving on every call
-  // would persist untouched defaults immediately — making every later
-  // reload look like a "returning visitor" and skip the wizard for good.
-  // Only persist once the wizard has actually been completed once. Also
-  // skipped for exactly one calc() right after loading a shared link (see
+  // Save on every calc() so partial wizard progress survives a refresh.
+  // Skipped for exactly one calc() right after loading a shared link (see
   // _suppressSaveOnce's own comment) -- opening someone else's link must
   // never silently overwrite the visitor's own already-saved scenario.
-  if(!_wizardCompleted || _suppressSaveOnce) return;
+  // Whether to skip the wizard on the next load is decided separately by
+  // the rg_v1_done flag, which is only written when the wizard is actually
+  // completed (see revealResults()).
+  if(_suppressSaveOnce) return;
   try{
     if(_canStore) localStorage.setItem('rg_v1', JSON.stringify(collectInputs()));
   }catch(e){}
@@ -4518,7 +4517,11 @@ function loadSavedInputs(){
     var saved=_canStore?JSON.parse(localStorage.getItem('rg_v1')||'{}'):{};
     if(!saved || Object.keys(saved).length===0) return false;
     applyInputs(saved);
-    return true;
+    // Return true only when the wizard was previously completed — that's
+    // what triggers revealResults() (skip wizard, go straight to results).
+    // Partial progress (rg_v1 present, rg_v1_done absent) still restores
+    // the fields but leaves the user in the wizard so they can finish.
+    return !!(_canStore && localStorage.getItem('rg_v1_done'));
   }catch(e){ return false; }
 }
 
